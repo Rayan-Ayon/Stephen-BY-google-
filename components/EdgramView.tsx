@@ -1,70 +1,124 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { YoutubeIcon, TiktokIcon, InstagramIcon, HeartIcon, MessageCircleIcon, ShareIcon, DotsHorizontalIcon } from './icons';
-
-const Post = ({ index }: { index: number }) => {
-    const icons = [<YoutubeIcon className="w-5 h-5 text-red-500"/>, <TiktokIcon className="w-5 h-5 text-white"/>, <InstagramIcon className="w-5 h-5 text-pink-500"/>];
-    
-    return (
-        <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl mb-6">
-            <div className="flex items-center p-4">
-                <div className="w-10 h-10 bg-gray-700 rounded-full mr-3"></div>
-                <div className="font-semibold text-white">user_name</div>
-                <div className="ml-auto text-gray-400">
-                    {icons[index % 3]}
-                </div>
-            </div>
-            <div className="w-full aspect-[9/16] bg-gray-800 max-h-[75vh]">
-                 <img src={`https://picsum.photos/seed/${index+30}/500/888`} alt="Post content" className="w-full h-full object-cover"/>
-            </div>
-            <div className="p-4">
-                <div className="flex items-center space-x-4 mb-3">
-                    <HeartIcon className="w-6 h-6 cursor-pointer hover:text-red-500"/>
-                    <MessageCircleIcon className="w-6 h-6 cursor-pointer hover:text-white"/>
-                    <ShareIcon className="w-6 h-6 cursor-pointer hover:text-white"/>
-                    <div className="ml-auto">
-                        <DotsHorizontalIcon className="w-6 h-6 cursor-pointer"/>
-                    </div>
-                </div>
-                <p className="text-sm font-semibold text-white">1,234 likes</p>
-                <p className="text-sm mt-2">
-                    <span className="font-semibold text-white">user_name</span>
-                    <span className="text-gray-300 ml-2">This is a caption for the post. Learning and sharing knowledge! #AI #EdTech</span>
-                </p>
-                 <p className="text-xs text-gray-500 mt-2 cursor-pointer">View all 42 comments</p>
-            </div>
-        </div>
-    );
-}
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { SettingsIcon, CubeIcon, UsersIcon, BookmarkIcon, HeartIcon, MessageCircleIcon } from './icons';
 
 const EdgramView = () => {
+    const [activeTab, setActiveTab] = useState('posts');
+    const posts = Array(12).fill(0);
+
+    const TabButton = ({ name, label, icon, active, onClick }: { name: string, label: string, icon: React.ReactElement, active: boolean, onClick: (name: string) => void }) => (
+        <button
+            onClick={() => onClick(name)}
+            className={`flex items-center justify-center w-full sm:w-auto sm:px-4 py-3 text-sm font-semibold border-t-2 transition-colors ${
+                active ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-white'
+            }`}
+        >
+            {React.cloneElement(icon, { className: "w-4 h-4 mr-2"})}
+            <span className="hidden sm:inline">{label}</span>
+        </button>
+    );
+
+    const PostGridItem = ({ index }: { index: number }) => (
+        <>
+            <img src={`https://picsum.photos/seed/${index+30}/500/500`} alt="Post content" className="w-full h-full object-cover"/>
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white">
+                <div className="flex items-center gap-1 font-bold">
+                    <HeartIcon className="w-5 h-5" />
+                    <span>{Math.floor(Math.random() * 2000)}</span>
+                </div>
+                <div className="flex items-center gap-1 font-bold">
+                    <MessageCircleIcon className="w-5 h-5" />
+                    <span>{Math.floor(Math.random() * 100)}</span>
+                </div>
+            </div>
+        </>
+    );
+
     return (
         <div className="flex-1 flex flex-col h-full overflow-y-auto stephen-bg items-center p-4 sm:p-6 lg:p-8">
-            <div className="w-full max-w-lg">
-                {/* Profile Header Placeholder */}
-                <div className="flex items-center p-4 mb-8">
-                    <div className="w-24 h-24 bg-gray-700 rounded-full mr-8"></div>
-                    <div className="flex-1">
-                        <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: "'Lora', serif" }}>Stephen_AI</h2>
-                        <div className="flex space-x-6">
-                            <div><span className="font-bold text-white">102</span> <span className="text-gray-400">Posts</span></div>
-                            <div><span className="font-bold text-white">5.1k</span> <span className="text-gray-400">Connections</span></div>
+            <div className="w-full max-w-4xl">
+                {/* Profile Header */}
+                <header className="flex mb-8 md:mb-12 px-2">
+                    <div className="w-24 h-24 sm:w-36 sm:h-36 shrink-0 mr-6 sm:mr-10 md:mr-20">
+                        <div className="w-full h-full bg-gray-700 rounded-full"></div>
+                    </div>
+                    <div className="flex-grow">
+                        <div className="flex items-center gap-4 mb-4 flex-wrap">
+                            <h2 className="text-2xl text-white font-light">stephen_ai</h2>
+                            <div className="flex items-center gap-2 flex-grow sm:flex-grow-0">
+                                <button className="px-4 py-1.5 text-sm font-semibold bg-gray-700 rounded-lg hover:bg-gray-600 w-full sm:w-auto">Edit Profile</button>
+                                <button className="px-4 py-1.5 text-sm font-semibold bg-gray-700 rounded-lg hover:bg-gray-600 w-full sm:w-auto">View Archive</button>
+                            </div>
+                             <button className="p-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white"><SettingsIcon className="w-5 h-5"/></button>
+                        </div>
+
+                        <div className="hidden md:flex items-center gap-8 mb-4">
+                            <div><span className="font-bold text-white">102</span> <span className="text-gray-400">posts</span></div>
+                            <div><span className="font-bold text-white">5.1k</span> <span className="text-gray-400">connections</span></div>
+                        </div>
+                        
+                        <div>
+                            <p className="font-semibold text-white">Stephen AI</p>
+                            <p className="text-gray-300 text-sm">
+                                Your personal AI learning companion. 🚀<br/>
+                                Turning any content into interactive courses.
+                            </p>
+                            <a href="#" className="text-sm text-blue-400 font-semibold hover:underline">stephen.ai</a>
                         </div>
                     </div>
+                </header>
+                
+                {/* Stats for mobile */}
+                <div className="md:hidden flex items-center justify-around text-center border-y border-gray-800 py-3 mb-4">
+                    <div><span className="font-bold text-white block">102</span> <span className="text-gray-400 text-sm">posts</span></div>
+                    <div><span className="font-bold text-white block">5.1k</span> <span className="text-gray-400 text-sm">connections</span></div>
                 </div>
 
-                {/* Feed */}
-                <div>
-                    {Array(5).fill(0).map((_, index) => (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.5, delay: index * 0.1 }}
+                {/* Feed Tabs */}
+                <div className="border-t border-gray-800 flex justify-center gap-4 sm:gap-12 -mt-px">
+                    <TabButton name="posts" label="POSTS" icon={<CubeIcon />} active={activeTab === 'posts'} onClick={setActiveTab} />
+                    <TabButton name="saved" label="SAVED" icon={<BookmarkIcon />} active={activeTab === 'saved'} onClick={setActiveTab} />
+                    <TabButton name="tagged" label="TAGGED" icon={<UsersIcon />} active={activeTab === 'tagged'} onClick={setActiveTab} />
+                </div>
+
+                {/* Feed Grid */}
+                <div className="mt-1">
+                    <AnimatePresence>
+                    {activeTab === 'posts' && (
+                        <motion.div 
+                            key="posts"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="grid grid-cols-3 gap-1"
                         >
-                          <Post index={index} />
+                            {posts.map((_, index) => (
+                                // FIX: Wrapped PostGridItem in motion.div and moved animation props here to resolve key prop error.
+                                <motion.div
+                                    key={index}
+                                    className="relative aspect-square group cursor-pointer"
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                                >
+                                    <PostGridItem index={index} />
+                                </motion.div>
+                            ))}
                         </motion.div>
-                    ))}
+                    )}
+                    {(activeTab === 'saved' || activeTab === 'tagged') && (
+                         <motion.div
+                            key="empty"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="text-center py-20 text-gray-500"
+                         >
+                            <h3 className="text-2xl font-bold text-white mb-2" style={{fontFamily: "'Lora', serif"}}>Nothing to see here yet</h3>
+                            <p>Posts will appear here once they are available.</p>
+                         </motion.div>
+                    )}
+                    </AnimatePresence>
                 </div>
             </div>
         </div>
