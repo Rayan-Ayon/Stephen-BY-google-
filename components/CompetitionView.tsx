@@ -25,9 +25,8 @@ const dummyCompetitions = Array(9).fill({
 });
 
 const CompetitionCard = ({ competition }: { competition: typeof dummyCompetitions[0] }) => (
-    <motion.div 
-      className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden flex flex-col group hover:border-green-500/50 transition-all duration-300"
-      whileHover={{ y: -5 }}
+    <div 
+      className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden flex flex-col group hover:border-green-500/50 transition-all duration-300 h-full"
     >
         <div className="h-40 overflow-hidden">
             <img src={competition.imageUrl} alt={competition.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -54,7 +53,7 @@ const CompetitionCard = ({ competition }: { competition: typeof dummyCompetition
                 </div>
             </div>
         </div>
-    </motion.div>
+    </div>
 );
 
 const CompetitionView = () => {
@@ -123,8 +122,11 @@ const CompetitionView = () => {
 
             {/* Competitions Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* FIX: Wrapped CompetitionCard in motion.div and moved the key to fix TypeScript error. */}
                 {dummyCompetitions.map((comp, index) => (
-                    <CompetitionCard key={index} competition={comp} />
+                    <motion.div key={index} whileHover={{ y: -5 }}>
+                        <CompetitionCard competition={comp} />
+                    </motion.div>
                 ))}
             </div>
         </div>

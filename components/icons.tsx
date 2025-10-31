@@ -14,6 +14,86 @@ export const AddCoursesIcon: React.FC<IconProps> = (props) => (
     </svg>
 );
 
+export const TrophyIcon: React.FC<IconProps> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 10h16" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21V10" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 10V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v5" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 10a4 4 0 0 0-4 4v0a4 4 0 0 0 4 4" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M18 10a4 4 0 0 1 4 4v0a4 4 0 0 1-4 4" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8 21h8" />
+  </svg>
+);
+
+export const ProjectsResearchIcon: React.FC<IconProps> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9.75h16.5v10.5a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5V9.75Z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9.75L7.5 3h9l3.75 6.75" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="m10.5 14.25 1.5 1.5 1.5-1.5" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15.75v-4.5" />
+  </svg>
+);
+
+export const ExamPaperPenIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+    </svg>
+);
+
+export const MicroscopeIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 21h14M6 18h2m-1-5h4M7 13v5m10-10a4 4 0 1 0-8 0 4 4 0 0 0 8 0Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13 13h5m-2-5 3-3m-3 0 3 3" />
+    </svg>
+);
+
+export const ProfessorStudentIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-1.063M15 19.128v-3.328c0-.982-.524-1.853-1.338-2.316a5.527 5.527 0 0 0-3.322-.975" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 9.75a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 19.128a9.38 9.38 0 0 1-2.625.372A9.337 9.337 0 0 1 2.25 18.063M9 19.128v-3.328c0-.982.524-1.853 1.338-2.316a5.527 5.527 0 0 1 3.322-.975" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 9.75a3.375 3.375 0 1 1 6.75 0 3.375 3.375 0 0 1-6.75 0Z" />
+    </svg>
+);
+
+export const DebatePodiumIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 14v-3a2 2 0 1 1 4 0v3m-4-3H4m4 3h4m0-3h4m-4 3v4m0 0H8m4 0h4m-4-4V7a2 2 0 1 1 4 0v3" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 14h4v4H4v-4Zm12 0h4v4h-4v-4Z" />
+    </svg>
+);
+
+export const EdgramIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" {...props}>
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" strokeLinecap="round" strokeLinejoin="round"></line>
+    </svg>
+);
+
+export const GlobeIcon: React.FC<IconProps> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 0a9 9 0 0 1 1.34-4.75M20.25 12a9 9 0 0 0-1.34-4.75" />
+  </svg>
+);
+
+export const LocationTrackerIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75L15 3.75m-6 3v10.5l6-3m0 0v-10.5l-6 3" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75L3 9.75v10.5l6-3" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 3.75L21 6.75v10.5l-6-3" />
+    </svg>
+);
+
+export const LearningMethodIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.364 12.364a3 3 0 0 1-4.242-4.242M12.364 15.364V12.364h-3" />
+    </svg>
+);
+
+// --- Old icons, keeping for potential other uses, but replaced in sidebar ---
 export const CompetitionIcon: React.FC<IconProps> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9a9.75 9.75 0 1 1 9 0Z" />

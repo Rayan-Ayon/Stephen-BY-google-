@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Theme } from '../App';
 import {
-    PlusIcon, AddCoursesIcon, CompetitionIcon, ProjectIcon, ExamIcon,
-    LabIcon, UsersIcon, DebateIcon, DiscoverIcon, TrackerIcon, BrainIcon,
-    FeedbackIcon, GuideIcon, ExtensionIcon, SettingsIcon, HistoryIcon,
-    SunIcon, MoonIcon, LogoutIcon, ChevronRightIcon
+    PlusIcon, AddCoursesIcon, FeedbackIcon, GuideIcon, ExtensionIcon, SettingsIcon, HistoryIcon,
+    SunIcon, MoonIcon, LogoutIcon,
+    TrophyIcon, ProjectsResearchIcon, ExamPaperPenIcon, MicroscopeIcon,
+    ProfessorStudentIcon, DebatePodiumIcon, EdgramIcon, GlobeIcon,
+    LocationTrackerIcon, LearningMethodIcon
 } from './icons';
 
 interface SidebarProps {
@@ -20,23 +21,23 @@ const navConfig = [
         items: [
             { name: 'Add Content', icon: <PlusIcon className="w-5 h-5" />, key: 'add_content' },
             { name: 'Add Courses', icon: <AddCoursesIcon className="w-5 h-5" />, key: 'add_courses' },
-            { name: 'Competitions', icon: <CompetitionIcon className="w-5 h-5" />, key: 'competitions' },
-            { name: 'Projects & Research', icon: <ProjectIcon className="w-5 h-5" />, key: 'projects' },
-            { name: 'Exams', icon: <ExamIcon className="w-5 h-5" />, key: 'exams' },
+            { name: 'Competitions', icon: <TrophyIcon className="w-5 h-5" />, key: 'competitions' },
+            { name: 'Projects & Research', icon: <ProjectsResearchIcon className="w-5 h-5" />, key: 'projects' },
+            { name: 'Exams', icon: <ExamPaperPenIcon className="w-5 h-5" />, key: 'exams' },
             { name: 'Create Space', icon: <PlusIcon className="w-5 h-5" />, key: 'create_space' },
         ]
     },
     { type: 'separator' },
     {
         items: [
-            { name: 'Research Lab', icon: <LabIcon className="w-5 h-5" />, key: 'research_lab' },
-            { name: 'Consult Professors', icon: <UsersIcon className="w-5 h-5" />, key: 'consult_professors' },
-            { name: 'Consult Students', icon: <UsersIcon className="w-5 h-5" />, key: 'consult_students' },
-            { name: 'Debate', icon: <DebateIcon className="w-5 h-5" />, key: 'debate' },
-            { name: 'Edgrame', icon: <ChevronRightIcon className="w-5 h-5" />, key: 'edgrame' },
-            { name: 'Discover', icon: <DiscoverIcon className="w-5 h-5" />, key: 'discover' },
-            { name: 'Tracker', icon: <TrackerIcon className="w-5 h-5" />, key: 'tracker' },
-            { name: 'Learning Methods', icon: <BrainIcon className="w-5 h-5" />, key: 'learning_methods' },
+            { name: 'Research Lab', icon: <MicroscopeIcon className="w-5 h-5" />, key: 'research_lab' },
+            { name: 'Consult Professors', icon: <ProfessorStudentIcon className="w-5 h-5" />, key: 'consult_professors' },
+            { name: 'Consult Students', icon: <ProfessorStudentIcon className="w-5 h-5" />, key: 'consult_students' },
+            { name: 'Debate', icon: <DebatePodiumIcon className="w-5 h-5" />, key: 'debate' },
+            { name: 'Edgrame', icon: <EdgramIcon className="w-5 h-5" />, key: 'edgrame' },
+            { name: 'Discover', icon: <GlobeIcon className="w-5 h-5" />, key: 'discover' },
+            { name: 'Tracker', icon: <LocationTrackerIcon className="w-5 h-5" />, key: 'tracker' },
+            { name: 'Learning Methods', icon: <LearningMethodIcon className="w-5 h-5" />, key: 'learning_methods' },
         ]
     },
     { type: 'separator' },

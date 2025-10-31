@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import Workspace from './Workspace';
 import HistoryView from './HistoryView';
@@ -7,6 +8,8 @@ import AddCoursesView from './AddCoursesView';
 import CompetitionView from './CompetitionView';
 import DiscoverView from './DiscoverView';
 import EdgramView from './EdgramView';
+import DebateView from './DebateView';
+import QuickGuideModal from './QuickGuideModal';
 import type { Theme } from '../App';
 
 export interface HistoryItem {
@@ -88,8 +91,13 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme }) => {
     const [currentView, setCurrentView] = useState('add_content');
     const [selectedCourse, setSelectedCourse] = useState<HistoryItem | null>(null);
     const [showWorkspaceHeader, setShowWorkspaceHeader] = useState(true);
+    const [isQuickGuideOpen, setIsQuickGuideOpen] = useState(false);
 
     const handleNavigate = (view: string) => {
+        if (view === 'quick_guide') {
+            setIsQuickGuideOpen(true);
+            return;
+        }
         setCurrentView(view);
         setSelectedCourse(null);
     };
@@ -123,6 +131,8 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme }) => {
                 return <DiscoverView />;
             case 'edgram':
                 return <EdgramView />;
+            case 'debate':
+                return <DebateView />;
             default:
                 return <AddContentView onCourseCreated={handleCourseCreated} />;
         }
@@ -134,6 +144,9 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme }) => {
             <main className="flex-1 flex flex-col overflow-hidden">
                 {renderView()}
             </main>
+            <AnimatePresence>
+                {isQuickGuideOpen && <QuickGuideModal onClose={() => setIsQuickGuideOpen(false)} />}
+            </AnimatePresence>
         </div>
     );
 };
