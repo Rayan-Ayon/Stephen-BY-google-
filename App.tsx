@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Dashboard from './components/Dashboard';
+import LandingPage from './components/LandingPage';
 
 export type Theme = 'light' | 'dark';
 
 const App: React.FC = () => {
   const [theme, setTheme] = useState<Theme>('dark');
+  const [showDashboard, setShowDashboard] = useState(false);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -22,9 +24,17 @@ const App: React.FC = () => {
     setTheme(prevTheme => (prevTheme === 'dark' ? 'light' : 'dark'));
   };
 
+  const handleStartLearning = () => {
+    setShowDashboard(true);
+  };
+
   return (
     <div className={`transition-colors duration-300 ${theme === 'dark' ? 'dark text-gray-300' : 'text-gray-800'}`} style={{ fontFamily: "'Inter', sans-serif" }}>
-      <Dashboard toggleTheme={toggleTheme} theme={theme} />
+      {showDashboard ? (
+        <Dashboard toggleTheme={toggleTheme} theme={theme} />
+      ) : (
+        <LandingPage onStartLearning={handleStartLearning} toggleTheme={toggleTheme} theme={theme} />
+      )}
     </div>
   );
 };

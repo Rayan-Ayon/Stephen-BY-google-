@@ -46,6 +46,9 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated }) => {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
         const chatInstance = ai.chats.create({
             model: 'gemini-2.5-flash',
+            config: {
+                thinkingConfig: { thinkingBudget: 0 },
+            },
         });
         setChat(chatInstance);
     }, []);
