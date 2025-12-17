@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SendIcon, LinkIcon, BrainIcon, PlusIcon } from './icons';
@@ -20,12 +22,12 @@ const DebateSidebar: React.FC<{
     onSelectDebate: (id: number) => void;
     activeDebateId: number | null;
 }> = ({ onNewDebate, debateHistory, onSelectDebate, activeDebateId }) => (
-    <aside className="w-72 bg-[#131313] border-r border-gray-800/50 p-6 flex flex-col shrink-0">
-        <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "'Lora', serif" }}>Debate</h1>
-        <p className="text-sm text-gray-400 mb-8">Place where you can debate with the Hawking in any topics.</p>
+    <aside className="w-72 dark:bg-[#131313] bg-neutral-100 border-r dark:border-gray-800/50 border-neutral-200 p-6 pt-16 flex flex-col shrink-0">
+        <h1 className="text-3xl font-bold dark:text-white text-black mb-2" style={{ fontFamily: "'Lora', serif" }}>Debate</h1>
+        <p className="text-sm dark:text-gray-400 text-neutral-500 mb-8">Place where you can debate with the Hawking in any topics.</p>
         <button 
             onClick={onNewDebate}
-            className="w-full flex items-center justify-center p-2.5 mb-4 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-semibold text-white transition-colors"
+            className="w-full flex items-center justify-center p-2.5 mb-4 dark:bg-gray-700 bg-neutral-200 dark:hover:bg-gray-600 hover:bg-neutral-300 rounded-lg text-sm font-semibold dark:text-white text-black transition-colors"
         >
             <PlusIcon className="w-5 h-5 mr-2" />
             New Debate
@@ -37,7 +39,7 @@ const DebateSidebar: React.FC<{
                     key={debate.id} 
                     onClick={() => onSelectDebate(debate.id)}
                     className={`text-left text-sm p-2 rounded-md transition-colors truncate ${
-                        activeDebateId === debate.id ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800'
+                        activeDebateId === debate.id ? 'dark:bg-gray-800 bg-neutral-300 dark:text-white text-black' : 'dark:text-gray-300 text-neutral-700 dark:hover:bg-gray-800 hover:bg-neutral-200'
                     }`}
                 >
                     {debate.title}
@@ -49,7 +51,7 @@ const DebateSidebar: React.FC<{
 
 const TypingIndicator = () => (
     <motion.div 
-        className="flex items-center space-x-1 p-3 bg-[#1a1a1a] rounded-lg"
+        className="flex items-center space-x-1 p-3 dark:bg-[#1a1a1a] bg-neutral-100 rounded-lg"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 10 }}
@@ -177,9 +179,9 @@ const DebateView: React.FC = () => {
     };
 
     const renderChatUI = () => (
-        <div className="flex-1 flex flex-col h-full w-full max-w-4xl mx-auto">
-            <div className="relative flex items-center justify-center p-4 border-b border-gray-800 shrink-0">
-                <h2 className="text-lg font-semibold text-white" style={{ fontFamily: "'Lora', serif" }}>DebateBot</h2>
+        <div className="flex-1 flex flex-col h-full w-full max-w-4xl mx-auto pt-16 lg:pt-0">
+            <div className="relative flex items-center justify-center p-4 border-b dark:border-gray-800 border-neutral-200 shrink-0">
+                <h2 className="text-lg font-semibold dark:text-white text-black" style={{ fontFamily: "'Lora', serif" }}>DebateBot</h2>
             </div>
             <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-6 p-6">
                  {messages.map((msg, index) => (
@@ -190,11 +192,11 @@ const DebateView: React.FC = () => {
                         className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                         {msg.role === 'model' && (
-                            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
-                                <BrainIcon className="w-5 h-5 text-green-400" />
+                            <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0">
+                                <BrainIcon className="w-5 h-5 text-orange-500" />
                             </div>
                         )}
-                        <div className={`p-4 rounded-2xl max-w-lg ${msg.role === 'user' ? 'bg-gray-700 text-white rounded-br-none' : 'bg-[#1a1a1a] border border-gray-800 text-gray-300 rounded-bl-none'}`}>
+                        <div className={`p-4 rounded-2xl max-w-lg ${msg.role === 'user' ? 'dark:bg-gray-700 bg-neutral-800 text-white rounded-br-none' : 'dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 dark:text-gray-300 text-neutral-800 rounded-bl-none'}`}>
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                         </div>
                          {msg.role === 'user' && (
@@ -203,8 +205,8 @@ const DebateView: React.FC = () => {
                     </motion.div>
                 ))}
                 {isLoading && <div className="flex items-start gap-3 justify-start">
-                    <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
-                       <BrainIcon className="w-5 h-5 text-green-400" />
+                    <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0">
+                       <BrainIcon className="w-5 h-5 text-orange-400" />
                     </div>
                     <TypingIndicator />
                 </div>}
@@ -215,13 +217,13 @@ const DebateView: React.FC = () => {
 
     const renderInitialUI = () => (
         <motion.div 
-            className="flex-1 flex flex-col items-center justify-center p-8 relative h-full w-full"
+            className="flex-1 flex flex-col items-center justify-center p-8 relative h-full w-full pt-16 lg:pt-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
         >
             <div className="text-center">
-                <h2 className="text-4xl text-white font-semibold" style={{ fontFamily: "'Lora', serif" }}>In which topic do you want to debate?</h2>
+                <h2 className="text-4xl dark:text-white text-black font-semibold" style={{ fontFamily: "'Lora', serif" }}>In which topic do you want to debate?</h2>
             </div>
             {renderInputArea()}
         </motion.div>
@@ -237,13 +239,13 @@ const DebateView: React.FC = () => {
                     onKeyPress={handleKeyPress}
                     placeholder="Debate with comparative Hawking."
                     rows={1}
-                    className="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl py-3 pl-5 pr-28 text-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-all resize-none"
+                    className="w-full dark:bg-[#1a1a1a] bg-white border dark:border-gray-700 border-neutral-200 rounded-xl py-3 pl-5 pr-28 text-md focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all resize-none"
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-2">
-                    <button className="p-2 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition-colors" aria-label="Attach file">
+                    <button className="p-2 rounded-lg text-gray-400 dark:hover:bg-gray-700 hover:bg-neutral-200 dark:hover:text-white hover:text-black transition-colors" aria-label="Attach file">
                         <LinkIcon className="w-5 h-5" />
                     </button>
-                    <button onClick={handleSendMessage} disabled={isLoading || !inputValue.trim()} className="p-2 rounded-lg bg-gray-200 text-black hover:bg-white transition-colors disabled:opacity-50" aria-label="Send message">
+                    <button onClick={handleSendMessage} disabled={isLoading || !inputValue.trim()} className="p-2 rounded-lg dark:bg-gray-200 bg-neutral-800 dark:text-black text-white dark:hover:bg-white hover:bg-neutral-700 transition-colors disabled:opacity-50" aria-label="Send message">
                         <SendIcon className="w-5 h-5" />
                     </button>
                 </div>
@@ -252,7 +254,7 @@ const DebateView: React.FC = () => {
     );
 
     return (
-        <div className="flex-1 flex h-full overflow-hidden stephen-bg">
+        <div className="flex-1 flex h-full overflow-hidden">
             <DebateSidebar 
                 onNewDebate={handleNewDebate} 
                 debateHistory={debateHistory}

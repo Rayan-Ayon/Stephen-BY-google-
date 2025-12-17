@@ -12,11 +12,11 @@ const App: React.FC = () => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
       document.body.classList.add('dark');
-      document.body.style.backgroundColor = '#0d0d0d';
+      document.body.style.backgroundColor = '#111111';
     } else {
       document.documentElement.classList.remove('dark');
       document.body.classList.remove('dark');
-      document.body.style.backgroundColor = '#fbfcfd';
+      document.body.style.backgroundColor = '#ffffff';
     }
   }, [theme]);
 
@@ -29,7 +29,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className={`transition-colors duration-300 ${theme === 'dark' ? 'dark text-gray-300' : 'text-gray-800'}`} style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className={`transition-colors duration-300 ${theme === 'dark' ? 'dark text-neutral-200' : 'text-neutral-800'}`} style={{ fontFamily: "'Inter', sans-serif" }}>
       {showDashboard ? (
         <Dashboard toggleTheme={toggleTheme} theme={theme} />
       ) : (

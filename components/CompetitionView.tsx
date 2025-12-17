@@ -26,30 +26,30 @@ const dummyCompetitions = Array(9).fill({
 
 const CompetitionCard = ({ competition }: { competition: typeof dummyCompetitions[0] }) => (
     <div 
-      className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden flex flex-col group hover:border-green-500/50 transition-all duration-300 h-full"
+      className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl overflow-hidden flex flex-col group hover:border-orange-500/50 transition-all duration-300 h-full"
     >
         <div className="h-40 overflow-hidden">
             <img src={competition.imageUrl} alt={competition.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         </div>
         <div className="p-5 flex-grow flex flex-col">
-            <h3 className="font-bold text-white text-lg mb-2" style={{ fontFamily: "'Lora', serif" }}>{competition.title}</h3>
-            <p className="text-gray-400 text-sm mb-3 flex-grow">{competition.description}</p>
+            <h3 className="font-bold dark:text-white text-black text-lg mb-2" style={{ fontFamily: "'Lora', serif" }}>{competition.title}</h3>
+            <p className="dark:text-gray-400 text-neutral-500 text-sm mb-3 flex-grow">{competition.description}</p>
             <div className="text-xs text-gray-500 mb-3">
                 Organizers: {competition.organizers.join(', ')}
             </div>
             <div className="flex justify-between items-center text-sm">
                 <span className="text-xs py-1 px-2.5 bg-blue-500/10 text-blue-300 rounded-full">{competition.status}</span>
-                <span className="text-gray-400 font-medium">{competition.competitors} Competitors</span>
+                <span className="dark:text-gray-400 text-neutral-500 font-medium">{competition.competitors} Competitors</span>
             </div>
-            <div className="border-t border-gray-800 my-4"></div>
+            <div className="border-t dark:border-gray-800 border-neutral-200 my-4"></div>
             <div className="flex justify-between items-end">
                  <div>
                     <p className="text-xs text-gray-500">End Time</p>
-                    <p className="text-sm font-medium text-gray-300">{competition.endTime}</p>
+                    <p className="text-sm font-medium dark:text-gray-300 text-neutral-700">{competition.endTime}</p>
                 </div>
                 <div>
                     <p className="text-xs text-gray-500">Prize</p>
-                    <p className="text-lg font-bold text-green-400">{competition.prize}</p>
+                    <p className="text-lg font-bold text-orange-500">{competition.prize}</p>
                 </div>
             </div>
         </div>
@@ -68,7 +68,7 @@ const CompetitionView = () => {
     }, []);
 
     return (
-        <div className="flex-1 flex flex-col h-full overflow-y-auto stephen-bg p-6 lg:p-8">
+        <div className="flex-1 flex flex-col h-full overflow-y-auto p-6 lg:p-8">
             {/* Carousel */}
             <div className="relative w-full h-64 rounded-2xl overflow-hidden mb-8">
                 <AnimatePresence>
@@ -97,12 +97,12 @@ const CompetitionView = () => {
 
             {/* Tabs and Filters */}
             <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-                <div className="flex items-center border-b border-gray-800">
+                <div className="flex items-center border-b dark:border-gray-800 border-neutral-200">
                     {['All Competitions', 'Ongoing Competitions', 'Completed Competitions'].map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-green-400' : 'text-gray-400 hover:text-white'}`}
+                            className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === tab ? 'dark:text-white text-black border-b-2 border-orange-500' : 'text-gray-400 hover:text-white'}`}
                         >
                             {tab}
                         </button>
@@ -110,10 +110,10 @@ const CompetitionView = () => {
                 </div>
                 <div className="flex items-center space-x-4">
                     <div className="relative">
-                        <input type="text" placeholder="Search competitions..." className="bg-[#1a1a1a] border border-gray-800 rounded-lg py-2 pl-10 pr-4 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-green-500" />
+                        <input type="text" placeholder="Search competitions..." className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-lg py-2 pl-10 pr-4 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-orange-500" />
                         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                     </div>
-                     <button className="flex items-center text-sm text-gray-300 hover:text-white bg-[#1a1a1a] border border-gray-800 px-4 py-2 rounded-lg">
+                     <button className="flex items-center text-sm dark:text-gray-300 text-neutral-600 dark:hover:text-white hover:text-black dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 px-4 py-2 rounded-lg">
                          Recent
                          <ChevronDownIcon className="w-4 h-4 ml-2" />
                      </button>

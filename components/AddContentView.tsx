@@ -20,7 +20,7 @@ interface Message {
 // Typing indicator component
 const TypingIndicator = () => (
     <motion.div 
-        className="flex items-center space-x-1 p-3 bg-[#1a1a1a] rounded-lg"
+        className="flex items-center space-x-1 p-3 dark:bg-[#1a1a1a] bg-neutral-100 rounded-lg"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 10 }}
@@ -112,13 +112,13 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated }) => {
     const ActionButton = ({ icon, title, subtitle }: { icon: React.ReactNode, title: string, subtitle: string }) => (
         <button
             onClick={() => title === 'Paste' && setIsPasteModalOpen(true)}
-            className="flex items-center text-left p-4 bg-[#1a1a1a] border border-gray-800 rounded-xl hover:bg-gray-800 hover:border-gray-700 transition-all duration-300"
+            className="flex items-center text-left p-4 dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-gray-200 rounded-xl dark:hover:bg-gray-800 hover:bg-gray-100 transition-all duration-300"
         >
-            <div className="mr-4 text-gray-400">
+            <div className="mr-4 text-gray-500 dark:text-gray-400">
                 {icon}
             </div>
             <div>
-                <p className="font-semibold text-white">{title}</p>
+                <p className="font-semibold dark:text-white text-gray-800">{title}</p>
                 <p className="text-sm text-gray-500">{subtitle}</p>
             </div>
         </button>
@@ -134,16 +134,16 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated }) => {
                 animate={{ opacity: 1 }}
                 className="flex-1 flex flex-col w-full max-w-4xl mx-auto h-full"
             >
-                <div className="relative flex items-center justify-center p-4 border-b border-gray-800 shrink-0">
+                <div className="relative flex items-center justify-center p-4 border-b dark:border-gray-800 border-neutral-200 shrink-0">
                     <button 
                         onClick={() => setIsChatActive(false)} 
-                        className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center text-sm text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-800 transition-colors"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center text-sm text-gray-400 dark:hover:text-white hover:text-black p-2 rounded-lg dark:hover:bg-gray-800 hover:bg-neutral-200 transition-colors"
                         aria-label="Go back"
                     >
                         <ChevronLeftIcon className="w-5 h-5 mr-1" />
                         <span>Back</span>
                     </button>
-                    <h2 className="text-lg font-semibold text-white" style={{ fontFamily: "'Lora', serif" }}>AI Tutor</h2>
+                    <h2 className="text-lg font-semibold dark:text-white text-black" style={{ fontFamily: "'Lora', serif" }}>AI Tutor</h2>
                 </div>
 
                 <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-6 p-6">
@@ -155,22 +155,22 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated }) => {
                             className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
                             {msg.role === 'model' && (
-                                <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
-                                    <BrainIcon className="w-5 h-5 text-green-400" />
+                                <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0">
+                                    <BrainIcon className="w-5 h-5 text-orange-500" />
                                 </div>
                             )}
-                            <div className={`p-4 rounded-2xl max-w-lg ${msg.role === 'user' ? 'bg-gray-700 text-white rounded-br-none' : 'bg-[#1a1a1a] border border-gray-800 text-gray-300 rounded-bl-none'}`}>
+                            <div className={`p-4 rounded-2xl max-w-lg ${msg.role === 'user' ? 'dark:bg-gray-700 bg-neutral-800 text-white rounded-br-none' : 'dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 dark:text-gray-300 text-neutral-800 rounded-bl-none'}`}>
                                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                             </div>
                              {msg.role === 'user' && (
-                                <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center shrink-0 font-bold text-white text-sm">A</div>
+                                <img className="w-8 h-8 rounded-full shrink-0" src="https://images.unsplash.com/photo-1521119989659-a83eee488004?q=80&w=2823&auto=format&fit=crop" alt="User avatar" />
                             )}
                         </motion.div>
                     ))}
                     {isLoading && (!lastMessage || lastMessage.role === 'user') && (
                         <div className="flex items-start gap-3 justify-start">
-                            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
-                               <BrainIcon className="w-5 h-5 text-green-400" />
+                            <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0">
+                               <BrainIcon className="w-5 h-5 text-orange-400" />
                             </div>
                             <TypingIndicator />
                         </div>
@@ -185,9 +185,9 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated }) => {
                             onChange={(e) => setInputValue(e.target.value)}
                             onKeyPress={handleKeyPress}
                             placeholder="Ask a follow-up question..."
-                            className="w-full bg-[#1a1a1a] border border-gray-800 rounded-xl py-3.5 pl-5 pr-14 text-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
+                            className="w-full dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-xl py-3.5 pl-5 pr-14 text-md focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
                         />
-                        <button onClick={handleSendMessage} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors disabled:opacity-50" disabled={isLoading || !inputValue.trim()}>
+                        <button onClick={handleSendMessage} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full dark:bg-gray-700 bg-neutral-200 dark:text-gray-300 text-neutral-600 dark:hover:bg-gray-600 hover:bg-neutral-300 transition-colors disabled:opacity-50" disabled={isLoading || !inputValue.trim()}>
                             <ArrowUpIcon className="w-5 h-5" />
                         </button>
                     </div>
@@ -199,13 +199,13 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated }) => {
     const renderInitialUI = () => (
          <motion.div
                 key="initial-view"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.5 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
                 className="w-full max-w-3xl"
             >
-                <h1 className="text-3xl font-bold text-white mb-6 text-center" style={{ fontFamily: "'Lora', serif" }}>
+                <h1 className="text-5xl md:text-6xl font-bold text-black dark:text-white mb-8 text-center" style={{ fontFamily: "'Lora', serif" }}>
                     What do you want to learn?
                 </h1>
                 
@@ -223,16 +223,16 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated }) => {
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyPress={handleKeyPress}
                         placeholder="Learn anything"
-                        className="w-full bg-[#1a1a1a] border border-gray-800 rounded-xl py-3.5 pl-5 pr-14 text-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
+                        className="w-full dark:bg-[#1a1a1a] bg-white border border-gray-200 dark:border-gray-800 rounded-xl py-3.5 pl-5 pr-14 text-md dark:text-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
                     />
-                    <button onClick={handleSendMessage} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors">
-                        <ArrowUpIcon className="w-5 h-5 rotate-45" />
+                    <button onClick={handleSendMessage} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full dark:bg-gray-700 bg-gray-200 dark:text-gray-300 text-gray-700 dark:hover:bg-gray-600 hover:bg-gray-300 transition-colors">
+                        <ArrowUpIcon className="w-5 h-5" />
                     </button>
                 </div>
 
                 <div className="flex items-center justify-between mb-4">
-                     <h2 className="text-xl font-bold text-white" style={{ fontFamily: "'Lora', serif" }}>My Spaces</h2>
-                     <button className="flex items-center text-sm text-gray-400 hover:text-white bg-[#1a1a1a] border border-gray-800 px-3 py-1.5 rounded-lg">
+                     <h2 className="text-3xl font-bold text-black dark:text-white" style={{ fontFamily: "'Lora', serif" }}>My Spaces</h2>
+                     <button className="flex items-center text-sm dark:text-gray-400 text-neutral-500 dark:hover:text-white hover:text-black dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 px-3 py-1.5 rounded-lg">
                          <ClockIcon className="w-4 h-4 mr-2" />
                          Newest
                          <ChevronDownIcon className="w-4 h-4 ml-1" />
@@ -240,13 +240,13 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated }) => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <button className="flex flex-col items-center justify-center p-6 bg-[#1a1a1a] border-2 border-dashed border-gray-800 rounded-xl hover:border-gray-700 hover:bg-gray-800/50 transition-all text-gray-500 hover:text-white">
+                    <button className="flex flex-col items-center justify-center p-6 bg-transparent border-2 border-dashed dark:border-gray-800 border-neutral-300 rounded-xl dark:hover:border-gray-700 hover:border-neutral-400 dark:hover:bg-gray-800/50 hover:bg-neutral-100/50 transition-all text-gray-500 dark:hover:text-white hover:text-black">
                         <PlusIcon className="w-6 h-6 mb-2" />
                         <span className="font-semibold">Create Space</span>
                     </button>
-                    <div className="flex flex-col p-6 bg-[#1a1a1a] border border-gray-800 rounded-xl">
+                    <div className="flex flex-col p-6 dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-gray-200 rounded-xl">
                         <CubeIcon className="w-6 h-6 mb-4 text-gray-400" />
-                        <p className="font-semibold text-white">my space</p>
+                        <p className="font-semibold dark:text-white text-black">Farhan's Space</p>
                         <p className="text-sm text-gray-500">0 content</p>
                     </div>
                 </div>
@@ -254,7 +254,7 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated }) => {
     );
 
     return (
-        <div className="flex-1 flex flex-col items-center justify-start p-8 lg:p-12 overflow-y-auto stephen-bg h-full">
+        <div className="flex-1 flex flex-col items-center justify-start p-8 lg:p-12 overflow-y-auto h-full">
             <AnimatePresence mode="wait">
                  {isChatActive ? renderChatUI() : renderInitialUI()}
             </AnimatePresence>

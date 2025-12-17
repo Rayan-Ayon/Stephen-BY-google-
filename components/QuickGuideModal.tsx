@@ -43,15 +43,15 @@ const QuickGuideModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-[#0d0d0d] text-gray-300 w-[90vw] h-[90vh] max-w-7xl rounded-2xl border border-gray-800 shadow-2xl flex overflow-hidden relative"
+                className="dark:bg-[#0d0d0d] bg-white dark:text-gray-300 text-neutral-800 w-[90vw] h-[90vh] max-w-7xl rounded-2xl border dark:border-gray-800 border-neutral-200 shadow-2xl flex overflow-hidden relative"
             >
-                <button onClick={onClose} className="absolute top-4 right-4 z-10 p-2 rounded-full hover:bg-gray-700 transition-colors">
+                <button onClick={onClose} className="absolute top-4 right-4 z-10 p-2 rounded-full dark:hover:bg-gray-700 hover:bg-neutral-200 transition-colors">
                     <XIcon className="w-6 h-6" />
                 </button>
                 
                 {/* Left Sidebar */}
-                <aside className="w-80 bg-[#131313] border-r border-gray-800/50 p-6 flex flex-col shrink-0 overflow-y-auto">
-                    <h2 className="text-2xl font-bold text-white mb-8" style={{ fontFamily: "'Lora', serif" }}>Quick Guide</h2>
+                <aside className="w-80 dark:bg-[#131313] bg-neutral-100 border-r dark:border-gray-800/50 border-neutral-200 p-6 flex flex-col shrink-0 overflow-y-auto">
+                    <h2 className="text-2xl font-bold dark:text-white text-black mb-8" style={{ fontFamily: "'Lora', serif" }}>Quick Guide</h2>
                     <nav className="flex flex-col space-y-4">
                         {guideSections.map(section => (
                             <div key={section.segment}>
@@ -63,8 +63,8 @@ const QuickGuideModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                             onClick={() => setActiveItem(item)}
                                             className={`w-full text-left text-sm p-2 rounded-md transition-colors ${
                                                 activeItem.name === item.name 
-                                                ? 'bg-gray-700 text-white font-semibold' 
-                                                : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                                                ? 'dark:bg-gray-700 bg-neutral-300 dark:text-white text-black font-semibold' 
+                                                : 'dark:text-gray-400 text-neutral-600 dark:hover:bg-gray-800 hover:bg-neutral-200 dark:hover:text-white hover:text-black'
                                             }`}
                                         >
                                             {item.name}
@@ -86,9 +86,9 @@ const QuickGuideModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.3 }}
                         >
-                            <h1 className="text-4xl font-bold text-white mb-4" style={{ fontFamily: "'Lora', serif" }}>{activeItem.content.title}</h1>
-                            <p className="text-gray-400 mb-8 max-w-3xl">{activeItem.content.description}</p>
-                            <div className="w-full aspect-video rounded-xl bg-gray-800 overflow-hidden">
+                            <h1 className="text-4xl font-bold dark:text-white text-black mb-4" style={{ fontFamily: "'Lora', serif" }}>{activeItem.content.title}</h1>
+                            <p className="dark:text-gray-400 text-neutral-500 mb-8 max-w-3xl">{activeItem.content.description}</p>
+                            <div className="w-full aspect-video rounded-xl dark:bg-gray-800 bg-neutral-200 overflow-hidden">
                                 <img src={activeItem.content.image} alt={activeItem.content.title} className="w-full h-full object-cover"/>
                             </div>
                         </motion.div>
