@@ -278,7 +278,7 @@ const Card: React.FC<ProfessorCardProps> = ({ type, data }) => {
 // Filter Sidebar Component
 const FilterSidebar = () => {
     return (
-        <aside className="w-64 border-r dark:border-gray-800/50 border-neutral-200 p-6 pt-20 hidden md:block overflow-y-auto shrink-0 dark:bg-[#131313] bg-neutral-50">
+        <aside className="w-64 border-r dark:border-gray-800/50 border-neutral-200 p-6 pt-24 hidden md:block overflow-y-auto shrink-0 dark:bg-[#131313] bg-neutral-50">
             <h2 className="font-bold dark:text-white text-black text-lg mb-6">Filters</h2>
 
             {/* Category */}
@@ -357,7 +357,7 @@ const ConsultProfessorsView = () => {
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col h-full overflow-hidden dark:bg-black bg-white">
                 {/* Header */}
-                <header className="p-6 md:p-8 pt-20 pb-4 shrink-0 border-b dark:border-gray-800 border-neutral-200">
+                <header className="p-6 md:p-8 pt-24 pb-4 shrink-0 border-b dark:border-gray-800 border-neutral-200">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                          <div className="relative w-full md:w-96">
                             <input 

@@ -1,21 +1,23 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { XIcon, StarIcon, CheckCircleIcon, PlusIcon, LinkIcon } from './icons';
+import { XIcon, StarIcon, CheckCircleIcon, PlusIcon, LinkIcon, MicIcon, VideoCameraIcon, FileTextIcon, ClipboardIcon } from './icons';
 import { HistoryItem } from './Dashboard';
 
 interface ModalProps {
     onClose: () => void;
     title: string;
     children: React.ReactNode;
-    ctaText: string;
-    onCtaClick: () => void;
+    ctaText?: string;
+    onCtaClick?: () => void;
     ctaDisabled?: boolean;
+    showFooter?: boolean;
+    icon?: React.ReactNode;
 }
 
-const BaseModal: React.FC<ModalProps> = ({ onClose, title, children, ctaText, onCtaClick, ctaDisabled = false }) => {
+const BaseModal: React.FC<ModalProps> = ({ onClose, title, children, ctaText, onCtaClick, ctaDisabled = false, showFooter = true, icon }) => {
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -28,23 +30,85 @@ const BaseModal: React.FC<ModalProps> = ({ onClose, title, children, ctaText, on
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 30, scale: 0.95 }}
                 transition={{ duration: 0.3, ease: 'easeOut' }}
-                className="relative dark:bg-[#1a1a1a] bg-white dark:text-gray-300 text-neutral-800 w-full max-w-lg rounded-2xl border dark:border-gray-800 border-neutral-200 shadow-2xl"
+                className="relative dark:bg-[#131313] bg-white dark:text-gray-300 text-neutral-800 w-full max-w-[500px] rounded-[28px] border dark:border-[#2a2a2a] border-neutral-200 shadow-2xl overflow-hidden"
             >
-                <div className="flex items-center justify-between p-6 border-b dark:border-gray-800 border-neutral-200">
-                    <h2 className="text-xl font-semibold dark:text-white text-black" style={{ fontFamily: "'Lora', serif" }}>{title}</h2>
-                    <button onClick={onClose} className="p-1 rounded-full dark:hover:bg-gray-700 hover:bg-neutral-200 transition-colors"><XIcon className="w-5 h-5" /></button>
+                <div className="flex items-center justify-between px-8 py-7">
+                    <div className="flex items-center space-x-3">
+                        {icon && <div className="text-[#888]">{icon}</div>}
+                        <h2 className="text-[20px] font-bold dark:text-[#eee] text-black">{title}</h2>
+                    </div>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-800/50 transition-colors"><XIcon className="w-5 h-5 text-gray-500" /></button>
                 </div>
-                <div className="p-6">{children}</div>
-                <div className="flex justify-end p-6 border-t dark:border-gray-800 border-neutral-200 space-x-4">
-                    <button onClick={onClose} className="px-5 py-2.5 text-sm font-semibold rounded-lg border dark:border-gray-700 border-neutral-300 dark:hover:bg-gray-800 hover:bg-neutral-100 transition-colors">Cancel</button>
-                    <button onClick={onCtaClick} disabled={ctaDisabled} className="px-5 py-2.5 text-sm font-semibold rounded-lg dark:bg-white dark:text-black bg-black text-white dark:hover:bg-gray-200 hover:bg-neutral-800 transition-colors dark:disabled:bg-gray-600 disabled:bg-neutral-300 disabled:cursor-not-allowed">{ctaText}</button>
-                </div>
+                <div className="px-8 pb-8">{children}</div>
+                {showFooter && (
+                    <div className="px-8 py-6 border-t dark:border-[#2a2a2a] border-neutral-200">
+                         {ctaText ? (
+                            <button onClick={onCtaClick} disabled={ctaDisabled} className="w-full py-4 text-[16px] font-bold rounded-[20px] dark:bg-[#2a2a2a] bg-neutral-200 dark:text-[#666] text-neutral-600 hover:dark:text-white hover:text-black transition-colors dark:disabled:bg-[#1a1a1a] disabled:opacity-50">
+                                {ctaText}
+                            </button>
+                         ) : (
+                            <div className="flex justify-end">
+                                <button onClick={onClose} className="px-6 py-2.5 text-sm font-semibold rounded-xl border dark:border-[#2a2a2a] border-neutral-300 dark:hover:bg-gray-800 hover:bg-neutral-100 transition-colors">Close</button>
+                            </div>
+                         )}
+                    </div>
+                )}
             </motion.div>
         </div>
     );
 };
 
-// --- Specific Modals ---
+export const RecordLectureModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    const OptionBox = ({ icon, title, subtitle }: { icon: React.ReactNode, title: string, subtitle: string }) => (
+        <button className="w-full flex items-center p-6 mb-3 dark:bg-transparent bg-neutral-50 border dark:border-[#2a2a2a] border-neutral-200 rounded-[28px] hover:border-[#888] transition-all group">
+            <div className="mr-6 text-[#666] group-hover:text-white transition-colors">
+                {React.cloneElement(icon as React.ReactElement, { className: "w-7 h-7" })}
+            </div>
+            <div className="text-left">
+                <p className="font-bold text-[18px] dark:text-[#eee] text-gray-800 group-hover:text-white transition-colors leading-tight">{title}</p>
+                <p className="text-[13px] text-[#666] group-hover:text-[#aaa] transition-colors font-medium mt-0.5">{subtitle}</p>
+            </div>
+        </button>
+    );
+
+    return (
+        <BaseModal title="Record Lecture" onClose={onClose} showFooter={false}>
+            <div className="mt-1">
+                <OptionBox 
+                    icon={<MicIcon />} 
+                    title="Microphone" 
+                    subtitle="Record your voice or class" 
+                />
+                <OptionBox 
+                    icon={<VideoCameraIcon />} 
+                    title="Browser Tab" 
+                    subtitle="Capture audio playing in a browser tab" 
+                />
+            </div>
+        </BaseModal>
+    );
+};
+
+export const PasteTextModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    return (
+        <BaseModal 
+            title="Paste Text" 
+            onClose={onClose} 
+            icon={<ClipboardIcon className="w-6 h-6" />}
+            ctaText="Add"
+            onCtaClick={onClose}
+        >
+            <p className="text-[14px] dark:text-[#666] text-neutral-500 mb-6 font-medium">Copy and paste text to add as content</p>
+            <div className="relative">
+                <textarea 
+                    placeholder="Paste your notes here" 
+                    rows={8} 
+                    className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-[#2a2a2a] border-neutral-300 rounded-[24px] p-6 text-md focus:outline-none focus:ring-1 focus:ring-gray-600 transition-all resize-none dark:text-white placeholder-[#444]"
+                />
+            </div>
+        </BaseModal>
+    );
+};
 
 export const PasteUrlModal: React.FC<{ onClose: () => void, onCourseCreated: (course: HistoryItem) => void; }> = ({ onClose, onCourseCreated }) => {
     const [url, setUrl] = useState('');
@@ -53,8 +117,6 @@ export const PasteUrlModal: React.FC<{ onClose: () => void, onCourseCreated: (co
     const handleSubmit = () => {
         if (!url || isLoading) return;
         setIsLoading(true);
-
-        // Simulate API call
         setTimeout(() => {
             const newCourse: HistoryItem = {
                 id: Date.now(),
@@ -63,11 +125,7 @@ export const PasteUrlModal: React.FC<{ onClose: () => void, onCourseCreated: (co
                 type: url.includes('youtube.com') ? 'video' : 'article',
                 time: 'Just now',
                 videoUrl: url.includes('youtube.com') ? url.replace('watch?v=', 'embed/') : 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-                day: 1,
-                totalDays: 7,
-                depth: 10,
-                level: 'Intermediate',
-                learningReason: 'To explore a new topic from a web resource.',
+                day: 1, totalDays: 7, depth: 10, level: 'Intermediate', learningReason: 'To explore a new topic from a web resource.',
             };
             setIsLoading(false);
             onCourseCreated(newCourse);
@@ -76,17 +134,11 @@ export const PasteUrlModal: React.FC<{ onClose: () => void, onCourseCreated: (co
     };
 
     return (
-        <BaseModal title="Create course from link" ctaText={isLoading ? "Creating..." : "Create"} onCtaClick={handleSubmit} onClose={onClose} ctaDisabled={isLoading}>
-            <p className="text-sm dark:text-gray-400 text-neutral-500 mb-4">Add any link, like a YouTube video, a PDF, or an article, and we'll create a personalized course for you.</p>
+        <BaseModal title="Create course from link" ctaText={isLoading ? "Creating..." : "Create"} onCtaClick={handleSubmit} onClose={onClose} ctaDisabled={isLoading} icon={<LinkIcon className="w-6 h-6" />}>
+            <p className="text-sm dark:text-[#666] text-neutral-500 mb-6 font-medium">Add any link, like a YouTube video, a PDF, or an article, and we'll create a personalized course for you.</p>
             <div className="relative">
-                <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
-                    type="text"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    placeholder="Paste any link here..."
-                    className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl py-3 pl-12 pr-4 text-md focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                />
+                <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#444]" />
+                <input type="text" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Paste any link here..." className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-[#2a2a2a] border-neutral-300 rounded-[18px] py-4 pl-12 pr-4 text-md focus:outline-none focus:ring-1 focus:ring-gray-600 transition-all dark:text-white" />
             </div>
         </BaseModal>
     );
@@ -243,7 +295,7 @@ export const UpgradeModal: React.FC<{ onClose: () => void, onNavigateToPricing: 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="relative w-full max-w-md bg-black border border-gray-800 rounded-3xl p-8 shadow-2xl overflow-hidden z-10"
+                className="relative w-full max-w-md bg-black border border-[#2a2a2a] rounded-3xl p-8 shadow-2xl overflow-hidden z-10"
             >
                 <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white">
                     <XIcon className="w-5 h-5" />
@@ -283,14 +335,13 @@ export const UpgradeModal: React.FC<{ onClose: () => void, onNavigateToPricing: 
                     </div>
                 </div>
 
-                {/* Billing Options */}
                 <div className="space-y-3 mb-8">
                     <button
                         onClick={() => setBillingCycle('yearly')}
                         className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
                             billingCycle === 'yearly' 
                             ? 'bg-[#0f1f15] border-green-900/50' 
-                            : 'bg-[#111] border-gray-800 hover:border-gray-700'
+                            : 'bg-[#111] border-[#2a2a2a] hover:border-gray-700'
                         }`}
                     >
                         <div className="flex items-center">
@@ -305,9 +356,8 @@ export const UpgradeModal: React.FC<{ onClose: () => void, onNavigateToPricing: 
                         className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
                             billingCycle === 'monthly' 
                             ? 'bg-[#1a1a1a] border-gray-600' 
-                            : 'bg-[#111] border-gray-800 hover:border-gray-700'
+                            : 'bg-[#111] border-[#2a2a2a] hover:border-gray-700'
                         }`}
-                        style={billingCycle === 'monthly' ? { backgroundColor: '#1a1a1a', borderColor: '#555' } : {}}
                     >
                         <div className="flex items-center">
                             <span className={`font-semibold ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-400'}`}>Monthly</span>

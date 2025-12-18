@@ -411,7 +411,7 @@ const EdgramView = () => {
     return (
         <div className="flex-1 flex h-full overflow-hidden dark:bg-black bg-white transition-colors duration-300 dark:text-white text-black">
             {/* Edgram Navigation */}
-            <nav className="w-16 lg:w-64 dark:bg-black bg-white border-r dark:border-gray-800 border-neutral-200 pt-16 pb-3 px-3 flex flex-col items-center lg:items-start shrink-0 transition-colors duration-300">
+            <nav className="w-16 lg:w-64 dark:bg-black bg-white border-r dark:border-gray-800 border-neutral-200 pt-24 pb-3 px-3 flex flex-col items-center lg:items-start shrink-0 transition-colors duration-300">
                 <div className="text-2xl font-bold dark:text-white text-black hidden lg:block py-6 px-4 mb-2" style={{ fontFamily: "'Lora', serif" }}>Edgram</div>
                  <div className="w-10 h-10 lg:hidden flex items-center justify-center mb-4 mt-4">
                     <EdgramIcon className="w-8 h-8 dark:text-white text-black"/>

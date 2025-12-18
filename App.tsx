@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Dashboard from './components/Dashboard';
 import LandingPage from './components/LandingPage';
@@ -12,7 +13,7 @@ const App: React.FC = () => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
       document.body.classList.add('dark');
-      document.body.style.backgroundColor = '#111111';
+      document.body.style.backgroundColor = '#0b0b0b';
     } else {
       document.documentElement.classList.remove('dark');
       document.body.classList.remove('dark');

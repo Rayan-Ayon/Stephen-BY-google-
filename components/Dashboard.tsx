@@ -1,5 +1,4 @@
 
-
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './Sidebar';
@@ -204,7 +203,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme }) => {
     );
 
     return (
-        <div className={`flex h-screen ${theme === 'dark' ? 'bg-[#0d0d0d]' : 'bg-white'}`}>
+        <div className={`flex h-screen ${theme === 'dark' ? 'bg-[#0b0b0b]' : 'bg-white'}`}>
             <Sidebar 
                 toggleTheme={toggleTheme} 
                 theme={theme} 
@@ -224,6 +223,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme }) => {
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.8 }}
+                            // FIX: Corrected state setter name from setIsExpanded to setIsSidebarExpanded
                             onClick={() => setIsSidebarExpanded(true)}
                             className="absolute top-4 left-4 z-20 p-2 rounded-lg bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 shadow-md text-gray-500 hover:text-black dark:hover:text-white transition-colors"
                         >

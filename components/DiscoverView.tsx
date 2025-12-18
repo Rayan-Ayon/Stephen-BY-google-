@@ -7,7 +7,7 @@ import { ShareIcon, DotsHorizontalIcon, PlusIcon, XIcon, CloudyIcon, SunIcon, Tr
 const DiscoverView = () => {
     return (
         <div className="flex-1 flex h-full overflow-hidden dark:bg-black bg-neutral-100 dark:text-gray-300 text-neutral-800">
-            <div className="flex-1 overflow-y-auto p-6 lg:p-8 pt-20">
+            <div className="flex-1 overflow-y-auto p-6 lg:p-8 pt-24">
                 <header className="flex items-center justify-between mb-8">
                     <div className="flex items-center space-x-4">
                         <h1 className="text-2xl font-bold dark:text-white text-black" style={{ fontFamily: "'Lora', serif" }}>Discover</h1>
@@ -54,7 +54,7 @@ const DiscoverView = () => {
                 </main>
             </div>
             
-            <aside className="w-96 border-l dark:border-gray-800 border-neutral-200 p-6 pt-20 overflow-y-auto hidden lg:block shrink-0 dark:bg-black bg-neutral-50">
+            <aside className="w-96 border-l dark:border-gray-800 border-neutral-200 p-6 pt-24 overflow-y-auto hidden lg:block shrink-0 dark:bg-black bg-neutral-50">
                 <div className="bg-gradient-to-br dark:from-teal-500/20 from-teal-500/10 dark:to-green-500/20 to-green-500/10 border dark:border-teal-500/30 border-teal-500/40 rounded-xl p-5 mb-6 relative shadow-sm">
                     <button className="absolute top-3 right-3 dark:text-gray-400 text-neutral-600 dark:hover:text-white hover:text-black"><XIcon className="w-4 h-4"/></button>
                     <h3 className="font-bold dark:text-white text-black mb-2">Make it yours</h3>

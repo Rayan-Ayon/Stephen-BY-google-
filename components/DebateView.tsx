@@ -22,7 +22,7 @@ const DebateSidebar: React.FC<{
     onSelectDebate: (id: number) => void;
     activeDebateId: number | null;
 }> = ({ onNewDebate, debateHistory, onSelectDebate, activeDebateId }) => (
-    <aside className="w-72 dark:bg-[#131313] bg-neutral-100 border-r dark:border-gray-800/50 border-neutral-200 p-6 pt-16 flex flex-col shrink-0">
+    <aside className="w-72 dark:bg-[#131313] bg-neutral-100 border-r dark:border-gray-800/50 border-neutral-200 p-6 pt-20 flex flex-col shrink-0">
         <h1 className="text-3xl font-bold dark:text-white text-black mb-2" style={{ fontFamily: "'Lora', serif" }}>Debate</h1>
         <p className="text-sm dark:text-gray-400 text-neutral-500 mb-8">Place where you can debate with the Hawking in any topics.</p>
         <button 
@@ -179,7 +179,7 @@ const DebateView: React.FC = () => {
     };
 
     const renderChatUI = () => (
-        <div className="flex-1 flex flex-col h-full w-full max-w-4xl mx-auto pt-16 lg:pt-0">
+        <div className="flex-1 flex flex-col h-full w-full max-w-4xl mx-auto pt-20 lg:pt-0">
             <div className="relative flex items-center justify-center p-4 border-b dark:border-gray-800 border-neutral-200 shrink-0">
                 <h2 className="text-lg font-semibold dark:text-white text-black" style={{ fontFamily: "'Lora', serif" }}>DebateBot</h2>
             </div>
@@ -217,7 +217,7 @@ const DebateView: React.FC = () => {
 
     const renderInitialUI = () => (
         <motion.div 
-            className="flex-1 flex flex-col items-center justify-center p-8 relative h-full w-full pt-16 lg:pt-0"
+            className="flex-1 flex flex-col items-center justify-center p-8 relative h-full w-full pt-20 lg:pt-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}

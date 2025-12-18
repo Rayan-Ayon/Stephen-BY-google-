@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Theme } from '../App';
@@ -17,7 +15,6 @@ interface SidebarProps {
   theme: Theme;
   onNavigate: (view: string) => void;
   activeItem: string;
-  // New props for state management
   sidebarMode: 'hover' | 'manual';
   setSidebarMode: (mode: 'hover' | 'manual') => void;
   isExpanded: boolean;
@@ -65,43 +62,31 @@ const Sidebar: React.FC<SidebarProps> = ({
     const [profileOpen, setProfileOpen] = useState(false);
     const [sidebarSettingsOpen, setSidebarSettingsOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
-
-    // Determine actual expanded state based on mode
     const [hoverExpanded, setHoverExpanded] = useState(false);
     
-    // Effective expanded state logic
     useEffect(() => {
         if (sidebarMode === 'hover') {
              setIsExpanded(hoverExpanded);
         }
     }, [sidebarMode, hoverExpanded, setIsExpanded]);
 
-
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
                 setProfileOpen(false);
-                setSidebarSettingsOpen(false); // Close submenu too
+                setSidebarSettingsOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const textColor = theme === 'dark' ? 'text-gray-200' : 'text-neutral-700'; // Lighter/Better contrast
+    const textColor = theme === 'dark' ? 'text-gray-200' : 'text-neutral-700';
     const iconColor = theme === 'dark' ? 'text-gray-400' : 'text-neutral-500';
     const hoverClasses = 'dark:hover:bg-gray-800 hover:bg-neutral-200 dark:hover:text-white hover:text-black';
     const activeClasses = theme === 'dark' 
         ? 'bg-gray-800 border border-gray-700 text-white' 
         : 'bg-neutral-200 border border-neutral-300 text-black';
-
-    const handleMouseEnter = () => {
-        if (sidebarMode === 'hover') setHoverExpanded(true);
-    };
-
-    const handleMouseLeave = () => {
-        if (sidebarMode === 'hover') setHoverExpanded(false);
-    };
 
     return (
         <motion.aside
@@ -109,8 +94,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             initial={{ width: '5rem' }}
             animate={{ width: isExpanded ? '17rem' : '5rem' }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
+            onMouseEnter={() => sidebarMode === 'hover' && setHoverExpanded(true)}
+            onMouseLeave={() => sidebarMode === 'hover' && setHoverExpanded(false)}
             className={`group h-screen flex flex-col shrink-0 border-r z-30 relative ${theme === 'dark' ? 'bg-[#131313] border-gray-800/50' : 'bg-neutral-100 border-neutral-200'}`}
         >
             <div className="flex items-center px-6 h-16 shrink-0 relative">
@@ -126,11 +111,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                        {isExpanded ? (
                            <>
                                <span className="text-xl">Stephen</span>
-                               {/* Collapse Button (Only visible on hover in expanded mode) */}
                                <button 
                                     onClick={(e) => { e.stopPropagation(); if(sidebarMode === 'manual') setIsExpanded(false); }}
-                                    className={`opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300`}
-                                    title="Collapse Sidebar"
+                                    className={`opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-lg bg-gray-200 dark:bg-[#2a2a2a] hover:bg-gray-300 dark:hover:bg-[#333] text-gray-700 dark:text-white`}
                                >
                                    <DoubleChevronLeftIcon className="w-4 h-4" />
                                </button>
@@ -178,28 +161,25 @@ const Sidebar: React.FC<SidebarProps> = ({
                 ))}
             </nav>
 
-             <div className="px-3 pb-4 pt-2 shrink-0" ref={profileRef}>
-                {/* Free Plan Widget */}
+             <div className="px-3 pb-6 pt-2 shrink-0 relative" ref={profileRef}>
                 <AnimatePresence>
                     {isExpanded && (
                         <motion.div
-                            initial={{ opacity: 0, y: 10, height: 0 }}
-                            animate={{ opacity: 1, y: 0, height: 'auto' }}
-                            exit={{ opacity: 0, y: 10, height: 0 }}
-                            className="mb-2 px-3 py-2 rounded-lg border border-green-800/40 bg-green-900/10 relative overflow-hidden group mx-1"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            className="mx-3 -mb-1 relative z-0"
                         >
-                            <div className="flex justify-between items-center mb-1.5">
-                                <span className="text-[10px] font-bold text-green-400 uppercase tracking-wider">Free Plan</span>
-                                <span className="text-[10px] text-green-300">1/10</span>
-                            </div>
-                            <div className="w-full h-1 bg-gray-700/50 rounded-full overflow-hidden">
-                                <div className="h-full bg-green-500 w-[10%]"></div>
+                            <div className={`rounded-t-xl border-t border-x ${theme === 'dark' ? 'border-green-600 bg-[#0c2414]' : 'border-green-500 bg-[#e7f5eb]'} px-3 py-1 pb-2`}>
+                                <div className="flex justify-center items-center">
+                                    <span className={`text-[10px] font-bold ${theme === 'dark' ? 'text-[#38d361]' : 'text-green-700'} tracking-wide`}>Free Plan</span>
+                                </div>
                             </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
-                <div className="relative">
+                <div className="relative z-10">
                     <AnimatePresence>
                         {profileOpen && (
                              <motion.div
@@ -234,8 +214,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                                             <div className={`bg-black w-3.5 h-3.5 rounded-full shadow-md transform transition-transform duration-300 ${theme === 'dark' ? 'translate-x-3.5' : ''}`}></div>
                                         </button>
                                     </div>
-                                    
-                                    {/* Sidebar Settings Option */}
                                     <div 
                                         className="relative" 
                                         onMouseEnter={() => setSidebarSettingsOpen(true)}
@@ -248,8 +226,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                                             </div>
                                             <ChevronDownIcon className="w-3 h-3 -rotate-90" />
                                         </button>
-                                        
-                                        {/* Nested Submenu */}
                                         <AnimatePresence>
                                             {sidebarSettingsOpen && (
                                                 <motion.div
@@ -278,7 +254,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                                             )}
                                         </AnimatePresence>
                                     </div>
-
                                     <div className="pt-1 pb-1">
                                         <div className={`border-t ${theme === 'dark' ? 'border-gray-800' : 'border-neutral-200'}`}></div>
                                     </div>
@@ -293,23 +268,23 @@ const Sidebar: React.FC<SidebarProps> = ({
                     
                     <button 
                         onClick={() => setProfileOpen(p => !p)} 
-                        className={`w-full flex items-center justify-between p-2 rounded-xl transition-all border ${
+                        className={`w-full flex items-center justify-between p-2.5 rounded-2xl transition-all border ${
                             profileOpen 
-                            ? (theme === 'dark' ? 'bg-[#1a1a1a] border-gray-600' : 'bg-white border-gray-400')
-                            : (theme === 'dark' ? 'bg-transparent border-gray-600 hover:bg-[#252525] hover:border-gray-500' : 'bg-transparent border-gray-300 hover:bg-gray-50 hover:border-gray-400')
+                            ? (theme === 'dark' ? 'bg-[#222] border-gray-400' : 'bg-neutral-50 border-gray-500')
+                            : (theme === 'dark' ? 'bg-[#0a0a0a] border-[#333] hover:bg-[#1a1a1a] hover:border-gray-500 shadow-[0_0_0_1px_rgba(255,255,255,0.05)]' : 'bg-white border-gray-300 hover:bg-gray-50 hover:border-gray-400')
                         }`}
                     >
                         <div className="flex items-center min-w-0">
-                            <img className="w-9 h-9 rounded-full shrink-0 object-cover border border-gray-300 dark:border-gray-600" src="https://images.unsplash.com/photo-1521119989659-a83eee488004?q=80&w=2823&auto=format&fit=crop" alt="User avatar" />
+                            <img className="w-9 h-9 rounded-full shrink-0 object-cover border border-gray-300 dark:border-gray-700" src="https://images.unsplash.com/photo-1521119989659-a83eee488004?q=80&w=2823&auto=format&fit=crop" alt="User avatar" />
                             <AnimatePresence>
                                 {isExpanded && (
                                     <motion.div initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0 }} className="ml-3 text-left overflow-hidden">
-                                        <p className={`font-semibold text-sm truncate ${theme === 'dark' ? 'text-gray-200' : 'text-neutral-800'}`}>AyonLogy</p>
+                                        <p className={`font-semibold text-[15px] truncate ${theme === 'dark' ? 'text-[#eee]' : 'text-neutral-900'}`}>AyonLogy</p>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
                         </div>
-                        {isExpanded && <ChevronDownIcon className={`w-4 h-4 transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''} ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />}
+                        {isExpanded && <ChevronDownIcon className={`w-4 h-4 transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''} ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />}
                     </button>
                 </div>
             </div>
