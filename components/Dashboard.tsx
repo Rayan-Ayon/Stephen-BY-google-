@@ -173,7 +173,13 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView =
     const renderView = () => {
         switch (currentView) {
             case 'workspace':
-                return selectedCourse ? <Workspace course={selectedCourse} showHeader={showWorkspaceHeader} /> : <AddContentView onCourseCreated={handleCourseCreated} />;
+                return selectedCourse ? (
+                    <Workspace 
+                        course={selectedCourse} 
+                        showHeader={showWorkspaceHeader} 
+                        onBack={() => handleNavigate('add_courses')}
+                    />
+                ) : <AddContentView onCourseCreated={handleCourseCreated} />;
             case 'history':
                 return <HistoryView historyItems={dummyHistory} onSelectCourse={handleSelectCourse} />;
             case 'add_content':
