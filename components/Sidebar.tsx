@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Theme } from '../App';
@@ -7,7 +8,7 @@ import {
     TrophyIcon, ProjectsResearchIcon, ExamPaperPenIcon, MicroscopeIcon,
     ProfessorStudentIcon, DebatePodiumIcon, EdgramIcon, GlobeIcon,
     LocationTrackerIcon, LearningMethodIcon, ChevronDownIcon, CrownIcon,
-    DoubleChevronLeftIcon, ViewSidebarIcon, CheckCircleIcon
+    ViewSidebarIcon, CheckCircleIcon, DollarIcon, SidebarToggleIcon
 } from './icons';
 
 interface SidebarProps {
@@ -51,6 +52,7 @@ const navConfig = [
             { name: 'Feedback', icon: <FeedbackIcon className="w-5 h-5" />, key: 'feedback' },
             { name: 'Quick Guide', icon: <GuideIcon className="w-5 h-5" />, key: 'quick_guide' },
             { name: 'Chrome Extension', icon: <ExtensionIcon className="w-5 h-5" />, key: 'chrome_extension' },
+            { name: 'Invite & Earn', icon: <DollarIcon className="w-5 h-5" />, key: 'invite_earn' },
         ]
     }
 ];
@@ -62,13 +64,14 @@ const Sidebar: React.FC<SidebarProps> = ({
     const [profileOpen, setProfileOpen] = useState(false);
     const [sidebarSettingsOpen, setSidebarSettingsOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
-    const [hoverExpanded, setHoverExpanded] = useState(false);
+    const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+    const [showTooltip, setShowTooltip] = useState(false);
     
     useEffect(() => {
         if (sidebarMode === 'hover') {
-             setIsExpanded(hoverExpanded);
+             setIsExpanded(isSidebarHovered);
         }
-    }, [sidebarMode, hoverExpanded, setIsExpanded]);
+    }, [sidebarMode, isSidebarHovered, setIsExpanded]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -88,40 +91,86 @@ const Sidebar: React.FC<SidebarProps> = ({
         ? 'bg-gray-800 border border-gray-700 text-white' 
         : 'bg-neutral-200 border border-neutral-300 text-black';
 
+    const handleToggle = (e: React.MouseEvent) => {
+        if (sidebarMode === 'manual') {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
+        }
+    };
+
     return (
         <motion.aside
             layout
             initial={{ width: '5rem' }}
             animate={{ width: isExpanded ? '17rem' : '5rem' }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            onMouseEnter={() => sidebarMode === 'hover' && setHoverExpanded(true)}
-            onMouseLeave={() => sidebarMode === 'hover' && setHoverExpanded(false)}
+            onMouseEnter={() => setIsSidebarHovered(true)}
+            onMouseLeave={() => { setIsSidebarHovered(false); setShowTooltip(false); }}
             className={`group h-screen flex flex-col shrink-0 border-r z-30 relative ${theme === 'dark' ? 'bg-[#131313] border-gray-800/50' : 'bg-neutral-100 border-neutral-200'}`}
         >
             <div className="flex items-center px-6 h-16 shrink-0 relative">
                 <AnimatePresence mode="wait">
-                    <motion.div
-                        key={isExpanded ? 'full' : 'short'}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -10 }}
-                        transition={{ duration: 0.2 }}
-                        className={`font-semibold flex items-center justify-between w-full ${theme === 'dark' ? 'text-gray-200' : 'text-neutral-700'}`}
-                    >
-                       {isExpanded ? (
-                           <>
-                               <span className="text-xl">Stephen</span>
-                               <button 
-                                    onClick={(e) => { e.stopPropagation(); if(sidebarMode === 'manual') setIsExpanded(false); }}
-                                    className={`opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-lg bg-gray-200 dark:bg-[#2a2a2a] hover:bg-gray-300 dark:hover:bg-[#333] text-gray-700 dark:text-white`}
-                               >
-                                   <DoubleChevronLeftIcon className="w-4 h-4" />
-                               </button>
-                           </>
-                       ) : (
-                           <span className="text-2xl">S</span>
-                       )}
-                    </motion.div>
+                    {isExpanded ? (
+                        <motion.div
+                            key="expanded-header"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }}
+                            transition={{ duration: 0.2 }}
+                            className={`font-semibold flex items-center justify-between w-full ${theme === 'dark' ? 'text-gray-200' : 'text-neutral-700'}`}
+                        >
+                           <span className="text-xl font-light tracking-tight">Stephen</span>
+                           {sidebarMode === 'manual' && (
+                               <div className="relative">
+                                   <button 
+                                        onClick={handleToggle}
+                                        onMouseEnter={() => setShowTooltip(true)}
+                                        onMouseLeave={() => setShowTooltip(false)}
+                                        className="p-1.5 rounded-lg text-gray-500 hover:text-black dark:hover:text-white hover:bg-neutral-200 dark:hover:bg-gray-800 transition-all"
+                                   >
+                                       <SidebarToggleIcon className="w-6 h-6" />
+                                   </button>
+                                   {showTooltip && (
+                                       <div className="absolute top-1/2 left-full ml-4 -translate-y-1/2 px-3 py-1.5 bg-black text-white text-[11px] font-bold rounded-lg whitespace-nowrap shadow-xl z-50 pointer-events-none">
+                                           close sidebar
+                                       </div>
+                                   )}
+                               </div>
+                           )}
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="collapsed-header"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            className="flex items-center justify-center w-full"
+                        >
+                            <div className="relative">
+                                {sidebarMode === 'manual' ? (
+                                    <button
+                                        onClick={handleToggle}
+                                        onMouseEnter={() => setShowTooltip(true)}
+                                        onMouseLeave={() => setShowTooltip(false)}
+                                        className="flex items-center justify-center p-2 rounded-lg transition-all"
+                                    >
+                                        {isSidebarHovered ? (
+                                            <SidebarToggleIcon className="w-6 h-6 text-gray-500 dark:hover:text-white hover:text-black" />
+                                        ) : (
+                                            <span className="text-2xl font-light dark:text-gray-200 text-neutral-700">S</span>
+                                        )}
+                                    </button>
+                                ) : (
+                                    <span className="text-2xl font-light dark:text-gray-200 text-neutral-700">S</span>
+                                )}
+                                {sidebarMode === 'manual' && isSidebarHovered && showTooltip && (
+                                    <div className="absolute top-1/2 left-full ml-4 -translate-y-1/2 px-3 py-1.5 bg-black text-white text-[11px] font-bold rounded-lg whitespace-nowrap shadow-xl z-50 pointer-events-none">
+                                        open sidebar
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
                 </AnimatePresence>
             </div>
             
@@ -141,7 +190,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 className={`w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === item.key ? activeClasses : ''}`}
                             >
                                 <div className={`${activeItem === item.key ? 'text-current' : iconColor} shrink-0`}>
-                                     {React.cloneElement(item.icon, { className: "w-5 h-5" })}
+                                     {React.cloneElement(item.icon as React.ReactElement<any>, { className: "w-5 h-5" })}
                                 </div>
                                 <AnimatePresence>
                                     {isExpanded && (

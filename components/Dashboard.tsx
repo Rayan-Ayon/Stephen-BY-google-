@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './Sidebar';
 import Workspace from './Workspace';
@@ -13,12 +13,13 @@ import DebateView from './DebateView';
 import TrackerView from './TrackerView';
 import ConsultProfessorsView from './ConsultProfessorsView';
 import PricingView from './PricingView';
+import InviteEarnView from './InviteEarnView';
 import QuickGuideModal from './QuickGuideModal';
 import FeedbackModal from './FeedbackModal';
 import SettingsModal from './SettingsModal';
+import ContactUsSlide from './ContactUsSlide';
 import { UpgradeModal } from './modals';
 import HawkingFab from './HawkingFab';
-import { MenuIcon } from './icons';
 import type { Theme } from '../App';
 
 export interface HistoryItem {
@@ -94,21 +95,27 @@ const dummyHistory: HistoryItem[] = [
 interface DashboardProps {
     toggleTheme: () => void;
     theme: Theme;
+    initialView?: string;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme }) => {
-    const [currentView, setCurrentView] = useState('add_content');
+const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView = 'add_content' }) => {
+    const [currentView, setCurrentView] = useState(initialView);
     const [selectedCourse, setSelectedCourse] = useState<HistoryItem | null>(null);
     const [showWorkspaceHeader, setShowWorkspaceHeader] = useState(true);
     const [isQuickGuideOpen, setIsQuickGuideOpen] = useState(false);
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+    const [isContactUsOpen, setIsContactUsOpen] = useState(false);
     const [isNavigating, setIsNavigating] = useState(false);
 
     // Sidebar State
     const [sidebarMode, setSidebarMode] = useState<'hover' | 'manual'>('hover');
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+
+    useEffect(() => {
+        if (initialView) setCurrentView(initialView);
+    }, [initialView]);
 
 
     const handleNavigate = (view: string) => {
@@ -129,8 +136,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme }) => {
             return;
         }
         
-        // Views that generally have heavier content or need a clear transition
-        if (view !== 'discover' && view !== 'tracker' && view !== 'consult_professors' && view !== 'pricing') {
+        if (view !== 'discover' && view !== 'tracker' && view !== 'consult_professors' && view !== 'pricing' && view !== 'invite_earn') {
             setIsNavigating(true);
             setTimeout(() => {
                 setCurrentView(view);
@@ -188,6 +194,8 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme }) => {
                 return <ConsultProfessorsView />;
             case 'pricing':
                 return <PricingView />;
+            case 'invite_earn':
+                return <InviteEarnView onContactUs={() => setIsContactUsOpen(true)} />;
             default:
                 return <AddContentView onCourseCreated={handleCourseCreated} />;
         }
@@ -216,27 +224,10 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme }) => {
             />
             
             <main className="flex-1 flex flex-col overflow-hidden relative">
-                 {/* Manual Sidebar Toggle Button - Visible only in manual mode when collapsed */}
-                <AnimatePresence>
-                    {sidebarMode === 'manual' && !isSidebarExpanded && (
-                        <motion.button
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            // FIX: Corrected state setter name from setIsExpanded to setIsSidebarExpanded
-                            onClick={() => setIsSidebarExpanded(true)}
-                            className="absolute top-4 left-4 z-20 p-2 rounded-lg bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 shadow-md text-gray-500 hover:text-black dark:hover:text-white transition-colors"
-                        >
-                            <MenuIcon className="w-5 h-5" />
-                        </motion.button>
-                    )}
-                </AnimatePresence>
-
-                {/* Upgrade Button */}
-                <div className="absolute top-6 right-8 z-20">
+                <div className="absolute top-4 right-8 z-20">
                     <button 
                         onClick={() => setIsUpgradeModalOpen(true)}
-                        className="px-5 py-2 rounded-full border border-green-800 bg-green-900/20 text-green-500 hover:bg-green-900/40 hover:text-green-400 font-semibold text-sm transition-all duration-300"
+                        className="px-5 py-1.5 rounded-full border border-green-800 bg-green-900/20 text-green-500 hover:bg-green-900/40 hover:text-green-400 font-semibold text-sm transition-all duration-300"
                     >
                         Upgrade
                     </button>
@@ -254,13 +245,13 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme }) => {
                     )}
                 </AnimatePresence>
                 
-                {/* Hawking Floating Action Button */}
                 <HawkingFab />
             </main>
             <AnimatePresence>
                 {isQuickGuideOpen && <QuickGuideModal onClose={() => setIsQuickGuideOpen(false)} />}
                 {isFeedbackOpen && <FeedbackModal onClose={() => setIsFeedbackOpen(false)} />}
                 {isSettingsOpen && <SettingsModal onClose={() => setIsSettingsOpen(false)} />}
+                {isContactUsOpen && <ContactUsSlide onClose={() => setIsContactUsOpen(false)} />}
                 {isUpgradeModalOpen && (
                     <UpgradeModal 
                         onClose={() => setIsUpgradeModalOpen(false)} 

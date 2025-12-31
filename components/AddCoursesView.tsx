@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { HistoryItem } from './Dashboard';
@@ -8,25 +9,60 @@ import RoadmapView from './course_creation/RoadmapView';
 
 const initialCourses = [
     {
-        title: "Organic Chemistry",
-        level: "Basic",
+        org: "Google",
+        title: "Foundations: Data, Data, Everywhere",
+        level: "Course",
         depth: 20,
         duration: "7 Days",
-        completed: 70,
+        completed: 6,
+        estimatedDate: "Dec 19, 2025",
+        nextStep: {
+            title: "Evaluate your current data analytics skills",
+            type: "Reading",
+            duration: "4 minutes"
+        }
     },
     {
-        title: "Data Science",
-        level: "Intermediate",
+        org: "University of Colorado System",
+        title: "Foundation and Potential of AI in Healthcare",
+        level: "Course",
         depth: 50,
         duration: "20 Days",
-        completed: 50,
+        completed: 15,
+        estimatedDate: "Dec 8, 2025",
+        nextStep: {
+            title: "AI Evolution",
+            type: "Video",
+            duration: "5 minutes"
+        }
     },
     {
-        title: "Rocket Physics",
-        level: "Advanced",
+        org: "IBM",
+        title: "Gen AI Foundational Models for NLP & Language Understanding",
+        level: "Course",
         depth: 70,
         duration: "2 Months",
-        completed: 90,
+        completed: 0,
+        estimatedDate: "Nov 28, 2025",
+        nextStep: {
+            title: "Course Introduction",
+            type: "Video",
+            duration: "2 minutes"
+        }
+    },
+    {
+        org: "IBM",
+        title: "Generative AI Advance Fine-Tuning for LLMs",
+        level: "Course",
+        depth: 70,
+        duration: "3 Months",
+        completed: 0,
+        estimatedDate: "Dec 3, 2025",
+        nextStep: {
+            title: "Course Introduction",
+            type: "Video",
+            duration: "3 minutes"
+        }
     }
 ];
 
@@ -51,17 +87,20 @@ const AddCoursesView: React.FC<{ onSelectCourse: (course: HistoryItem) => void }
 
     const handleBackToLanding = () => {
         const newCourse = {
-            title: "Machine Learning",
-            level: "Basic",
-            depth: 20, // Based on dummy answers
+            org: "Stephen AI",
+            title: topic || "New Course",
+            level: "Course",
+            depth: 20,
             duration: "7 Days",
             completed: 0,
+            estimatedDate: "Jan 25, 2026",
+            nextStep: {
+                title: "Introduction to Topic",
+                type: "Reading",
+                duration: "5 minutes"
+            }
         };
-        setCourses(prev => [
-            {...prev[0], title: "Organic Chemistry"}, // Ensure first title is correct
-            ...prev.slice(1),
-            newCourse
-        ]);
+        setCourses(prev => [newCourse, ...prev]);
         setFlowState('landing');
     };
 
@@ -80,7 +119,7 @@ const AddCoursesView: React.FC<{ onSelectCourse: (course: HistoryItem) => void }
     }
     
     return (
-        <div className="flex-1 flex flex-col p-8 lg:p-12 overflow-y-auto h-full">
+        <div className="flex-1 flex flex-col p-4 lg:p-12 overflow-y-auto h-full">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={flowState}
@@ -88,7 +127,7 @@ const AddCoursesView: React.FC<{ onSelectCourse: (course: HistoryItem) => void }
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="w-full h-full flex flex-col items-center justify-center"
+                    className="w-full h-full flex flex-col"
                 >
                     {renderContent()}
                 </motion.div>

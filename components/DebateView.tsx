@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SendIcon, LinkIcon, BrainIcon, PlusIcon } from './icons';
@@ -78,10 +77,11 @@ const DebateView: React.FC = () => {
     
     const isDebateActive = activeDebateId !== null;
 
+    /* FIX: Re-initializing with strict process.env.API_KEY string and complex model gemini-3-pro-preview for reasoning tasks */
     useEffect(() => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const chatInstance = ai.chats.create({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3-pro-preview',
             config: {
                 systemInstruction: "You are 'DebateBot', an AI designed to engage in debates. Always take the opposite stance of the user's opinion respectfully. React naturally like a human in a debate — witty, logical, and confident. Never agree with the user; challenge their statements with reasoning.",
             },

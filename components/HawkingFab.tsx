@@ -19,11 +19,11 @@ const HawkingFab: React.FC = () => {
     const [chat, setChat] = useState<Chat | null>(null);
     const chatContainerRef = useRef<HTMLDivElement>(null);
 
-    // Initialize Chat
+    /* FIX: Re-initializing with strict process.env.API_KEY string and basic model gemini-3-flash-preview for tutor assistant tasks */
     useEffect(() => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const chatInstance = ai.chats.create({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3-flash-preview',
             config: {
                 systemInstruction: "You are Hawking, an intelligent, concise, and helpful AI tutor assistant residing in a floating window. You help students with quick questions, definitions, and calculations. Keep answers brief unless asked to elaborate.",
             },

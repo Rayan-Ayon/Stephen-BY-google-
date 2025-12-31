@@ -1,18 +1,16 @@
 
-
-import React from 'react';
-// FIX: Import Variants type from framer-motion to correctly type animation variants.
-import { motion, Variants } from 'framer-motion';
-import { Theme } from '../App';
-import { SunIcon, MoonIcon, BrainIcon, UploadIcon, FlashcardIcon, TrophyIcon, EdgramIcon, DebatePodiumIcon } from './icons';
+import React, { useState } from 'react';
+import { motion, Variants, AnimatePresence } from 'framer-motion';
+import { Theme, AuthType } from '../App';
+import { SunIcon, MoonIcon, BrainIcon, UploadIcon, FlashcardIcon, TrophyIcon, EdgramIcon, DebatePodiumIcon, ChevronDownIcon } from './icons';
 
 interface LandingPageProps {
-  onStartLearning: () => void;
+  onStartLearning: (view?: string) => void;
+  onAuth: (type: AuthType) => void;
   toggleTheme: () => void;
   theme: Theme;
 }
 
-// FIX: Changed icon prop type from React.ReactElement to React.ReactElement<any> to allow passing a className prop via React.cloneElement.
 const FeatureCard = ({ icon, title, description, theme }: { icon: React.ReactElement<any>, title: string, description: string, theme: Theme }) => (
     <motion.div 
         className={`rounded-xl p-6 text-center border ${theme === 'dark' ? 'bg-neutral-900/50 border-neutral-800/60' : 'bg-neutral-100/50 border-neutral-200/80'}`}
@@ -27,10 +25,24 @@ const FeatureCard = ({ icon, title, description, theme }: { icon: React.ReactEle
     </motion.div>
 );
 
-const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, toggleTheme, theme }) => {
-    const navLinks = ['Collab', 'Features', 'Pricing', 'Community'];
+const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, toggleTheme, theme }) => {
+    const [isFeaturesOpen, setIsFeaturesOpen] = useState(false);
+
+    const featureDropdownItems = [
+        { name: 'AI features', key: 'discover' },
+        { name: 'Professor support', key: 'consult_professors' },
+        { name: 'Research', key: 'research_lab' },
+        { name: 'learning network', key: 'edgram' },
+        { name: 'Structurize learning', key: 'add_courses' },
+    ];
+
+    const navLinks = [
+        { name: 'Collab', key: 'edgram' },
+        { name: 'Features', key: 'features', hasDropdown: true },
+        { name: 'Pricing', key: 'pricing' },
+        { name: 'Community', key: 'edgram' }
+    ];
     
-    // FIX: Explicitly type variants with Variants to prevent TypeScript errors.
     const containerVariants: Variants = {
         hidden: { opacity: 0 },
         visible: {
@@ -41,7 +53,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, toggleTheme,
         },
     };
 
-    // FIX: Explicitly type variants with Variants to prevent TypeScript errors.
     const itemVariants: Variants = {
         hidden: { y: 20, opacity: 0 },
         visible: {
@@ -53,13 +64,56 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, toggleTheme,
 
     return (
         <div className={`w-full min-h-screen ${theme === 'dark' ? 'text-neutral-200' : 'text-neutral-800'}`}>
-            <header className="absolute top-0 left-0 right-0 z-10 p-4">
+            <header className="absolute top-0 left-0 right-0 z-50 p-4">
                 <div className="container mx-auto flex justify-between items-center">
                     <div className="flex items-center space-x-8">
                         <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'}`} style={{ fontFamily: "'Lora', serif" }}>Stephen</div>
                         <nav className="hidden md:flex items-center space-x-6">
                             {navLinks.map(link => (
-                                <a key={link} href="#" className={`text-sm ${theme === 'dark' ? 'text-neutral-400 hover:text-white' : 'text-neutral-500 hover:text-black'} transition-colors`}>{link}</a>
+                                <div 
+                                    key={link.name} 
+                                    className="relative group"
+                                    onMouseEnter={() => link.hasDropdown && setIsFeaturesOpen(true)}
+                                    onMouseLeave={() => link.hasDropdown && setIsFeaturesOpen(false)}
+                                >
+                                    <button 
+                                        onClick={() => !link.hasDropdown && onStartLearning(link.key)} 
+                                        className={`flex items-center text-sm ${theme === 'dark' ? 'text-neutral-400 hover:text-white' : 'text-neutral-500 hover:text-black'} transition-colors py-2`}
+                                    >
+                                        {link.name}
+                                        {link.hasDropdown && <ChevronDownIcon className={`w-3.5 h-3.5 ml-1 transition-transform ${isFeaturesOpen ? 'rotate-180' : ''}`} />}
+                                    </button>
+
+                                    {link.hasDropdown && (
+                                        <AnimatePresence>
+                                            {isFeaturesOpen && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: 10 }}
+                                                    transition={{ duration: 0.2 }}
+                                                    className={`absolute left-0 top-full mt-1 w-56 rounded-2xl border shadow-xl overflow-hidden py-3 z-[60] ${theme === 'dark' ? 'bg-[#0d0d0d] border-gray-800' : 'bg-white border-neutral-100'}`}
+                                                >
+                                                    <div className="flex flex-col">
+                                                        {featureDropdownItems.map((item) => (
+                                                            <button
+                                                                key={item.name}
+                                                                onClick={() => {}} 
+                                                                className={`px-5 py-2.5 text-left text-sm transition-colors duration-200 ${
+                                                                    theme === 'dark' 
+                                                                    ? 'text-neutral-500 hover:text-white' 
+                                                                    : 'text-neutral-400 hover:text-black'
+                                                                }`}
+                                                            >
+                                                                {item.name}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    )}
+                                </div>
                             ))}
                         </nav>
                     </div>
@@ -67,10 +121,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, toggleTheme,
                         <button onClick={toggleTheme} className={`p-2 rounded-full ${theme === 'dark' ? 'text-neutral-400 hover:bg-neutral-800' : 'text-neutral-500 hover:bg-neutral-200'} transition-colors`}>
                             {theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
                         </button>
-                        <button onClick={onStartLearning} className={`px-4 py-2 text-sm font-semibold rounded-lg ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
-                            Sign Up
+                        <button onClick={() => onAuth('signup')} className={`px-4 py-2 text-sm font-semibold rounded-lg ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
+                            Sign In
                         </button>
-                         <button onClick={onStartLearning} className="px-4 py-2 text-sm font-semibold text-white rounded-lg bg-[#FF5A1A] hover:opacity-90 transition-opacity">
+                         <button onClick={() => onAuth('login')} className="px-4 py-2 text-sm font-semibold text-white rounded-lg bg-[#FF5A1A] hover:opacity-90 transition-opacity">
                             Login
                         </button>
                     </div>
@@ -88,7 +142,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, toggleTheme,
                     <motion.h1 
                         variants={itemVariants}
                         className="text-5xl md:text-7xl font-medium mb-6" 
-                        // FIX: Corrected a typo in the fontFamily value. It had an extra single quote.
                         style={{ fontFamily: "'Lora', serif", color: theme === 'dark' ? '#f5f5f5' : '#171717' }}
                     >
                         Your gateway to<br/>world-class<br/>learning.
@@ -104,7 +157,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, toggleTheme,
                             See Features
                         </button>
                         <button
-                            onClick={onStartLearning}
+                            onClick={() => onStartLearning()}
                             className="bg-[#FF5A1A] text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
                         >
                             Start Learning
@@ -166,7 +219,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, toggleTheme,
                 <section className="py-24 text-center px-4">
                      <h2 className={`text-3xl md:text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'} mb-6`} style={{ fontFamily: "'Lora', serif" }}>Ready to Transform How You Learn?</h2>
                      <button
-                        onClick={onStartLearning}
+                        onClick={() => onStartLearning()}
                         className="bg-[#FF5A1A] text-white font-semibold px-8 py-3 rounded-lg hover:opacity-90 transition-opacity"
                     >
                         Get Started for Free
@@ -179,7 +232,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, toggleTheme,
                     &copy; {new Date().getFullYear()} Stephen AI. All rights reserved.
                 </div>
             </footer>
-        {/* FIX: Corrected a closing div tag typo. */}
         </div>
     );
 };

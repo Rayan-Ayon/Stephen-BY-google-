@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { XIcon, StarIcon, CheckCircleIcon, PlusIcon, LinkIcon, MicIcon, VideoCameraIcon, FileTextIcon, ClipboardIcon } from './icons';
+import { XIcon, StarIcon, CheckCircleIcon, PlusIcon, LinkIcon, MicIcon, VideoCameraIcon, FileTextIcon, ClipboardIcon, ChevronDownIcon } from './icons';
 import { HistoryItem } from './Dashboard';
 
 interface ModalProps {
@@ -22,7 +22,7 @@ const BaseModal: React.FC<ModalProps> = ({ onClose, title, children, ctaText, on
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/80 backdrop-blur-md"
                 onClick={onClose}
             />
             <motion.div
@@ -30,26 +30,22 @@ const BaseModal: React.FC<ModalProps> = ({ onClose, title, children, ctaText, on
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 30, scale: 0.95 }}
                 transition={{ duration: 0.3, ease: 'easeOut' }}
-                className="relative dark:bg-[#131313] bg-white dark:text-gray-300 text-neutral-800 w-full max-w-[500px] rounded-[28px] border dark:border-[#2a2a2a] border-neutral-200 shadow-2xl overflow-hidden"
+                className="relative dark:bg-[#0d0d0d] bg-white dark:text-gray-300 text-neutral-800 w-full max-w-[500px] rounded-[32px] border dark:border-white/10 border-neutral-200 shadow-2xl overflow-hidden"
             >
                 <div className="flex items-center justify-between px-8 py-7">
-                    <div className="flex items-center space-x-3">
-                        {icon && <div className="text-[#888]">{icon}</div>}
-                        <h2 className="text-[20px] font-bold dark:text-[#eee] text-black">{title}</h2>
+                    <div className="flex flex-col">
+                        <h2 className="text-[20px] font-bold dark:text-white text-black tracking-tight">{title}</h2>
                     </div>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-800/50 transition-colors"><XIcon className="w-5 h-5 text-gray-500" /></button>
                 </div>
                 <div className="px-8 pb-8">{children}</div>
                 {showFooter && (
-                    <div className="px-8 py-6 border-t dark:border-[#2a2a2a] border-neutral-200">
-                         {ctaText ? (
-                            <button onClick={onCtaClick} disabled={ctaDisabled} className="w-full py-4 text-[16px] font-bold rounded-[20px] dark:bg-[#2a2a2a] bg-neutral-200 dark:text-[#666] text-neutral-600 hover:dark:text-white hover:text-black transition-colors dark:disabled:bg-[#1a1a1a] disabled:opacity-50">
+                    <div className="px-8 py-6 border-t dark:border-white/5 border-neutral-200 flex justify-end items-center space-x-3">
+                         <button onClick={onClose} className="px-6 py-2.5 text-[14px] font-bold rounded-xl dark:bg-[#1a1a1a] bg-neutral-100 dark:text-white text-black hover:opacity-80 transition-all">Cancel</button>
+                         {ctaText && (
+                            <button onClick={onCtaClick} disabled={ctaDisabled} className="px-6 py-2.5 text-[14px] font-bold rounded-xl bg-white text-black hover:bg-neutral-200 transition-colors disabled:opacity-50 shadow-lg">
                                 {ctaText}
                             </button>
-                         ) : (
-                            <div className="flex justify-end">
-                                <button onClick={onClose} className="px-6 py-2.5 text-sm font-semibold rounded-xl border dark:border-[#2a2a2a] border-neutral-300 dark:hover:bg-gray-800 hover:bg-neutral-100 transition-colors">Close</button>
-                            </div>
                          )}
                     </div>
                 )}
@@ -58,11 +54,283 @@ const BaseModal: React.FC<ModalProps> = ({ onClose, title, children, ctaText, on
     );
 };
 
+export const FlashcardModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
+    <BaseModal title="Create Flashcard Set" ctaText="Create Set" onCtaClick={onClose} onClose={onClose}>
+        <p className="text-sm dark:text-gray-400 text-neutral-500 -mt-6 mb-8 font-medium">Select specific concepts and customize your flashcard set</p>
+        <div className="space-y-6">
+            <div>
+                <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Number of flashcards <span className="text-red-500">*</span></label>
+                <input type="text" placeholder="e.g., 10" className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl p-4 focus:outline-none focus:ring-1 focus:ring-white transition-all text-white" />
+            </div>
+            <div>
+                <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Select topics</label>
+                <div className="mt-2 p-3 dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                        <span className="text-[12px] font-bold bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-white/5 flex items-center">
+                            Selected All Topics <XIcon className="w-3 h-3 ml-2 text-gray-500" />
+                        </span>
+                        <button className="text-[12px] font-bold text-gray-500 hover:text-white flex items-center">
+                            Show all items <ChevronDownIcon className="w-3 h-3 ml-1 -rotate-90" />
+                        </button>
+                    </div>
+                    <XIcon className="w-5 h-5 text-gray-600" />
+                </div>
+                <p className="text-[11px] text-gray-500 mt-2 font-medium">Optional: Select concepts to focus on</p>
+            </div>
+            <div>
+                <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">What should the flashcard focus on?</label>
+                <textarea placeholder="Focus on the parts that are about..." rows={4} className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl p-4 focus:outline-none focus:ring-1 focus:ring-white transition-all text-white resize-none"></textarea>
+            </div>
+        </div>
+    </BaseModal>
+);
+
+export const QuizModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    const [difficulty, setDifficulty] = useState('Medium');
+    const [selectedTypes, setSelectedTypes] = useState(['Multiple Choice']);
+
+    const toggleType = (type: string) => {
+        setSelectedTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
+    };
+
+    const typeClasses = (type: string) => `flex-1 text-[13px] font-bold py-3 border rounded-xl transition-all ${
+        selectedTypes.includes(type) 
+        ? 'dark:bg-[#1a1a1a] border-white text-white' 
+        : 'dark:bg-transparent dark:border-gray-800 dark:text-gray-500 hover:border-gray-600'
+    }`;
+
+    const diffClasses = (diff: string) => `flex-1 flex items-center justify-center space-x-2 py-3 border rounded-xl transition-all font-bold text-[13px] ${
+        difficulty === diff 
+        ? 'dark:bg-[#1a1a1a] border-white text-white' 
+        : 'dark:bg-transparent dark:border-gray-800 dark:text-gray-500 hover:border-gray-600'
+    }`;
+
+    return (
+        <BaseModal title="Customize Quiz" ctaText="Generate" onCtaClick={onClose} onClose={onClose}>
+             <p className="text-sm dark:text-gray-400 text-neutral-500 -mt-6 mb-8 font-medium">Create quiz sets with preferred question types, difficulty, and more.</p>
+            <div className="space-y-6">
+                <div>
+                    <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Question Types <span className="text-red-500">*</span></label>
+                    <div className="grid grid-cols-2 gap-2">
+                        {['Multiple Choice', 'Free Response', 'True or False', 'Fill in the blank'].map(type => (
+                            <button key={type} onClick={() => toggleType(type)} className={typeClasses(type)}>
+                                {selectedTypes.includes(type) && <CheckCircleIcon className="w-3.5 h-3.5 inline mr-1.5" />}
+                                {type}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                 <div>
+                    <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Difficulty <span className="text-red-500">*</span></label>
+                    <div className="flex space-x-2">
+                         {['Easy', 'Medium', 'Hard'].map((label, index) => (
+                             <button key={label} onClick={() => setDifficulty(label)} className={diffClasses(label)}>
+                                <div className="flex space-x-0.5">
+                                    {[0, 1, 2].map(i => (
+                                        <StarIcon key={i} className={`w-3 h-3 ${index >= i ? (difficulty === label ? 'text-yellow-400' : 'text-gray-500') : 'text-transparent'}`} />
+                                    ))}
+                                </div>
+                                <span>{label}</span>
+                             </button>
+                         ))}
+                    </div>
+                </div>
+                 <div>
+                    <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Number of Questions</label>
+                    <input type="text" defaultValue="10" className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl p-4 text-white focus:outline-none focus:ring-1 focus:ring-white transition-all" />
+                </div>
+                <div>
+                    <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Topics</label>
+                    <div className="p-3 dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl flex items-center justify-between">
+                         <div className="flex items-center space-x-2">
+                            <span className="text-[12px] font-bold bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-white/5">Selected All Topics x</span>
+                            <span className="text-[12px] font-bold text-gray-500">Select topics for this set</span>
+                         </div>
+                         <XIcon className="w-5 h-5 text-gray-600" />
+                    </div>
+                </div>
+                <div>
+                    <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">What should the quiz focus on?</label>
+                    <textarea placeholder="Focus on the parts that are about..." rows={3} className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl p-4 text-white focus:outline-none focus:ring-1 focus:ring-white transition-all resize-none"></textarea>
+                </div>
+            </div>
+        </BaseModal>
+    );
+};
+
+export const PodcastModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    const [length, setLength] = useState('Default');
+
+    return (
+        <BaseModal title="Customize Podcast" ctaText="Generate" onCtaClick={onClose} onClose={onClose}>
+            <p className="text-sm dark:text-gray-400 text-neutral-500 -mt-6 mb-8 font-medium">Select specific concepts and voices for your podcast</p>
+            <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Voice 1</label>
+                         <div className="relative">
+                            <select className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-300 rounded-xl p-4 appearance-none text-sm dark:text-white focus:outline-none">
+                                <option>Charon</option>
+                                <option>Laomedeia</option>
+                            </select>
+                            <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                         </div>
+                    </div>
+                     <div>
+                        <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Voice 2</label>
+                        <div className="relative">
+                            <select className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-300 rounded-xl p-4 appearance-none text-sm dark:text-white focus:outline-none">
+                                <option>Laomedeia</option>
+                                <option>Charon</option>
+                            </select>
+                            <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Length</label>
+                    <div className="flex space-x-2">
+                        {['Short', 'Default', 'Detailed'].map(len => (
+                             <button key={len} onClick={() => setLength(len)} className={`flex-1 py-3 text-[13px] font-bold border rounded-xl transition-all ${length === len ? 'dark:bg-[#1a1a1a] border-white text-white' : 'dark:bg-transparent dark:border-gray-800 dark:text-gray-500'}`}>{len}</button>
+                        ))}
+                    </div>
+                </div>
+                <div>
+                    <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Topics (Optional)</label>
+                    <div className="p-3 dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl flex items-center justify-between">
+                         <div className="flex items-center space-x-2">
+                            <span className="text-[12px] font-bold bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-white/5">Selected All Topics x</span>
+                            <span className="text-[12px] font-bold text-gray-500">Show all items ></span>
+                         </div>
+                         <XIcon className="w-5 h-5 text-gray-600" />
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-2 font-medium">Optional: Select concepts to focus on</p>
+                </div>
+            </div>
+        </BaseModal>
+    );
+}
+
+export const SummaryModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    const [selectedTemplate, setSelectedTemplate] = useState('Detailed Summary');
+    
+    const templates = [
+        { id: 'Detailed Summary', title: 'Detailed Summary', desc: 'Comprehensive summary with key points and context' },
+        { id: 'Cheat Sheet', title: 'Cheat Sheet', desc: 'Concise bullet points for quick reference' },
+        { id: 'Short Summary', title: 'Short Summary', desc: 'Brief overview with essential information only' },
+        { id: 'Add Custom Prompt', title: 'Add Custom Prompt', desc: '' }
+    ];
+
+    return (
+        <BaseModal 
+            title="Customize Summary" 
+            ctaText="Generate Summary" 
+            onCtaClick={onClose} 
+            onClose={onClose}
+        >
+            <p className="text-sm dark:text-gray-500 text-neutral-500 -mt-6 mb-8 font-medium">Select specific prompts and ranges for your summary set</p>
+            
+            <div className="space-y-6">
+                <div>
+                    <label className="text-[13px] font-bold dark:text-white text-neutral-800 block mb-4 uppercase tracking-wider">Templates</label>
+                    <div className="space-y-2.5">
+                        {templates.map(template => (
+                            <button 
+                                key={template.id} 
+                                onClick={() => setSelectedTemplate(template.id)}
+                                className={`w-full text-left flex items-start p-4 border rounded-[16px] transition-all duration-200 ${selectedTemplate === template.id ? 'dark:bg-[#1a1a1a] dark:border-white/20 border-gray-300 bg-neutral-50' : 'dark:bg-[#0d0d0d] dark:border-white/5 border-neutral-100'}`}
+                            >
+                                <div className="mt-1 mr-4 shrink-0">
+                                    <div className={`w-5 h-5 rounded-full border-2 transition-all flex items-center justify-center ${selectedTemplate === template.id ? 'dark:border-white border-black' : 'dark:border-white/20 border-gray-300'}`}>
+                                        {selectedTemplate === template.id && <div className="w-2.5 h-2.5 dark:bg-white bg-black rounded-full" />}
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className={`font-bold text-[14px] ${selectedTemplate === template.id ? 'dark:text-white text-black' : 'dark:text-gray-400 text-neutral-600'}`}>{template.title}</p>
+                                    {template.desc && <p className="text-[12px] text-gray-500 mt-0.5">{template.desc}</p>}
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div>
+                    <label className="text-[13px] font-bold dark:text-white text-neutral-800 block mb-4 uppercase tracking-wider">Summary Range</label>
+                    <div className="space-y-4">
+                        <p className="text-xs font-bold dark:text-white">Range 1</p>
+                        <div className="flex items-center space-x-4">
+                            <div className="flex-1">
+                                <span className="text-[10px] text-gray-500 font-bold block mb-1.5 uppercase">Start</span>
+                                <input type="text" defaultValue="00:00:00" className="w-full dark:bg-[#151515] bg-neutral-100 border dark:border-white/5 border-neutral-200 rounded-xl p-4 text-[14px] text-white focus:outline-none focus:ring-1 focus:ring-white transition-all"/>
+                            </div>
+                            <span className="text-gray-500 mt-6 text-sm font-medium">to</span>
+                            <div className="flex-1">
+                                <span className="text-[10px] text-gray-500 font-bold block mb-1.5 uppercase">End</span>
+                                <input type="text" defaultValue="19:50:05" className="w-full dark:bg-[#151515] bg-neutral-100 border dark:border-white/5 border-neutral-200 rounded-xl p-4 text-[14px] text-white focus:outline-none focus:ring-1 focus:ring-white transition-all"/>
+                            </div>
+                        </div>
+                        <button className="flex items-center text-[13px] font-bold dark:text-white hover:opacity-80 transition-all pt-1">
+                            <PlusIcon className="w-4 h-4 mr-2" /> Add Another Range
+                        </button>
+                        <p className="text-[11px] text-gray-500 italic mt-2">Maximum range: 00:00 to 19:50:05</p>
+                    </div>
+                </div>
+            </div>
+        </BaseModal>
+    );
+};
+
+export const CustomPromptModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    // Note: The user requested that clicking "Create Prompt" should open the "Customize Summary" modal.
+    // However, I'm keeping this one updated to match Screenshot 184907's design style just in case.
+    const [prompt, setPrompt] = useState('');
+    const suggestions = [
+        "Key Takeaways",
+        "Summary for Exam",
+        "Study Guide",
+        "Detailed Summary",
+        "Action Items",
+        "Visual Concepts"
+    ];
+
+    return (
+        <BaseModal title="Custom Summary Prompt" ctaText="Add Prompt" onCtaClick={onClose} onClose={onClose}>
+            <p className="text-sm dark:text-gray-400 text-neutral-500 -mt-6 mb-8 font-medium">Tell Hawking what kind of summary you need from this content.</p>
+            <div className="space-y-6">
+                <div>
+                    <label className="text-[13px] font-bold dark:text-white text-neutral-800 block mb-4 uppercase tracking-wider">Suggestions</label>
+                    <div className="flex flex-wrap gap-2">
+                        {suggestions.map(tag => (
+                            <button 
+                                key={tag} 
+                                onClick={() => setPrompt(tag)}
+                                className="px-4 py-2 rounded-full border dark:border-white/10 dark:bg-white/5 bg-neutral-100 text-[12px] font-bold dark:text-gray-400 text-neutral-600 hover:dark:border-white hover:dark:text-white transition-all"
+                            >
+                                {tag}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                <div>
+                    <label className="text-[13px] font-bold dark:text-white text-neutral-800 block mb-3 uppercase tracking-wider">Custom prompt</label>
+                    <textarea 
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        placeholder="Focus on the core concepts and real-world applications of..." 
+                        rows={6} 
+                        className="w-full dark:bg-[#151515] bg-neutral-100 border dark:border-white/10 border-neutral-200 rounded-[24px] p-6 text-[15px] focus:outline-none focus:ring-1 focus:ring-white transition-all dark:text-white placeholder-[#444] resize-none"
+                    />
+                </div>
+            </div>
+        </BaseModal>
+    );
+};
+
 export const RecordLectureModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const OptionBox = ({ icon, title, subtitle }: { icon: React.ReactNode, title: string, subtitle: string }) => (
         <button className="w-full flex items-center p-6 mb-3 dark:bg-transparent bg-neutral-50 border dark:border-[#2a2a2a] border-neutral-200 rounded-[28px] hover:border-[#888] transition-all group">
             <div className="mr-6 text-[#666] group-hover:text-white transition-colors">
-                {React.cloneElement(icon as React.ReactElement, { className: "w-7 h-7" })}
+                {React.cloneElement(icon as React.ReactElement<any>, { className: "w-7 h-7" })}
             </div>
             <div className="text-left">
                 <p className="font-bold text-[18px] dark:text-[#eee] text-gray-800 group-hover:text-white transition-colors leading-tight">{title}</p>
@@ -114,23 +382,32 @@ export const PasteUrlModal: React.FC<{ onClose: () => void, onCourseCreated: (co
     const [url, setUrl] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
+    const getYouTubeId = (url: string) => {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    };
+
     const handleSubmit = () => {
         if (!url || isLoading) return;
         setIsLoading(true);
+        const videoId = getYouTubeId(url);
+        const embedUrl = videoId ? `https://www.youtube.com/embed/${videoId}` : 'https://www.youtube.com/embed/g_IaVepNDT4';
+
         setTimeout(() => {
             const newCourse: HistoryItem = {
                 id: Date.now(),
-                title: 'New Course From URL',
-                description: `This course was generated from the provided URL: ${url}.`,
-                type: url.includes('youtube.com') ? 'video' : 'article',
+                title: videoId ? 'New YouTube Course' : 'Personalized Learning Course',
+                description: videoId ? `Course created from YouTube video.` : `This course was generated from: ${url}.`,
+                type: 'video',
                 time: 'Just now',
-                videoUrl: url.includes('youtube.com') ? url.replace('watch?v=', 'embed/') : 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-                day: 1, totalDays: 7, depth: 10, level: 'Intermediate', learningReason: 'To explore a new topic from a web resource.',
+                videoUrl: embedUrl,
+                day: 1, totalDays: 7, depth: 10, level: 'Intermediate', learningReason: 'Exploring web resources.',
             };
             setIsLoading(false);
             onCourseCreated(newCourse);
             onClose();
-        }, 1500);
+        }, 1200);
     };
 
     return (
@@ -143,141 +420,6 @@ export const PasteUrlModal: React.FC<{ onClose: () => void, onCourseCreated: (co
         </BaseModal>
     );
 };
-
-export const FlashcardModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
-    <BaseModal title="Create Flashcard Set" ctaText="Create Set" onCtaClick={onClose} onClose={onClose}>
-        <div className="space-y-6">
-            <div>
-                <label className="text-sm font-medium dark:text-gray-300 text-neutral-800">Number of flashcards *</label>
-                <input type="text" placeholder="e.g. 10" className="mt-2 w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-            </div>
-            <div>
-                <label className="text-sm font-medium dark:text-gray-300 text-neutral-800">Select topics</label>
-                <div className="mt-2 p-3 dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-lg">
-                    <span className="text-sm text-gray-500">Optional: Select concepts to focus on</span>
-                </div>
-            </div>
-            <div>
-                <label className="text-sm font-medium dark:text-gray-300 text-neutral-800">What should the flashcard focus on?</label>
-                <textarea placeholder="Focus on the parts that are about..." rows={3} className="mt-2 w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-orange-500"></textarea>
-            </div>
-        </div>
-    </BaseModal>
-);
-
-export const QuizModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-    const [difficulty, setDifficulty] = useState(2);
-    return (
-        <BaseModal title="Customize Quiz" ctaText="Generate" onCtaClick={onClose} onClose={onClose}>
-            <div className="space-y-6">
-                <div>
-                    <label className="text-sm font-medium dark:text-gray-300 text-neutral-800">Question Types *</label>
-                    <div className="mt-2 flex space-x-2">
-                        {['Multiple Choice', 'Free Response', 'True or False', 'Fill in the blank'].map(type => (
-                            <button key={type} className="flex-1 text-sm py-2.5 border dark:border-gray-700 border-neutral-300 rounded-lg dark:hover:bg-gray-800 hover:bg-neutral-100 data-[active=true]:bg-orange-500/20 data-[active=true]:border-orange-500 dark:data-[active=true]:text-orange-300 data-[active=true]:text-orange-600" data-active={type === 'Multiple Choice' || type === 'Free Response'}>{type}</button>
-                        ))}
-                    </div>
-                </div>
-                 <div>
-                    <label className="text-sm font-medium dark:text-gray-300 text-neutral-800">Difficulty *</label>
-                    <div className="mt-2 flex space-x-2">
-                         {['Easy', 'Medium', 'Hard'].map((label, index) => (
-                             <button key={label} onClick={() => setDifficulty(index + 1)} className="flex-1 flex items-center justify-center space-x-1 py-2.5 border dark:border-gray-700 border-neutral-300 rounded-lg dark:hover:bg-gray-800 hover:bg-neutral-100 data-[active=true]:bg-orange-500/20 data-[active=true]:border-orange-500 dark:data-[active=true]:text-orange-300 data-[active=true]:text-orange-600" data-active={difficulty === index + 1}>
-                                <StarIcon className={`w-4 h-4 ${difficulty >= index + 1 ? 'text-yellow-400 fill-current' : 'text-gray-600'}`} />
-                                <span>{label}</span>
-                             </button>
-                         ))}
-                    </div>
-                </div>
-                 <div>
-                    <label className="text-sm font-medium dark:text-gray-300 text-neutral-800">Number of Questions</label>
-                    <input type="text" defaultValue="10" className="mt-2 w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                </div>
-                <div>
-                    <label className="text-sm font-medium dark:text-gray-300 text-neutral-800">What should the quiz focus on?</label>
-                    <textarea placeholder="Focus on the parts that are about..." rows={3} className="mt-2 w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-orange-500"></textarea>
-                </div>
-            </div>
-        </BaseModal>
-    );
-};
-
-export const PodcastModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
-    <BaseModal title="Customize Podcast" ctaText="Generate" onCtaClick={onClose} onClose={onClose}>
-        <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="text-sm font-medium dark:text-gray-300 text-neutral-800">Voice 1</label>
-                     <select className="mt-2 w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-lg p-3 appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500">
-                        <option>Charon</option>
-                        <option>Laomedeia</option>
-                    </select>
-                </div>
-                 <div>
-                    <label className="text-sm font-medium dark:text-gray-300 text-neutral-800">Voice 2</label>
-                    <select className="mt-2 w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-lg p-3 appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500">
-                        <option>Laomedeia</option>
-                        <option>Charon</option>
-                    </select>
-                </div>
-            </div>
-            <div>
-                <label className="text-sm font-medium dark:text-gray-300 text-neutral-800">Length</label>
-                <div className="mt-2 flex space-x-2">
-                    {['Short', 'Default', 'Detailed'].map(len => (
-                         <button key={len} className="flex-1 text-sm py-2.5 border dark:border-gray-700 border-neutral-300 rounded-lg dark:hover:bg-gray-800 hover:bg-neutral-100 data-[active=true]:bg-orange-500/20 data-[active=true]:border-orange-500 dark:data-[active=true]:text-orange-300 data-[active=true]:text-orange-600" data-active={len === 'Default'}>{len}</button>
-                    ))}
-                </div>
-            </div>
-            <div>
-                <label className="text-sm font-medium dark:text-gray-300 text-neutral-800">Topics (Optional)</label>
-                <div className="mt-2 p-3 dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-lg">
-                    <span className="text-sm text-gray-500">Optional: Select concepts to focus on</span>
-                </div>
-            </div>
-        </div>
-    </BaseModal>
-);
-
-export const SummaryModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-    const [selectedTemplate, setSelectedTemplate] = useState('Detailed Summary');
-    return (
-    <BaseModal title="Customize Summary" ctaText="Generate Summary" onCtaClick={onClose} onClose={onClose}>
-        <div className="space-y-6">
-            <div>
-                <label className="text-sm font-medium dark:text-gray-300 text-neutral-800">Templates</label>
-                <div className="mt-2 space-y-2">
-                    {[
-                        { title: 'Detailed Summary', desc: 'Comprehensive summary with key points and context.' },
-                        { title: 'Cheat Sheet', desc: 'Concise bullet points for quick reference.' },
-                        { title: 'Short Summary', desc: 'Brief overview with essential information only.' }
-                    ].map(template => (
-                         <button key={template.title} onClick={() => setSelectedTemplate(template.title)} className="w-full text-left flex items-start p-3 border dark:border-gray-700 border-neutral-300 rounded-lg dark:hover:bg-gray-800 hover:bg-neutral-100 data-[active=true]:bg-orange-500/20 data-[active=true]:border-orange-500" data-active={selectedTemplate === template.title}>
-                             <div className="mt-1 mr-3">
-                                <div className={`w-5 h-5 rounded-full border-2 ${selectedTemplate === template.title ? 'border-orange-400 bg-orange-400' : 'dark:border-gray-600 border-neutral-400'} flex items-center justify-center`}>
-                                   {selectedTemplate === template.title && <div className="w-2 h-2 dark:bg-[#1a1a1a] bg-white rounded-full"></div>}
-                                </div>
-                             </div>
-                             <div>
-                                 <p className="font-semibold dark:text-white text-black">{template.title}</p>
-                                 <p className="text-sm dark:text-gray-400 text-neutral-500">{template.desc}</p>
-                             </div>
-                         </button>
-                    ))}
-                </div>
-            </div>
-            <div>
-                 <label className="text-sm font-medium dark:text-gray-300 text-neutral-800">Summary Range</label>
-                 <div className="mt-2 flex items-center space-x-2">
-                    <input type="text" defaultValue="00:00:00" className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-lg p-3 text-center"/>
-                    <span className="text-gray-500">to</span>
-                    <input type="text" defaultValue="29:03:16" className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-lg p-3 text-center"/>
-                 </div>
-                 <button className="mt-2 flex items-center text-sm text-orange-400 hover:text-orange-300"><PlusIcon className="w-4 h-4 mr-1" /> Add Another Range</button>
-            </div>
-        </div>
-    </BaseModal>
-)};
 
 export const UpgradeModal: React.FC<{ onClose: () => void, onNavigateToPricing: () => void }> = ({ onClose, onNavigateToPricing }) => {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
