@@ -33,8 +33,8 @@ const faqs = [
         answer: "If you need any assistance or have questions about the affiliate program, please contact our support team through Rewardful or our website."
     },
     {
-        question: "Can I bid on \"YouLearn AI\" or similar brand terms in paid ads?",
-        answer: "No. Bidding on our brand name (\"YouLearn AI\") or any related terms, spellings, or phrases in paid ads (such as Google Ads, Bing, or social platforms) is not allowed. Such activity redirects users who are already searching for us and is considered non-compliant traffic. Any conversions from these ads are ineligible for commission and may lead to account suspension or forfeiture of unpaid commissions. You’re welcome to promote us using non-branded keywords (e.g., \"AI study tools\", \"note-taking with AI\") or through content and social media."
+        question: "Can I bid on \"Stephen AI\" or similar brand terms in paid ads?",
+        answer: "No. Bidding on our brand name (\"Stephen AI\") or any related terms, spellings, or phrases in paid ads (such as Google Ads, Bing, or social platforms) is not allowed. Such activity redirects users who are already searching for us and is considered non-compliant traffic. Any conversions from these ads are ineligible for commission and may lead to account suspension or forfeiture of unpaid commissions. You’re welcome to promote us using non-branded keywords (e.g., \"AI study tools\", \"note-taking with AI\") or through content and social media."
     }
 ];
 

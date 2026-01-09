@@ -15,6 +15,10 @@ interface DebateSession {
   messages: Message[];
 }
 
+interface DebateViewProps {
+    initialMessage?: string;
+}
+
 const DebateSidebar: React.FC<{
     onNewDebate: () => void;
     debateHistory: DebateSession[];
@@ -62,7 +66,7 @@ const TypingIndicator = () => (
 );
 
 
-const DebateView: React.FC = () => {
+const DebateView: React.FC<DebateViewProps> = ({ initialMessage }) => {
     const [debateHistory, setDebateHistory] = useState<DebateSession[]>([]);
     const [activeDebateId, setActiveDebateId] = useState<number | null>(null);
     const [inputValue, setInputValue] = useState('');
@@ -70,6 +74,9 @@ const DebateView: React.FC = () => {
     const [chat, setChat] = useState<Chat | null>(null);
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    
+    // To prevent initial message being processed multiple times on re-renders
+    const hasProcessedInitialRef = useRef(false);
 
     const messages = useMemo(() => {
         return debateHistory.find(d => d.id === activeDebateId)?.messages ?? [];
@@ -77,7 +84,6 @@ const DebateView: React.FC = () => {
     
     const isDebateActive = activeDebateId !== null;
 
-    /* FIX: Re-initializing with strict process.env.API_KEY string and complex model gemini-3-pro-preview for reasoning tasks */
     useEffect(() => {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const chatInstance = ai.chats.create({
@@ -95,6 +101,14 @@ const DebateView: React.FC = () => {
         }
     }, [messages, isLoading]);
     
+    // Effect to handle initial message passed via props (from redirect)
+    useEffect(() => {
+        if (initialMessage && chat && !hasProcessedInitialRef.current) {
+            hasProcessedInitialRef.current = true;
+            triggerDebate(initialMessage);
+        }
+    }, [initialMessage, chat]);
+
     const handleInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
         const target = e.target as HTMLTextAreaElement;
         setInputValue(target.value);
@@ -102,22 +116,23 @@ const DebateView: React.FC = () => {
         target.style.height = `${Math.min(target.scrollHeight, 200)}px`;
     };
 
-    const handleSendMessage = async () => {
-        if (!inputValue.trim() || isLoading || !chat) return;
+    const triggerDebate = async (messageText: string) => {
+        if (!messageText.trim() || isLoading || !chat) return;
 
-        const userMessage: Message = { role: 'user', text: inputValue };
-        const currentInput = inputValue;
-        setInputValue('');
+        const userMessage: Message = { role: 'user', text: messageText };
         setIsLoading(true);
         if (textareaRef.current) textareaRef.current.style.height = 'auto';
 
         let currentDebateId = activeDebateId;
 
+        // Force create new debate if none active or if starting fresh from redirect
         if (currentDebateId === null) {
             const newId = Date.now();
             let title = null;
-            if (currentInput.trim().split(' ').length > 3) {
-                title = currentInput.trim().substring(0, 40) + (currentInput.trim().length > 40 ? '...' : '');
+            if (messageText.trim().split(' ').length > 3) {
+                title = messageText.trim().substring(0, 40) + (messageText.trim().length > 40 ? '...' : '');
+            } else {
+                title = messageText;
             }
             const newDebate: DebateSession = { id: newId, title, messages: [userMessage] };
             setDebateHistory(prev => [...prev, newDebate]);
@@ -130,7 +145,7 @@ const DebateView: React.FC = () => {
         }
 
         try {
-            const stream = await chat.sendMessageStream({ message: currentInput });
+            const stream = await chat.sendMessageStream({ message: messageText });
             let firstChunk = true;
             for await (const chunk of stream) {
                 const chunkText = chunk.text;
@@ -161,6 +176,14 @@ const DebateView: React.FC = () => {
         }
     };
 
+    const handleSendMessage = () => {
+        if (inputValue.trim()) {
+            const text = inputValue;
+            setInputValue('');
+            triggerDebate(text);
+        }
+    }
+
     const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -172,6 +195,7 @@ const DebateView: React.FC = () => {
         setActiveDebateId(null);
         setInputValue('');
         setIsLoading(false);
+        hasProcessedInitialRef.current = false; // Reset for potential new internal navigation
     };
 
     const handleSelectDebate = (id: number) => {

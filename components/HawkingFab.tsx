@@ -2,14 +2,31 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenAI, Chat } from '@google/genai';
-import { ArrowUpIcon, XIcon, BrainIcon } from './icons';
+import { 
+    ArrowUpIcon, XIcon, BrainIcon, PlusIcon, AdjustIcon, ChevronDownIcon,
+    MicIcon, CheckIcon, ProjectIcon, BookOpenIcon, DebatePodiumIcon,
+    MessageCircleIcon, FlashIcon, PresentationIcon, UploadIcon
+} from './icons';
 
 interface Message {
     role: 'user' | 'model';
     text: string;
 }
 
-const HawkingFab: React.FC = () => {
+interface HawkingFabProps {
+    onNavigate: (view: string, data?: any) => void;
+}
+
+const models = [
+    { name: 'Auto', free: true },
+    { name: 'Gemini 3 Flash', free: true },
+    { name: 'Claude 4.5 Sonnet', free: false },
+    { name: 'GPT-5.2', free: false },
+    { name: 'Gemini 3 Pro', free: false },
+    { name: 'Grok 4.1', free: false },
+];
+
+const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
         { role: 'model', text: "Hello. I am Hawking. How can I assist your studies today?" }
@@ -17,9 +34,22 @@ const HawkingFab: React.FC = () => {
     const [inputValue, setInputValue] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [chat, setChat] = useState<Chat | null>(null);
-    const chatContainerRef = useRef<HTMLDivElement>(null);
+    const [isFocused, setIsFocused] = useState(false);
+    
+    // UI State for dropdowns (Mirroring ProjectsView)
+    const [selectedModel, setSelectedModel] = useState('Auto');
+    const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
+    const [isToolsOpen, setIsToolsOpen] = useState(false);
+    const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
+    const [activeTool, setActiveTool] = useState<{name: string, icon: React.ReactNode} | null>(null);
 
-    /* FIX: Re-initializing with strict process.env.API_KEY string and basic model gemini-3-flash-preview for tutor assistant tasks */
+    const chatContainerRef = useRef<HTMLDivElement>(null);
+    const modelMenuRef = useRef<HTMLDivElement>(null);
+    const toolsMenuRef = useRef<HTMLDivElement>(null);
+    const plusMenuRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const inputContainerRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const chatInstance = ai.chats.create({
@@ -31,7 +61,26 @@ const HawkingFab: React.FC = () => {
         setChat(chatInstance);
     }, []);
 
-    // Auto-scroll to bottom
+    // Outside Click Handling
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (modelMenuRef.current && !modelMenuRef.current.contains(event.target as Node)) {
+                setIsModelMenuOpen(false);
+            }
+            if (toolsMenuRef.current && !toolsMenuRef.current.contains(event.target as Node)) {
+                setIsToolsOpen(false);
+            }
+            if (plusMenuRef.current && !plusMenuRef.current.contains(event.target as Node)) {
+                setIsPlusMenuOpen(false);
+            }
+            if (inputContainerRef.current && !inputContainerRef.current.contains(event.target as Node)) {
+                setIsFocused(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     useEffect(() => {
         if (chatContainerRef.current) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -40,6 +89,20 @@ const HawkingFab: React.FC = () => {
 
     const handleSendMessage = async () => {
         if (!inputValue.trim() || isLoading || !chat) return;
+
+        // Tool Redirection Logic
+        if (activeTool?.name === 'Debate') {
+            setIsOpen(false);
+            onNavigate('debate', { initialMessage: inputValue });
+            setInputValue('');
+            return;
+        }
+        if (activeTool?.name === 'Add Courses') {
+            setIsOpen(false);
+            onNavigate('add_courses', { topic: inputValue });
+            setInputValue('');
+            return;
+        }
 
         const userText = inputValue;
         setInputValue('');
@@ -74,10 +137,28 @@ const HawkingFab: React.FC = () => {
         }
     };
 
-    const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSendMessage();
+        }
+    };
+
+    const toolsList = [
+        { name: 'Add Project', icon: <ProjectIcon className="w-4 h-4" /> },
+        { name: 'Add Content', icon: <PlusIcon className="w-4 h-4" /> },
+        { name: 'Add Courses', icon: <BookOpenIcon className="w-4 h-4" /> },
+        { name: 'Debate', icon: <DebatePodiumIcon className="w-4 h-4" /> },
+        { name: 'Q&A', icon: <MessageCircleIcon className="w-4 h-4" /> },
+        { name: 'Instant describe', icon: <FlashIcon className="w-4 h-4" /> },
+        { name: 'Presentation', icon: <PresentationIcon className="w-4 h-4" /> }
+    ];
+
+    const handleToolClick = (toolName: string) => {
+        setIsToolsOpen(false);
+        const tool = toolsList.find(t => t.name === toolName);
+        if (tool) {
+            setActiveTool(tool);
         }
     };
 
@@ -91,7 +172,7 @@ const HawkingFab: React.FC = () => {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ duration: 0.2 }}
-                        className="fixed bottom-24 right-6 w-[90vw] md:w-96 h-[60vh] max-h-[600px] bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 flex flex-col z-50 overflow-hidden"
+                        className="fixed bottom-24 right-6 w-[90vw] md:w-[420px] h-[70vh] max-h-[600px] bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 flex flex-col z-50 overflow-hidden"
                     >
                         {/* Header */}
                         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-neutral-50 dark:bg-[#1f1f1f]">
@@ -113,7 +194,7 @@ const HawkingFab: React.FC = () => {
                                 <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                     <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
                                         msg.role === 'user' 
-                                            ? 'bg-orange-500 text-white rounded-br-none' 
+                                            ? 'bg-black text-white rounded-br-none' 
                                             : 'bg-gray-100 dark:bg-gray-800 text-black dark:text-gray-200 rounded-bl-none'
                                     }`}>
                                         {msg.text}
@@ -131,24 +212,179 @@ const HawkingFab: React.FC = () => {
                             )}
                         </div>
 
-                        {/* Input Area */}
-                        <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a1a1a]">
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    value={inputValue}
-                                    onChange={(e) => setInputValue(e.target.value)}
-                                    onKeyDown={handleKeyPress}
+                        {/* Chat Input Area (Replicated from ProjectsView) */}
+                        <div className="p-4 bg-white dark:bg-[#1a1a1a] border-t border-gray-200 dark:border-gray-800">
+                            <div 
+                                ref={inputContainerRef}
+                                className={`relative dark:bg-[#111] bg-neutral-50 border border-gray-200 dark:border-[#1e1e1e] shadow-sm transition-all duration-300 ${
+                                    isFocused || inputValue.trim() ? 'rounded-[20px] ring-1 ring-neutral-300 dark:ring-white/10' : 'rounded-[20px]'
+                                }`}
+                            >
+                                <textarea 
+                                    ref={textareaRef} 
+                                    value={inputValue} 
+                                    onChange={(e) => {
+                                        setInputValue(e.target.value);
+                                        e.target.style.height = 'auto';
+                                        e.target.style.height = `${Math.min(e.target.scrollHeight, 100)}px`;
+                                    }} 
+                                    onKeyPress={handleKeyPress}
+                                    onFocus={() => setIsFocused(true)}
                                     placeholder="Ask Hawking..."
-                                    className="w-full pl-4 pr-10 py-3 rounded-xl bg-gray-100 dark:bg-[#0d0d0d] border-transparent focus:border-orange-500 focus:bg-white dark:focus:bg-black focus:ring-1 focus:ring-orange-500 outline-none text-sm dark:text-white transition-all"
+                                    className={`w-full bg-transparent border-none focus:outline-none text-sm text-black dark:text-white placeholder-gray-500 px-4 py-3 resize-none transition-all font-medium`} 
+                                    rows={1}
+                                    style={{ minHeight: isFocused || inputValue.trim() ? '60px' : '48px' }}
                                 />
-                                <button 
-                                    onClick={handleSendMessage}
-                                    disabled={!inputValue.trim() || isLoading}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ArrowUpIcon className="w-4 h-4" />
-                                </button>
+                                
+                                <div className={`flex items-center justify-between px-3 pb-2 transition-opacity duration-200 ${isFocused || inputValue.trim() ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
+                                    <div className="flex items-center space-x-1">
+                                        {/* Plus Menu */}
+                                        <div className="relative" ref={plusMenuRef}>
+                                            <button 
+                                                onClick={() => setIsPlusMenuOpen(!isPlusMenuOpen)}
+                                                className="p-1.5 rounded-full dark:hover:bg-white/10 hover:bg-neutral-200 text-gray-500 transition-colors"
+                                            >
+                                                <PlusIcon className="w-4 h-4" />
+                                            </button>
+                                            <AnimatePresence>
+                                                {isPlusMenuOpen && (
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                        className="absolute bottom-full left-0 mb-2 w-40 dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl overflow-hidden py-1 z-50"
+                                                    >
+                                                        {[
+                                                            { label: 'Upload files', icon: <UploadIcon className="w-3 h-3" /> },
+                                                            { label: 'Add from Drive', icon: <div className="w-3 h-3 text-green-500"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l3.43 6h11.72l6.55-11.5-3.42-6H7.71zm8.87 1.5l3.4 6-3.27 5.75H5.43L8.7 5h7.88zm-6.55 1.7L4.57 16h6.86l5.46-9.28H10.03z"/></svg></div> },
+                                                        ].map((item) => (
+                                                            <button 
+                                                                key={item.label}
+                                                                onClick={() => setIsPlusMenuOpen(false)}
+                                                                className="w-full flex items-center space-x-2 px-3 py-2 text-xs dark:text-gray-300 text-gray-700 hover:dark:bg-white/5 hover:bg-gray-100 transition-colors"
+                                                            >
+                                                                <div className="dark:text-white text-black opacity-70">{item.icon}</div>
+                                                                <span className="font-medium">{item.label}</span>
+                                                            </button>
+                                                        ))}
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
+                                        
+                                        {/* Tools Dropdown */}
+                                        <div className="relative" ref={toolsMenuRef}>
+                                            <button 
+                                                onClick={() => setIsToolsOpen(!isToolsOpen)}
+                                                className={`flex items-center space-x-1.5 px-2 py-1 rounded-full border transition-colors text-[10px] font-bold ${isToolsOpen ? 'dark:bg-white/10 bg-neutral-200 border-gray-400 dark:border-white/20 text-black dark:text-white' : 'dark:hover:bg-white/10 hover:bg-neutral-200 border-transparent text-gray-500'}`}
+                                            >
+                                                <AdjustIcon className="w-3 h-3" />
+                                                <span>Tools</span>
+                                                <ChevronDownIcon className={`w-2.5 h-2.5 transition-transform ${isToolsOpen ? 'rotate-180' : ''}`} />
+                                            </button>
+                                            
+                                            <AnimatePresence>
+                                                {isToolsOpen && (
+                                                    <motion.div 
+                                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                        className="absolute bottom-full left-0 mb-2 w-48 dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-xl overflow-hidden py-1 z-50"
+                                                    >
+                                                        {toolsList.map((tool) => (
+                                                            <button 
+                                                                key={tool.name}
+                                                                onClick={() => handleToolClick(tool.name)}
+                                                                className="w-full flex items-center space-x-2 px-3 py-2 text-xs dark:text-gray-300 text-gray-700 hover:dark:bg-white/5 hover:bg-gray-100 transition-colors"
+                                                            >
+                                                                <div className="text-gray-500 dark:text-gray-400">{tool.icon}</div>
+                                                                <span className="font-medium">{tool.name}</span>
+                                                            </button>
+                                                        ))}
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
+
+                                        {/* Active Tool Chip */}
+                                        <AnimatePresence>
+                                            {activeTool && (
+                                                <motion.div 
+                                                    initial={{ opacity: 0, scale: 0.9, x: -10 }}
+                                                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                                                    exit={{ opacity: 0, scale: 0.9, x: -10 }}
+                                                    className="flex items-center space-x-1 px-2 py-1 rounded-full dark:bg-[#2a2a2a] bg-gray-200 border dark:border-white/10 border-gray-300 text-[10px] font-bold dark:text-white text-black"
+                                                >
+                                                    <div className="dark:text-white text-black scale-75">
+                                                        {activeTool.icon}
+                                                    </div>
+                                                    <span>{activeTool.name}</span>
+                                                    <button 
+                                                        onClick={() => setActiveTool(null)}
+                                                        className="ml-1 p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/20 text-gray-500 dark:text-gray-400"
+                                                    >
+                                                        <XIcon className="w-2.5 h-2.5" />
+                                                    </button>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                    
+                                    <div className="flex items-center space-x-2">
+                                        <div className="relative" ref={modelMenuRef}>
+                                            <button 
+                                                onClick={() => setIsModelMenuOpen(!isModelMenuOpen)}
+                                                className="flex items-center space-x-1 text-[10px] font-bold text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+                                            >
+                                                <span>{selectedModel}</span>
+                                                <ChevronDownIcon className={`w-2.5 h-2.5 transition-transform ${isModelMenuOpen ? 'rotate-180' : ''}`} />
+                                            </button>
+                                            
+                                            <AnimatePresence>
+                                                {isModelMenuOpen && (
+                                                    <motion.div 
+                                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                        className="absolute bottom-full right-0 mb-2 w-40 dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-xl overflow-hidden py-1 z-50"
+                                                    >
+                                                        {models.map((m) => (
+                                                            <button 
+                                                                key={m.name}
+                                                                onClick={() => { setSelectedModel(m.name); setIsModelMenuOpen(false); }}
+                                                                className="w-full flex items-center justify-between px-3 py-2 text-[11px] dark:text-gray-300 text-gray-700 hover:dark:bg-white/5 hover:bg-gray-100 transition-colors"
+                                                            >
+                                                                <span className={selectedModel === m.name ? "font-bold text-orange-500" : ""}>{m.name}</span>
+                                                                {selectedModel === m.name && <CheckIcon className="w-3 h-3 text-orange-500" />}
+                                                            </button>
+                                                        ))}
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
+
+                                        <button className="p-1.5 text-gray-500 hover:text-black dark:hover:text-white transition-colors">
+                                            <MicIcon className="w-4 h-4" />
+                                        </button>
+                                        <button 
+                                            onClick={handleSendMessage}
+                                            disabled={isLoading || !inputValue.trim()}
+                                            className={`p-1.5 rounded-full transition-all ${inputValue.trim() ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-transparent text-gray-600'}`}
+                                        >
+                                            <ArrowUpIcon className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {!isFocused && !inputValue.trim() && (
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-3 pointer-events-none">
+                                        <div className="flex items-center space-x-1 text-[10px] font-bold text-gray-500">
+                                            <span>{selectedModel}</span>
+                                            <ChevronDownIcon className="w-2.5 h-2.5" />
+                                        </div>
+                                        <MicIcon className="w-4 h-4 text-gray-500" />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </motion.div>
@@ -164,7 +400,7 @@ const HawkingFab: React.FC = () => {
             >
                 <span className="font-serif font-bold text-2xl group-hover:scale-110 transition-transform">H</span>
                 
-                {/* Notification dot example (optional) */}
+                {/* Notification dot */}
                 <span className="absolute top-0 right-0 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>

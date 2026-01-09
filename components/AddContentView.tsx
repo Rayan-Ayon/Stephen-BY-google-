@@ -234,7 +234,7 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated }) => {
     const renderInitialUI = () => (
          <motion.div key="initial-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="w-full max-w-2xl flex flex-col items-center pt-12">
                 <h1 className="text-3xl md:text-5xl font-medium text-black dark:text-white mb-14 text-center tracking-tight" style={{ fontFamily: "'Lora', serif" }}>
-                    What should we learn, Fatema?
+                    What should we learn, Ayon?
                 </h1>
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8 w-full px-4">
@@ -247,7 +247,7 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated }) => {
                 <div className="relative mb-28 w-full px-4">
                     <div 
                         ref={inputContainerRef}
-                        className={`relative dark:bg-[#111] bg-white border border-gray-200 dark:border-[#1e1e1e] shadow-sm overflow-hidden transition-none ${
+                        className={`relative dark:bg-[#111] bg-white border border-gray-200 dark:border-[#1e1e1e] shadow-sm transition-none ${
                             isFocused || inputValue.trim() ? 'rounded-[28px] p-1' : 'rounded-full px-2 py-0.5'
                         }`}
                     >

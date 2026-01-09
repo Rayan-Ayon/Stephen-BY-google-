@@ -1,227 +1,175 @@
 
 import React, { useState, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './Sidebar';
-import Workspace from './Workspace';
-import HistoryView from './HistoryView';
 import AddContentView from './AddContentView';
 import AddCoursesView from './AddCoursesView';
 import CompetitionView from './CompetitionView';
+import ProjectsView from './ProjectsView';
 import DiscoverView from './DiscoverView';
 import EdgramView from './EdgramView';
 import DebateView from './DebateView';
 import TrackerView from './TrackerView';
 import ConsultProfessorsView from './ConsultProfessorsView';
 import PricingView from './PricingView';
+import HistoryView from './HistoryView';
 import InviteEarnView from './InviteEarnView';
-import QuickGuideModal from './QuickGuideModal';
-import FeedbackModal from './FeedbackModal';
+import Workspace from './Workspace';
 import SettingsModal from './SettingsModal';
+import FeedbackModal from './FeedbackModal';
+import QuickGuideModal from './QuickGuideModal';
 import ContactUsSlide from './ContactUsSlide';
-import { UpgradeModal } from './modals';
 import HawkingFab from './HawkingFab';
-import type { Theme } from '../App';
+import ResearchLabView from './ResearchLabView';
+import { Theme } from '../App';
 
 export interface HistoryItem {
     id: number;
     title: string;
     description: string;
-    type: 'video' | 'article';
+    type: string;
     time: string;
-    videoUrl: string;
-    day: number;
-    totalDays: number;
-    depth: number;
-    level: string;
-    learningReason: string;
+    videoUrl?: string;
+    day?: number;
+    totalDays?: number;
+    depth?: number;
+    level?: string;
+    learningReason?: string;
+    isStructured?: boolean;
 }
-
-const dummyHistory: HistoryItem[] = [
-    {
-        id: 1,
-        title: 'Introduction to Quantum Computing',
-        description: 'A beginner-friendly course on the principles of quantum mechanics and computation.',
-        type: 'video',
-        time: '2 days ago',
-        videoUrl: 'https://www.youtube.com/embed/g_IaVepNDT4',
-        day: 3,
-        totalDays: 28,
-        depth: 25,
-        level: 'Beginner',
-        learningReason: 'To understand the future of computing and its potential impact on various industries.',
-    },
-    {
-        id: 2,
-        title: 'Advanced Machine Learning Techniques',
-        description: 'Explore deep learning, reinforcement learning, and other advanced topics in machine learning.',
-        type: 'video',
-        time: '5 days ago',
-        videoUrl: 'https://www.youtube.com/embed/aircAruvnKk',
-        day: 12,
-        totalDays: 45,
-        depth: 60,
-        level: 'Advanced',
-        learningReason: 'To build complex AI models and solve real-world problems.',
-    },
-    {
-        id: 3,
-        title: 'The Art of Web Design',
-        description: 'Learn about UI/UX principles, color theory, and typography to create beautiful websites.',
-        type: 'article',
-        time: '1 week ago',
-        videoUrl: 'https://www.youtube.com/embed/5a0csh5KiAY', // Placeholder for article
-        day: 7,
-        totalDays: 15,
-        depth: 40,
-        level: 'Intermediate',
-        learningReason: 'To improve design skills for personal and professional web projects.',
-    },
-     {
-        id: 4,
-        title: 'Data Structures and Algorithms in Python',
-        description: 'Master essential data structures and algorithms for coding interviews and software development.',
-        type: 'video',
-        time: '2 weeks ago',
-        videoUrl: 'https://www.youtube.com/embed/8hly31xKli0',
-        day: 1,
-        totalDays: 30,
-        depth: 5,
-        level: 'Beginner',
-        learningReason: 'To strengthen foundational computer science knowledge.',
-    },
-];
-
 
 interface DashboardProps {
     toggleTheme: () => void;
     theme: Theme;
-    initialView?: string;
+    initialView: string;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView = 'add_content' }) => {
+const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView }) => {
     const [currentView, setCurrentView] = useState(initialView);
     const [selectedCourse, setSelectedCourse] = useState<HistoryItem | null>(null);
-    const [showWorkspaceHeader, setShowWorkspaceHeader] = useState(true);
-    const [isQuickGuideOpen, setIsQuickGuideOpen] = useState(false);
-    const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-    const [isContactUsOpen, setIsContactUsOpen] = useState(false);
-    const [isNavigating, setIsNavigating] = useState(false);
-
-    // Sidebar State
-    const [sidebarMode, setSidebarMode] = useState<'hover' | 'manual'>('hover');
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+    const [sidebarMode, setSidebarMode] = useState<'hover' | 'manual'>('hover');
+    
+    // Modals state
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+    const [isQuickGuideOpen, setIsQuickGuideOpen] = useState(false);
+    const [isContactUsOpen, setIsContactUsOpen] = useState(false);
+
+    // State for AddCourses flow context persistence
+    const [addCoursesContext, setAddCoursesContext] = useState({ flow: 'landing', topic: '' });
+    
+    // State for Debate flow context
+    const [debateInitialMessage, setDebateInitialMessage] = useState('');
+
+    // Mock History Items
+    const [historyItems, setHistoryItems] = useState<HistoryItem[]>([
+        {
+            id: 1,
+            title: "Generative AI Essentials",
+            description: "Master the fundamentals of generative AI models and applications.",
+            type: "video",
+            time: "2 hours ago",
+            videoUrl: "https://www.youtube.com/embed/g_IaVepNDT4",
+            isStructured: false
+        },
+        {
+            id: 2,
+            title: "Advanced React Patterns",
+            description: "Deep dive into component composition and state management.",
+            type: "article",
+            time: "Yesterday",
+            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+            isStructured: false
+        }
+    ]);
 
     useEffect(() => {
-        if (initialView) setCurrentView(initialView);
+        if (initialView) {
+            setCurrentView(initialView);
+        }
     }, [initialView]);
 
-
-    const handleNavigate = (view: string) => {
-        if (view === currentView) return;
-
-        if (view === 'quick_guide') {
-            setIsQuickGuideOpen(true);
-            return;
-        }
-
-        if (view === 'feedback') {
-            setIsFeedbackOpen(true);
-            return;
-        }
-
+    const handleNavigate = (view: string, data?: any) => {
         if (view === 'settings') {
             setIsSettingsOpen(true);
-            return;
-        }
-        
-        if (view !== 'discover' && view !== 'tracker' && view !== 'consult_professors' && view !== 'pricing' && view !== 'invite_earn') {
-            setIsNavigating(true);
-            setTimeout(() => {
-                setCurrentView(view);
-                setSelectedCourse(null);
-                setIsNavigating(false);
-            }, 60);
+        } else if (view === 'feedback') {
+            setIsFeedbackOpen(true);
+        } else if (view === 'quick_guide') {
+            setIsQuickGuideOpen(true);
+        } else if (view === 'contact_us') {
+             setIsContactUsOpen(true);
         } else {
+            // Handle data passing for specific views
+            if (view === 'add_courses' && data?.topic) {
+                setAddCoursesContext({ flow: 'qa', topic: data.topic });
+            }
+            if (view === 'debate') {
+                if (data?.initialMessage) {
+                    setDebateInitialMessage(data.initialMessage);
+                } else {
+                    setDebateInitialMessage('');
+                }
+            }
+
             setCurrentView(view);
             setSelectedCourse(null);
         }
     };
-    
+
     const handleSelectCourse = (course: HistoryItem) => {
-        setIsNavigating(true);
-        setTimeout(() => {
-            setSelectedCourse(course);
-            setShowWorkspaceHeader(true);
-            setCurrentView('workspace');
-            setIsNavigating(false);
-        }, 60);
-    };
-    
-    const handleCourseCreated = (newCourse: HistoryItem) => {
-        dummyHistory.unshift(newCourse);
-        setIsNavigating(true);
-        setTimeout(() => {
-            setSelectedCourse(newCourse);
-            setShowWorkspaceHeader(false); // As requested, hide header for pasted URL courses
-            setCurrentView('workspace');
-            setIsNavigating(false);
-        }, 60);
+        setSelectedCourse(course);
+        // Add to history if not present
+        if (!historyItems.find(i => i.id === course.id)) {
+            setHistoryItems([course, ...historyItems]);
+        }
     };
 
-    const renderView = () => {
+    const handleCourseCreated = (course: HistoryItem) => {
+        setHistoryItems([course, ...historyItems]);
+        handleSelectCourse(course);
+    };
+
+    const renderContent = () => {
+        if (selectedCourse) {
+            return <Workspace course={selectedCourse} showHeader={false} onBack={() => setSelectedCourse(null)} />;
+        }
+
         switch (currentView) {
-            case 'workspace':
-                return selectedCourse ? (
-                    <Workspace 
-                        course={selectedCourse} 
-                        showHeader={showWorkspaceHeader} 
-                        onBack={() => handleNavigate('add_courses')}
-                    />
-                ) : <AddContentView onCourseCreated={handleCourseCreated} />;
-            case 'history':
-                return <HistoryView historyItems={dummyHistory} onSelectCourse={handleSelectCourse} />;
             case 'add_content':
                 return <AddContentView onCourseCreated={handleCourseCreated} />;
             case 'add_courses':
-                 return <AddCoursesView onSelectCourse={handleSelectCourse} />;
-            case 'competitions':
-                return <CompetitionView />;
-            case 'discover':
-                return <DiscoverView />;
-            case 'edgram':
-                return <EdgramView />;
-            case 'debate':
-                return <DebateView />;
-            case 'tracker':
-                return <TrackerView />;
-            case 'consult_professors':
-                return <ConsultProfessorsView />;
-            case 'pricing':
-                return <PricingView />;
-            case 'invite_earn':
-                return <InviteEarnView onContactUs={() => setIsContactUsOpen(true)} />;
+                 return (
+                    <AddCoursesView 
+                        onSelectCourse={(c) => handleSelectCourse({...c, isStructured: true})} 
+                        context={addCoursesContext}
+                        setContext={setAddCoursesContext}
+                    />
+                 );
+            case 'competitions': return <CompetitionView />;
+            case 'projects': return <ProjectsView onNavigate={handleNavigate} />;
+            case 'discover': return <DiscoverView />;
+            case 'edgram': return <EdgramView />;
+            case 'debate': return <DebateView initialMessage={debateInitialMessage} />;
+            case 'tracker': return <TrackerView />;
+            case 'consult_professors': return <ConsultProfessorsView />;
+            case 'pricing': return <PricingView />;
+            case 'history': return <HistoryView historyItems={historyItems} onSelectCourse={handleSelectCourse} />;
+            case 'invite_earn': return <InviteEarnView onContactUs={() => setIsContactUsOpen(true)} />;
+            case 'research_lab': return <ResearchLabView />;
+            case 'create_space': return <div className="flex items-center justify-center h-full text-gray-500">Create Space Coming Soon</div>;
+            case 'learning_methods': return <div className="flex items-center justify-center h-full text-gray-500">Learning Methods Coming Soon</div>;
+            case 'chrome_extension': return <div className="flex items-center justify-center h-full text-gray-500">Chrome Extension Coming Soon</div>;
             default:
                 return <AddContentView onCourseCreated={handleCourseCreated} />;
         }
     };
 
-    const LoadingSpinner = () => (
-        <div className="flex items-center justify-center h-full">
-            <svg className="animate-spin h-10 w-10 text-neutral-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-        </div>
-    );
-
     return (
-        <div className={`flex h-screen ${theme === 'dark' ? 'bg-[#0b0b0b]' : 'bg-white'}`}>
+        <div className="flex h-screen w-full overflow-hidden bg-white dark:bg-black">
             <Sidebar 
                 toggleTheme={toggleTheme} 
                 theme={theme} 
-                onNavigate={handleNavigate} 
+                onNavigate={(view) => handleNavigate(view)} 
                 activeItem={currentView}
                 sidebarMode={sidebarMode}
                 setSidebarMode={setSidebarMode}
@@ -229,42 +177,15 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView =
                 setIsExpanded={setIsSidebarExpanded}
             />
             
-            <main className="flex-1 flex flex-col overflow-hidden relative">
-                <div className="absolute top-4 right-8 z-20">
-                    <button 
-                        onClick={() => setIsUpgradeModalOpen(true)}
-                        className="px-5 py-1.5 rounded-full border border-green-800 bg-green-900/20 text-green-500 hover:bg-green-900/40 hover:text-green-400 font-semibold text-sm transition-all duration-300"
-                    >
-                        Upgrade
-                    </button>
-                </div>
-
-                <AnimatePresence mode="wait">
-                    {isNavigating ? (
-                        <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
-                           <LoadingSpinner />
-                        </motion.div>
-                    ) : (
-                        <motion.div key={currentView} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="h-full">
-                           {renderView()}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-                
-                <HawkingFab />
+            <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+                {renderContent()}
+                <HawkingFab onNavigate={handleNavigate} />
             </main>
-            <AnimatePresence>
-                {isQuickGuideOpen && <QuickGuideModal onClose={() => setIsQuickGuideOpen(false)} />}
-                {isFeedbackOpen && <FeedbackModal onClose={() => setIsFeedbackOpen(false)} />}
-                {isSettingsOpen && <SettingsModal onClose={() => setIsSettingsOpen(false)} />}
-                {isContactUsOpen && <ContactUsSlide onClose={() => setIsContactUsOpen(false)} />}
-                {isUpgradeModalOpen && (
-                    <UpgradeModal 
-                        onClose={() => setIsUpgradeModalOpen(false)} 
-                        onNavigateToPricing={() => handleNavigate('pricing')} 
-                    />
-                )}
-            </AnimatePresence>
+
+            {isSettingsOpen && <SettingsModal onClose={() => setIsSettingsOpen(false)} />}
+            {isFeedbackOpen && <FeedbackModal onClose={() => setIsFeedbackOpen(false)} />}
+            {isQuickGuideOpen && <QuickGuideModal onClose={() => setIsQuickGuideOpen(false)} />}
+            {isContactUsOpen && <ContactUsSlide onClose={() => setIsContactUsOpen(false)} />}
         </div>
     );
 };

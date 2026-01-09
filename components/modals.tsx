@@ -33,8 +33,9 @@ const BaseModal: React.FC<ModalProps> = ({ onClose, title, children, ctaText, on
                 className="relative dark:bg-[#0d0d0d] bg-white dark:text-gray-300 text-neutral-800 w-full max-w-[500px] rounded-[32px] border dark:border-white/10 border-neutral-200 shadow-2xl overflow-hidden"
             >
                 <div className="flex items-center justify-between px-8 py-7">
-                    <div className="flex flex-col">
-                        <h2 className="text-[20px] font-bold dark:text-white text-black tracking-tight">{title}</h2>
+                    <div className="flex items-center gap-3">
+                        {icon && <div className="text-white">{icon}</div>}
+                        <h2 className="text-[20px] font-bold dark:text-white text-black tracking-tight leading-none">{title}</h2>
                     </div>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-800/50 transition-colors"><XIcon className="w-5 h-5 text-gray-500" /></button>
                 </div>
@@ -281,8 +282,6 @@ export const SummaryModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
 };
 
 export const CustomPromptModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-    // Note: The user requested that clicking "Create Prompt" should open the "Customize Summary" modal.
-    // However, I'm keeping this one updated to match Screenshot 184907's design style just in case.
     const [prompt, setPrompt] = useState('');
     const suggestions = [
         "Key Takeaways",
@@ -411,11 +410,35 @@ export const PasteUrlModal: React.FC<{ onClose: () => void, onCourseCreated: (co
     };
 
     return (
-        <BaseModal title="Create course from link" ctaText={isLoading ? "Creating..." : "Create"} onCtaClick={handleSubmit} onClose={onClose} ctaDisabled={isLoading} icon={<LinkIcon className="w-6 h-6" />}>
-            <p className="text-sm dark:text-[#666] text-neutral-500 mb-6 font-medium">Add any link, like a YouTube video, a PDF, or an article, and we'll create a personalized course for you.</p>
-            <div className="relative">
-                <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#444]" />
-                <input type="text" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Paste any link here..." className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-[#2a2a2a] border-neutral-300 rounded-[18px] py-4 pl-12 pr-4 text-md focus:outline-none focus:ring-1 focus:ring-gray-600 transition-all dark:text-white" />
+        <BaseModal 
+            title="YouTube, Website" 
+            onClose={onClose} 
+            showFooter={false}
+            icon={<LinkIcon className="w-5 h-5 text-white" />}
+        >
+            <p className="text-[13px] text-[#999] mb-6 leading-relaxed">
+                YouTube (videos & playlists), websites, arXiv, and public file URLs: .pdf, .docx, .pptx, .mp3, .mp4
+            </p>
+            <div className="space-y-4">
+                <input 
+                    type="text" 
+                    value={url} 
+                    onChange={(e) => setUrl(e.target.value)} 
+                    placeholder="https://youtu.be/..." 
+                    className="w-full bg-transparent border border-[#333] rounded-xl px-4 py-3 text-[15px] focus:outline-none focus:border-gray-500 transition-all text-white placeholder-[#444]" 
+                    autoFocus
+                />
+                <button 
+                    onClick={handleSubmit}
+                    disabled={!url || isLoading}
+                    className={`w-full py-3 font-bold rounded-xl transition-all duration-200 ${
+                        !url || isLoading 
+                        ? 'bg-[#333] text-[#666] cursor-not-allowed' 
+                        : 'bg-white text-black hover:bg-neutral-200'
+                    }`}
+                >
+                    {isLoading ? "Adding..." : "Add"}
+                </button>
             </div>
         </BaseModal>
     );

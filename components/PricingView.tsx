@@ -6,7 +6,7 @@ import { CheckCircleIcon, ChevronDownIcon, PlusIcon } from './icons';
 const faqs = [
     {
         question: "What do I get with the Pro plan?",
-        answer: "With the Pro plan on YouLearn, you get unlimited uploads, pastes, and recordings, along with unlimited AI chats (100 per day when using Learn+ mode). You can generate unlimited quizzes, unlimited practice exams, and create up to 12 podcasts per day. The plan supports file uploads of up to 2000 pages or 300 MB each, plus you get 10 courses and 20 placement tests per month, and unlimited course cards. This feature-rich plan empowers flexible, high-level learning and makes it easy to study, review, and master materials seamlessly."
+        answer: "With the Pro plan on Stephen, you get unlimited uploads, pastes, and recordings, along with unlimited AI chats (100 per day when using Learn+ mode). You can generate unlimited quizzes, unlimited practice exams, and create up to 12 podcasts per day. The plan supports file uploads of up to 2000 pages or 300 MB each, plus you get 10 courses and 20 placement tests per month, and unlimited course cards. This feature-rich plan empowers flexible, high-level learning and makes it easy to study, review, and master materials seamlessly."
     },
     {
         question: "What do I get with the Team plan?",
@@ -17,8 +17,8 @@ const faqs = [
         answer: "We support payments via major wallets, credit cards, and select country-specific methods, including Apple Pay, Google Pay, Link, Amazon Pay, Cash App Pay, Alipay, and WeChat Pay."
     },
     {
-        question: "Can I cancel my YouLearn plan at any time?",
-        answer: "Yes, you can cancel your YouLearn plan at any time and there are no cancellation fees. If you decide to cancel, you'll still have access to your plan's features until the end of your current billing cycle."
+        question: "Can I cancel my Stephen plan at any time?",
+        answer: "Yes, you can cancel your Stephen plan at any time and there are no cancellation fees. If you decide to cancel, you'll still have access to your plan's features until the end of your current billing cycle."
     },
     {
         question: "Do you offer student discount?",

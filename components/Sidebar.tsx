@@ -28,8 +28,7 @@ const navConfig = [
             { name: 'Add Content', icon: <PlusIcon className="w-5 h-5" />, key: 'add_content' },
             { name: 'Add Courses', icon: <AddCoursesIcon className="w-5 h-5" />, key: 'add_courses' },
             { name: 'Competitions', icon: <TrophyIcon className="w-5 h-5" />, key: 'competitions' },
-            { name: 'Projects & Research', icon: <ProjectsResearchIcon className="w-5 h-5" />, key: 'projects' },
-            { name: 'Exams', icon: <ExamPaperPenIcon className="w-5 h-5" />, key: 'exams' },
+            { name: 'Projects', icon: <ProjectsResearchIcon className="w-5 h-5" />, key: 'projects' },
             { name: 'Create Space', icon: <PlusIcon className="w-5 h-5" />, key: 'create_space' },
         ]
     },
