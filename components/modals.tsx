@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { XIcon, StarIcon, CheckCircleIcon, PlusIcon, LinkIcon, MicIcon, VideoCameraIcon, FileTextIcon, ClipboardIcon, ChevronDownIcon } from './icons';
+import { XIcon, StarIcon, CheckCircleIcon, PlusIcon, LinkIcon, MicIcon, VideoCameraIcon, FileTextIcon, ClipboardIcon, ChevronDownIcon, GlobeIcon, LockClosedIcon } from './icons';
 import { HistoryItem } from './Dashboard';
 
 interface ModalProps {
@@ -13,11 +13,12 @@ interface ModalProps {
     ctaDisabled?: boolean;
     showFooter?: boolean;
     icon?: React.ReactNode;
+    danger?: boolean;
 }
 
-const BaseModal: React.FC<ModalProps> = ({ onClose, title, children, ctaText, onCtaClick, ctaDisabled = false, showFooter = true, icon }) => {
+const BaseModal: React.FC<ModalProps> = ({ onClose, title, children, ctaText, onCtaClick, ctaDisabled = false, showFooter = true, icon, danger = false }) => {
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -44,7 +45,11 @@ const BaseModal: React.FC<ModalProps> = ({ onClose, title, children, ctaText, on
                     <div className="px-8 py-6 border-t dark:border-white/5 border-neutral-200 flex justify-end items-center space-x-3">
                          <button onClick={onClose} className="px-6 py-2.5 text-[14px] font-bold rounded-xl dark:bg-[#1a1a1a] bg-neutral-100 dark:text-white text-black hover:opacity-80 transition-all">Cancel</button>
                          {ctaText && (
-                            <button onClick={onCtaClick} disabled={ctaDisabled} className="px-6 py-2.5 text-[14px] font-bold rounded-xl bg-white text-black hover:bg-neutral-200 transition-colors disabled:opacity-50 shadow-lg">
+                            <button 
+                                onClick={onCtaClick} 
+                                disabled={ctaDisabled} 
+                                className={`px-6 py-2.5 text-[14px] font-bold rounded-xl transition-colors disabled:opacity-50 shadow-lg ${danger ? 'bg-red-900/80 text-white hover:bg-red-800' : 'bg-white text-black hover:bg-neutral-200'}`}
+                            >
                                 {ctaText}
                             </button>
                          )}
@@ -52,6 +57,62 @@ const BaseModal: React.FC<ModalProps> = ({ onClose, title, children, ctaText, on
                 )}
             </motion.div>
         </div>
+    );
+};
+
+export const DeleteSpaceModal: React.FC<{ spaceName: string, onClose: () => void, onDelete: () => void }> = ({ spaceName, onClose, onDelete }) => {
+    return (
+        <BaseModal 
+            title="Are you sure you want to delete this space?" 
+            onClose={onClose} 
+            ctaText="Delete" 
+            onCtaClick={onDelete}
+            danger={true}
+        >
+            <p className="text-sm dark:text-gray-400 text-neutral-500">"{spaceName}" will be permanently deleted.</p>
+        </BaseModal>
+    );
+};
+
+export const ShareSpaceModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    const [access, setAccess] = useState<'private' | 'public'>('private');
+
+    return (
+        <BaseModal title="Invite your friends" onClose={onClose} showFooter={false}>
+            <div className="space-y-4">
+                <button 
+                    onClick={() => setAccess('private')}
+                    className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${access === 'private' ? 'dark:bg-[#1a1a1a] dark:border-white/20 bg-neutral-100 border-neutral-300' : 'dark:border-white/5 border-neutral-200 hover:dark:bg-[#111] hover:bg-neutral-50'}`}
+                >
+                    <div className="flex items-center gap-4">
+                        <div className="p-2 rounded-full dark:bg-[#222] bg-white">
+                            <LockClosedIcon className="w-5 h-5 text-gray-400" />
+                        </div>
+                        <div className="text-left">
+                            <div className="font-bold text-sm dark:text-white text-black">Private</div>
+                            <div className="text-xs text-gray-500">Viewable by yourself only</div>
+                        </div>
+                    </div>
+                    {access === 'private' && <CheckCircleIcon className="w-5 h-5 text-white" />}
+                </button>
+
+                <button 
+                    onClick={() => setAccess('public')}
+                    className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${access === 'public' ? 'dark:bg-[#1a1a1a] dark:border-white/20 bg-neutral-100 border-neutral-300' : 'dark:border-white/5 border-neutral-200 hover:dark:bg-[#111] hover:bg-neutral-50'}`}
+                >
+                    <div className="flex items-center gap-4">
+                        <div className="p-2 rounded-full dark:bg-[#222] bg-white">
+                            <GlobeIcon className="w-5 h-5 text-gray-400" />
+                        </div>
+                        <div className="text-left">
+                            <div className="font-bold text-sm dark:text-white text-black">Public</div>
+                            <div className="text-xs text-gray-500">Anyone on the internet with the link can view</div>
+                        </div>
+                    </div>
+                    {access === 'public' && <CheckCircleIcon className="w-5 h-5 text-white" />}
+                </button>
+            </div>
+        </BaseModal>
     );
 };
 

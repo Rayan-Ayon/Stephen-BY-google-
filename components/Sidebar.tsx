@@ -8,8 +8,13 @@ import {
     TrophyIcon, ProjectsResearchIcon, ExamPaperPenIcon, MicroscopeIcon,
     ProfessorStudentIcon, DebatePodiumIcon, EdgramIcon, GlobeIcon,
     LocationTrackerIcon, LearningMethodIcon, ChevronDownIcon, CrownIcon,
-    ViewSidebarIcon, CheckCircleIcon, DollarIcon, SidebarToggleIcon
+    ViewSidebarIcon, CheckCircleIcon, DollarIcon, SidebarToggleIcon, CubeIcon, DotsHorizontalIcon, TrashIcon, ShareIcon, PencilIcon, ChevronRightIcon
 } from './icons';
+
+interface Space {
+    id: string;
+    title: string;
+}
 
 interface SidebarProps {
   toggleTheme: () => void;
@@ -20,6 +25,11 @@ interface SidebarProps {
   setSidebarMode: (mode: 'hover' | 'manual') => void;
   isExpanded: boolean;
   setIsExpanded: (expanded: boolean) => void;
+  spaces: Space[];
+  onCreateSpace: () => void;
+  onRenameSpace: (id: string, newTitle: string) => void;
+  onDeleteSpace: (id: string) => void;
+  onShareSpace: (id: string) => void;
 }
 
 const navConfig = [
@@ -29,7 +39,7 @@ const navConfig = [
             { name: 'Add Courses', icon: <AddCoursesIcon className="w-5 h-5" />, key: 'add_courses' },
             { name: 'Competitions', icon: <TrophyIcon className="w-5 h-5" />, key: 'competitions' },
             { name: 'Projects', icon: <ProjectsResearchIcon className="w-5 h-5" />, key: 'projects' },
-            { name: 'Create Space', icon: <PlusIcon className="w-5 h-5" />, key: 'create_space' },
+            // Removed static "Create Space" from here
         ]
     },
     { type: 'separator' },
@@ -37,7 +47,7 @@ const navConfig = [
         items: [
             { name: 'Research Lab', icon: <MicroscopeIcon className="w-5 h-5" />, key: 'research_lab' },
             { name: 'Consult', icon: <ProfessorStudentIcon className="w-5 h-5" />, key: 'consult_professors' },
-            { name: 'Debate', icon: <DebatePodiumIcon className="w-5 h-5" />, key: 'debate' },
+            // Debate removed from here
             { name: 'Edgram', icon: <EdgramIcon className="w-5 h-5" />, key: 'edgram' },
             { name: 'Discover', icon: <GlobeIcon className="w-5 h-5" />, key: 'discover' },
             { name: 'Tracker', icon: <LocationTrackerIcon className="w-5 h-5" />, key: 'tracker' },
@@ -58,7 +68,8 @@ const navConfig = [
 
 const Sidebar: React.FC<SidebarProps> = ({ 
     toggleTheme, theme, onNavigate, activeItem, 
-    sidebarMode, setSidebarMode, isExpanded, setIsExpanded 
+    sidebarMode, setSidebarMode, isExpanded, setIsExpanded,
+    spaces, onCreateSpace, onRenameSpace, onDeleteSpace, onShareSpace
 }) => {
     const [profileOpen, setProfileOpen] = useState(false);
     const [sidebarSettingsOpen, setSidebarSettingsOpen] = useState(false);
@@ -66,6 +77,13 @@ const Sidebar: React.FC<SidebarProps> = ({
     const [isSidebarHovered, setIsSidebarHovered] = useState(false);
     const [showTooltip, setShowTooltip] = useState(false);
     
+    // Space management state
+    const [hoveredSpaceId, setHoveredSpaceId] = useState<string | null>(null);
+    const [menuOpenSpaceId, setMenuOpenSpaceId] = useState<string | null>(null);
+    const [editingSpaceId, setEditingSpaceId] = useState<string | null>(null);
+    const [editValue, setEditValue] = useState('');
+    const menuRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         if (sidebarMode === 'hover') {
              setIsExpanded(isSidebarHovered);
@@ -78,10 +96,35 @@ const Sidebar: React.FC<SidebarProps> = ({
                 setProfileOpen(false);
                 setSidebarSettingsOpen(false);
             }
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setMenuOpenSpaceId(null);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    const handleEditStart = (space: Space, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setEditingSpaceId(space.id);
+        setEditValue(space.title);
+        setMenuOpenSpaceId(null);
+    };
+
+    const handleEditSave = (id: string) => {
+        if (editValue.trim()) {
+            onRenameSpace(id, editValue);
+        }
+        setEditingSpaceId(null);
+    };
+
+    const handleEditKeyDown = (e: React.KeyboardEvent, id: string) => {
+        if (e.key === 'Enter') {
+            handleEditSave(id);
+        } else if (e.key === 'Escape') {
+            setEditingSpaceId(null);
+        }
+    };
 
     const textColor = theme === 'dark' ? 'text-gray-200' : 'text-neutral-700';
     const iconColor = theme === 'dark' ? 'text-gray-400' : 'text-neutral-500';
@@ -205,6 +248,150 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 </AnimatePresence>
                             </button>
                         ))}
+                        
+                        {/* Inject Spaces Section after the first group (index 0) */}
+                        {sectionIndex === 0 && (
+                            <div className="mt-2 mb-2">
+                                <div className="px-3 pt-2 pb-1 flex items-center justify-between group/header">
+                                    {isExpanded ? (
+                                        <motion.h3
+                                            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                                            className="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                                        >
+                                            Spaces
+                                        </motion.h3>
+                                    ) : (
+                                        <div className="h-4"></div> /* Spacer when collapsed */
+                                    )}
+                                </div>
+                                
+                                <button 
+                                    onClick={onCreateSpace}
+                                    className={`w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200`}
+                                >
+                                    <div className={`${iconColor} shrink-0`}>
+                                        <PlusIcon className="w-5 h-5" />
+                                    </div>
+                                    <AnimatePresence>
+                                        {isExpanded && (
+                                            <motion.span 
+                                                initial={{ opacity: 0, width: 0 }} 
+                                                animate={{ opacity: 1, width: 'auto' }} 
+                                                exit={{ opacity: 0, width: 0 }} 
+                                                transition={{ duration: 0.2, delay: 0.05 }} 
+                                                className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden"
+                                            >
+                                                Create Space
+                                            </motion.span>
+                                        )}
+                                    </AnimatePresence>
+                                </button>
+
+                                {spaces.map(space => (
+                                    <div 
+                                        key={space.id} 
+                                        className="relative group/space"
+                                        onMouseEnter={() => setHoveredSpaceId(space.id)}
+                                        onMouseLeave={() => setHoveredSpaceId(null)}
+                                    >
+                                        <button 
+                                            onClick={() => onNavigate(`space_${space.id}`)} 
+                                            className={`w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === `space_${space.id}` ? activeClasses : ''}`}
+                                        >
+                                            <div className={`${activeItem === `space_${space.id}` ? 'text-current' : iconColor} shrink-0 transition-transform duration-200`}>
+                                                {hoveredSpaceId === space.id && isExpanded ? (
+                                                    <ChevronRightIcon className="w-5 h-5" />
+                                                ) : (
+                                                    <CubeIcon className="w-5 h-5" />
+                                                )}
+                                            </div>
+                                            <AnimatePresence>
+                                                {isExpanded && (
+                                                    <motion.div 
+                                                        initial={{ opacity: 0, width: 0 }} 
+                                                        animate={{ opacity: 1, width: 'auto' }} 
+                                                        exit={{ opacity: 0, width: 0 }} 
+                                                        transition={{ duration: 0.2, delay: 0.05 }} 
+                                                        className="ml-4 flex-1 overflow-hidden"
+                                                    >
+                                                        {editingSpaceId === space.id ? (
+                                                            <input 
+                                                                type="text" 
+                                                                value={editValue} 
+                                                                onChange={(e) => setEditValue(e.target.value)}
+                                                                onBlur={() => handleEditSave(space.id)}
+                                                                onKeyDown={(e) => handleEditKeyDown(e, space.id)}
+                                                                autoFocus
+                                                                className="w-full bg-transparent border-none outline-none text-[15px] font-medium p-0"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            />
+                                                        ) : (
+                                                            <span className="font-medium text-[15px] whitespace-nowrap overflow-hidden block">{space.title}</span>
+                                                        )}
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                            
+                                            {/* Three Dots Button - Only visible on hover and when expanded */}
+                                            {isExpanded && hoveredSpaceId === space.id && editingSpaceId !== space.id && (
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setMenuOpenSpaceId(menuOpenSpaceId === space.id ? null : space.id);
+                                                    }}
+                                                    className="shrink-0 p-1 hover:bg-gray-300 dark:hover:bg-gray-600 rounded transition-colors"
+                                                >
+                                                    <DotsHorizontalIcon className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </button>
+
+                                        {/* Dropdown Menu */}
+                                        <AnimatePresence>
+                                            {menuOpenSpaceId === space.id && (
+                                                <motion.div 
+                                                    ref={menuRef}
+                                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                    className="absolute right-0 top-full mt-1 w-40 dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden py-1"
+                                                >
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onShareSpace(space.id);
+                                                            setMenuOpenSpaceId(null);
+                                                        }}
+                                                        className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10"
+                                                    >
+                                                        <ShareIcon className="w-4 h-4" />
+                                                        <span>Share</span>
+                                                    </button>
+                                                    <button 
+                                                        onClick={(e) => handleEditStart(space, e)}
+                                                        className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10"
+                                                    >
+                                                        <PencilIcon className="w-4 h-4" />
+                                                        <span>Edit</span>
+                                                    </button>
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onDeleteSpace(space.id);
+                                                            setMenuOpenSpaceId(null);
+                                                        }}
+                                                        className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                    >
+                                                        <TrashIcon className="w-4 h-4" />
+                                                        <span>Delete Space</span>
+                                                    </button>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 ))}
             </nav>
@@ -319,7 +506,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         className={`w-full flex items-center justify-between p-2.5 rounded-2xl transition-all border ${
                             profileOpen 
                             ? (theme === 'dark' ? 'bg-[#222] border-gray-400' : 'bg-neutral-50 border-gray-500')
-                            : (theme === 'dark' ? 'bg-[#0a0a0a] border-[#333] hover:bg-[#1a1a1a] hover:border-gray-500 shadow-[0_0_0_1px_rgba(255,255,255,0.05)]' : 'bg-white border-gray-300 hover:bg-gray-50 hover:border-gray-400')
+                            : (theme === 'dark' ? 'bg-[#0a0a0a] border-[#333] hover:bg-[#1a1a1a] hover:border-gray-50 shadow-[0_0_0_1px_rgba(255,255,255,0.05)]' : 'bg-white border-gray-300 hover:bg-gray-50 hover:border-gray-400')
                         }`}
                     >
                         <div className="flex items-center min-w-0">

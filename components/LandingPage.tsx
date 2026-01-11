@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { motion, Variants, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Theme, AuthType } from '../App';
-import { SunIcon, MoonIcon, BrainIcon, UploadIcon, FlashcardIcon, TrophyIcon, EdgramIcon, DebatePodiumIcon, ChevronDownIcon } from './icons';
+import { SunIcon, MoonIcon, BrainIcon, UploadIcon, FlashcardIcon, TrophyIcon, EdgramIcon, DebatePodiumIcon, ChevronDownIcon, QuestionMarkIcon, ArrowUpRightIcon } from './icons';
 import EnterpriseView from './EnterpriseView';
 
 interface LandingPageProps {
@@ -30,13 +30,49 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
     const [currentView, setCurrentView] = useState<'home' | 'enterprise'>('home');
     const [enterpriseType, setEnterpriseType] = useState<'business' | 'team' | 'universities' | 'government'>('business');
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+    const [isHelpOpen, setIsHelpOpen] = useState(false);
 
-    const featureDropdownItems = [
-        { name: 'AI features', key: 'discover' },
-        { name: 'Professor support', key: 'consult_professors' },
-        { name: 'Research', key: 'research_lab' },
-        { name: 'learning network', key: 'edgram' },
-        { name: 'Structurize learning', key: 'add_courses' },
+    // Navigation Structure
+    const navLinks = [
+        { name: 'About', key: 'edgram' }, // Replacing Collab with About for now to match prompt "About Features..." flow
+        { name: 'Features', key: 'features', hasDropdown: true },
+        { name: 'Learn', key: 'learn', hasDropdown: false }, // Placeholder link
+        { name: 'Business', key: 'business', hasDropdown: true },
+        { name: 'Pricing', key: 'pricing', hasDropdown: true },
+        { name: 'Enterprise', key: 'enterprise', hasDropdown: true }, // Keeping existing enterprise logic
+        { name: 'Download', key: 'download', hasDropdown: false },
+    ];
+
+    // Dropdown Data
+    const featuresData = [
+        { name: 'AI features', key: 'discover', desc: 'Explore AI tools' },
+        { name: 'Professor support', key: 'consult_professors', desc: 'Get expert help' },
+        { name: 'Research', key: 'research_lab', desc: 'Academic labs' },
+        { name: 'Learning network', key: 'edgram', desc: 'Connect with peers' },
+        { name: 'Structurize learning', key: 'add_courses', desc: 'Guided paths' },
+    ];
+
+    const businessData = {
+        main: [
+            { name: 'Overview', key: 'business_overview' },
+            { name: 'Contact Sales', key: 'contact_sales' },
+            { name: 'Merchants', key: 'merchants' },
+        ],
+        solutions: [
+            { name: 'Data Science & Analytics', key: 'ds_analytics' },
+            { name: 'Engineering', key: 'engineering' },
+            { name: 'Finance', key: 'finance' },
+            { name: 'Product Management', key: 'pm' },
+            { name: 'Sales & Marketing', key: 'marketing' },
+        ]
+    };
+
+    const pricingData = [
+        { name: 'Overview', key: 'pricing_overview' },
+        { name: 'Free', key: 'pricing_free' },
+        { name: 'Go', key: 'pricing_go' },
+        { name: 'Plus', key: 'pricing_plus' },
+        { name: 'Pro', key: 'pricing_pro' },
     ];
 
     const enterpriseDropdownItems = [
@@ -46,14 +82,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
         { name: 'Government', key: 'government' },
     ];
 
-    const navLinks = [
-        { name: 'Collab', key: 'edgram' },
-        { name: 'Features', key: 'features', hasDropdown: true, items: featureDropdownItems },
-        { name: 'Community', key: 'edgram' },
-        { name: 'Pricing', key: 'pricing' },
-        { name: 'Enterprise', key: 'enterprise', hasDropdown: true, items: enterpriseDropdownItems },
-    ];
-    
     const containerVariants: Variants = {
         hidden: { opacity: 0 },
         visible: {
@@ -80,7 +108,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
             setActiveDropdown(null);
         } else if (['discover', 'consult_professors', 'research_lab', 'edgram', 'add_courses'].includes(itemKey)) {
             onStartLearning(itemKey);
+        } else if (itemKey.startsWith('pricing_')) {
+             onStartLearning('pricing');
         }
+        setActiveDropdown(null);
     };
 
     const getLogoSuffix = () => {
@@ -194,11 +225,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
 
     return (
         <div className={`w-full min-h-screen flex flex-col ${theme === 'dark' ? 'text-neutral-200' : 'text-neutral-800'}`}>
-            <header className="absolute top-0 left-0 right-0 z-50 p-4">
-                <div className="container mx-auto flex items-center">
+            <header className="absolute top-0 left-0 right-0 z-50 px-6 py-4">
+                <div className="container mx-auto flex items-center justify-between">
                     {/* Left: Logo */}
-                    <div className="flex items-center min-w-[200px]">
-                        <button onClick={() => setCurrentView('home')} className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'} flex items-center`} style={{ fontFamily: "'Lora', serif" }}>
+                    <div className="flex items-center">
+                        <button onClick={() => setCurrentView('home')} className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'} flex items-center tracking-tight`} style={{ fontFamily: "'Lora', serif" }}>
                             Stephen
                             {getLogoSuffix() && (
                                 <span className={`ml-2 text-xl font-normal ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
@@ -209,84 +240,171 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
                     </div>
 
                     {/* Center: Navigation */}
-                    <div className="flex-1 flex justify-center">
-                        <nav className="hidden md:flex items-center space-x-8">
-                            {navLinks.map(link => {
-                                const isSelected = link.key === 'enterprise' && currentView === 'enterprise';
-                                return (
-                                <div 
-                                    key={link.name} 
-                                    className="relative group"
-                                    onMouseEnter={() => link.hasDropdown && setActiveDropdown(link.key)}
-                                    onMouseLeave={() => link.hasDropdown && setActiveDropdown(null)}
+                    <div className="hidden md:flex items-center space-x-1 lg:space-x-2">
+                        {navLinks.map(link => {
+                            const isSelected = link.key === 'enterprise' && currentView === 'enterprise';
+                            return (
+                            <div 
+                                key={link.name} 
+                                className="relative group"
+                                onMouseEnter={() => link.hasDropdown && setActiveDropdown(link.key)}
+                                onMouseLeave={() => link.hasDropdown && setActiveDropdown(null)}
+                            >
+                                <button 
+                                    onClick={() => {
+                                        if (link.key === 'pricing') {
+                                            onStartLearning('pricing');
+                                        } else if (!link.hasDropdown) {
+                                            if (link.key === 'edgram') onStartLearning('edgram'); // 'About' maps to 'edgram' for now based on prompt logic assumption
+                                            else onStartLearning(link.key);
+                                        }
+                                    }} 
+                                    className={`flex items-center text-sm font-medium px-3 py-2 rounded-md transition-colors ${
+                                        isSelected 
+                                        ? 'text-black dark:text-white font-bold' 
+                                        : (theme === 'dark' ? 'text-neutral-300 hover:text-white' : 'text-neutral-600 hover:text-black')
+                                    }`}
                                 >
-                                    <button 
-                                        onClick={() => {
-                                            if (link.key === 'pricing') {
-                                                onStartLearning('pricing');
-                                            } else if (!link.hasDropdown) {
-                                                onStartLearning(link.key);
-                                            }
-                                        }} 
-                                        className={`flex items-center text-sm font-medium transition-colors py-2 ${
-                                            isSelected 
-                                            ? 'text-black dark:text-white font-bold' 
-                                            : (theme === 'dark' ? 'text-neutral-400 hover:text-white' : 'text-neutral-500 hover:text-black')
-                                        }`}
-                                    >
-                                        {link.name}
-                                        {link.hasDropdown && <ChevronDownIcon className={`w-3.5 h-3.5 ml-1 transition-transform ${activeDropdown === link.key ? 'rotate-180' : ''}`} />}
-                                    </button>
+                                    {link.name}
+                                </button>
 
-                                    {link.hasDropdown && (
-                                        <AnimatePresence>
-                                            {activeDropdown === link.key && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    exit={{ opacity: 0, y: 10 }}
-                                                    transition={{ duration: 0.2 }}
-                                                    className={`absolute left-1/2 -translate-x-1/2 mt-1 w-56 rounded-2xl border shadow-xl overflow-hidden py-2 z-[60] ${
-                                                        theme === 'dark' 
-                                                        ? 'bg-[#0d0d0d] border-gray-700' 
-                                                        : 'bg-white border-neutral-200'
-                                                    }`}
-                                                >
-                                                    <div className="flex flex-col">
-                                                        {link.items?.map((item) => (
-                                                            <button
-                                                                key={item.name}
-                                                                onClick={() => handleDropdownClick(item.key)} 
-                                                                className={`px-5 py-2.5 text-left text-sm transition-colors duration-200 ${
-                                                                    theme === 'dark' 
-                                                                    ? 'text-gray-400 hover:text-white hover:bg-white/10' 
-                                                                    : 'text-gray-600 hover:text-black hover:bg-gray-100'
-                                                                }`}
-                                                            >
+                                {link.hasDropdown && activeDropdown === link.key && (
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50 w-max">
+                                        {/* FEATURES DROPDOWN */}
+                                        {link.key === 'features' && (
+                                            <div className={`rounded-xl border shadow-xl overflow-hidden py-2 ${theme === 'dark' ? 'bg-[#1a1a1a] border-gray-800' : 'bg-white border-gray-200'}`}>
+                                                <div className="flex flex-col w-56">
+                                                    {featuresData.map(item => (
+                                                        <button key={item.key} onClick={() => handleDropdownClick(item.key)} className={`px-4 py-2.5 text-left hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors group`}>
+                                                            <div className="text-sm font-medium dark:text-white text-black">{item.name}</div>
+                                                            <div className="text-xs text-gray-500">{item.desc}</div>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* BUSINESS DROPDOWN */}
+                                        {link.key === 'business' && (
+                                            <div className={`rounded-xl border shadow-xl overflow-hidden p-6 grid grid-cols-2 gap-8 w-[500px] ${theme === 'dark' ? 'bg-[#1a1a1a] border-gray-800' : 'bg-white border-gray-200'}`}>
+                                                <div>
+                                                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Business</h4>
+                                                    <div className="flex flex-col space-y-3">
+                                                        {businessData.main.map(item => (
+                                                            <button key={item.key} onClick={() => handleDropdownClick(item.key)} className="text-sm font-medium text-left dark:text-white text-black hover:opacity-70 transition-opacity">
                                                                 {item.name}
                                                             </button>
                                                         ))}
                                                     </div>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-                                    )}
-                                </div>
-                            )})}
-                        </nav>
+                                                </div>
+                                                <div className={`pl-8 border-l ${theme === 'dark' ? 'border-gray-800' : 'border-gray-200'}`}>
+                                                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">AI solutions for</h4>
+                                                    <div className="flex flex-col space-y-3">
+                                                        {businessData.solutions.map(item => (
+                                                            <button key={item.key} onClick={() => handleDropdownClick(item.key)} className="text-sm font-medium text-left dark:text-white text-black hover:opacity-70 transition-opacity">
+                                                                {item.name}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* PRICING DROPDOWN */}
+                                        {link.key === 'pricing' && (
+                                            <div className={`rounded-xl border shadow-xl overflow-hidden py-2 w-48 ${theme === 'dark' ? 'bg-[#1a1a1a] border-gray-800' : 'bg-white border-gray-200'}`}>
+                                                <div className="flex flex-col">
+                                                    {pricingData.map(item => (
+                                                        <button key={item.key} onClick={() => handleDropdownClick(item.key)} className="px-5 py-2.5 text-left text-sm font-medium dark:text-white text-black hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors">
+                                                            {item.name}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* ENTERPRISE DROPDOWN (Existing) */}
+                                        {link.key === 'enterprise' && (
+                                            <div className={`rounded-xl border shadow-xl overflow-hidden py-2 w-56 ${theme === 'dark' ? 'bg-[#1a1a1a] border-gray-800' : 'bg-white border-neutral-200'}`}>
+                                                <div className="flex flex-col">
+                                                    {enterpriseDropdownItems.map((item) => (
+                                                        <button
+                                                            key={item.name}
+                                                            onClick={() => handleDropdownClick(item.key)} 
+                                                            className={`px-5 py-2.5 text-left text-sm transition-colors duration-200 ${
+                                                                theme === 'dark' 
+                                                                ? 'text-gray-400 hover:text-white hover:bg-white/10' 
+                                                                : 'text-gray-600 hover:text-black hover:bg-gray-100'
+                                                            }`}
+                                                        >
+                                                            {item.name}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )})}
                     </div>
 
-                    {/* Right: Auth & Theme */}
-                    <div className="flex items-center space-x-4 min-w-[200px] justify-end">
+                    {/* Right: Auth & Theme & Help */}
+                    <div className="flex items-center space-x-3">
                         <button onClick={toggleTheme} className={`p-2 rounded-full ${theme === 'dark' ? 'text-neutral-400 hover:bg-neutral-800' : 'text-neutral-500 hover:bg-neutral-200'} transition-colors`}>
                             {theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
                         </button>
-                        <button onClick={() => onAuth('signup')} className={`px-4 py-2 text-sm font-semibold rounded-lg ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
-                            Sign In
+                        <button onClick={() => onAuth('login')} className={`px-4 py-2 text-sm font-semibold rounded-full ${theme === 'dark' ? 'text-white hover:bg-neutral-800' : 'text-black hover:bg-neutral-100'} transition-colors`}>
+                            Log in
                         </button>
-                         <button onClick={() => onAuth('login')} className="px-4 py-2 text-sm font-semibold text-white rounded-lg bg-[#FF5A1A] hover:opacity-90 transition-opacity">
-                            Login
+                        <button onClick={() => onAuth('signup')} className={`px-4 py-2 text-sm font-semibold rounded-full bg-white text-black hover:opacity-90 transition-opacity border ${theme === 'dark' ? 'border-transparent' : 'border-gray-300'}`}>
+                            Sign up for free
                         </button>
+                        
+                        <div className="relative">
+                            <button 
+                                onClick={() => setIsHelpOpen(!isHelpOpen)}
+                                className={`p-2 rounded-full border transition-colors ${theme === 'dark' ? 'border-gray-700 hover:bg-neutral-800 text-gray-300' : 'border-gray-300 hover:bg-neutral-100 text-gray-600'}`}
+                            >
+                                <QuestionMarkIcon className="w-5 h-5" />
+                            </button>
+                            
+                            <AnimatePresence>
+                                {isHelpOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        className={`absolute right-0 top-full mt-2 w-64 rounded-xl shadow-2xl border overflow-hidden py-2 z-50 ${theme === 'dark' ? 'bg-[#1a1a1a] border-gray-800' : 'bg-white border-gray-200'}`}
+                                    >
+                                        <div className="flex flex-col">
+                                            {[
+                                                { label: 'See plans and pricing', action: () => onStartLearning('pricing') },
+                                                { label: 'Settings', action: () => {} }, // Placeholder
+                                            ].map((item, idx) => (
+                                                <button key={idx} onClick={() => { item.action(); setIsHelpOpen(false); }} className="w-full text-left px-5 py-2.5 text-sm font-medium dark:text-gray-200 text-gray-700 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors flex items-center justify-between group">
+                                                    {item.label}
+                                                    <ArrowUpRightIcon className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                </button>
+                                            ))}
+                                            
+                                            <div className={`my-2 border-t ${theme === 'dark' ? 'border-gray-800' : 'border-gray-100'}`} />
+                                            
+                                            {[
+                                                { label: 'Help center' },
+                                                { label: 'Release notes' },
+                                                { label: 'Terms & policies' },
+                                            ].map((item, idx) => (
+                                                <button key={idx} className="w-full text-left px-5 py-2.5 text-sm font-medium dark:text-gray-200 text-gray-700 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors flex items-center justify-between group">
+                                                    {item.label}
+                                                    <ArrowUpRightIcon className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </div>
                 </div>
             </header>

@@ -28,6 +28,12 @@ const models = [
 
 const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
     const [isOpen, setIsOpen] = useState(false);
+    
+    // Persona State
+    const [persona, setPersona] = useState<'Hawking' | 'Stephen'>('Hawking');
+    const [stephenLoaded, setStephenLoaded] = useState(false);
+    const [isSwitching, setIsSwitching] = useState(false);
+
     const [messages, setMessages] = useState<Message[]>([
         { role: 'model', text: "Hello. I am Hawking. How can I assist your studies today?" }
     ]);
@@ -85,22 +91,42 @@ const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
         if (chatContainerRef.current) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
         }
-    }, [messages, isOpen]);
+    }, [messages, isOpen, isSwitching]);
+
+    const handlePersonaSwitch = () => {
+        if (persona === 'Hawking') {
+            if (!stephenLoaded) {
+                setPersona('Stephen');
+                setIsSwitching(true);
+                setTimeout(() => {
+                    setIsSwitching(false);
+                    setStephenLoaded(true);
+                    setMessages(prev => [...prev, { role: 'model', text: "Stephen here. Ready to dive deeper?" }]);
+                }, 1500);
+            } else {
+                setPersona('Stephen');
+            }
+        } else {
+            setPersona('Hawking');
+        }
+    };
 
     const handleSendMessage = async () => {
         if (!inputValue.trim() || isLoading || !chat) return;
 
-        // Tool Redirection Logic
+        // Tool Redirection Logic - Identical to ProjectsView
         if (activeTool?.name === 'Debate') {
             setIsOpen(false);
             onNavigate('debate', { initialMessage: inputValue });
             setInputValue('');
+            setActiveTool(null);
             return;
         }
         if (activeTool?.name === 'Add Courses') {
             setIsOpen(false);
             onNavigate('add_courses', { topic: inputValue });
             setInputValue('');
+            setActiveTool(null);
             return;
         }
 
@@ -176,10 +202,23 @@ const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
                     >
                         {/* Header */}
                         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-neutral-50 dark:bg-[#1f1f1f]">
-                            <div className="flex items-center space-x-2">
-                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                                <span className="font-bold font-serif text-lg text-black dark:text-white">Hawking</span>
+                            {/* Toggle Switch */}
+                            <div 
+                                className="relative bg-gray-200 dark:bg-black rounded-full p-1 flex items-center cursor-pointer select-none h-8 w-40" 
+                                onClick={handlePersonaSwitch}
+                            >
+                                <motion.div 
+                                    className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-[#333] rounded-full shadow-sm"
+                                    initial={false}
+                                    animate={{ x: persona === 'Hawking' ? 0 : '100%' }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                />
+                                <div className="flex w-full justify-between items-center text-[11px] font-bold z-10 px-1">
+                                    <span className={`w-1/2 text-center transition-colors ${persona === 'Hawking' ? 'text-black dark:text-white' : 'text-gray-500'}`}>Hawking</span>
+                                    <span className={`w-1/2 text-center transition-colors ${persona === 'Stephen' ? 'text-black dark:text-white' : 'text-gray-500'}`}>Stephen</span>
+                                </div>
                             </div>
+
                             <button 
                                 onClick={() => setIsOpen(false)}
                                 className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
@@ -189,26 +228,42 @@ const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
                         </div>
 
                         {/* Messages Area */}
-                        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-white dark:bg-[#1a1a1a]">
-                            {messages.map((msg, idx) => (
-                                <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
-                                        msg.role === 'user' 
-                                            ? 'bg-black text-white rounded-br-none' 
-                                            : 'bg-gray-100 dark:bg-gray-800 text-black dark:text-gray-200 rounded-bl-none'
-                                    }`}>
-                                        {msg.text}
+                        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-white dark:bg-[#1a1a1a] relative">
+                            {isSwitching ? (
+                                <div className="space-y-4 animate-pulse">
+                                    <div className="flex justify-start">
+                                        <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded-2xl rounded-bl-none w-3/4"></div>
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <div className="h-12 bg-gray-200 dark:bg-gray-800 rounded-2xl rounded-br-none w-1/2"></div>
+                                    </div>
+                                    <div className="flex justify-start">
+                                        <div className="h-24 bg-gray-200 dark:bg-gray-800 rounded-2xl rounded-bl-none w-5/6"></div>
                                     </div>
                                 </div>
-                            ))}
-                            {isLoading && (
-                                <div className="flex justify-start">
-                                    <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-bl-none px-4 py-3 flex space-x-1">
-                                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div>
-                                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-75"></div>
-                                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-150"></div>
-                                    </div>
-                                </div>
+                            ) : (
+                                <>
+                                    {messages.map((msg, idx) => (
+                                        <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                            <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
+                                                msg.role === 'user' 
+                                                    ? 'bg-black text-white rounded-br-none' 
+                                                    : 'bg-gray-100 dark:bg-gray-800 text-black dark:text-gray-200 rounded-bl-none'
+                                            }`}>
+                                                {msg.text}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {isLoading && (
+                                        <div className="flex justify-start">
+                                            <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-bl-none px-4 py-3 flex space-x-1">
+                                                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div>
+                                                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-75"></div>
+                                                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-150"></div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
 
@@ -230,7 +285,7 @@ const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
                                     }} 
                                     onKeyPress={handleKeyPress}
                                     onFocus={() => setIsFocused(true)}
-                                    placeholder="Ask Hawking..."
+                                    placeholder={persona === 'Hawking' ? "Ask Hawking..." : "Ask Stephen..."}
                                     className={`w-full bg-transparent border-none focus:outline-none text-sm text-black dark:text-white placeholder-gray-500 px-4 py-3 resize-none transition-all font-medium`} 
                                     rows={1}
                                     style={{ minHeight: isFocused || inputValue.trim() ? '60px' : '48px' }}

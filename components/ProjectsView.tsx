@@ -9,6 +9,7 @@ import {
     UsersIcon, ExamPaperPenIcon, PlusIcon, PaperclipIcon, CheckIcon,
     MicIcon, XIcon, ProjectIcon, GlobeIcon, LockClosedIcon, UploadIcon
 } from './icons';
+import DebateView from './DebateView';
 
 interface ProjectsViewProps {
     onNavigate: (view: string, data?: any) => void;
@@ -278,6 +279,9 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
     const [isLearnTrackOpen, setIsLearnTrackOpen] = useState(true);
     const [viewMode, setViewMode] = useState<'complete' | 'incomplete'>('incomplete');
     
+    // Debate local state
+    const [isDebateStarted, setIsDebateStarted] = useState(false);
+
     // Chat State
     const [inputValue, setInputValue] = useState('');
     const [selectedModel, setSelectedModel] = useState('Auto');
@@ -337,8 +341,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
                 { 
                     label: 'Debates', 
                     id: 'debates', 
-                    icon: <DebatePodiumIcon className="w-4 h-4"/>,
-                    action: () => onNavigate('debate')
+                    icon: <DebatePodiumIcon className="w-4 h-4"/>
                 },
                 { label: 'Presentation', id: 'presentation', icon: <PresentationIcon className="w-4 h-4"/> },
                 { label: 'Q&A', id: 'qa', icon: <MessageCircleIcon className="w-4 h-4"/> },
@@ -354,7 +357,9 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
         
         // Special Navigation for Tools
         if (activeTool?.name === 'Debate') {
-            onNavigate('debate', { initialMessage: inputValue });
+            setActiveSection('debates');
+            setIsDebateStarted(true); // Auto-start debate if accessing via tool? Or maybe pass message
+            // Ideally we'd pass the initial message to the embedded DebateView
             return;
         }
         if (activeTool?.name === 'Add Courses') {
@@ -363,14 +368,14 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
         }
 
         setIsLoading(true);
-        setChatResponse(''); // Clear previous response if needed or append to a chat history
+        setChatResponse(''); 
         try {
             const response = await ai.models.generateContent({
                 model: 'gemini-3-flash-preview',
                 contents: inputValue
             });
             setChatResponse(response.text || '');
-            setInputValue(''); // Optional: clear input after send
+            setInputValue('');
         } catch (error) {
             console.error("GenAI Error:", error);
         } finally {
@@ -411,7 +416,6 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
         // Reddish for Incomplete, Greenish for Complete
         const isComplete = viewMode === 'complete';
         
-        // Revised styling to be strictly reddish for Incomplete and Greenish for Complete
         const cardBgClass = isComplete 
             ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-800 hover:border-green-400 dark:hover:border-green-600' 
             : 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600';
@@ -460,6 +464,31 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
             </div>
         );
     };
+
+    const renderDebates = () => {
+        if (!isDebateStarted) {
+            return (
+                <div className="flex flex-col items-center justify-center h-full w-full bg-white dark:bg-[#0b0b0b]">
+                    <div className="text-center space-y-6">
+                        <div className="w-24 h-24 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <DebatePodiumIcon className="w-12 h-12 text-orange-500" />
+                        </div>
+                        <h2 className="text-4xl font-bold dark:text-white text-black font-serif">Debate Arena</h2>
+                        <p className="text-gray-500 max-w-md mx-auto text-lg leading-relaxed">
+                            Challenge your perspectives. Engage in structured debates with an AI opponent to refine your critical thinking.
+                        </p>
+                        <button 
+                            onClick={() => setIsDebateStarted(true)}
+                            className="px-10 py-4 bg-black dark:bg-white text-white dark:text-black font-bold rounded-full hover:opacity-90 transition-all shadow-xl hover:shadow-2xl text-base"
+                        >
+                            Start Debate
+                        </button>
+                    </div>
+                </div>
+            )
+        }
+        return <DebateView />;
+    }
 
     return (
         <div className="flex h-full w-full bg-white dark:bg-[#0b0b0b] text-neutral-900 dark:text-neutral-100 overflow-hidden">
@@ -523,258 +552,262 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto pt-24 px-8 pb-12">
-                <div className="max-w-6xl mx-auto">
-                    {/* Hero */}
-                    <div className="text-center mb-10">
-                        <h1 className="text-3xl md:text-4xl font-bold mb-8" style={{ fontFamily: "'Lora', serif" }}>
-                            Stephen is hearing your questions
-                        </h1>
-                        
-                        {/* Cinematic Chat Box */}
-                        <div className="w-full max-w-3xl mx-auto mb-10">
-                            <div 
-                                ref={inputContainerRef}
-                                className={`relative dark:bg-[#111] bg-neutral-50 border border-gray-200 dark:border-[#1e1e1e] shadow-lg transition-all duration-300 ${
-                                    isFocused || inputValue.trim() ? 'rounded-[28px] ring-1 ring-neutral-300 dark:ring-white/10' : 'rounded-full hover:shadow-xl'
-                                }`}
-                            >
-                                <textarea 
-                                    ref={textareaRef} 
-                                    value={inputValue} 
-                                    onChange={(e) => {
-                                        setInputValue(e.target.value);
-                                        e.target.style.height = 'auto';
-                                        e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
-                                    }} 
-                                    onKeyPress={handleKeyPress}
-                                    onFocus={() => setIsFocused(true)}
-                                    placeholder="What do you want to know about yourself?"
-                                    className={`w-full bg-transparent border-none focus:outline-none text-lg text-black dark:text-white placeholder-gray-500 px-6 py-4 resize-none transition-all font-medium`} 
-                                    rows={1}
-                                    style={{ minHeight: isFocused || inputValue.trim() ? '72px' : '56px' }}
-                                />
-                                
-                                <div className={`flex items-center justify-between px-4 pb-3 transition-opacity duration-200 ${isFocused || inputValue.trim() ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
-                                    <div className="flex items-center space-x-2">
-                                        <div className="relative" ref={plusMenuRef}>
-                                            <button 
-                                                onClick={() => setIsPlusMenuOpen(!isPlusMenuOpen)}
-                                                className="p-2 rounded-full dark:hover:bg-white/10 hover:bg-neutral-200 text-gray-500 transition-colors"
-                                            >
-                                                <PlusIcon className="w-5 h-5" />
-                                            </button>
+            <main className={`flex-1 ${activeSection === 'debates' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`}>
+                {activeSection === 'debates' ? (
+                    renderDebates()
+                ) : (
+                    <div className="pt-24 px-8 pb-12 max-w-6xl mx-auto">
+                        {/* Hero */}
+                        <div className="text-center mb-10">
+                            <h1 className="text-3xl md:text-4xl font-bold mb-8" style={{ fontFamily: "'Lora', serif" }}>
+                                Stephen is hearing your questions
+                            </h1>
+                            
+                            {/* Cinematic Chat Box */}
+                            <div className="w-full max-w-3xl mx-auto mb-10">
+                                <div 
+                                    ref={inputContainerRef}
+                                    className={`relative dark:bg-[#111] bg-neutral-50 border border-gray-200 dark:border-[#1e1e1e] shadow-lg transition-all duration-300 ${
+                                        isFocused || inputValue.trim() ? 'rounded-[28px] ring-1 ring-neutral-300 dark:ring-white/10' : 'rounded-full hover:shadow-xl'
+                                    }`}
+                                >
+                                    <textarea 
+                                        ref={textareaRef} 
+                                        value={inputValue} 
+                                        onChange={(e) => {
+                                            setInputValue(e.target.value);
+                                            e.target.style.height = 'auto';
+                                            e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+                                        }} 
+                                        onKeyPress={handleKeyPress}
+                                        onFocus={() => setIsFocused(true)}
+                                        placeholder="What do you want to know about yourself?"
+                                        className={`w-full bg-transparent border-none focus:outline-none text-lg text-black dark:text-white placeholder-gray-500 px-6 py-4 resize-none transition-all font-medium`} 
+                                        rows={1}
+                                        style={{ minHeight: isFocused || inputValue.trim() ? '72px' : '56px' }}
+                                    />
+                                    
+                                    <div className={`flex items-center justify-between px-4 pb-3 transition-opacity duration-200 ${isFocused || inputValue.trim() ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
+                                        <div className="flex items-center space-x-2">
+                                            <div className="relative" ref={plusMenuRef}>
+                                                <button 
+                                                    onClick={() => setIsPlusMenuOpen(!isPlusMenuOpen)}
+                                                    className="p-2 rounded-full dark:hover:bg-white/10 hover:bg-neutral-200 text-gray-500 transition-colors"
+                                                >
+                                                    <PlusIcon className="w-5 h-5" />
+                                                </button>
+                                                <AnimatePresence>
+                                                    {isPlusMenuOpen && (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                            className="absolute bottom-full left-0 mb-2 w-48 dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl overflow-hidden py-1 z-50"
+                                                        >
+                                                            {[
+                                                                { label: 'Upload files', icon: <UploadIcon className="w-4 h-4" /> },
+                                                                { label: 'Add from Drive', icon: <div className="w-4 h-4 text-green-500"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l3.43 6h11.72l6.55-11.5-3.42-6H7.71zm8.87 1.5l3.4 6-3.27 5.75H5.43L8.7 5h7.88zm-6.55 1.7L4.57 16h6.86l5.46-9.28H10.03z"/></svg></div> }, // Simple SVG
+                                                                { label: 'Photos', icon: <div className="w-4 h-4 text-blue-500"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3.2"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg></div> },
+                                                                { label: 'NotebookLM', icon: <div className="w-4 h-4 text-purple-500"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div> },
+                                                            ].map((item) => (
+                                                                <button 
+                                                                    key={item.label}
+                                                                    onClick={() => setIsPlusMenuOpen(false)}
+                                                                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-[13px] dark:text-gray-300 text-gray-700 hover:dark:bg-white/5 hover:bg-gray-100 transition-colors"
+                                                                >
+                                                                    <div className="dark:text-white text-black opacity-70">{item.icon}</div>
+                                                                    <span className="font-medium">{item.label}</span>
+                                                                </button>
+                                                            ))}
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                            
+                                            {/* Tools Dropdown */}
+                                            <div className="relative" ref={toolsMenuRef}>
+                                                <button 
+                                                    onClick={() => setIsToolsOpen(!isToolsOpen)}
+                                                    className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border transition-colors text-xs font-bold ${isToolsOpen ? 'dark:bg-white/10 bg-neutral-200 border-gray-400 dark:border-white/20 text-black dark:text-white' : 'dark:hover:bg-white/10 hover:bg-neutral-200 border-transparent text-gray-500'}`}
+                                                >
+                                                    <AdjustIcon className="w-4 h-4" />
+                                                    <span>Tools</span>
+                                                    <ChevronDownIcon className={`w-3 h-3 transition-transform ${isToolsOpen ? 'rotate-180' : ''}`} />
+                                                </button>
+                                                
+                                                <AnimatePresence>
+                                                    {isToolsOpen && (
+                                                        <motion.div 
+                                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                            className="absolute top-full left-0 mt-2 w-56 dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-xl overflow-hidden py-1 z-50"
+                                                        >
+                                                            {toolsList.map((tool) => (
+                                                                <button 
+                                                                    key={tool.name}
+                                                                    onClick={() => handleToolClick(tool.name)}
+                                                                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-[13px] dark:text-gray-300 text-gray-700 hover:dark:bg-white/5 hover:bg-gray-100 transition-colors"
+                                                                >
+                                                                    <div className="text-gray-500 dark:text-gray-400">{tool.icon}</div>
+                                                                    <span className="font-medium">{tool.name}</span>
+                                                                </button>
+                                                            ))}
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+
+                                            {/* Active Tool Chip */}
                                             <AnimatePresence>
-                                                {isPlusMenuOpen && (
-                                                    <motion.div
-                                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                        className="absolute bottom-full left-0 mb-2 w-48 dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl overflow-hidden py-1 z-50"
+                                                {activeTool && (
+                                                    <motion.div 
+                                                        initial={{ opacity: 0, scale: 0.9, x: -10 }}
+                                                        animate={{ opacity: 1, scale: 1, x: 0 }}
+                                                        exit={{ opacity: 0, scale: 0.9, x: -10 }}
+                                                        className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full dark:bg-[#2a2a2a] bg-gray-200 border dark:border-white/10 border-gray-300 text-[11px] font-bold dark:text-white text-black"
                                                     >
-                                                        {[
-                                                            { label: 'Upload files', icon: <UploadIcon className="w-4 h-4" /> },
-                                                            { label: 'Add from Drive', icon: <div className="w-4 h-4 text-green-500"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l3.43 6h11.72l6.55-11.5-3.42-6H7.71zm8.87 1.5l3.4 6-3.27 5.75H5.43L8.7 5h7.88zm-6.55 1.7L4.57 16h6.86l5.46-9.28H10.03z"/></svg></div> }, // Simple SVG
-                                                            { label: 'Photos', icon: <div className="w-4 h-4 text-blue-500"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3.2"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg></div> },
-                                                            { label: 'NotebookLM', icon: <div className="w-4 h-4 text-purple-500"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div> },
-                                                        ].map((item) => (
-                                                            <button 
-                                                                key={item.label}
-                                                                onClick={() => setIsPlusMenuOpen(false)}
-                                                                className="w-full flex items-center space-x-3 px-4 py-2.5 text-[13px] dark:text-gray-300 text-gray-700 hover:dark:bg-white/5 hover:bg-gray-100 transition-colors"
-                                                            >
-                                                                <div className="dark:text-white text-black opacity-70">{item.icon}</div>
-                                                                <span className="font-medium">{item.label}</span>
-                                                            </button>
-                                                        ))}
+                                                        <div className="dark:text-white text-black">
+                                                            {activeTool.icon}
+                                                        </div>
+                                                        <span>{activeTool.name}</span>
+                                                        <button 
+                                                            onClick={() => setActiveTool(null)}
+                                                            className="ml-1 p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/20 text-gray-500 dark:text-gray-400"
+                                                        >
+                                                            <XIcon className="w-3 h-3" />
+                                                        </button>
                                                     </motion.div>
                                                 )}
                                             </AnimatePresence>
                                         </div>
                                         
-                                        {/* Tools Dropdown */}
-                                        <div className="relative" ref={toolsMenuRef}>
-                                            <button 
-                                                onClick={() => setIsToolsOpen(!isToolsOpen)}
-                                                className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border transition-colors text-xs font-bold ${isToolsOpen ? 'dark:bg-white/10 bg-neutral-200 border-gray-400 dark:border-white/20 text-black dark:text-white' : 'dark:hover:bg-white/10 hover:bg-neutral-200 border-transparent text-gray-500'}`}
-                                            >
-                                                <AdjustIcon className="w-4 h-4" />
-                                                <span>Tools</span>
-                                                <ChevronDownIcon className={`w-3 h-3 transition-transform ${isToolsOpen ? 'rotate-180' : ''}`} />
-                                            </button>
-                                            
-                                            <AnimatePresence>
-                                                {isToolsOpen && (
-                                                    <motion.div 
-                                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                        className="absolute top-full left-0 mt-2 w-56 dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-xl overflow-hidden py-1 z-50"
-                                                    >
-                                                        {toolsList.map((tool) => (
-                                                            <button 
-                                                                key={tool.name}
-                                                                onClick={() => handleToolClick(tool.name)}
-                                                                className="w-full flex items-center space-x-3 px-4 py-2.5 text-[13px] dark:text-gray-300 text-gray-700 hover:dark:bg-white/5 hover:bg-gray-100 transition-colors"
-                                                            >
-                                                                <div className="text-gray-500 dark:text-gray-400">{tool.icon}</div>
-                                                                <span className="font-medium">{tool.name}</span>
-                                                            </button>
-                                                        ))}
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-                                        </div>
-
-                                        {/* Active Tool Chip */}
-                                        <AnimatePresence>
-                                            {activeTool && (
-                                                <motion.div 
-                                                    initial={{ opacity: 0, scale: 0.9, x: -10 }}
-                                                    animate={{ opacity: 1, scale: 1, x: 0 }}
-                                                    exit={{ opacity: 0, scale: 0.9, x: -10 }}
-                                                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full dark:bg-[#2a2a2a] bg-gray-200 border dark:border-white/10 border-gray-300 text-[11px] font-bold dark:text-white text-black"
+                                        <div className="flex items-center space-x-3">
+                                            <div className="relative" ref={modelMenuRef}>
+                                                <button 
+                                                    onClick={() => setIsModelMenuOpen(!isModelMenuOpen)}
+                                                    className="flex items-center space-x-1 text-xs font-bold text-gray-500 hover:text-black dark:hover:text-white transition-colors"
                                                 >
-                                                    <div className="dark:text-white text-black">
-                                                        {activeTool.icon}
-                                                    </div>
-                                                    <span>{activeTool.name}</span>
-                                                    <button 
-                                                        onClick={() => setActiveTool(null)}
-                                                        className="ml-1 p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/20 text-gray-500 dark:text-gray-400"
-                                                    >
-                                                        <XIcon className="w-3 h-3" />
-                                                    </button>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-                                    </div>
-                                    
-                                    <div className="flex items-center space-x-3">
-                                        <div className="relative" ref={modelMenuRef}>
-                                            <button 
-                                                onClick={() => setIsModelMenuOpen(!isModelMenuOpen)}
-                                                className="flex items-center space-x-1 text-xs font-bold text-gray-500 hover:text-black dark:hover:text-white transition-colors"
-                                            >
-                                                <span>{selectedModel}</span>
-                                                <ChevronDownIcon className={`w-3 h-3 transition-transform ${isModelMenuOpen ? 'rotate-180' : ''}`} />
+                                                    <span>{selectedModel}</span>
+                                                    <ChevronDownIcon className={`w-3 h-3 transition-transform ${isModelMenuOpen ? 'rotate-180' : ''}`} />
+                                                </button>
+                                                
+                                                <AnimatePresence>
+                                                    {isModelMenuOpen && (
+                                                        <motion.div 
+                                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                            className="absolute bottom-full right-0 mb-2 w-48 dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-xl overflow-hidden py-1 z-50"
+                                                        >
+                                                            {models.map((m) => (
+                                                                <button 
+                                                                    key={m.name}
+                                                                    onClick={() => { setSelectedModel(m.name); setIsModelMenuOpen(false); }}
+                                                                    className="w-full flex items-center justify-between px-4 py-2.5 text-[12px] dark:text-gray-300 text-gray-700 hover:dark:bg-white/5 hover:bg-gray-100 transition-colors"
+                                                                >
+                                                                    <span className={selectedModel === m.name ? "font-bold text-orange-500" : ""}>{m.name}</span>
+                                                                    {selectedModel === m.name && <CheckIcon className="w-3 h-3 text-orange-500" />}
+                                                                </button>
+                                                            ))}
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+
+                                            <button className="p-2 text-gray-500 hover:text-black dark:hover:text-white transition-colors">
+                                                <MicIcon className="w-5 h-5" />
                                             </button>
-                                            
-                                            <AnimatePresence>
-                                                {isModelMenuOpen && (
-                                                    <motion.div 
-                                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                        className="absolute bottom-full right-0 mb-2 w-48 dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-xl overflow-hidden py-1 z-50"
-                                                    >
-                                                        {models.map((m) => (
-                                                            <button 
-                                                                key={m.name}
-                                                                onClick={() => { setSelectedModel(m.name); setIsModelMenuOpen(false); }}
-                                                                className="w-full flex items-center justify-between px-4 py-2.5 text-[12px] dark:text-gray-300 text-gray-700 hover:dark:bg-white/5 hover:bg-gray-100 transition-colors"
-                                                            >
-                                                                <span className={selectedModel === m.name ? "font-bold text-orange-500" : ""}>{m.name}</span>
-                                                                {selectedModel === m.name && <CheckIcon className="w-3 h-3 text-orange-500" />}
-                                                            </button>
-                                                        ))}
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
+                                            <button 
+                                                onClick={handleSendMessage}
+                                                disabled={isLoading || !inputValue.trim()}
+                                                className={`p-2 rounded-full transition-all ${inputValue.trim() ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-transparent text-gray-600'}`}
+                                            >
+                                                <ArrowUpIcon className="w-5 h-5" />
+                                            </button>
                                         </div>
-
-                                        <button className="p-2 text-gray-500 hover:text-black dark:hover:text-white transition-colors">
-                                            <MicIcon className="w-5 h-5" />
-                                        </button>
-                                        <button 
-                                            onClick={handleSendMessage}
-                                            disabled={isLoading || !inputValue.trim()}
-                                            className={`p-2 rounded-full transition-all ${inputValue.trim() ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-transparent text-gray-600'}`}
-                                        >
-                                            <ArrowUpIcon className="w-5 h-5" />
-                                        </button>
                                     </div>
-                                </div>
 
-                                {!isFocused && !inputValue.trim() && (
-                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center space-x-4">
-                                        <div className="flex items-center space-x-1 text-xs font-bold text-gray-500">
-                                            <span>{selectedModel}</span>
-                                            <ChevronDownIcon className="w-3 h-3" />
+                                    {!isFocused && !inputValue.trim() && (
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center space-x-4">
+                                            <div className="flex items-center space-x-1 text-xs font-bold text-gray-500">
+                                                <span>{selectedModel}</span>
+                                                <ChevronDownIcon className="w-3 h-3" />
+                                            </div>
+                                            <MicIcon className="w-5 h-5 text-gray-500" />
                                         </div>
-                                        <MicIcon className="w-5 h-5 text-gray-500" />
+                                    )}
+                                </div>
+                                
+                                {/* Chat Response Display */}
+                                {chatResponse && (
+                                    <div className="mt-6 p-6 rounded-2xl dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-neutral-200 animate-in fade-in slide-in-from-bottom-2">
+                                        <div className="prose dark:prose-invert max-w-none text-sm leading-relaxed">
+                                            {chatResponse}
+                                        </div>
                                     </div>
                                 )}
                             </div>
-                            
-                            {/* Chat Response Display */}
-                            {chatResponse && (
-                                <div className="mt-6 p-6 rounded-2xl dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-neutral-200 animate-in fade-in slide-in-from-bottom-2">
-                                    <div className="prose dark:prose-invert max-w-none text-sm leading-relaxed">
-                                        {chatResponse}
+
+                            {/* Controls Row */}
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+                                <div className="flex items-center gap-3 w-full md:w-auto">
+                                    <button className="flex items-center px-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Recent <ChevronDownIcon className="w-4 h-4 ml-2"/>
+                                    </button>
+                                    <button className="px-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Projects
+                                    </button>
+                                </div>
+                                
+                                <div className="flex items-center gap-3 w-full md:w-auto">
+                                    <div className="relative flex-grow md:flex-grow-0">
+                                        <input 
+                                            type="text" 
+                                            placeholder="Search catalog" 
+                                            className="w-full md:w-64 pl-9 pr-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                        />
+                                        <SearchIcon className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2"/>
                                     </div>
+                                    <button className="flex items-center px-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                                        <AdjustIcon className="w-4 h-4 mr-2"/> Filters
+                                    </button>
                                 </div>
-                            )}
-                        </div>
+                            </div>
 
-                        {/* Controls Row - Reordered */}
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
-                            <div className="flex items-center gap-3 w-full md:w-auto">
-                                <button className="flex items-center px-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Recent <ChevronDownIcon className="w-4 h-4 ml-2"/>
-                                </button>
-                                <button className="px-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Projects
-                                </button>
+                            {/* Toggle Switch */}
+                            <div className="flex items-center justify-start mb-8">
+                                <div className="bg-neutral-100 dark:bg-[#1a1a1a] p-1 rounded-lg flex items-center border border-neutral-200 dark:border-gray-800">
+                                    <button 
+                                        onClick={() => setViewMode('incomplete')}
+                                        className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${viewMode === 'incomplete' ? 'bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                                    >
+                                        Incomplete
+                                    </button>
+                                    <button 
+                                        onClick={() => setViewMode('complete')}
+                                        className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${viewMode === 'complete' ? 'bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                                    >
+                                        Complete
+                                    </button>
+                                </div>
                             </div>
                             
-                            <div className="flex items-center gap-3 w-full md:w-auto">
-                                <div className="relative flex-grow md:flex-grow-0">
-                                    <input 
-                                        type="text" 
-                                        placeholder="Search catalog" 
-                                        className="w-full md:w-64 pl-9 pr-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                                    />
-                                    <SearchIcon className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2"/>
-                                </div>
-                                <button className="flex items-center px-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                                    <AdjustIcon className="w-4 h-4 mr-2"/> Filters
-                                </button>
+                            {/* Results Count */}
+                            <div className="text-left mb-6 text-sm text-gray-500">
+                                {viewMode === 'incomplete' ? incompleteItems.length : completeItems.length} results
                             </div>
-                        </div>
 
-                        {/* Toggle Switch */}
-                        <div className="flex items-center justify-start mb-8">
-                            <div className="bg-neutral-100 dark:bg-[#1a1a1a] p-1 rounded-lg flex items-center border border-neutral-200 dark:border-gray-800">
-                                <button 
-                                    onClick={() => setViewMode('incomplete')}
-                                    className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${viewMode === 'incomplete' ? 'bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-                                >
-                                    Incomplete
-                                </button>
-                                <button 
-                                    onClick={() => setViewMode('complete')}
-                                    className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${viewMode === 'complete' ? 'bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-                                >
-                                    Complete
-                                </button>
+                            {/* Cards Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
+                                {viewMode === 'incomplete' 
+                                    ? incompleteItems.map((item, idx) => renderCard(item, idx))
+                                    : completeItems.map((item, idx) => renderCard(item, idx))
+                                }
                             </div>
-                        </div>
-                        
-                        {/* Results Count */}
-                        <div className="text-left mb-6 text-sm text-gray-500">
-                            {viewMode === 'incomplete' ? incompleteItems.length : completeItems.length} results
-                        </div>
-
-                        {/* Cards Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
-                            {viewMode === 'incomplete' 
-                                ? incompleteItems.map((item, idx) => renderCard(item, idx))
-                                : completeItems.map((item, idx) => renderCard(item, idx))
-                            }
                         </div>
                     </div>
-                </div>
+                )}
             </main>
 
             <AnimatePresence>
