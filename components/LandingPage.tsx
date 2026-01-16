@@ -34,12 +34,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
 
     // Navigation Structure
     const navLinks = [
-        { name: 'About', key: 'edgram' }, // Replacing Collab with About for now to match prompt "About Features..." flow
+        { name: 'About', key: 'edgram' }, // Replacing Collab with About for now
         { name: 'Features', key: 'features', hasDropdown: true },
-        { name: 'Learn', key: 'learn', hasDropdown: false }, // Placeholder link
+        { name: 'Learn', key: 'learn', hasDropdown: true }, 
         { name: 'Business', key: 'business', hasDropdown: true },
         { name: 'Pricing', key: 'pricing', hasDropdown: true },
-        { name: 'Enterprise', key: 'enterprise', hasDropdown: true }, // Keeping existing enterprise logic
+        { name: 'Enterprise', key: 'enterprise', hasDropdown: true },
         { name: 'Download', key: 'download', hasDropdown: false },
     ];
 
@@ -51,6 +51,29 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
         { name: 'Learning network', key: 'edgram', desc: 'Connect with peers' },
         { name: 'Structurize learning', key: 'add_courses', desc: 'Guided paths' },
     ];
+
+    const learnData = {
+        for: [
+            { name: 'Students', key: 'students' },
+            { name: 'University Educators', key: 'educators' },
+            { name: 'Teachers', key: 'teachers' },
+            { name: 'Scientists', key: 'scientists' },
+            { name: 'Parents', key: 'parents' },
+            { name: 'Veterans', key: 'veterans' },
+        ],
+        inspiration: [
+            { name: 'Student Writing Guide', key: 'writing_guide' },
+            { name: 'Recipes and Cooking', key: 'recipes' },
+        ],
+        waysToUse: [
+            { name: 'Canva in Stephen', key: 'canva' },
+            { name: 'Spotify in Stephen', key: 'spotify' },
+            { name: 'Chat with PDFs', key: 'pdf' },
+            { name: 'Chat with Presentations', key: 'ppt' },
+            { name: 'Chat with Spreadsheets', key: 'xls' },
+            { name: 'For College Students', key: 'college' },
+        ]
+    };
 
     const businessData = {
         main: [
@@ -87,17 +110,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
         visible: {
             opacity: 1,
             transition: {
-                staggerChildren: 0.1,
+                staggerChildren: 0.15,
+                delayChildren: 0.2
             },
         },
     };
 
     const itemVariants: Variants = {
-        hidden: { y: 20, opacity: 0 },
+        hidden: { y: 60, opacity: 0, rotateX: -10 },
         visible: {
             y: 0,
             opacity: 1,
-            transition: { type: 'spring', stiffness: 100 },
+            rotateX: 0,
+            transition: { 
+                type: 'spring', 
+                stiffness: 70,
+                damping: 20,
+                duration: 0.8
+            },
         },
     };
 
@@ -125,35 +155,106 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
         }
     };
 
+    // Shared styles for the liquid glass effect dropdowns
+    const dropdownClasses = `rounded-xl border shadow-2xl backdrop-blur-xl overflow-hidden py-2 ${theme === 'dark' ? 'bg-black/80 border-white/10 text-white' : 'bg-white/80 border-gray-200 text-black'}`;
+
     const renderHomeView = () => (
         <>
+            <style>{`
+                @keyframes text-shine-unified {
+                    0% { background-position: -150vw 0; }
+                    100% { background-position: 50vw 0; }
+                }
+            `}</style>
             {/* Hero Section */}
             <motion.section 
-                className="relative text-center py-48 md:py-64 px-4"
+                className="relative text-center min-h-[90vh] flex flex-col justify-center items-center px-4 overflow-hidden pt-32"
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
             >
-                <motion.h1 
-                    variants={itemVariants}
-                    className="text-5xl md:text-7xl font-medium mb-6" 
-                    style={{ fontFamily: "'Lora', serif", color: theme === 'dark' ? '#f5f5f5' : '#171717' }}
+                <div className="flex flex-col items-center justify-center max-w-[95vw]">
+                    <motion.div variants={itemVariants}>
+                        <h1 
+                            className={`font-display leading-[0.9] text-center bg-clip-text text-transparent`}
+                            style={{ 
+                                fontSize: 'clamp(4rem, 14vw, 12rem)',
+                                backgroundImage: theme === 'dark' 
+                                    ? 'linear-gradient(to right, #525252 0%, #525252 40%, #ffffff 50%, #525252 60%, #525252 100%)' 
+                                    : 'linear-gradient(to right, #9ca3af 0%, #9ca3af 40%, #000000 50%, #9ca3af 60%, #9ca3af 100%)',
+                                backgroundSize: '200vw auto',
+                                backgroundAttachment: 'fixed',
+                                animation: 'text-shine-unified 5s linear infinite'
+                            }}
+                        >
+                            Your gateway to
+                        </h1>
+                    </motion.div>
+                    <motion.div variants={itemVariants} className="mb-10">
+                        <h1 
+                            className="font-display leading-[0.9] text-center" 
+                            style={{ 
+                                fontSize: 'clamp(4rem, 14vw, 12rem)',
+                            }}
+                        >
+                            <span 
+                                className={`bg-clip-text text-transparent`}
+                                style={{ 
+                                    backgroundImage: theme === 'dark' 
+                                        ? 'linear-gradient(to right, #525252 0%, #525252 40%, #ffffff 50%, #525252 60%, #525252 100%)' 
+                                        : 'linear-gradient(to right, #9ca3af 0%, #9ca3af 40%, #000000 50%, #9ca3af 60%, #9ca3af 100%)',
+                                    backgroundSize: '200vw auto',
+                                    backgroundAttachment: 'fixed',
+                                    animation: 'text-shine-unified 5s linear infinite'
+                                }}
+                            >
+                                world-class{' '}
+                            </span>
+                            <span 
+                                className={`inline-block bg-clip-text text-transparent`}
+                                style={{ 
+                                    backgroundImage: theme === 'dark'
+                                        ? 'linear-gradient(to right, #FF5A1A 0%, #FF5A1A 40%, #ffffff 50%, #FF5A1A 60%, #FF5A1A 100%)'
+                                        : 'linear-gradient(to right, #FF5A1A 0%, #FF5A1A 40%, #000000 50%, #FF5A1A 60%, #FF5A1A 100%)',
+                                    backgroundSize: '200vw auto',
+                                    backgroundAttachment: 'fixed',
+                                    animation: 'text-shine-unified 5s linear infinite'
+                                }}
+                            >
+                                {"learning.".split("").map((char, i) => (
+                                    <span
+                                        key={i}
+                                        className={`transition-colors duration-300 cursor-default ${
+                                            theme === 'dark'
+                                            ? 'hover:text-white'
+                                            : 'hover:text-black'
+                                        }`}
+                                    >
+                                        {char}
+                                    </span>
+                                ))}
+                            </span>
+                        </h1>
+                    </motion.div>
+                </div>
+
+                <motion.p 
+                    variants={itemVariants} 
+                    className={`max-w-xl mx-auto text-lg md:text-xl mb-12 ${theme === 'dark' ? 'text-neutral-400' : 'text-neutral-600'} font-light`}
                 >
-                    Your gateway to<br/>world-class<br/>learning.
-                </motion.h1>
-                <motion.p variants={itemVariants} className={`max-w-xl mx-auto text-lg mb-10 ${theme === 'dark' ? 'text-neutral-400' : 'text-neutral-500'}`}>
                     Personalized, scientific, real-world learning — at your pace.
                 </motion.p>
-                <motion.div variants={itemVariants} className="flex justify-center items-center space-x-4">
+                
+                <motion.div variants={itemVariants} className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
                         <button
                         onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-                        className={`font-semibold px-6 py-3 rounded-lg border transition-colors ${theme === 'dark' ? 'border-neutral-700 text-white hover:bg-neutral-800' : 'border-neutral-300 text-black hover:bg-neutral-100'}`}
+                        className={`font-semibold px-8 py-3.5 rounded-full border transition-all text-base ${theme === 'dark' ? 'border-neutral-700 text-white hover:bg-neutral-800' : 'border-neutral-300 text-black hover:bg-neutral-100'}`}
                     >
                         See Features
                     </button>
                     <button
                         onClick={() => onStartLearning()}
-                        className="bg-[#FF5A1A] text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
+                        className="bg-[#FF5A1A] text-white font-semibold px-8 py-3.5 rounded-full hover:bg-[#ff7a45] transition-all shadow-lg hover:shadow-orange-500/20 text-base"
                     >
                         Start Learning
                     </button>
@@ -161,11 +262,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
             </motion.section>
 
             {/* Features Section */}
-            <section id="features" className={`py-24 px-4 ${theme === 'dark' ? 'bg-black/50' : 'bg-white'}`}>
+            <section id="features" className={`py-32 px-6 ${theme === 'dark' ? 'bg-black/50' : 'bg-white'}`}>
                 <div className="container mx-auto">
-                    <div className="text-center mb-12">
-                        <h2 className={`text-3xl md:text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'}`} style={{ fontFamily: "'Lora', serif" }}>Unlock Your Learning Potential</h2>
-                        <p className={`${theme === 'dark' ? 'text-neutral-400' : 'text-neutral-500'} mt-4 max-w-xl mx-auto`}>
+                    <div className="text-center mb-20">
+                        <h2 className={`text-4xl md:text-5xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'}`} style={{ fontFamily: "'Lora', serif" }}>Unlock Your Learning Potential</h2>
+                        <p className={`${theme === 'dark' ? 'text-neutral-400' : 'text-neutral-500'} mt-6 text-xl max-w-2xl mx-auto font-light`}>
                             From lectures to articles, Stephen provides a suite of powerful tools to help you master any subject.
                         </p>
                     </div>
@@ -211,11 +312,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
             </section>
             
             {/* CTA Section */}
-            <section className="py-24 text-center px-4">
-                    <h2 className={`text-3xl md:text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'} mb-6`} style={{ fontFamily: "'Lora', serif" }}>Ready to Transform How You Learn?</h2>
+            <section className="py-32 text-center px-6">
+                    <h2 className={`text-4xl md:text-6xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'} mb-10`} style={{ fontFamily: "'Lora', serif" }}>Ready to Transform How You Learn?</h2>
                     <button
                     onClick={() => onStartLearning()}
-                    className="bg-[#FF5A1A] text-white font-semibold px-8 py-3 rounded-lg hover:opacity-90 transition-opacity"
+                    className="bg-[#FF5A1A] text-white font-semibold px-10 py-4 rounded-full hover:bg-[#ff7a45] transition-all shadow-xl hover:shadow-orange-500/30 text-lg"
                 >
                     Get Started for Free
                 </button>
@@ -225,11 +326,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
 
     return (
         <div className={`w-full min-h-screen flex flex-col ${theme === 'dark' ? 'text-neutral-200' : 'text-neutral-800'}`}>
-            <header className="absolute top-0 left-0 right-0 z-50 px-6 py-4">
+            <header className="absolute top-0 left-0 right-0 z-50 px-6 py-6">
                 <div className="container mx-auto flex items-center justify-between">
                     {/* Left: Logo */}
                     <div className="flex items-center">
-                        <button onClick={() => setCurrentView('home')} className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'} flex items-center tracking-tight`} style={{ fontFamily: "'Lora', serif" }}>
+                        <button onClick={() => setCurrentView('home')} className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'} flex items-center tracking-tight`} style={{ fontFamily: "'Lora', serif" }}>
                             Stephen
                             {getLogoSuffix() && (
                                 <span className={`ml-2 text-xl font-normal ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
@@ -259,9 +360,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
                                             else onStartLearning(link.key);
                                         }
                                     }} 
-                                    className={`flex items-center text-sm font-medium px-3 py-2 rounded-md transition-colors ${
+                                    className={`flex items-center text-sm font-medium px-4 py-2 rounded-full transition-all ${
                                         isSelected 
-                                        ? 'text-black dark:text-white font-bold' 
+                                        ? 'bg-white/10 text-white font-bold backdrop-blur-sm' 
                                         : (theme === 'dark' ? 'text-neutral-300 hover:text-white' : 'text-neutral-600 hover:text-black')
                                     }`}
                                 >
@@ -269,39 +370,75 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
                                 </button>
 
                                 {link.hasDropdown && activeDropdown === link.key && (
-                                    <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50 w-max">
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 z-50 w-max">
                                         {/* FEATURES DROPDOWN */}
                                         {link.key === 'features' && (
-                                            <div className={`rounded-xl border shadow-xl overflow-hidden py-2 ${theme === 'dark' ? 'bg-[#1a1a1a] border-gray-800' : 'bg-white border-gray-200'}`}>
-                                                <div className="flex flex-col w-56">
+                                            <div className={dropdownClasses}>
+                                                <div className="flex flex-col w-64">
                                                     {featuresData.map(item => (
-                                                        <button key={item.key} onClick={() => handleDropdownClick(item.key)} className={`px-4 py-2.5 text-left hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors group`}>
-                                                            <div className="text-sm font-medium dark:text-white text-black">{item.name}</div>
-                                                            <div className="text-xs text-gray-500">{item.desc}</div>
+                                                        <button key={item.key} onClick={() => handleDropdownClick(item.key)} className={`px-5 py-3 text-left hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors group`}>
+                                                            <div className="text-sm font-bold mb-0.5">{item.name}</div>
+                                                            <div className="text-xs opacity-60">{item.desc}</div>
                                                         </button>
                                                     ))}
                                                 </div>
                                             </div>
                                         )}
 
-                                        {/* BUSINESS DROPDOWN */}
-                                        {link.key === 'business' && (
-                                            <div className={`rounded-xl border shadow-xl overflow-hidden p-6 grid grid-cols-2 gap-8 w-[500px] ${theme === 'dark' ? 'bg-[#1a1a1a] border-gray-800' : 'bg-white border-gray-200'}`}>
+                                        {/* LEARN DROPDOWN (NEW) */}
+                                        {link.key === 'learn' && (
+                                            <div className={`${dropdownClasses} grid grid-cols-3 gap-8 p-6 w-[700px]`}>
                                                 <div>
-                                                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Business</h4>
+                                                    <h4 className="text-xs font-bold opacity-50 uppercase tracking-wider mb-4">Stephen for</h4>
                                                     <div className="flex flex-col space-y-3">
-                                                        {businessData.main.map(item => (
-                                                            <button key={item.key} onClick={() => handleDropdownClick(item.key)} className="text-sm font-medium text-left dark:text-white text-black hover:opacity-70 transition-opacity">
+                                                        {learnData.for.map(item => (
+                                                            <button key={item.key} onClick={() => onStartLearning()} className="text-sm font-medium text-left hover:opacity-70 transition-opacity">
                                                                 {item.name}
                                                             </button>
                                                         ))}
                                                     </div>
                                                 </div>
-                                                <div className={`pl-8 border-l ${theme === 'dark' ? 'border-gray-800' : 'border-gray-200'}`}>
-                                                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">AI solutions for</h4>
+                                                <div className={`pl-8 border-l ${theme === 'dark' ? 'border-white/10' : 'border-black/10'}`}>
+                                                    <h4 className="text-xs font-bold opacity-50 uppercase tracking-wider mb-4">Inspiration</h4>
+                                                    <div className="flex flex-col space-y-3">
+                                                        {learnData.inspiration.map(item => (
+                                                            <button key={item.key} onClick={() => onStartLearning()} className="text-sm font-medium text-left hover:opacity-70 transition-opacity">
+                                                                {item.name}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div className={`pl-8 border-l ${theme === 'dark' ? 'border-white/10' : 'border-black/10'}`}>
+                                                    <h4 className="text-xs font-bold opacity-50 uppercase tracking-wider mb-4">Ways to Use</h4>
+                                                    <div className="flex flex-col space-y-3">
+                                                        {learnData.waysToUse.map(item => (
+                                                            <button key={item.key} onClick={() => onStartLearning()} className="text-sm font-medium text-left hover:opacity-70 transition-opacity">
+                                                                {item.name}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* BUSINESS DROPDOWN */}
+                                        {link.key === 'business' && (
+                                            <div className={`${dropdownClasses} p-6 grid grid-cols-2 gap-8 w-[500px]`}>
+                                                <div>
+                                                    <h4 className="text-xs font-bold opacity-50 uppercase tracking-wider mb-4">Business</h4>
+                                                    <div className="flex flex-col space-y-3">
+                                                        {businessData.main.map(item => (
+                                                            <button key={item.key} onClick={() => handleDropdownClick(item.key)} className="text-sm font-medium text-left hover:opacity-70 transition-opacity">
+                                                                {item.name}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div className={`pl-8 border-l ${theme === 'dark' ? 'border-white/10' : 'border-black/10'}`}>
+                                                    <h4 className="text-xs font-bold opacity-50 uppercase tracking-wider mb-4">AI solutions for</h4>
                                                     <div className="flex flex-col space-y-3">
                                                         {businessData.solutions.map(item => (
-                                                            <button key={item.key} onClick={() => handleDropdownClick(item.key)} className="text-sm font-medium text-left dark:text-white text-black hover:opacity-70 transition-opacity">
+                                                            <button key={item.key} onClick={() => handleDropdownClick(item.key)} className="text-sm font-medium text-left hover:opacity-70 transition-opacity">
                                                                 {item.name}
                                                             </button>
                                                         ))}
@@ -312,10 +449,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
 
                                         {/* PRICING DROPDOWN */}
                                         {link.key === 'pricing' && (
-                                            <div className={`rounded-xl border shadow-xl overflow-hidden py-2 w-48 ${theme === 'dark' ? 'bg-[#1a1a1a] border-gray-800' : 'bg-white border-gray-200'}`}>
+                                            <div className={`${dropdownClasses} w-48`}>
                                                 <div className="flex flex-col">
                                                     {pricingData.map(item => (
-                                                        <button key={item.key} onClick={() => handleDropdownClick(item.key)} className="px-5 py-2.5 text-left text-sm font-medium dark:text-white text-black hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors">
+                                                        <button key={item.key} onClick={() => handleDropdownClick(item.key)} className="px-5 py-2.5 text-left text-sm font-medium hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors">
                                                             {item.name}
                                                         </button>
                                                     ))}
@@ -323,19 +460,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
                                             </div>
                                         )}
 
-                                        {/* ENTERPRISE DROPDOWN (Existing) */}
+                                        {/* ENTERPRISE DROPDOWN */}
                                         {link.key === 'enterprise' && (
-                                            <div className={`rounded-xl border shadow-xl overflow-hidden py-2 w-56 ${theme === 'dark' ? 'bg-[#1a1a1a] border-gray-800' : 'bg-white border-neutral-200'}`}>
+                                            <div className={`${dropdownClasses} w-56`}>
                                                 <div className="flex flex-col">
                                                     {enterpriseDropdownItems.map((item) => (
                                                         <button
                                                             key={item.name}
                                                             onClick={() => handleDropdownClick(item.key)} 
-                                                            className={`px-5 py-2.5 text-left text-sm transition-colors duration-200 ${
-                                                                theme === 'dark' 
-                                                                ? 'text-gray-400 hover:text-white hover:bg-white/10' 
-                                                                : 'text-gray-600 hover:text-black hover:bg-gray-100'
-                                                            }`}
+                                                            className={`px-5 py-2.5 text-left text-sm font-medium transition-colors duration-200 hover:bg-neutral-100 dark:hover:bg-white/5`}
                                                         >
                                                             {item.name}
                                                         </button>
@@ -354,10 +487,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
                         <button onClick={toggleTheme} className={`p-2 rounded-full ${theme === 'dark' ? 'text-neutral-400 hover:bg-neutral-800' : 'text-neutral-500 hover:bg-neutral-200'} transition-colors`}>
                             {theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
                         </button>
-                        <button onClick={() => onAuth('login')} className={`px-4 py-2 text-sm font-semibold rounded-full ${theme === 'dark' ? 'text-white hover:bg-neutral-800' : 'text-black hover:bg-neutral-100'} transition-colors`}>
+                        <button onClick={() => onAuth('login')} className={`px-5 py-2.5 text-sm font-bold rounded-full ${theme === 'dark' ? 'text-white hover:bg-neutral-800' : 'text-black hover:bg-neutral-100'} transition-colors`}>
                             Log in
                         </button>
-                        <button onClick={() => onAuth('signup')} className={`px-4 py-2 text-sm font-semibold rounded-full bg-white text-black hover:opacity-90 transition-opacity border ${theme === 'dark' ? 'border-transparent' : 'border-gray-300'}`}>
+                        <button onClick={() => onAuth('signup')} className={`px-5 py-2.5 text-sm font-bold rounded-full bg-white text-black hover:opacity-90 transition-opacity border ${theme === 'dark' ? 'border-transparent' : 'border-gray-300'}`}>
                             Sign up for free
                         </button>
                         
@@ -375,27 +508,27 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
                                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                        className={`absolute right-0 top-full mt-2 w-64 rounded-xl shadow-2xl border overflow-hidden py-2 z-50 ${theme === 'dark' ? 'bg-[#1a1a1a] border-gray-800' : 'bg-white border-gray-200'}`}
+                                        className={`absolute right-0 top-full mt-2 w-64 ${dropdownClasses} z-50`}
                                     >
                                         <div className="flex flex-col">
                                             {[
                                                 { label: 'See plans and pricing', action: () => onStartLearning('pricing') },
                                                 { label: 'Settings', action: () => {} }, // Placeholder
                                             ].map((item, idx) => (
-                                                <button key={idx} onClick={() => { item.action(); setIsHelpOpen(false); }} className="w-full text-left px-5 py-2.5 text-sm font-medium dark:text-gray-200 text-gray-700 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors flex items-center justify-between group">
+                                                <button key={idx} onClick={() => { item.action(); setIsHelpOpen(false); }} className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors flex items-center justify-between group">
                                                     {item.label}
                                                     <ArrowUpRightIcon className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 </button>
                                             ))}
                                             
-                                            <div className={`my-2 border-t ${theme === 'dark' ? 'border-gray-800' : 'border-gray-100'}`} />
+                                            <div className={`my-2 border-t ${theme === 'dark' ? 'border-white/10' : 'border-black/10'}`} />
                                             
                                             {[
                                                 { label: 'Help center' },
                                                 { label: 'Release notes' },
                                                 { label: 'Terms & policies' },
                                             ].map((item, idx) => (
-                                                <button key={idx} className="w-full text-left px-5 py-2.5 text-sm font-medium dark:text-gray-200 text-gray-700 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors flex items-center justify-between group">
+                                                <button key={idx} className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors flex items-center justify-between group">
                                                     {item.label}
                                                     <ArrowUpRightIcon className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 </button>
@@ -409,7 +542,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
                 </div>
             </header>
 
-            <main className="flex-grow pt-20">
+            <main className="flex-grow pt-0">
                 {currentView === 'home' ? renderHomeView() : <EnterpriseView theme={theme} onStartLearning={onStartLearning} type={enterpriseType} />}
             </main>
 

@@ -7,7 +7,8 @@ import {
     DebatePodiumIcon, PresentationIcon, FlashIcon, ChevronRightIcon, 
     SearchIcon, ChevronDownIcon, AdjustIcon, ArrowUpIcon, TrophyIcon, 
     UsersIcon, ExamPaperPenIcon, PlusIcon, PaperclipIcon, CheckIcon,
-    MicIcon, XIcon, ProjectIcon, GlobeIcon, LockClosedIcon, UploadIcon
+    MicIcon, XIcon, ProjectIcon, GlobeIcon, LockClosedIcon, UploadIcon,
+    ChevronLeftIcon
 } from './icons';
 import DebateView from './DebateView';
 
@@ -276,8 +277,9 @@ const AddProjectModal = ({ onClose }: { onClose: () => void }) => {
 
 const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
     const [activeSection, setActiveSection] = useState('overview');
-    const [isLearnTrackOpen, setIsLearnTrackOpen] = useState(true);
+    const [sidebarView, setSidebarView] = useState<'main' | 'learn_track'>('main');
     const [viewMode, setViewMode] = useState<'complete' | 'incomplete'>('incomplete');
+    const [justReturned, setJustReturned] = useState(false);
     
     // Debate local state
     const [isDebateStarted, setIsDebateStarted] = useState(false);
@@ -328,29 +330,38 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const sidebarItems = [
+    // Sidebar Configurations
+    const mainSidebarItems = [
         { type: 'section', label: 'Overview', id: 'overview', icon: <HomeIcon className="w-5 h-5"/> },
         { 
-            type: 'folder', 
+            type: 'action', 
             label: 'Learn Track', 
             id: 'learn_track', 
             icon: <BookOpenIcon className="w-5 h-5"/>,
-            children: [
-                { label: 'Chats', id: 'chats', icon: <MessageCircleIcon className="w-4 h-4"/> },
-                { label: 'Recalls', id: 'recalls', icon: <BrainIcon className="w-4 h-4"/> },
-                { 
-                    label: 'Debates', 
-                    id: 'debates', 
-                    icon: <DebatePodiumIcon className="w-4 h-4"/>
-                },
-                { label: 'Presentation', id: 'presentation', icon: <PresentationIcon className="w-4 h-4"/> },
-                { label: 'Q&A', id: 'qa', icon: <MessageCircleIcon className="w-4 h-4"/> },
-                { label: 'Instant describe', id: 'instant_describe', icon: <FlashIcon className="w-4 h-4"/> },
-            ]
+            action: () => {
+                setSidebarView('learn_track');
+                setActiveSection('chats');
+            },
+            hasArrow: true
         },
         { type: 'section', label: 'Analysis', id: 'analysis', icon: <BarChartIcon className="w-5 h-5"/> },
         { type: 'section', label: 'Exams', id: 'exams', icon: <ExamPaperPenIcon className="w-5 h-5"/> }
     ];
+
+    const learnTrackItems = [
+        { label: 'Chats', id: 'chats', icon: <MessageCircleIcon className="w-4 h-4"/> },
+        { label: 'Recalls', id: 'recalls', icon: <BrainIcon className="w-4 h-4"/> },
+        { label: 'Debates', id: 'debates', icon: <DebatePodiumIcon className="w-4 h-4"/> },
+        { label: 'Presentation', id: 'presentation', icon: <PresentationIcon className="w-4 h-4"/> },
+        { label: 'Q&A', id: 'qa', icon: <MessageCircleIcon className="w-4 h-4"/> },
+        { label: 'Instant describe', id: 'instant_describe', icon: <FlashIcon className="w-4 h-4"/> },
+    ];
+
+    const handleBackToMain = () => {
+        setSidebarView('main');
+        setJustReturned(true);
+        setTimeout(() => setJustReturned(false), 2000); // Shimmer duration
+    };
 
     const handleSendMessage = async () => {
         if (!inputValue.trim() || isLoading || !ai) return;
@@ -358,8 +369,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
         // Special Navigation for Tools
         if (activeTool?.name === 'Debate') {
             setActiveSection('debates');
-            setIsDebateStarted(true); // Auto-start debate if accessing via tool? Or maybe pass message
-            // Ideally we'd pass the initial message to the embedded DebateView
+            setIsDebateStarted(true); 
             return;
         }
         if (activeTool?.name === 'Add Courses') {
@@ -413,7 +423,6 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
     };
 
     const renderCard = (item: any, idx: number) => {
-        // Reddish for Incomplete, Greenish for Complete
         const isComplete = viewMode === 'complete';
         
         const cardBgClass = isComplete 
@@ -490,72 +499,98 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
         return <DebateView />;
     }
 
+    const renderEmptySegment = () => (
+        <div className="flex flex-col items-center justify-center h-full w-full bg-white dark:bg-[#0b0b0b]">
+            <p className="text-gray-500 text-lg font-medium">this segment will be add soon</p>
+        </div>
+    );
+
     return (
         <div className="flex h-full w-full bg-white dark:bg-[#0b0b0b] text-neutral-900 dark:text-neutral-100 overflow-hidden">
             {/* Inner Sidebar */}
             <aside className="w-64 border-r border-neutral-200 dark:border-white/10 flex flex-col shrink-0 overflow-y-auto pt-20 pb-6 px-4 bg-neutral-50 dark:bg-[#0f0f0f]">
-                <div className="space-y-1">
-                    {sidebarItems.map((item: any) => (
-                        <div key={item.id}>
-                            {item.type === 'section' ? (
-                                <button 
-                                    onClick={() => setActiveSection(item.id)}
-                                    className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeSection === item.id ? 'bg-neutral-200 dark:bg-white/10 text-black dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-neutral-100 dark:hover:bg-white/5'}`}
-                                >
-                                    <span className="mr-3">{item.icon}</span>
-                                    {item.label}
-                                </button>
-                            ) : (
-                                <div>
+                <AnimatePresence mode="wait">
+                    {sidebarView === 'main' ? (
+                        <motion.div 
+                            key="main"
+                            initial={{ x: -20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: -20, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="space-y-1"
+                        >
+                            {mainSidebarItems.map((item: any) => {
+                                const isShimmering = item.id === 'learn_track' && justReturned;
+                                return (
                                     <button 
-                                        onClick={() => setIsLearnTrackOpen(!isLearnTrackOpen)}
-                                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
+                                        key={item.id}
+                                        onClick={() => item.action ? item.action() : setActiveSection(item.id)}
+                                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors relative overflow-hidden ${
+                                            activeSection === item.id && !isShimmering
+                                            ? 'bg-neutral-200 dark:bg-white/10 text-black dark:text-white' 
+                                            : 'text-gray-500 dark:text-gray-400 hover:bg-neutral-100 dark:hover:bg-white/5'
+                                        }`}
                                     >
-                                        <div className="flex items-center">
+                                        <div className="flex items-center relative z-10">
                                             <span className="mr-3">{item.icon}</span>
                                             {item.label}
                                         </div>
-                                        <ChevronDownIcon className={`w-3.5 h-3.5 transition-transform ${isLearnTrackOpen ? 'rotate-180' : ''}`} />
-                                    </button>
-                                    <AnimatePresence>
-                                        {isLearnTrackOpen && (
-                                            <motion.div 
-                                                initial={{ height: 0, opacity: 0 }}
-                                                animate={{ height: 'auto', opacity: 1 }}
-                                                exit={{ height: 0, opacity: 0 }}
-                                                className="overflow-hidden pl-4 mt-1 space-y-1"
-                                            >
-                                                {item.children.map((child: any) => (
-                                                    <button 
-                                                        key={child.id}
-                                                        onClick={() => {
-                                                            if (child.action) {
-                                                                child.action();
-                                                            } else {
-                                                                setActiveSection(child.id);
-                                                            }
-                                                        }}
-                                                        className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeSection === child.id ? 'bg-neutral-200 dark:bg-white/10 text-black dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-neutral-100 dark:hover:bg-white/5'}`}
-                                                    >
-                                                        <span className="mr-3">{child.icon}</span>
-                                                        {child.label}
-                                                    </button>
-                                                ))}
-                                            </motion.div>
+                                        {item.hasArrow && <ChevronRightIcon className="w-4 h-4 relative z-10" />}
+                                        
+                                        {isShimmering && (
+                                            <div className="absolute inset-0 z-0">
+                                                <div className="absolute inset-0 bg-neutral-200 dark:bg-white/10" />
+                                                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/40 dark:via-white/10 to-transparent" />
+                                            </div>
                                         )}
-                                    </AnimatePresence>
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
+                                    </button>
+                                )
+                            })}
+                        </motion.div>
+                    ) : (
+                        <motion.div 
+                            key="sub"
+                            initial={{ x: 20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: 20, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="space-y-1"
+                        >
+                            <button 
+                                onClick={handleBackToMain}
+                                className="w-full flex items-center px-3 py-2 rounded-lg text-sm font-bold text-gray-500 dark:text-gray-400 hover:bg-neutral-100 dark:hover:bg-white/5 mb-2 transition-colors"
+                            >
+                                <ChevronLeftIcon className="w-4 h-4 mr-2" />
+                                Learn Track
+                            </button>
+                            <div className="pl-2">
+                                {learnTrackItems.map((child: any, index: number) => (
+                                    <motion.button 
+                                        key={child.id}
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        onClick={() => setActiveSection(child.id)}
+                                        className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeSection === child.id ? 'bg-neutral-200 dark:bg-white/10 text-black dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-neutral-100 dark:hover:bg-white/5'}`}
+                                    >
+                                        <span className="mr-3">{child.icon}</span>
+                                        {child.label}
+                                    </motion.button>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </aside>
 
             {/* Main Content */}
             <main className={`flex-1 ${activeSection === 'debates' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`}>
-                {activeSection === 'debates' ? (
+                {['chats', 'recalls', 'presentation', 'qa', 'instant_describe'].includes(activeSection) ? (
+                    renderEmptySegment()
+                ) : activeSection === 'debates' ? (
                     renderDebates()
                 ) : (
+                    // Default Overview View
                     <div className="pt-24 px-8 pb-12 max-w-6xl mx-auto">
                         {/* Hero */}
                         <div className="text-center mb-10">
