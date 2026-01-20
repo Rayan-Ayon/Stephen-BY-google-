@@ -277,9 +277,7 @@ const AddProjectModal = ({ onClose }: { onClose: () => void }) => {
 
 const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
     const [activeSection, setActiveSection] = useState('overview');
-    const [sidebarView, setSidebarView] = useState<'main' | 'learn_track'>('main');
     const [viewMode, setViewMode] = useState<'complete' | 'incomplete'>('incomplete');
-    const [justReturned, setJustReturned] = useState(false);
     
     // Debate local state
     const [isDebateStarted, setIsDebateStarted] = useState(false);
@@ -330,24 +328,6 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Sidebar Configurations
-    const mainSidebarItems = [
-        { type: 'section', label: 'Overview', id: 'overview', icon: <HomeIcon className="w-5 h-5"/> },
-        { 
-            type: 'action', 
-            label: 'Learn Track', 
-            id: 'learn_track', 
-            icon: <BookOpenIcon className="w-5 h-5"/>,
-            action: () => {
-                setSidebarView('learn_track');
-                setActiveSection('chats');
-            },
-            hasArrow: true
-        },
-        { type: 'section', label: 'Analysis', id: 'analysis', icon: <BarChartIcon className="w-5 h-5"/> },
-        { type: 'section', label: 'Exams', id: 'exams', icon: <ExamPaperPenIcon className="w-5 h-5"/> }
-    ];
-
     const learnTrackItems = [
         { label: 'Chats', id: 'chats', icon: <MessageCircleIcon className="w-4 h-4"/> },
         { label: 'Recalls', id: 'recalls', icon: <BrainIcon className="w-4 h-4"/> },
@@ -356,12 +336,6 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
         { label: 'Q&A', id: 'qa', icon: <MessageCircleIcon className="w-4 h-4"/> },
         { label: 'Instant describe', id: 'instant_describe', icon: <FlashIcon className="w-4 h-4"/> },
     ];
-
-    const handleBackToMain = () => {
-        setSidebarView('main');
-        setJustReturned(true);
-        setTimeout(() => setJustReturned(false), 2000); // Shimmer duration
-    };
 
     const handleSendMessage = async () => {
         if (!inputValue.trim() || isLoading || !ai) return;
@@ -507,83 +481,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
 
     return (
         <div className="flex h-full w-full bg-white dark:bg-[#0b0b0b] text-neutral-900 dark:text-neutral-100 overflow-hidden">
-            {/* Inner Sidebar */}
-            <aside className="w-64 border-r border-neutral-200 dark:border-white/10 flex flex-col shrink-0 overflow-y-auto pt-20 pb-6 px-4 bg-neutral-50 dark:bg-[#0f0f0f]">
-                <AnimatePresence mode="wait">
-                    {sidebarView === 'main' ? (
-                        <motion.div 
-                            key="main"
-                            initial={{ x: -20, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            exit={{ x: -20, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="space-y-1"
-                        >
-                            {mainSidebarItems.map((item: any) => {
-                                const isShimmering = item.id === 'learn_track' && justReturned;
-                                return (
-                                    <button 
-                                        key={item.id}
-                                        onClick={() => item.action ? item.action() : setActiveSection(item.id)}
-                                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors relative overflow-hidden ${
-                                            activeSection === item.id && !isShimmering
-                                            ? 'bg-neutral-200 dark:bg-white/10 text-black dark:text-white' 
-                                            : 'text-gray-500 dark:text-gray-400 hover:bg-neutral-100 dark:hover:bg-white/5'
-                                        }`}
-                                    >
-                                        <div className="flex items-center relative z-10">
-                                            <span className="mr-3">{item.icon}</span>
-                                            {item.label}
-                                        </div>
-                                        {item.hasArrow && <ChevronRightIcon className="w-4 h-4 relative z-10" />}
-                                        
-                                        {isShimmering && (
-                                            <div className="absolute inset-0 z-0">
-                                                <div className="absolute inset-0 bg-neutral-200 dark:bg-white/10" />
-                                                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/40 dark:via-white/10 to-transparent" />
-                                            </div>
-                                        )}
-                                    </button>
-                                )
-                            })}
-                        </motion.div>
-                    ) : (
-                        <motion.div 
-                            key="sub"
-                            initial={{ x: 20, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            exit={{ x: 20, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="space-y-1"
-                        >
-                            <button 
-                                onClick={handleBackToMain}
-                                className="w-full flex items-center px-3 py-2 rounded-lg text-sm font-bold text-gray-500 dark:text-gray-400 hover:bg-neutral-100 dark:hover:bg-white/5 mb-2 transition-colors"
-                            >
-                                <ChevronLeftIcon className="w-4 h-4 mr-2" />
-                                Learn Track
-                            </button>
-                            <div className="pl-2">
-                                {learnTrackItems.map((child: any, index: number) => (
-                                    <motion.button 
-                                        key={child.id}
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: index * 0.05 }}
-                                        onClick={() => setActiveSection(child.id)}
-                                        className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeSection === child.id ? 'bg-neutral-200 dark:bg-white/10 text-black dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-neutral-100 dark:hover:bg-white/5'}`}
-                                    >
-                                        <span className="mr-3">{child.icon}</span>
-                                        {child.label}
-                                    </motion.button>
-                                ))}
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </aside>
-
-            {/* Main Content */}
+            {/* Main Content - No Sidebar */}
             <main className={`flex-1 ${activeSection === 'debates' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`}>
                 {['chats', 'recalls', 'presentation', 'qa', 'instant_describe'].includes(activeSection) ? (
                     renderEmptySegment()
@@ -641,7 +539,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
                                                         >
                                                             {[
                                                                 { label: 'Upload files', icon: <UploadIcon className="w-4 h-4" /> },
-                                                                { label: 'Add from Drive', icon: <div className="w-4 h-4 text-green-500"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l3.43 6h11.72l6.55-11.5-3.42-6H7.71zm8.87 1.5l3.4 6-3.27 5.75H5.43L8.7 5h7.88zm-6.55 1.7L4.57 16h6.86l5.46-9.28H10.03z"/></svg></div> }, // Simple SVG
+                                                                { label: 'Add from Drive', icon: <div className="w-4 h-4 text-green-500"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l3.43 6h11.72l6.55-11.5-3.42-6H7.71zm8.87 1.5l3.4 6-3.27 5.75H5.43L8.7 5h7.88zm-6.55 1.7L4.57 16h6.86l5.46-9.28H10.03z"/></svg></div> }, 
                                                                 { label: 'Photos', icon: <div className="w-4 h-4 text-blue-500"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3.2"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg></div> },
                                                                 { label: 'NotebookLM', icon: <div className="w-4 h-4 text-purple-500"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div> },
                                                             ].map((item) => (
@@ -785,7 +683,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
                             </div>
 
                             {/* Controls Row */}
-                            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
                                 <div className="flex items-center gap-3 w-full md:w-auto">
                                     <button className="flex items-center px-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Recent <ChevronDownIcon className="w-4 h-4 ml-2"/>
@@ -808,6 +706,24 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
                                         <AdjustIcon className="w-4 h-4 mr-2"/> Filters
                                     </button>
                                 </div>
+                            </div>
+
+                            {/* Learn Track Nav Row */}
+                            <div className="flex flex-wrap items-center gap-2 mb-4 overflow-x-auto no-scrollbar pb-2">
+                                {learnTrackItems.map((item) => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => setActiveSection(item.id)}
+                                        className={`flex items-center px-4 py-2 rounded-full text-xs font-bold border transition-colors whitespace-nowrap ${
+                                            activeSection === item.id 
+                                            ? 'bg-neutral-800 dark:bg-white text-white dark:text-black border-transparent' 
+                                            : 'bg-white dark:bg-[#1a1a1a] text-gray-600 dark:text-gray-300 border-neutral-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600'
+                                        }`}
+                                    >
+                                        <span className="mr-2 opacity-70">{item.icon}</span>
+                                        {item.label}
+                                    </button>
+                                ))}
                             </div>
 
                             {/* Toggle Switch */}

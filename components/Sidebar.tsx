@@ -8,7 +8,8 @@ import {
     TrophyIcon, ProjectsResearchIcon, ExamPaperPenIcon, MicroscopeIcon,
     ProfessorStudentIcon, DebatePodiumIcon, EdgramIcon, GlobeIcon,
     LocationTrackerIcon, LearningMethodIcon, ChevronDownIcon, CrownIcon,
-    ViewSidebarIcon, CheckCircleIcon, DollarIcon, SidebarToggleIcon, CubeIcon, DotsHorizontalIcon, TrashIcon, ShareIcon, PencilIcon, ChevronRightIcon
+    ViewSidebarIcon, CheckCircleIcon, DollarIcon, SidebarToggleIcon, CubeIcon, DotsHorizontalIcon, TrashIcon, ShareIcon, PencilIcon, ChevronRightIcon,
+    HomeIcon
 } from './icons';
 
 interface Space {
@@ -489,6 +490,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                                             )}
                                         </AnimatePresence>
                                     </div>
+                                    <button 
+                                        onClick={() => onNavigate('landing')} 
+                                        className={`w-full text-left text-sm flex items-center px-3 py-2.5 rounded-xl ${hoverClasses} dark:text-gray-300 text-neutral-700`}
+                                    >
+                                        <HomeIcon className="w-4 h-4 mr-3" />
+                                        About
+                                    </button>
                                     <div className="pt-1 pb-1">
                                         <div className={`border-t ${theme === 'dark' ? 'border-gray-800' : 'border-neutral-200'}`}></div>
                                     </div>

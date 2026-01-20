@@ -42,7 +42,12 @@ const App: React.FC = () => {
   return (
     <div className={`transition-colors duration-300 ${theme === 'dark' ? 'dark text-neutral-200' : 'text-neutral-800'}`} style={{ fontFamily: "'Inter', sans-serif" }}>
       {showDashboard ? (
-        <Dashboard toggleTheme={toggleTheme} theme={theme} initialView={initialView} />
+        <Dashboard 
+          toggleTheme={toggleTheme} 
+          theme={theme} 
+          initialView={initialView} 
+          onExit={() => setShowDashboard(false)}
+        />
       ) : (
         <LandingPage 
           onStartLearning={handleStartLearning} 

@@ -48,6 +48,7 @@ interface DashboardProps {
     toggleTheme: () => void;
     theme: Theme;
     initialView: string;
+    onExit: () => void;
 }
 
 const ShimmerLoader = () => (
@@ -73,7 +74,7 @@ const ShimmerLoader = () => (
     </div>
 );
 
-const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView }) => {
+const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, onExit }) => {
     const [currentView, setCurrentView] = useState(initialView);
     const [selectedCourse, setSelectedCourse] = useState<HistoryItem | null>(null);
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
@@ -126,6 +127,11 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView }
     }, [initialView]);
 
     const handleNavigate = (view: string, data?: any) => {
+        if (view === 'landing') {
+            onExit();
+            return;
+        }
+
         if (view === 'settings') {
             setIsSettingsOpen(true);
         } else if (view === 'feedback') {
