@@ -25,52 +25,61 @@ const models = [
     { name: 'Grok 4.1', free: false },
 ];
 
-// Data for Incomplete Section (Reddish)
+// Data for Incomplete Section (Reddish) - Updated to 6 specific boxes
 const incompleteItems = [
     {
-        type: 'Course',
-        badge: 'Skill badge',
-        title: 'Manage Kubernetes in Google Cloud',
-        desc: 'Complete the intermediate Manage Kubernetes in Google Cloud skill badge course to demonstrate skills in the following: managing deployments with...',
-        duration: '30 minutes',
+        type: 'Chats',
+        badge: 'Active',
+        title: 'Deep Learning Conversation',
+        desc: 'Ongoing chat session exploring the fundamentals of backpropagation and neural network architecture.',
+        duration: '10m ago',
         status: 'Incomplete',
-        action: 'arrow'
+        icon: <MessageCircleIcon className="w-5 h-5" />
     },
     {
-        type: 'Course',
-        badge: 'Skill badge',
-        title: 'Derive Insights from BigQuery Data',
-        desc: 'Complete the introductory Derive Insights from BigQuery Data skill badge course to demonstrate skills in the following: Write SQL queries.Query...',
-        duration: '1 hour 15 minutes',
+        type: 'Recalls',
+        badge: 'Review',
+        title: 'React Hooks Mastery',
+        desc: 'Active recall session scheduled to review useState, useEffect, and custom hooks implementation.',
+        duration: '2h ago',
         status: 'Incomplete',
-        action: 'arrow'
+        icon: <BrainIcon className="w-5 h-5" />
     },
     {
-        type: 'Course',
-        badge: 'Skill badge',
-        title: 'Share Data Using Google Data Cloud',
-        desc: 'Earn a skill badge by completing the Share Data Using Google Data Cloud skill badge course, where you will gain practical experience with Google...',
-        duration: '30 minutes',
+        type: 'Debates',
+        badge: 'Challenge',
+        title: 'AI Ethics & Regulation',
+        desc: 'Debate session: "Should AI development be paused?" Preparing arguments for the affirmative side.',
+        duration: '1d ago',
         status: 'Incomplete',
-        action: 'arrow'
+        icon: <DebatePodiumIcon className="w-5 h-5" />
     },
     {
-        type: 'Lab',
-        badge: '',
-        title: 'Predicting Customer Churn with Vertex AI',
-        desc: 'In this lab, you will use Vertex AI to train and deploy a machine learning model to predict customer churn.',
-        duration: '45 minutes',
+        type: 'Presentation',
+        badge: 'Draft',
+        title: 'Q3 Research Findings',
+        desc: 'Drafting slides for the upcoming quarterly review. Focusing on data visualization and key metrics.',
+        duration: '3d ago',
         status: 'Incomplete',
-        action: 'arrow'
+        icon: <PresentationIcon className="w-5 h-5" />
     },
     {
-        type: 'Course',
-        badge: 'Skill badge',
-        title: 'Build Infrastructure with Terraform',
-        desc: 'Learn how to use Terraform to provision and manage Google Cloud resources using Infrastructure as Code principles.',
-        duration: '2 hours',
+        type: 'Q&A',
+        badge: 'Study',
+        title: 'System Design Interview',
+        desc: 'Mock Q&A session for distributed systems, load balancing, and database sharding concepts.',
+        duration: '4d ago',
         status: 'Incomplete',
-        action: 'arrow'
+        icon: <MessageCircleIcon className="w-5 h-5" /> // Reusing MessageCircle for Q&A if specific icon not present
+    },
+    {
+        type: 'Instant describe',
+        badge: 'Analysis',
+        title: 'Architecture Diagram',
+        desc: 'Quick analysis of the uploaded microservices architecture diagram. Identifying potential bottlenecks.',
+        duration: '5d ago',
+        status: 'Incomplete',
+        icon: <FlashIcon className="w-5 h-5" />
     }
 ];
 
@@ -83,7 +92,8 @@ const completeItems = [
         desc: 'Complete the introductory Migrate MySQL Data to Cloud SQL Using Database Migration Service skill badge course to demonstrate skills in the following...',
         duration: '1 hour 15 minutes',
         status: 'Completed',
-        action: 'arrow'
+        action: 'arrow',
+        icon: <UsersIcon className="w-5 h-5" />
     },
     {
         type: 'Course',
@@ -92,7 +102,8 @@ const completeItems = [
         desc: 'In this Quest, the experienced user of Google Cloud will learn how to describe and launch cloud resources with Terraform.',
         duration: '3 hours 45 minutes',
         status: 'Completed',
-        action: 'arrow'
+        action: 'arrow',
+        icon: <UsersIcon className="w-5 h-5" />
     },
     {
         type: 'Course',
@@ -101,7 +112,8 @@ const completeItems = [
         desc: 'Earn the advanced skill badge by completing the Use Machine Learning APIs on Google Cloud course, where you learn the basic features for the...',
         duration: '30 minutes',
         status: 'Completed',
-        action: 'arrow'
+        action: 'arrow',
+        icon: <UsersIcon className="w-5 h-5" />
     },
     {
         type: 'Course',
@@ -110,7 +122,8 @@ const completeItems = [
         desc: 'Complete the intermediate Mitigate Threats and Vulnerabilities with Security Command Center skill badge course to demonstrate skills...',
         duration: '30 minutes',
         status: 'Completed',
-        action: 'arrow'
+        action: 'arrow',
+        icon: <UsersIcon className="w-5 h-5" />
     },
     {
         type: 'Course',
@@ -119,7 +132,8 @@ const completeItems = [
         desc: 'Earn a skill badge by completing the Monitor Environments with Google Cloud Managed Service for Prometheus skill badge course.',
         duration: '30 minutes',
         status: 'Completed',
-        action: 'arrow'
+        action: 'arrow',
+        icon: <UsersIcon className="w-5 h-5" />
     },
     {
         type: 'Lab',
@@ -128,7 +142,8 @@ const completeItems = [
         desc: 'In this lab, you’ll use AppSheet to create a no-code app for Google Chat.',
         duration: '1 hour',
         status: 'Completed',
-        action: 'arrow'
+        action: 'arrow',
+        icon: <ExamPaperPenIcon className="w-5 h-5" />
     }
 ];
 
@@ -278,55 +293,8 @@ const AddProjectModal = ({ onClose }: { onClose: () => void }) => {
 const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
     const [activeSection, setActiveSection] = useState('overview');
     const [viewMode, setViewMode] = useState<'complete' | 'incomplete'>('incomplete');
-    
-    // Debate local state
     const [isDebateStarted, setIsDebateStarted] = useState(false);
-
-    // Chat State
-    const [inputValue, setInputValue] = useState('');
-    const [selectedModel, setSelectedModel] = useState('Auto');
-    const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [chatResponse, setChatResponse] = useState('');
-    const [isFocused, setIsFocused] = useState(false);
-    
-    // Tools Dropdown State
-    const [isToolsOpen, setIsToolsOpen] = useState(false);
     const [showAddProjectModal, setShowAddProjectModal] = useState(false);
-    const [activeTool, setActiveTool] = useState<{name: string, icon: React.ReactNode} | null>(null);
-    const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
-    
-    const modelMenuRef = useRef<HTMLDivElement>(null);
-    const toolsMenuRef = useRef<HTMLDivElement>(null);
-    const plusMenuRef = useRef<HTMLDivElement>(null);
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const inputContainerRef = useRef<HTMLDivElement>(null);
-
-    // GenAI instance (initialized on demand or effect)
-    const [ai, setAi] = useState<GoogleGenAI | null>(null);
-
-    useEffect(() => {
-        setAi(new GoogleGenAI({ apiKey: process.env.API_KEY }));
-    }, []);
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (modelMenuRef.current && !modelMenuRef.current.contains(event.target as Node)) {
-                setIsModelMenuOpen(false);
-            }
-            if (toolsMenuRef.current && !toolsMenuRef.current.contains(event.target as Node)) {
-                setIsToolsOpen(false);
-            }
-            if (plusMenuRef.current && !plusMenuRef.current.contains(event.target as Node)) {
-                setIsPlusMenuOpen(false);
-            }
-            if (inputContainerRef.current && !inputContainerRef.current.contains(event.target as Node)) {
-                setIsFocused(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
 
     const learnTrackItems = [
         { label: 'Chats', id: 'chats', icon: <MessageCircleIcon className="w-4 h-4"/> },
@@ -336,65 +304,6 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
         { label: 'Q&A', id: 'qa', icon: <MessageCircleIcon className="w-4 h-4"/> },
         { label: 'Instant describe', id: 'instant_describe', icon: <FlashIcon className="w-4 h-4"/> },
     ];
-
-    const handleSendMessage = async () => {
-        if (!inputValue.trim() || isLoading || !ai) return;
-        
-        // Special Navigation for Tools
-        if (activeTool?.name === 'Debate') {
-            setActiveSection('debates');
-            setIsDebateStarted(true); 
-            return;
-        }
-        if (activeTool?.name === 'Add Courses') {
-            onNavigate('add_courses', { topic: inputValue });
-            return;
-        }
-
-        setIsLoading(true);
-        setChatResponse(''); 
-        try {
-            const response = await ai.models.generateContent({
-                model: 'gemini-3-flash-preview',
-                contents: inputValue
-            });
-            setChatResponse(response.text || '');
-            setInputValue('');
-        } catch (error) {
-            console.error("GenAI Error:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSendMessage();
-        }
-    };
-
-    const toolsList = [
-        { name: 'Add Project', icon: <ProjectIcon className="w-4 h-4" /> },
-        { name: 'Add Content', icon: <PlusIcon className="w-4 h-4" /> },
-        { name: 'Add Courses', icon: <BookOpenIcon className="w-4 h-4" /> },
-        { name: 'Debate', icon: <DebatePodiumIcon className="w-4 h-4" /> },
-        { name: 'Q&A', icon: <MessageCircleIcon className="w-4 h-4" /> },
-        { name: 'Instant describe', icon: <FlashIcon className="w-4 h-4" /> },
-        { name: 'Presentation', icon: <PresentationIcon className="w-4 h-4" /> }
-    ];
-
-    const handleToolClick = (toolName: string) => {
-        setIsToolsOpen(false);
-        const tool = toolsList.find(t => t.name === toolName);
-        if (tool) {
-            setActiveTool(tool);
-        }
-        
-        if (toolName === 'Add Project') {
-            setShowAddProjectModal(true);
-        }
-    };
 
     const renderCard = (item: any, idx: number) => {
         const isComplete = viewMode === 'complete';
@@ -412,11 +321,15 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
             : 'bg-red-100 dark:bg-red-800/30 text-red-600 dark:text-red-400';
 
         return (
-            <div key={idx} className={`border rounded-2xl p-6 flex flex-col justify-between hover:shadow-lg transition-all duration-300 ${cardBgClass}`}>
+            <div key={idx} className={`border rounded-2xl p-6 flex flex-col justify-between hover:shadow-lg transition-all duration-300 ${cardBgClass} relative`}>
+                {/* Top Right Icon */}
+                <div className={`absolute top-6 right-6 p-2 rounded-full ${iconBgClass}`}>
+                    {item.icon}
+                </div>
+
                 <div>
                     <div className="flex items-center space-x-3 mb-4">
                         <span className={`flex items-center text-[11px] font-bold px-2 py-1 rounded ${badgeBgClass}`}>
-                            {item.type === 'Course' ? <UsersIcon className="w-3 h-3 mr-1.5"/> : <ArrowUpIcon className="w-3 h-3 mr-1.5 transform rotate-45"/>}
                             {item.type}
                         </span>
                         {item.badge && (
@@ -426,7 +339,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
                             </span>
                         )}
                     </div>
-                    <h3 className="text-xl font-bold text-black dark:text-white mb-3 leading-tight">
+                    <h3 className="text-xl font-bold text-black dark:text-white mb-3 leading-tight pr-10">
                         {item.title}
                     </h3>
                     <p className="text-sm text-gray-700 dark:text-gray-300 mb-6 line-clamp-3 leading-relaxed">
@@ -490,272 +403,97 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
                 ) : (
                     // Default Overview View
                     <div className="pt-24 px-8 pb-12 max-w-6xl mx-auto">
-                        {/* Hero */}
-                        <div className="text-center mb-10">
-                            <h1 className="text-3xl md:text-4xl font-bold mb-8" style={{ fontFamily: "'Lora', serif" }}>
-                                Stephen is hearing your questions
-                            </h1>
+                        
+                        {/* New Header */}
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
+                            <div>
+                                <h1 className="text-4xl font-bold dark:text-white text-black mb-1" style={{ fontFamily: "'Lora', serif" }}>
+                                    Hey, Ayon.
+                                </h1>
+                                <p className="text-xl text-gray-500 dark:text-gray-400">Ready to start a project?</p>
+                            </div>
+                            <button 
+                                onClick={() => setShowAddProjectModal(true)}
+                                className="px-5 py-2 bg-[#238636] hover:bg-[#2ea043] text-white text-sm font-bold rounded-md flex items-center shadow-sm border border-[rgba(240,246,252,0.1)] transition-colors"
+                            >
+                                <PlusIcon className="w-4 h-4 mr-2" />
+                                New
+                            </button>
+                        </div>
+
+                        {/* Controls Row */}
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                <button className="flex items-center px-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Recent <ChevronDownIcon className="w-4 h-4 ml-2"/>
+                                </button>
+                                <button className="px-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Projects
+                                </button>
+                            </div>
                             
-                            {/* Cinematic Chat Box */}
-                            <div className="w-full max-w-3xl mx-auto mb-10">
-                                <div 
-                                    ref={inputContainerRef}
-                                    className={`relative dark:bg-[#111] bg-neutral-50 border border-gray-200 dark:border-[#1e1e1e] shadow-lg transition-all duration-300 ${
-                                        isFocused || inputValue.trim() ? 'rounded-[28px] ring-1 ring-neutral-300 dark:ring-white/10' : 'rounded-full hover:shadow-xl'
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                <div className="relative flex-grow md:flex-grow-0">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search catalog" 
+                                        className="w-full md:w-64 pl-9 pr-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                    />
+                                    <SearchIcon className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2"/>
+                                </div>
+                                <button className="flex items-center px-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                                    <AdjustIcon className="w-4 h-4 mr-2"/> Filters
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Learn Track Nav Row */}
+                        <div className="flex flex-wrap items-center gap-2 mb-4 overflow-x-auto no-scrollbar pb-2">
+                            {learnTrackItems.map((item) => (
+                                <button
+                                    key={item.id}
+                                    onClick={() => setActiveSection(item.id)}
+                                    className={`flex items-center px-4 py-2 rounded-full text-xs font-bold border transition-colors whitespace-nowrap ${
+                                        activeSection === item.id 
+                                        ? 'bg-neutral-800 dark:bg-white text-white dark:text-black border-transparent' 
+                                        : 'bg-white dark:bg-[#1a1a1a] text-gray-600 dark:text-gray-300 border-neutral-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600'
                                     }`}
                                 >
-                                    <textarea 
-                                        ref={textareaRef} 
-                                        value={inputValue} 
-                                        onChange={(e) => {
-                                            setInputValue(e.target.value);
-                                            e.target.style.height = 'auto';
-                                            e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
-                                        }} 
-                                        onKeyPress={handleKeyPress}
-                                        onFocus={() => setIsFocused(true)}
-                                        placeholder="What do you want to know about yourself?"
-                                        className={`w-full bg-transparent border-none focus:outline-none text-lg text-black dark:text-white placeholder-gray-500 px-6 py-4 resize-none transition-all font-medium`} 
-                                        rows={1}
-                                        style={{ minHeight: isFocused || inputValue.trim() ? '72px' : '56px' }}
-                                    />
-                                    
-                                    <div className={`flex items-center justify-between px-4 pb-3 transition-opacity duration-200 ${isFocused || inputValue.trim() ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
-                                        <div className="flex items-center space-x-2">
-                                            <div className="relative" ref={plusMenuRef}>
-                                                <button 
-                                                    onClick={() => setIsPlusMenuOpen(!isPlusMenuOpen)}
-                                                    className="p-2 rounded-full dark:hover:bg-white/10 hover:bg-neutral-200 text-gray-500 transition-colors"
-                                                >
-                                                    <PlusIcon className="w-5 h-5" />
-                                                </button>
-                                                <AnimatePresence>
-                                                    {isPlusMenuOpen && (
-                                                        <motion.div
-                                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                            className="absolute bottom-full left-0 mb-2 w-48 dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl overflow-hidden py-1 z-50"
-                                                        >
-                                                            {[
-                                                                { label: 'Upload files', icon: <UploadIcon className="w-4 h-4" /> },
-                                                                { label: 'Add from Drive', icon: <div className="w-4 h-4 text-green-500"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l3.43 6h11.72l6.55-11.5-3.42-6H7.71zm8.87 1.5l3.4 6-3.27 5.75H5.43L8.7 5h7.88zm-6.55 1.7L4.57 16h6.86l5.46-9.28H10.03z"/></svg></div> }, 
-                                                                { label: 'Photos', icon: <div className="w-4 h-4 text-blue-500"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3.2"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg></div> },
-                                                                { label: 'NotebookLM', icon: <div className="w-4 h-4 text-purple-500"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div> },
-                                                            ].map((item) => (
-                                                                <button 
-                                                                    key={item.label}
-                                                                    onClick={() => setIsPlusMenuOpen(false)}
-                                                                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-[13px] dark:text-gray-300 text-gray-700 hover:dark:bg-white/5 hover:bg-gray-100 transition-colors"
-                                                                >
-                                                                    <div className="dark:text-white text-black opacity-70">{item.icon}</div>
-                                                                    <span className="font-medium">{item.label}</span>
-                                                                </button>
-                                                            ))}
-                                                        </motion.div>
-                                                    )}
-                                                </AnimatePresence>
-                                            </div>
-                                            
-                                            {/* Tools Dropdown */}
-                                            <div className="relative" ref={toolsMenuRef}>
-                                                <button 
-                                                    onClick={() => setIsToolsOpen(!isToolsOpen)}
-                                                    className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border transition-colors text-xs font-bold ${isToolsOpen ? 'dark:bg-white/10 bg-neutral-200 border-gray-400 dark:border-white/20 text-black dark:text-white' : 'dark:hover:bg-white/10 hover:bg-neutral-200 border-transparent text-gray-500'}`}
-                                                >
-                                                    <AdjustIcon className="w-4 h-4" />
-                                                    <span>Tools</span>
-                                                    <ChevronDownIcon className={`w-3 h-3 transition-transform ${isToolsOpen ? 'rotate-180' : ''}`} />
-                                                </button>
-                                                
-                                                <AnimatePresence>
-                                                    {isToolsOpen && (
-                                                        <motion.div 
-                                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                            className="absolute top-full left-0 mt-2 w-56 dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-xl overflow-hidden py-1 z-50"
-                                                        >
-                                                            {toolsList.map((tool) => (
-                                                                <button 
-                                                                    key={tool.name}
-                                                                    onClick={() => handleToolClick(tool.name)}
-                                                                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-[13px] dark:text-gray-300 text-gray-700 hover:dark:bg-white/5 hover:bg-gray-100 transition-colors"
-                                                                >
-                                                                    <div className="text-gray-500 dark:text-gray-400">{tool.icon}</div>
-                                                                    <span className="font-medium">{tool.name}</span>
-                                                                </button>
-                                                            ))}
-                                                        </motion.div>
-                                                    )}
-                                                </AnimatePresence>
-                                            </div>
+                                    <span className="mr-2 opacity-70">{item.icon}</span>
+                                    {item.label}
+                                </button>
+                            ))}
+                        </div>
 
-                                            {/* Active Tool Chip */}
-                                            <AnimatePresence>
-                                                {activeTool && (
-                                                    <motion.div 
-                                                        initial={{ opacity: 0, scale: 0.9, x: -10 }}
-                                                        animate={{ opacity: 1, scale: 1, x: 0 }}
-                                                        exit={{ opacity: 0, scale: 0.9, x: -10 }}
-                                                        className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full dark:bg-[#2a2a2a] bg-gray-200 border dark:border-white/10 border-gray-300 text-[11px] font-bold dark:text-white text-black"
-                                                    >
-                                                        <div className="dark:text-white text-black">
-                                                            {activeTool.icon}
-                                                        </div>
-                                                        <span>{activeTool.name}</span>
-                                                        <button 
-                                                            onClick={() => setActiveTool(null)}
-                                                            className="ml-1 p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/20 text-gray-500 dark:text-gray-400"
-                                                        >
-                                                            <XIcon className="w-3 h-3" />
-                                                        </button>
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-                                        </div>
-                                        
-                                        <div className="flex items-center space-x-3">
-                                            <div className="relative" ref={modelMenuRef}>
-                                                <button 
-                                                    onClick={() => setIsModelMenuOpen(!isModelMenuOpen)}
-                                                    className="flex items-center space-x-1 text-xs font-bold text-gray-500 hover:text-black dark:hover:text-white transition-colors"
-                                                >
-                                                    <span>{selectedModel}</span>
-                                                    <ChevronDownIcon className={`w-3 h-3 transition-transform ${isModelMenuOpen ? 'rotate-180' : ''}`} />
-                                                </button>
-                                                
-                                                <AnimatePresence>
-                                                    {isModelMenuOpen && (
-                                                        <motion.div 
-                                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                            className="absolute bottom-full right-0 mb-2 w-48 dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-xl overflow-hidden py-1 z-50"
-                                                        >
-                                                            {models.map((m) => (
-                                                                <button 
-                                                                    key={m.name}
-                                                                    onClick={() => { setSelectedModel(m.name); setIsModelMenuOpen(false); }}
-                                                                    className="w-full flex items-center justify-between px-4 py-2.5 text-[12px] dark:text-gray-300 text-gray-700 hover:dark:bg-white/5 hover:bg-gray-100 transition-colors"
-                                                                >
-                                                                    <span className={selectedModel === m.name ? "font-bold text-orange-500" : ""}>{m.name}</span>
-                                                                    {selectedModel === m.name && <CheckIcon className="w-3 h-3 text-orange-500" />}
-                                                                </button>
-                                                            ))}
-                                                        </motion.div>
-                                                    )}
-                                                </AnimatePresence>
-                                            </div>
-
-                                            <button className="p-2 text-gray-500 hover:text-black dark:hover:text-white transition-colors">
-                                                <MicIcon className="w-5 h-5" />
-                                            </button>
-                                            <button 
-                                                onClick={handleSendMessage}
-                                                disabled={isLoading || !inputValue.trim()}
-                                                className={`p-2 rounded-full transition-all ${inputValue.trim() ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-transparent text-gray-600'}`}
-                                            >
-                                                <ArrowUpIcon className="w-5 h-5" />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {!isFocused && !inputValue.trim() && (
-                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center space-x-4">
-                                            <div className="flex items-center space-x-1 text-xs font-bold text-gray-500">
-                                                <span>{selectedModel}</span>
-                                                <ChevronDownIcon className="w-3 h-3" />
-                                            </div>
-                                            <MicIcon className="w-5 h-5 text-gray-500" />
-                                        </div>
-                                    )}
-                                </div>
-                                
-                                {/* Chat Response Display */}
-                                {chatResponse && (
-                                    <div className="mt-6 p-6 rounded-2xl dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-neutral-200 animate-in fade-in slide-in-from-bottom-2">
-                                        <div className="prose dark:prose-invert max-w-none text-sm leading-relaxed">
-                                            {chatResponse}
-                                        </div>
-                                    </div>
-                                )}
+                        {/* Toggle Switch */}
+                        <div className="flex items-center justify-start mb-8">
+                            <div className="bg-neutral-100 dark:bg-[#1a1a1a] p-1 rounded-lg flex items-center border border-neutral-200 dark:border-gray-800">
+                                <button 
+                                    onClick={() => setViewMode('incomplete')}
+                                    className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${viewMode === 'incomplete' ? 'bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                                >
+                                    Incomplete
+                                </button>
+                                <button 
+                                    onClick={() => setViewMode('complete')}
+                                    className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${viewMode === 'complete' ? 'bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                                >
+                                    Complete
+                                </button>
                             </div>
+                        </div>
+                        
+                        {/* Results Count */}
+                        <div className="text-left mb-6 text-sm text-gray-500">
+                            {viewMode === 'incomplete' ? incompleteItems.length : completeItems.length} results
+                        </div>
 
-                            {/* Controls Row */}
-                            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
-                                <div className="flex items-center gap-3 w-full md:w-auto">
-                                    <button className="flex items-center px-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Recent <ChevronDownIcon className="w-4 h-4 ml-2"/>
-                                    </button>
-                                    <button className="px-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Projects
-                                    </button>
-                                </div>
-                                
-                                <div className="flex items-center gap-3 w-full md:w-auto">
-                                    <div className="relative flex-grow md:flex-grow-0">
-                                        <input 
-                                            type="text" 
-                                            placeholder="Search catalog" 
-                                            className="w-full md:w-64 pl-9 pr-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                                        />
-                                        <SearchIcon className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2"/>
-                                    </div>
-                                    <button className="flex items-center px-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                                        <AdjustIcon className="w-4 h-4 mr-2"/> Filters
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Learn Track Nav Row */}
-                            <div className="flex flex-wrap items-center gap-2 mb-4 overflow-x-auto no-scrollbar pb-2">
-                                {learnTrackItems.map((item) => (
-                                    <button
-                                        key={item.id}
-                                        onClick={() => setActiveSection(item.id)}
-                                        className={`flex items-center px-4 py-2 rounded-full text-xs font-bold border transition-colors whitespace-nowrap ${
-                                            activeSection === item.id 
-                                            ? 'bg-neutral-800 dark:bg-white text-white dark:text-black border-transparent' 
-                                            : 'bg-white dark:bg-[#1a1a1a] text-gray-600 dark:text-gray-300 border-neutral-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600'
-                                        }`}
-                                    >
-                                        <span className="mr-2 opacity-70">{item.icon}</span>
-                                        {item.label}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Toggle Switch */}
-                            <div className="flex items-center justify-start mb-8">
-                                <div className="bg-neutral-100 dark:bg-[#1a1a1a] p-1 rounded-lg flex items-center border border-neutral-200 dark:border-gray-800">
-                                    <button 
-                                        onClick={() => setViewMode('incomplete')}
-                                        className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${viewMode === 'incomplete' ? 'bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-                                    >
-                                        Incomplete
-                                    </button>
-                                    <button 
-                                        onClick={() => setViewMode('complete')}
-                                        className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${viewMode === 'complete' ? 'bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-                                    >
-                                        Complete
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            {/* Results Count */}
-                            <div className="text-left mb-6 text-sm text-gray-500">
-                                {viewMode === 'incomplete' ? incompleteItems.length : completeItems.length} results
-                            </div>
-
-                            {/* Cards Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
-                                {viewMode === 'incomplete' 
-                                    ? incompleteItems.map((item, idx) => renderCard(item, idx))
-                                    : completeItems.map((item, idx) => renderCard(item, idx))
-                                }
-                            </div>
+                        {/* Cards Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
+                            {viewMode === 'incomplete' 
+                                ? incompleteItems.map((item, idx) => renderCard(item, idx))
+                                : completeItems.map((item, idx) => renderCard(item, idx))
+                            }
                         </div>
                     </div>
                 )}

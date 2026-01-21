@@ -7,12 +7,13 @@ import {
     LocationTrackerIcon, FlaskIcon, MicroscopeIcon,
     BrainIcon, AdjustIcon, FileTextIcon,
     GlobeIcon,
-    LightningIcon, // Assuming visual for impact, if not present will fallback
+    LightningIcon, 
     SparkleIcon,
-    AlertIcon, // Fallback if not present
+    AlertIcon,
     LabIcon,
     WrenchIcon,
-    BookOpenIcon
+    BookOpenIcon,
+    DownloadIcon
 } from './icons';
 
 // --- Mock Data & Types ---
@@ -82,7 +83,15 @@ const ProgressBar = ({ progress }: { progress: number }) => (
     </div>
 );
 
-const TimelineStep = ({ label, status, date, eta, isLast }: { label: string, status: string, date?: string, eta?: string, isLast?: boolean }) => {
+interface TimelineStepProps {
+    label: string;
+    status: string;
+    date?: string;
+    eta?: string;
+    isLast?: boolean;
+}
+
+const TimelineStep: React.FC<TimelineStepProps> = ({ label, status, date, eta, isLast }) => {
     const isActive = status === 'active';
     const isCompleted = status === 'completed';
     
@@ -142,7 +151,7 @@ const TrackerView = () => {
     const [selectedTab, setSelectedTab] = useState('Overview');
 
     return (
-        <div className="flex-1 overflow-y-auto h-full dark:bg-black bg-neutral-100 dark:text-gray-200 text-neutral-800 p-6 lg:p-10 font-sans">
+        <div className="flex-1 overflow-y-auto h-full dark:bg-[#0E0E10] bg-neutral-100 dark:text-gray-200 text-neutral-800 p-6 lg:p-10 font-sans">
             <div className="max-w-[1400px] mx-auto space-y-6">
                 
                 {/* Header Area */}
@@ -157,6 +166,9 @@ const TrackerView = () => {
                         </h1>
                     </div>
                     <div className="flex items-center space-x-3">
+                        <button className="p-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-lg text-gray-600 dark:text-gray-400 hover:border-gray-400 transition-colors">
+                            <DownloadIcon className="w-5 h-5" />
+                        </button>
                         <button className="px-4 py-2 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-semibold hover:border-gray-400 transition-colors">
                             Export Log
                         </button>
