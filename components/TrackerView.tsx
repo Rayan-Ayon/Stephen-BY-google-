@@ -1,402 +1,406 @@
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+// FIX: Added missing ShieldCheckIcon to imports
 import { 
-    CheckCircleIcon, StarIcon, ChatIcon, UsersIcon, 
+    CheckCircleIcon, StarIcon, MessageCircleIcon, UsersIcon, 
     TrophyIcon, TrendingUpIcon, ClockIcon, ChevronRightIcon,
-    LocationTrackerIcon, FlaskIcon, MicroscopeIcon,
-    BrainIcon, AdjustIcon, FileTextIcon,
-    GlobeIcon,
-    LightningIcon, 
-    SparkleIcon,
-    AlertIcon,
-    LabIcon,
-    WrenchIcon,
-    BookOpenIcon,
-    DownloadIcon
+    FlaskIcon, MicroscopeIcon, BrainIcon, AdjustIcon, FileTextIcon,
+    GlobeIcon, SparkleIcon, LightningIcon, AlertIcon, 
+    DoubleChevronUpIcon, BookOpenIcon, PlusIcon, SendIcon,
+    ShieldCheckIcon
 } from './icons';
 
-// --- Mock Data & Types ---
+// --- Types & Data ---
 
-const RESEARCH_PROJECT = {
+interface Milestone {
+    id: string;
+    label: string;
+    status: 'completed' | 'active' | 'pending';
+    date?: string;
+    eta?: string;
+}
+
+interface Experiment {
+    id: string;
+    name: string;
+    version: string;
+    metric: string;
+    result: 'success' | 'failed';
+    date: string;
+}
+
+const ACTIVE_RESEARCH = {
     title: "Neuromorphic Vision Processors for Autonomous Swarms",
     domain: "Robotics / Edge AI",
-    status: "Prototyping",
-    progress: 68,
-    healthScore: 92, // 0-100
-    mentor: "Dr. Sarah Chen",
-    deadline: "Nov 14, 2026",
+    phase: "Experimentation",
+    status: "Ongoing",
+    progress: 72,
+    healthScore: 88,
+    mentor: "Dr. Sarah Chen (MIT)",
+    nextCheckpoint: "Nov 14, 2026",
     milestones: [
-        { id: 1, label: "Hypothesis", status: "completed", date: "Jan 10" },
-        { id: 2, label: "Literature Review", status: "completed", date: "Feb 15" },
-        { id: 3, label: "Simulation", status: "completed", date: "Mar 20" },
-        { id: 4, label: "Hardware Prototype", status: "active", eta: "2 weeks" },
-        { id: 5, label: "Field Testing", status: "pending", eta: "2 months" },
-        { id: 6, label: "Publication", status: "pending", eta: "4 months" },
-    ]
+        { id: '1', label: "Idea", status: 'completed', date: "Jan 10" },
+        { id: '2', label: "Proposal", status: 'completed', date: "Feb 15" },
+        { id: '3', label: "Review", status: 'completed', date: "Mar 20" },
+        { id: '4', label: "Experiment", status: 'active', eta: "2 weeks" },
+        { id: '5', label: "Validation", status: 'pending', eta: "2 months" },
+        { id: '6', label: "Publication", status: 'pending', eta: "4 months" },
+    ] as Milestone[],
+    team: [
+        { name: "AyonLogy", role: "Lead", institution: "UaiU", status: "Active" },
+        { name: "S. Brown", role: "Researcher", institution: "Stanford", status: "Active" },
+        { name: "K. Tanaka", role: "Engineer", institution: "Kyoto U", status: "External" },
+    ],
+    experiments: [
+        { id: "EXP-802", name: "Backprop Latency", version: "v4.2.1", metric: "12.4ms", result: "success", date: "Today" },
+        { id: "EXP-801", name: "Power Load Alpha", version: "v4.2.0", metric: "4.8W", result: "failed", date: "Yesterday" },
+        { id: "EXP-799", name: "Swarm Optical Flow", version: "v4.1.9", metric: "98.2%", result: "success", date: "Oct 28" },
+    ] as Experiment[],
 };
-
-const EXPERIMENTS = [
-    { id: "EXP-042", name: "Latency Test v4.1", date: "Today, 10:42 AM", status: "Success", metric: "12ms", delta: "-4ms", result: "pass" },
-    { id: "EXP-041", name: "Power Consumption", date: "Yesterday", status: "Failed", metric: "4.2W", delta: "+1.2W", result: "fail" },
-    { id: "EXP-040", name: "Optical Flow Algo", date: "Oct 24", status: "Success", metric: "98% Acc", delta: "+2%", result: "pass" },
-];
-
-const RESOURCES = [
-    { type: "Paper", title: "Spiking Neural Networks in Edge Devices (2024)", status: "Read" },
-    { type: "Dataset", title: "Drone-Swarm-Vision-v2 (12TB)", status: "Linked" },
-    { type: "Tool", title: "PyTorch Lightning / CUDA 12.4", status: "Active" },
-];
-
-const AI_SUGGESTIONS = [
-    { type: "insight", text: "Based on EXP-041 failure, consider reducing the batch size for the inference engine." },
-    { type: "resource", text: "New paper published by MIT CSAIL relates to your optical flow algorithm." },
-    { type: "risk", text: "Milestone 'Field Testing' is at risk of delay due to hardware procurement." }
-];
 
 // --- Sub-Components ---
 
-const HealthBadge = ({ score }: { score: number }) => {
-    let color = "text-green-500 border-green-500/30 bg-green-500/10";
-    if (score < 80) color = "text-yellow-500 border-yellow-500/30 bg-yellow-500/10";
-    if (score < 50) color = "text-red-500 border-red-500/30 bg-red-500/10";
-
-    return (
-        <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border ${color}`}>
-            <div className="relative w-2.5 h-2.5">
-                <div className={`absolute inset-0 rounded-full animate-ping opacity-75 ${score >= 80 ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                <div className={`relative rounded-full w-2.5 h-2.5 ${score >= 80 ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-            </div>
-            <span className="text-xs font-bold font-mono tracking-wider">HEALTH: {score}%</span>
+const HealthScoreHUD = ({ score }: { score: number }) => (
+    <div className="relative w-20 h-20 flex items-center justify-center">
+        <svg className="w-full h-full transform -rotate-90">
+            <circle cx="40" cy="40" r="34" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-gray-200 dark:text-gray-800" />
+            <motion.circle 
+                cx="40" cy="40" r="34" stroke="currentColor" strokeWidth="4" fill="transparent" 
+                strokeDasharray={213.6} 
+                initial={{ strokeDashoffset: 213.6 }}
+                animate={{ strokeDashoffset: 213.6 - (213.6 * score) / 100 }}
+                className={score > 80 ? "text-green-500" : "text-yellow-500"} 
+            />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-xl font-bold font-mono">{score}</span>
+            <span className="text-[8px] font-bold text-gray-500">HEALTH</span>
         </div>
-    );
-};
-
-const ProgressBar = ({ progress }: { progress: number }) => (
-    <div className="w-full h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
-        <motion.div 
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="h-full bg-gradient-to-r from-blue-500 to-violet-500"
-        />
     </div>
 );
 
-interface TimelineStepProps {
-    label: string;
-    status: string;
-    date?: string;
-    eta?: string;
-    isLast?: boolean;
-}
-
-const TimelineStep: React.FC<TimelineStepProps> = ({ label, status, date, eta, isLast }) => {
-    const isActive = status === 'active';
-    const isCompleted = status === 'completed';
-    
-    return (
-        <div className="flex flex-col relative flex-1">
-            <div className="flex items-center mb-2">
-                <div className={`w-3 h-3 rounded-full border-2 z-10 ${isCompleted ? 'bg-green-500 border-green-500' : isActive ? 'bg-blue-500 border-blue-500' : 'bg-transparent border-gray-600'}`}></div>
-                {!isLast && <div className={`flex-1 h-0.5 mx-2 ${isCompleted ? 'bg-green-500' : 'bg-gray-700'}`}></div>}
-            </div>
-            <div className="pr-4">
-                <p className={`text-xs font-bold mb-0.5 ${isActive ? 'text-white' : isCompleted ? 'text-green-400' : 'text-gray-500'}`}>{label}</p>
-                <p className="text-[10px] text-gray-500 font-mono">{date || eta}</p>
-            </div>
-        </div>
-    );
-};
-
-const MiniChart = ({ data, color = "stroke-blue-500" }: { data: number[], color?: string }) => {
-    // Simple SVG Sparkline
-    const max = Math.max(...data);
-    const points = data.map((d, i) => `${(i / (data.length - 1)) * 100},${100 - (d / max) * 100}`).join(" ");
-
-    return (
-        <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible" preserveAspectRatio="none">
-            <polyline
-                fill="none"
-                strokeWidth="2"
-                className={color}
-                points={points}
-                vectorEffect="non-scaling-stroke"
+const RadarChart = () => (
+    <div className="relative w-full h-40 flex items-center justify-center mt-4">
+        <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
+            <polygon points="50,0 100,25 100,75 50,100 0,75 0,25" className="fill-none stroke-gray-300 dark:stroke-gray-800 stroke-1" />
+            <polygon points="50,20 80,35 80,65 50,80 20,65 20,35" className="fill-none stroke-gray-300 dark:stroke-gray-800 stroke-1" />
+            <motion.polygon 
+                points="50,10 90,30 85,70 50,90 25,75 15,35" 
+                className="fill-blue-500/20 stroke-blue-500 stroke-2" 
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
             />
         </svg>
-    );
-};
+        <div className="absolute top-0 text-[9px] font-bold text-gray-400">Analysis</div>
+        <div className="absolute bottom-0 text-[9px] font-bold text-gray-400">Creativity</div>
+        <div className="absolute left-0 text-[9px] font-bold text-gray-400">Ethics</div>
+        <div className="absolute right-0 text-[9px] font-bold text-gray-400">Research</div>
+    </div>
+);
 
-const RadarChart = () => {
-    // Decorative simplified radar chart for "Growth"
+// --- Main Tracker Segment ---
+
+const TrackerView: React.FC = () => {
     return (
-        <div className="relative w-full h-full flex items-center justify-center">
-            <svg viewBox="0 0 100 100" className="w-3/4 h-3/4 overflow-visible">
-                <polygon points="50,0 100,25 100,75 50,100 0,75 0,25" className="fill-none stroke-gray-700 stroke-1" />
-                <polygon points="50,15 85,32 85,68 50,85 15,68 15,32" className="fill-none stroke-gray-800 stroke-1" />
-                <polygon points="50,0 80,25 90,75 50,90 20,70 10,30" className="fill-blue-500/20 stroke-blue-500 stroke-2" />
-                <circle cx="50" cy="0" r="2" className="fill-blue-400" />
-                <circle cx="80" cy="25" r="2" className="fill-blue-400" />
-                <circle cx="90" cy="75" r="2" className="fill-blue-400" />
-            </svg>
-            <div className="absolute top-0 text-[9px] text-gray-400 font-mono bg-black/50 px-1">Research</div>
-            <div className="absolute bottom-0 text-[9px] text-gray-400 font-mono bg-black/50 px-1">Ethics</div>
-            <div className="absolute left-0 text-[9px] text-gray-400 font-mono bg-black/50 px-1">Coding</div>
-            <div className="absolute right-0 text-[9px] text-gray-400 font-mono bg-black/50 px-1">Collab</div>
-        </div>
-    );
-};
-
-const TrackerView = () => {
-    const [selectedTab, setSelectedTab] = useState('Overview');
-
-    return (
-        <div className="flex-1 overflow-y-auto h-full dark:bg-[#0E0E10] bg-neutral-100 dark:text-gray-200 text-neutral-800 p-6 lg:p-10 font-sans">
-            <div className="max-w-[1400px] mx-auto space-y-6">
+        <div className="flex-1 h-full overflow-y-auto dark:bg-black bg-neutral-50 p-6 lg:p-10 pt-24 custom-scrollbar">
+            <div className="max-w-[1600px] mx-auto space-y-6">
                 
-                {/* Header Area */}
-                <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+                {/* Header HUD */}
+                <div className="flex flex-col md:flex-row items-end justify-between gap-6 mb-8">
                     <div>
-                        <div className="flex items-center space-x-2 text-xs font-bold text-orange-500 uppercase tracking-widest mb-2">
-                            <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
-                            <span>Research Command Center</span>
+                        <div className="flex items-center space-x-2 text-blue-500 font-bold text-xs uppercase tracking-[0.2em] mb-2">
+                            <LightningIcon className="w-4 h-4" />
+                            <span>UaiU Strategic Intelligence</span>
                         </div>
-                        <h1 className="text-3xl md:text-4xl font-bold dark:text-white text-black font-serif tracking-tight">
-                            Project Alpha: Vision
-                        </h1>
+                        <h1 className="text-4xl font-bold dark:text-white text-black font-serif">Research Command Center</h1>
                     </div>
-                    <div className="flex items-center space-x-3">
-                        <button className="p-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-lg text-gray-600 dark:text-gray-400 hover:border-gray-400 transition-colors">
-                            <DownloadIcon className="w-5 h-5" />
+                    <div className="flex items-center gap-3">
+                        <button className="px-6 py-2.5 bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-xl text-sm font-bold shadow-sm hover:border-gray-400 transition-all">
+                            Export Manifest
                         </button>
-                        <button className="px-4 py-2 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-semibold hover:border-gray-400 transition-colors">
-                            Export Log
-                        </button>
-                        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-900/20">
-                            + New Experiment
+                        <button className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-900/20 hover:bg-blue-700 transition-all">
+                            Start New Stream
                         </button>
                     </div>
-                </header>
+                </div>
 
-                {/* --- GRID LAYOUT --- */}
+                {/* Dashboard Grid */}
                 <div className="grid grid-cols-12 gap-6">
-
-                    {/* COL 1: Main Project Context (8 cols) */}
+                    
+                    {/* LEFT COLUMN: Project Context */}
                     <div className="col-span-12 lg:col-span-8 space-y-6">
                         
-                        {/* 1. Active Project Card */}
-                        <div className="dark:bg-[#0f0f0f] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6 shadow-sm relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                        {/* 1. Active Projects Box */}
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-200 rounded-[32px] p-8 shadow-sm relative overflow-hidden group"
+                        >
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-blue-500/10 transition-colors" />
                             
-                            <div className="flex justify-between items-start mb-6">
-                                <div>
-                                    <div className="flex items-center space-x-3 mb-1">
-                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                                            {RESEARCH_PROJECT.domain}
+                            <div className="flex justify-between items-start mb-8 relative z-10">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                                            {ACTIVE_RESEARCH.domain}
                                         </span>
-                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                                            {RESEARCH_PROJECT.status}
+                                        <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-purple-500/10 text-purple-500 border border-purple-500/20">
+                                            {ACTIVE_RESEARCH.status}
                                         </span>
                                     </div>
-                                    <h2 className="text-xl font-bold dark:text-white text-black mt-2">{RESEARCH_PROJECT.title}</h2>
-                                    <p className="text-sm text-gray-500 mt-1">Lead: Me • Mentor: {RESEARCH_PROJECT.mentor}</p>
+                                    <h2 className="text-2xl font-bold dark:text-white text-black mb-2 leading-tight">{ACTIVE_RESEARCH.title}</h2>
+                                    <p className="text-gray-500 text-sm flex items-center">
+                                        <ClockIcon className="w-4 h-4 mr-2" />
+                                        Next Checkpoint: <span className="text-blue-500 font-bold ml-1">{ACTIVE_RESEARCH.nextCheckpoint}</span>
+                                    </p>
                                 </div>
-                                <HealthBadge score={RESEARCH_PROJECT.healthScore} />
+                                <HealthScoreHUD score={ACTIVE_RESEARCH.healthScore} />
                             </div>
 
-                            <div className="space-y-2 mb-8">
-                                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-gray-500">
-                                    <span>Progress</span>
-                                    <span>{RESEARCH_PROJECT.progress}%</span>
+                            <div className="space-y-3 mb-10 relative z-10">
+                                <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-gray-500">
+                                    <span>Sync Progress</span>
+                                    <span>{ACTIVE_RESEARCH.progress}%</span>
                                 </div>
-                                <ProgressBar progress={RESEARCH_PROJECT.progress} />
-                            </div>
-
-                            {/* Milestones Stepper */}
-                            <div>
-                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Milestone Timeline</h3>
-                                <div className="flex flex-wrap gap-y-4">
-                                    {RESEARCH_PROJECT.milestones.map((m, i) => (
-                                        <TimelineStep 
-                                            key={m.id} 
-                                            label={m.label}
-                                            status={m.status}
-                                            date={m.date}
-                                            eta={m.eta}
-                                            isLast={i === RESEARCH_PROJECT.milestones.length - 1} 
-                                        />
-                                    ))}
+                                <div className="w-full h-2 dark:bg-gray-800 bg-neutral-100 rounded-full overflow-hidden">
+                                    <motion.div 
+                                        className="h-full bg-gradient-to-r from-blue-600 to-indigo-500" 
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${ACTIVE_RESEARCH.progress}%` }}
+                                        transition={{ duration: 1.5, ease: "easeOut" }}
+                                    />
                                 </div>
                             </div>
-                        </div>
 
-                        {/* 5. Experiments & Logs */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="dark:bg-[#0f0f0f] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6 shadow-sm">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="font-bold dark:text-white text-black flex items-center">
-                                        <FlaskIcon className="w-4 h-4 mr-2 text-violet-500" /> Recent Experiments
-                                    </h3>
-                                    <button className="text-xs text-gray-500 hover:text-white transition-colors">View All</button>
-                                </div>
-                                <div className="space-y-4">
-                                    {EXPERIMENTS.map(exp => (
-                                        <div key={exp.id} className="group flex items-center justify-between p-3 rounded-xl dark:bg-[#1a1a1a] bg-gray-50 border dark:border-white/5 border-gray-200 hover:border-gray-400 dark:hover:border-gray-600 transition-all cursor-pointer">
-                                            <div>
-                                                <div className="flex items-center space-x-2 mb-1">
-                                                    <span className="font-mono text-xs text-gray-500">{exp.id}</span>
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${exp.result === 'pass' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                                                </div>
-                                                <div className="font-bold text-sm dark:text-gray-200 text-gray-800">{exp.name}</div>
+                            {/* 2. Research Milestones Box */}
+                            <div className="relative z-10 pt-6 border-t dark:border-gray-800 border-neutral-100">
+                                <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-6 flex items-center justify-between">
+                                    <span>Research Milestones</span>
+                                    <span className="text-blue-500 normal-case">AI Prediction: +3 Days Acceleration Expected</span>
+                                </h3>
+                                <div className="flex flex-wrap items-center gap-y-6">
+                                    {ACTIVE_RESEARCH.milestones.map((m, i) => (
+                                        <div key={m.id} className="flex-1 min-w-[140px] relative group/ms">
+                                            <div className="flex items-center mb-3">
+                                                <div className={`w-4 h-4 rounded-full border-2 z-10 transition-all ${
+                                                    m.status === 'completed' ? 'bg-green-500 border-green-500 shadow-[0_0_10px_#22c55e]' : 
+                                                    m.status === 'active' ? 'bg-blue-500 border-blue-500 shadow-[0_0_10px_#3b82f6]' : 
+                                                    'bg-transparent border-gray-600'
+                                                }`} />
+                                                {i < ACTIVE_RESEARCH.milestones.length - 1 && (
+                                                    <div className={`flex-1 h-0.5 mx-2 ${m.status === 'completed' ? 'bg-green-500' : 'bg-gray-800'}`} />
+                                                )}
                                             </div>
-                                            <div className="text-right">
-                                                <div className="font-mono text-sm font-bold dark:text-white text-black">{exp.metric}</div>
-                                                <div className={`text-[10px] ${exp.result === 'pass' ? 'text-green-500' : 'text-red-500'}`}>{exp.delta}</div>
+                                            <div>
+                                                <p className={`text-xs font-bold ${m.status === 'active' ? 'dark:text-white text-black' : 'text-gray-500'}`}>{m.label}</p>
+                                                <p className="text-[10px] font-mono text-gray-600 mt-1">{m.date || m.eta}</p>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
+                        </motion.div>
 
-                            {/* 4. Knowledge & Resources */}
-                            <div className="dark:bg-[#0f0f0f] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6 shadow-sm">
-                                <div className="flex justify-between items-center mb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* 5. Experiments & Logs Box */}
+                            <div className="dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-200 rounded-[32px] p-6 shadow-sm">
+                                <div className="flex items-center justify-between mb-6">
                                     <h3 className="font-bold dark:text-white text-black flex items-center">
-                                        <BookOpenIcon className="w-4 h-4 mr-2 text-blue-500" /> Active Resources
+                                        <FlaskIcon className="w-5 h-5 mr-3 text-purple-500" />
+                                        Experiments & Logs
                                     </h3>
-                                    <button className="p-1 hover:bg-gray-800 rounded text-gray-500"><AdjustIcon className="w-4 h-4"/></button>
+                                    <span className="text-[10px] font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">AUTO-GEN SYNC</span>
                                 </div>
                                 <div className="space-y-3">
-                                    {RESOURCES.map((res, i) => (
-                                        <div key={i} className="flex items-start p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group cursor-pointer border border-transparent hover:border-gray-200 dark:hover:border-white/10">
-                                            <div className="mt-1 mr-3 text-gray-500 group-hover:text-blue-400">
-                                                {res.type === 'Paper' ? <FileTextIcon className="w-4 h-4" /> : res.type === 'Dataset' ? <LocationTrackerIcon className="w-4 h-4" /> : <WrenchIcon className="w-4 h-4" />}
+                                    {ACTIVE_RESEARCH.experiments.map(exp => (
+                                        <div key={exp.id} className="flex items-center justify-between p-3 rounded-xl dark:bg-[#151515] bg-neutral-50 border dark:border-white/5 border-neutral-200 hover:border-gray-400 transition-all cursor-pointer group">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-2 h-2 rounded-full ${exp.result === 'success' ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-red-500 shadow-[0_0_8px_#ef4444]'}`} />
+                                                <div>
+                                                    <p className="text-xs font-bold dark:text-white text-black leading-none mb-1">{exp.name}</p>
+                                                    <p className="text-[10px] font-mono text-gray-500 uppercase">{exp.version} • {exp.date}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <div className="text-sm font-medium dark:text-gray-300 text-gray-800 leading-snug">{res.title}</div>
-                                                <div className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">{res.type} • <span className="text-green-500">{res.status}</span></div>
+                                            <div className="text-right">
+                                                <p className="text-xs font-bold font-mono dark:text-blue-400 text-blue-600">{exp.metric}</p>
+                                                <p className="text-[9px] text-gray-500 uppercase font-bold tracking-tighter">Repro: 0.98</p>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
-                                <div className="mt-4 pt-4 border-t dark:border-gray-800 border-gray-100">
-                                    <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                                        <p className="text-xs text-blue-400 font-medium flex items-center">
-                                            <BrainIcon className="w-3 h-3 mr-2" />
-                                            AI Detected: Knowledge gap in "Spiking Neural Networks" optimization.
+                                <button className="w-full mt-4 py-2 text-xs font-bold text-gray-500 hover:text-white transition-colors border border-dashed dark:border-gray-800 rounded-lg">
+                                    + View All 84 Experiments
+                                </button>
+                            </div>
+
+                            {/* 4. Knowledge & Resources Box */}
+                            <div className="dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-200 rounded-[32px] p-6 shadow-sm flex flex-col">
+                                <h3 className="font-bold dark:text-white text-black flex items-center mb-6">
+                                    <BookOpenIcon className="w-5 h-5 mr-3 text-orange-500" />
+                                    Knowledge Graph
+                                </h3>
+                                <div className="space-y-4 flex-1">
+                                    <div className="p-3 rounded-xl dark:bg-orange-500/5 bg-orange-50 border border-orange-500/20">
+                                        <p className="text-[11px] font-bold text-orange-500 uppercase mb-2 flex items-center">
+                                            <BrainIcon className="w-3 h-3 mr-2" /> Knowledge Gap Detected
                                         </p>
+                                        <p className="text-xs dark:text-gray-300 text-gray-700 leading-relaxed">You have 12% lower mastery in "Asynchronous Swarm Protocols" than required for the next phase.</p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {['Paper: Spiking Vision v2', 'Dataset: Swarm-42-Lidar', 'Tool: CUDA Lab 12.4'].map(res => (
+                                            <div key={res} className="flex items-center justify-between text-xs px-2 group cursor-pointer">
+                                                <span className="text-gray-500 group-hover:text-blue-500 transition-colors flex items-center">
+                                                    <ChevronRightIcon className="w-3 h-3 mr-2" /> {res}
+                                                </span>
+                                                <CheckCircleIcon className="w-3.5 h-3.5 text-green-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="pt-4 border-t dark:border-gray-800 border-neutral-100 mt-auto">
+                                    <div className="flex items-center justify-between text-[10px] font-bold text-gray-500">
+                                        <span>READING PROGRESS</span>
+                                        <span>68% Total</span>
+                                    </div>
+                                    <div className="w-full h-1 bg-gray-800 rounded-full mt-2 overflow-hidden">
+                                        <div className="h-full bg-orange-500 w-[68%]" />
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        {/* 6. Output & Impact (Bottom Full) */}
-                        <div className="dark:bg-[#0f0f0f] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6 shadow-sm">
-                            <div className="flex justify-between items-center mb-6">
+
+                        {/* 6. Output & Impact Box */}
+                        <div className="dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-200 rounded-[32px] p-8 shadow-sm">
+                            <div className="flex items-center justify-between mb-8">
                                 <h3 className="font-bold dark:text-white text-black flex items-center">
-                                    <GlobeIcon className="w-4 h-4 mr-2 text-teal-500" /> Output & Impact
+                                    <TrophyIcon className="w-5 h-5 mr-3 text-yellow-500" />
+                                    Output & Impact
                                 </h3>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold dark:text-gray-400">Scientific Impact Score:</span>
+                                    <span className="text-xl font-bold dark:text-white font-mono">8.4</span>
+                                </div>
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                <div className="p-4 rounded-xl dark:bg-[#1a1a1a] bg-gray-50 border dark:border-white/5 border-gray-200">
-                                    <div className="text-xs text-gray-500 uppercase tracking-widest mb-2">Papers</div>
-                                    <div className="text-2xl font-bold dark:text-white text-black">1 <span className="text-sm text-gray-500 font-normal">published</span></div>
-                                    <div className="text-sm text-gray-500">2 preprints</div>
-                                </div>
-                                <div className="p-4 rounded-xl dark:bg-[#1a1a1a] bg-gray-50 border dark:border-white/5 border-gray-200">
-                                    <div className="text-xs text-gray-500 uppercase tracking-widest mb-2">Code</div>
-                                    <div className="text-2xl font-bold dark:text-white text-black">85% <span className="text-sm text-gray-500 font-normal">coverage</span></div>
-                                    <div className="text-sm text-gray-500">Reproduction score: High</div>
-                                </div>
-                                <div className="p-4 rounded-xl dark:bg-[#1a1a1a] bg-gray-50 border dark:border-white/5 border-gray-200">
-                                    <div className="text-xs text-gray-500 uppercase tracking-widest mb-2">Innovation</div>
-                                    <div className="text-2xl font-bold dark:text-white text-black">1 <span className="text-sm text-gray-500 font-normal">Prototype</span></div>
-                                    <div className="text-sm text-gray-500">TRL Level 4</div>
-                                </div>
-                                <div className="p-4 rounded-xl dark:bg-[#1a1a1a] bg-gray-50 border dark:border-white/5 border-gray-200 relative overflow-hidden">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent"></div>
-                                    <div className="relative z-10">
-                                        <div className="text-xs text-green-500 uppercase tracking-widest mb-2 font-bold">Impact Score</div>
-                                        <div className="text-2xl font-bold dark:text-white text-black">8.4</div>
-                                        <div className="text-sm text-green-500 font-medium">Top 5% in Domain</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    {/* COL 2: Assistant & Support (4 cols) */}
-                    <div className="col-span-12 lg:col-span-4 space-y-6">
-                        
-                        {/* 7. AI Research Assistant (Signature) */}
-                        <div className="dark:bg-[#0f0f0f] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6 shadow-lg shadow-purple-900/10 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
-                            
-                            <div className="flex items-center space-x-2 mb-6">
-                                <SparkleIcon className="w-5 h-5 text-purple-500" />
-                                <h3 className="font-bold dark:text-white text-black">AI Assistant</h3>
-                            </div>
-
-                            <div className="space-y-4 mb-6">
-                                {AI_SUGGESTIONS.map((sug, i) => (
-                                    <div key={i} className="p-3 rounded-lg dark:bg-white/5 bg-gray-50 border dark:border-white/10 border-gray-200 text-sm">
-                                        <div className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${
-                                            sug.type === 'risk' ? 'text-red-400' : sug.type === 'insight' ? 'text-blue-400' : 'text-green-400'
-                                        }`}>
-                                            {sug.type}
-                                        </div>
-                                        <p className="dark:text-gray-300 text-gray-700 leading-snug">{sug.text}</p>
+                                {[
+                                    { label: 'Published', val: '2', sub: 'Citations: 14' },
+                                    { label: 'Prototypes', val: '1', sub: 'TRL Level: 4' },
+                                    { label: 'Patents', val: '0', sub: '1 Pending' },
+                                    { label: 'Startups', val: '0', sub: 'In Stealth' },
+                                ].map((stat, i) => (
+                                    <div key={i} className="text-center p-4 rounded-2xl dark:bg-[#151515] bg-neutral-50 border dark:border-white/5 border-neutral-200">
+                                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{stat.label}</p>
+                                        <p className="text-2xl font-bold dark:text-white text-black mb-1">{stat.val}</p>
+                                        <p className="text-[9px] text-blue-500 font-bold">{stat.sub}</p>
                                     </div>
                                 ))}
                             </div>
+                        </div>
+                    </div>
 
-                            <div className="relative">
-                                <input 
-                                    type="text" 
-                                    placeholder="Ask about your data..." 
-                                    className="w-full bg-neutral-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 rounded-xl py-3 pl-4 pr-10 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all dark:text-white placeholder-gray-500"
+                    {/* RIGHT COLUMN: AI & Growth */}
+                    <div className="col-span-12 lg:col-span-4 space-y-6">
+                        
+                        {/* 7. AI Research Assistant Box */}
+                        <div className="dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-200 rounded-[32px] p-6 shadow-xl shadow-blue-500/5 flex flex-col h-[500px] relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10" />
+                            
+                            <div className="flex items-center space-x-3 mb-6 relative z-10">
+                                <SparkleIcon className="w-6 h-6 text-blue-500" />
+                                <h3 className="font-bold dark:text-white text-black">UaiU Assistant</h3>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto space-y-4 mb-4 custom-scrollbar relative z-10">
+                                <div className="p-3 rounded-2xl dark:bg-white/5 bg-neutral-100 border dark:border-white/5 border-neutral-200 text-xs leading-relaxed">
+                                    <p className="font-bold text-blue-500 mb-1">SMART SUGGESTION</p>
+                                    "Based on EXP-801, the power load exceeds edge limits. I recommend switching to the RISC-V V-extension profile."
+                                </div>
+                                <div className="p-3 rounded-2xl dark:bg-red-500/5 bg-red-50 border border-red-500/20 text-xs leading-relaxed">
+                                    <p className="font-bold text-red-500 mb-1 flex items-center">
+                                        <AlertIcon className="w-3 h-3 mr-2" /> RISK ALERT
+                                    </p>
+                                    "Milestone 'Validation' is currently blocked by hardware shipment delay. Accelerate Simulation v2 to compensate."
+                                </div>
+                            </div>
+
+                            <div className="relative mt-auto z-10">
+                                <textarea 
+                                    placeholder="Consult Hawking..." 
+                                    className="w-full dark:bg-[#151515] bg-neutral-50 border dark:border-gray-800 border-neutral-200 rounded-2xl p-4 pr-12 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all resize-none dark:text-white"
+                                    rows={2}
                                 />
-                                <button className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-500 hover:text-purple-400">
-                                    <ChevronRightIcon className="w-4 h-4" />
+                                <button className="absolute right-3 bottom-3 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all">
+                                    <SendIcon className="w-3.5 h-3.5" />
                                 </button>
                             </div>
                         </div>
 
-                        {/* 8. Personal Growth & Team */}
-                        <div className="dark:bg-[#0f0f0f] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6 shadow-sm">
-                            <h3 className="font-bold dark:text-white text-black mb-6 flex items-center justify-between">
-                                <div className="flex items-center"><UsersIcon className="w-4 h-4 mr-2 text-yellow-500" /> Team</div>
-                                <span className="text-xs bg-gray-100 dark:bg-white/10 px-2 py-1 rounded text-gray-500">3 Active</span>
-                            </h3>
-                            <div className="flex -space-x-2 overflow-hidden mb-6">
-                                <img className="inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-[#111]" src="https://images.unsplash.com/photo-1491528323818-fdd1faba62cc?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="" />
-                                <img className="inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-[#111]" src="https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="" />
-                                <img className="inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-[#111]" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2.25&w=256&h=256&q=80" alt="" />
-                                <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold ring-2 ring-white dark:ring-[#111]">+1</div>
-                            </div>
-                            
-                            <div className="border-t dark:border-gray-800 border-gray-100 pt-6">
-                                <h3 className="font-bold dark:text-white text-black mb-4 flex items-center">
-                                    <TrophyIcon className="w-4 h-4 mr-2 text-orange-500" /> Growth
+                        {/* 3. Team & Collaboration Box */}
+                        <div className="dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-200 rounded-[32px] p-6 shadow-sm">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="font-bold dark:text-white text-black flex items-center">
+                                    <UsersIcon className="w-5 h-5 mr-3 text-teal-500" />
+                                    Research Team
                                 </h3>
-                                <div className="h-40 w-full mb-4">
-                                    <RadarChart />
+                                <button className="p-1.5 rounded-lg hover:dark:bg-white/5 transition-colors"><AdjustIcon className="w-4 h-4 text-gray-500" /></button>
+                            </div>
+                            <div className="space-y-4">
+                                {ACTIVE_RESEARCH.team.map((member, i) => (
+                                    <div key={i} className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-full bg-neutral-200 dark:bg-gray-800 overflow-hidden border border-white/10">
+                                                <img src={`https://picsum.photos/seed/${i+42}/100/100`} className="w-full h-full object-cover" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold dark:text-white text-black">{member.name}</p>
+                                                <p className="text-[10px] text-gray-500">{member.role} • {member.institution}</p>
+                                            </div>
+                                        </div>
+                                        <div className={`w-2 h-2 rounded-full ${member.status === 'Active' ? 'bg-green-500' : 'bg-gray-600'}`} />
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="mt-6 p-4 rounded-2xl dark:bg-blue-500/5 bg-blue-50 border border-blue-500/10">
+                                <p className="text-[10px] font-bold text-blue-500 uppercase mb-1">AI Recommendation</p>
+                                <p className="text-[11px] dark:text-gray-400 text-gray-600">Suggesting: <span className="font-bold dark:text-gray-200">Li Wei (ETH Zurich)</span> for Swarm Optimization. Matches 94% of project requirements.</p>
+                            </div>
+                        </div>
+
+                        {/* 8. Personal Growth Tracker Box */}
+                        <div className="dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-200 rounded-[32px] p-6 shadow-sm">
+                            <h3 className="font-bold dark:text-white text-black flex items-center mb-6">
+                                <DoubleChevronUpIcon className="w-5 h-5 mr-3 text-indigo-500" />
+                                Cognitive Maturity
+                            </h3>
+                            <RadarChart />
+                            <div className="space-y-4 mt-6 pt-6 border-t dark:border-gray-800 border-neutral-100">
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-gray-500 font-medium">Research Maturity</span>
+                                    <span className="font-bold dark:text-white text-black px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800">LEVEL 4</span>
                                 </div>
                                 <div className="flex justify-between items-center text-xs">
-                                    <span className="text-gray-500">Research Maturity</span>
-                                    <span className="font-bold dark:text-white text-black">Level 4</span>
+                                    <span className="text-gray-500 font-medium">Weekly Research</span>
+                                    <span className="font-bold text-blue-500">42.5 Hours</span>
                                 </div>
-                                <div className="flex justify-between items-center text-xs mt-2">
-                                    <span className="text-gray-500">Bloom's Level</span>
-                                    <span className="font-bold text-blue-500">Analyzing</span>
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-gray-500 font-medium">Bloom's Taxonomy Level</span>
+                                    <span className="font-bold text-orange-500 uppercase tracking-tighter">Evaluating</span>
                                 </div>
                             </div>
                         </div>
 
                     </div>
-
                 </div>
+
+                {/* Footer Insight */}
+                <div className="pt-12 pb-20 text-center">
+                    <p className="text-gray-500 text-sm max-w-xl mx-auto flex items-center justify-center gap-2">
+                        <ShieldCheckIcon className="w-4 h-4 text-green-500" />
+                        All research data is encrypted and monitored for ethical compliance by UaiU Governance.
+                    </p>
+                </div>
+
             </div>
         </div>
     );
