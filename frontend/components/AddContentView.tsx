@@ -55,12 +55,22 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated }) => {
     const inputContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const chatInstance = ai.chats.create({
-            model: 'gemini-3-flash-preview',
-            config: { thinkingConfig: { thinkingBudget: 0 } },
-        });
-        setChat(chatInstance);
+        const apiKey = process.env.API_KEY;
+        if (!apiKey || apiKey === "YOUR_API_KEY_HERE" || apiKey === "undefined") {
+            console.warn("GEMINI_API_KEY is missing or invalid. AI features in AddContentView will be disabled.");
+            return;
+        }
+
+        try {
+            const ai = new GoogleGenAI({ apiKey });
+            const chatInstance = ai.chats.create({
+                model: 'gemini-3-flash-preview',
+                config: { thinkingConfig: { thinkingBudget: 0 } },
+            });
+            setChat(chatInstance);
+        } catch (error) {
+            console.error("Failed to initialize GoogleGenAI in AddContentView:", error);
+        }
     }, []);
 
     useEffect(() => {

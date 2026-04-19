@@ -262,7 +262,7 @@ export const PodcastModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
                     <div className="p-3 dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl flex items-center justify-between">
                          <div className="flex items-center space-x-2">
                             <span className="text-[12px] font-bold bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-white/5">Selected All Topics x</span>
-                            <span className="text-[12px] font-bold text-gray-500">Show all items ></span>
+                            <span className="text-[12px] font-bold text-gray-500">Show all items {'>'}</span>
                          </div>
                          <XIcon className="w-5 h-5 text-gray-600" />
                     </div>
@@ -438,7 +438,7 @@ export const PasteTextModal: React.FC<{ onClose: () => void }> = ({ onClose }) =
     );
 };
 
-export const PasteUrlModal: React.FC<{ onClose: () => void, onCourseCreated: (course: HistoryItem) => void; }> = ({ onClose, onCourseCreated }) => {
+export const PasteUrlModal: React.FC<{ onClose: () => void, onCourseCreated: (course: { id: number; title: string; description: string; type: string; time: string; videoUrl?: string; isStructured?: boolean }) => void }> = ({ onClose, onCourseCreated }) => {
     const [url, setUrl] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -451,21 +451,21 @@ export const PasteUrlModal: React.FC<{ onClose: () => void, onCourseCreated: (co
     const handleSubmit = () => {
         if (!url || isLoading) return;
         setIsLoading(true);
-        const videoId = getYouTubeId(url);
-        const embedUrl = videoId ? `https://www.youtube.com/embed/${videoId}` : 'https://www.youtube.com/embed/g_IaVepNDT4';
+        const videoId = getYouTubeId(url) || 'g_IaVepNDT4';
+        const embedUrl = `https://www.youtube.com/embed/${videoId}`;
 
         setTimeout(() => {
-            const newCourse: HistoryItem = {
+            setIsLoading(false);
+            const course = {
                 id: Date.now(),
-                title: videoId ? 'New YouTube Course' : 'Personalized Learning Course',
-                description: videoId ? `Course created from YouTube video.` : `This course was generated from: ${url}.`,
+                title: `Video: ${videoId}`,
+                description: 'YouTube Video',
                 type: 'video',
                 time: 'Just now',
                 videoUrl: embedUrl,
-                day: 1, totalDays: 7, depth: 10, level: 'Intermediate', learningReason: 'Exploring web resources.',
+                isStructured: false
             };
-            setIsLoading(false);
-            onCourseCreated(newCourse);
+            onCourseCreated(course);
             onClose();
         }, 1200);
     };

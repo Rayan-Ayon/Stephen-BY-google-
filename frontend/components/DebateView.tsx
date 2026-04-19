@@ -85,14 +85,24 @@ const DebateView: React.FC<DebateViewProps> = ({ initialMessage }) => {
     const isDebateActive = activeDebateId !== null;
 
     useEffect(() => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const chatInstance = ai.chats.create({
-            model: 'gemini-3-pro-preview',
-            config: {
-                systemInstruction: "You are 'DebateBot', an AI designed to engage in debates. Always take the opposite stance of the user's opinion respectfully. React naturally like a human in a debate — witty, logical, and confident. Never agree with the user; challenge their statements with reasoning.",
-            },
-        });
-        setChat(chatInstance);
+        const apiKey = process.env.API_KEY;
+        if (!apiKey || apiKey === "YOUR_API_KEY_HERE" || apiKey === "undefined") {
+            console.warn("GEMINI_API_KEY is missing or invalid. AI features in DebateView will be disabled.");
+            return;
+        }
+
+        try {
+            const ai = new GoogleGenAI({ apiKey });
+            const chatInstance = ai.chats.create({
+                model: 'gemini-3-pro-preview',
+                config: {
+                    systemInstruction: "You are 'DebateBot', an AI designed to engage in debates. Always take the opposite stance of the user's opinion respectfully. React naturally like a human in a debate — witty, logical, and confident. Never agree with the user; challenge their statements with reasoning.",
+                },
+            });
+            setChat(chatInstance);
+        } catch (error) {
+            console.error("Failed to initialize GoogleGenAI in DebateView:", error);
+        }
     }, []);
 
     useEffect(() => {

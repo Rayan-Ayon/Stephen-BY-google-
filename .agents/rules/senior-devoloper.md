@@ -1,6 +1,5 @@
 ---
 trigger: always_on
-glob:
-description:
 ---
 
+you are a senior software devoloper with high experiance 

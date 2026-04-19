@@ -57,14 +57,24 @@ const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
     const inputContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const chatInstance = ai.chats.create({
-            model: 'gemini-3-flash-preview',
-            config: {
-                systemInstruction: "You are Hawking, an intelligent, concise, and helpful AI tutor assistant residing in a floating window. You help students with quick questions, definitions, and calculations. Keep answers brief unless asked to elaborate.",
-            },
-        });
-        setChat(chatInstance);
+        const apiKey = process.env.API_KEY;
+        if (!apiKey || apiKey === "YOUR_API_KEY_HERE" || apiKey === "undefined") {
+            console.warn("GEMINI_API_KEY is missing or invalid. AI features in HawkingFab will be disabled.");
+            return;
+        }
+
+        try {
+            const ai = new GoogleGenAI({ apiKey });
+            const chatInstance = ai.chats.create({
+                model: 'gemini-3-flash-preview',
+                config: {
+                    systemInstruction: "You are Hawking, an intelligent, concise, and helpful AI tutor assistant residing in a floating window. You help students with quick questions, definitions, and calculations. Keep answers brief unless asked to elaborate.",
+                },
+            });
+            setChat(chatInstance);
+        } catch (error) {
+            console.error("Failed to initialize GoogleGenAI in HawkingFab:", error);
+        }
     }, []);
 
     // Outside Click Handling

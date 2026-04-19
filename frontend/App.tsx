@@ -7,6 +7,39 @@ import AuthOverlay from './components/AuthOverlay';
 export type Theme = 'light' | 'dark';
 export type AuthType = 'login' | 'signup' | null;
 
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
+  constructor(props: {children: React.ReactNode}) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("Dashboard error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-screen bg-[#0b0b0b] text-white p-8">
+          <h1 className="text-2xl font-bold mb-4">Something went wrong.</h1>
+          <p className="text-gray-400 mb-6 text-center">We encountered an error while loading the dashboard. Please check your console for details.</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-white text-black font-bold rounded-full"
+          >
+            Reload App
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const App: React.FC = () => {
   const [theme, setTheme] = useState<Theme>('dark');
   const [showDashboard, setShowDashboard] = useState(false);
@@ -42,12 +75,14 @@ const App: React.FC = () => {
   return (
     <div className={`transition-colors duration-300 ${theme === 'dark' ? 'dark text-neutral-200' : 'text-neutral-800'}`} style={{ fontFamily: "'Inter', sans-serif" }}>
       {showDashboard ? (
-        <Dashboard 
-          toggleTheme={toggleTheme} 
-          theme={theme} 
-          initialView={initialView} 
-          onExit={() => setShowDashboard(false)}
-        />
+        <ErrorBoundary>
+          <Dashboard 
+            toggleTheme={toggleTheme} 
+            theme={theme} 
+            initialView={initialView} 
+            onExit={() => setShowDashboard(false)}
+          />
+        </ErrorBoundary>
       ) : (
         <LandingPage 
           onStartLearning={handleStartLearning} 

@@ -113,14 +113,24 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
 
     // Initialize GenAI
     useEffect(() => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const chatInstance = ai.chats.create({
-            model: 'gemini-3-flash-preview',
-            config: {
-                systemInstruction: "You are an AI tutor helping a student with their course material. Be helpful, concise, and encouraging.",
-            },
-        });
-        setChat(chatInstance);
+        const apiKey = process.env.API_KEY;
+        if (!apiKey || apiKey === "YOUR_API_KEY_HERE" || apiKey === "undefined") {
+            console.warn("GEMINI_API_KEY is missing or invalid. AI features in TutorPanel will be disabled.");
+            return;
+        }
+
+        try {
+            const ai = new GoogleGenAI({ apiKey });
+            const chatInstance = ai.chats.create({
+                model: 'gemini-3-flash-preview',
+                config: {
+                    systemInstruction: "You are an AI tutor helping a student with their course material. Be helpful, concise, and encouraging.",
+                },
+            });
+            setChat(chatInstance);
+        } catch (error) {
+            console.error("Failed to initialize GoogleGenAI in TutorPanel:", error);
+        }
     }, []);
 
     // Simulate Loading for Tabs
