@@ -49,6 +49,23 @@ const parseTimeToSeconds = (timeStr: string): number => {
     return 0;
 };
 
+const MOCK_CHAPTERS: Chapter[] = [
+    { time: "00:00", title: "Introduction", desc: "Welcome to the course overview and what you'll learn." },
+    { time: "02:30", title: "Getting Started", desc: "Setting up your environment and prerequisites." },
+    { time: "05:00", title: "Core Concepts", desc: "Deep dive into the main topics and fundamentals." },
+    { time: "10:00", title: "Practical Examples", desc: "Hands-on examples and code demonstrations." },
+    { time: "15:00", title: "Advanced Topics", desc: "Advanced techniques and best practices." },
+    { time: "20:00", title: "Conclusion", desc: "Summary and next steps for learning." }
+];
+
+const MOCK_TRANSCRIPTS: TranscriptItem[] = [
+    { start: 0, text: "Welcome to this comprehensive course. In this video, we'll cover all the essential topics you need to get started." },
+    { start: 5, text: "Let's begin by understanding the fundamental concepts that will serve as the foundation for your learning journey." },
+    { start: 10, text: "Now let's dive into the practical examples that will help you apply what you've learned in real-world scenarios." },
+    { start: 15, text: "As we move forward, we'll explore more advanced topics and techniques that will take your skills to the next level." },
+    { start: 20, text: "Thank you for watching! Don't forget to like and subscribe for more content." }
+];
+
 const ChapterList: React.FC<{ chapters: Chapter[]; currentTime: number; onChapterClick: (time: number) => void }> = ({ chapters, currentTime, onChapterClick }) => {
     const activeIndex = chapters.findIndex((ch, i) => {
         const currentChapterTime = parseTimeToSeconds(ch.time);
@@ -127,10 +144,10 @@ const TranscriptList: React.FC<{ transcripts: TranscriptItem[]; currentTime: num
 const CinematicContentPanel: React.FC<{ course: HistoryItem, onBack?: () => void, isFullWidth: boolean }> = ({ course, onBack, isFullWidth }) => {
     const [activeTab, setActiveTab] = useState<'Chapters' | 'Transcripts'>('Chapters');
     const [isShrunk, setIsShrunk] = useState(false);
-    const [transcripts, setTranscripts] = useState<TranscriptItem[]>([]);
-    const [chapters, setChapters] = useState<Chapter[]>([]);
+    const [transcripts, setTranscripts] = useState<TranscriptItem[]>(MOCK_TRANSCRIPTS);
+    const [chapters, setChapters] = useState<Chapter[]>(MOCK_CHAPTERS);
     const [currentTime, setCurrentTime] = useState(0);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [autoScroll, setAutoScroll] = useState(true);
     const playerRef = useRef<any>(null);
     const [videoId, setVideoId] = useState<string>('');
