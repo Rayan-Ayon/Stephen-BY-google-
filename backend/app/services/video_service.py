@@ -1,10 +1,4 @@
 from youtube_transcript_api import YouTubeTranscriptApi
-import google.generativeai as genai
-import os
-import json
-from dotenv import load_dotenv
-
-load_dotenv()
 
 async def get_youtube_transcript(video_id: str):
     try:
@@ -19,44 +13,33 @@ async def get_youtube_transcript(video_id: str):
         raise Exception(f"Failed to fetch transcript: {str(e)}")
 
 async def generate_chapters(transcript_data):
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        return [
-            {"title": "Introduction", "time": "0:00", "desc": "Overview of the content"},
-            {"title": "Deep Dive", "time": "2:30", "desc": "Detailed analysis and concepts"},
-            {"title": "Conclusion", "time": "5:00", "desc": "Final thoughts and summary"}
-        ]
-        
-    genai.configure(api_key=api_key)
-    
-    text_chunks = [f"[{int(item['start'])}] {item['text']}" for item in transcript_data]
-    text = " ".join(text_chunks)
-    
-    if len(text) > 15000:
-        text = text[:15000] + "... (truncated)"
-        
-    prompt = f"""Given the following transcript from a video with timestamps in seconds, generate 5-10 logical chapters for the video.
-Return ONLY a JSON object with a 'chapters' key containing an array like this:
-{{
-  "chapters": [
-    {{ "title": "Chapter name", "time": "M:SS", "desc": "Short description" }}
-  ]
-}}
-
-Transcript:
-{text}
-"""
-    
-    model = genai.GenerativeModel('gemini-2.5-flash')
-    response = model.generate_content(prompt)
-    
-    try:
-        result_text = response.text
-        if result_text.startswith("```json"):
-            result_text = result_text[7:]
-        if result_text.endswith("```"):
-            result_text = result_text[:-3]
-        data = json.loads(result_text.strip())
-        return data.get("chapters", [])
-    except Exception as e:
+    if not transcript_data:
         return []
+    
+    duration = transcript_data[-1]['start'] + transcript_data[-1].get('duration', 5)
+    interval = max(duration // 6, 30)
+    chapters = []
+    labels = [
+        "Introduction and Overview",
+        "Getting Started with the Basics",
+        "Core Concepts and Fundamentals",
+        "Practical Examples and Implementation",
+        "Advanced Techniques and Best Practices",
+        "Summary and Final Thoughts"
+    ]
+    
+    for i in range(6):
+        time_sec = i * interval
+        minutes = time_sec // 60
+        seconds = time_sec % 60
+        time_str = f"{minutes}:{seconds:02d}"
+        
+        chapter_text = f"Topics covered from {time_str} onwards in this section"
+        
+        chapters.append({
+            "title": labels[i],
+            "time": time_str,
+            "desc": chapter_text
+        })
+    
+    return chapters

@@ -66,15 +66,40 @@ const MOCK_TRANSCRIPTS: TranscriptItem[] = [
     { start: 20, text: "Thank you for watching! Don't forget to like and subscribe for more content." }
 ];
 
+const groupTranscripts = (transcripts: TranscriptItem[], itemsPerGroup: number = 5): TranscriptItem[] => {
+    if (transcripts.length === 0) return [];
+    const grouped: TranscriptItem[] = [];
+    for (let i = 0; i < transcripts.length; i += itemsPerGroup) {
+        const group = transcripts.slice(i, i + itemsPerGroup);
+        const combinedText = group.map(t => t.text).join(' ');
+        grouped.push({
+            start: group[0].start,
+            text: combinedText,
+            duration: group.reduce((sum, t) => sum + (t.duration || 0), 0)
+        });
+    }
+    return grouped;
+};
+
 const ChapterList: React.FC<{ chapters: Chapter[]; currentTime: number; onChapterClick: (time: number) => void }> = ({ chapters, currentTime, onChapterClick }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
     const activeIndex = chapters.findIndex((ch, i) => {
         const currentChapterTime = parseTimeToSeconds(ch.time);
         const nextChapterTime = i < chapters.length - 1 ? parseTimeToSeconds(chapters[i + 1].time) : Infinity;
         return currentTime >= currentChapterTime && currentTime < nextChapterTime;
     });
 
+    useEffect(() => {
+        if (activeIndex !== -1 && containerRef.current) {
+            const elements = containerRef.current.children;
+            if (elements[activeIndex]) {
+                (elements[activeIndex] as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }, [activeIndex]);
+
     return (
-        <div className="flex-1 w-full pb-20">
+        <div className="flex-1 w-full pb-20" ref={containerRef}>
             <div className="space-y-3">
                 {chapters.map((ch, i) => {
                     const isActive = i === activeIndex;
@@ -102,17 +127,14 @@ const ChapterList: React.FC<{ chapters: Chapter[]; currentTime: number; onChapte
 
 const TranscriptList: React.FC<{ transcripts: TranscriptItem[]; currentTime: number; onTranscriptClick: (time: number) => void }> = ({ transcripts, currentTime, onTranscriptClick }) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const activeIndex = transcripts.findIndex((t, i) => {
-        const start = t.start;
-        const end = t.start + (t.duration || 5);
-        return currentTime >= start && currentTime < end;
-    });
+    
+    const activeIndex = transcripts.findIndex((t) => currentTime >= t.start && currentTime < (t.start + (t.duration || 5)));
 
     useEffect(() => {
         if (activeIndex !== -1 && containerRef.current) {
-            const activeElement = containerRef.current.children[activeIndex] as HTMLElement;
-            if (activeElement) {
-                activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const elements = containerRef.current.children;
+            if (elements[activeIndex]) {
+                (elements[activeIndex] as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
     }, [activeIndex]);
@@ -191,10 +213,15 @@ const CinematicContentPanel: React.FC<{ course: HistoryItem, onBack?: () => void
             playerRef.current = new window.YT.Player('youtube-player', {
                 videoId: videoId,
                 events: {
-                    'onReady': () => setPlayerReady(true),
+                    'onReady': () => {
+                        setPlayerReady(true);
+                        setCurrentTime(0);
+                    },
                     'onStateChange': (event: any) => {
                         if (event.data === window.YT.PlayerState.PLAYING) {
                             startTimeTracking();
+                        } else if (event.data === window.YT.PlayerState.PAUSED || event.data === window.YT.PlayerState.ENDED) {
+                            stopTimeTracking();
                         }
                     }
                 }
@@ -209,7 +236,14 @@ const CinematicContentPanel: React.FC<{ course: HistoryItem, onBack?: () => void
                     const time = playerRef.current.getCurrentTime();
                     setCurrentTime(time);
                 }
-            }, 500);
+            }, 250);
+        };
+        
+        const stopTimeTracking = () => {
+            if (timeInterval) {
+                clearInterval(timeInterval);
+                timeInterval = undefined;
+            }
         };
         
         loadYouTubeAPI();
@@ -265,66 +299,20 @@ const CinematicContentPanel: React.FC<{ course: HistoryItem, onBack?: () => void
                         text: t.text ?? '', 
                         duration: t.duration ?? 0 
                     }));
-                    setTranscripts(formattedTrans);
-                    console.log('Set transcripts:', formattedTrans.length);
+                    
+                    const groupedTrans = groupTranscripts(formattedTrans, 5);
+                    setTranscripts(groupedTrans);
+                    console.log('Set grouped transcripts:', groupedTrans.length, 'boxes');
+                    
+                    const fallbackChapters = generateFallbackChapters(transList);
+                    setChapters(fallbackChapters);
+                    console.log('Generated chapters from transcript:', fallbackChapters.length);
                 }
             } catch (err: any) {
                 console.error('Transcript fetch error:', err);
                 setError(err.message || 'Failed to fetch transcript');
             } finally {
                 setIsFetchingTranscript(false);
-            }
-            
-            if (transList.length > 0) {
-                try {
-                    setIsGeneratingChapters(true);
-                    const chaptersRes = await fetch('/api/chapters', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            transcript: transList.map((t: any) => ({ 
-                                text: t.text, 
-                                start: t.start, 
-                                duration: t.duration 
-                            })) 
-                        })
-                    });
-                    console.log('Chapters response status:', chaptersRes.status);
-                    
-                    if (!chaptersRes.ok) {
-                        const chaptersData = await chaptersRes.json();
-                        console.log('Chapters error response:', chaptersData);
-                        throw new Error(chaptersData.detail || 'Chapter generation failed');
-                    }
-                    
-                    const chaptersData = await chaptersRes.json();
-                    console.log('Chapters data:', chaptersData);
-                    
-                    let chapterList: any[] = [];
-                    if (Array.isArray(chaptersData)) {
-                        chapterList = chaptersData;
-                    } else if (chaptersData.chapters) {
-                        chapterList = chaptersData.chapters;
-                    } else if (chaptersData.data) {
-                        chapterList = chaptersData.data;
-                    }
-                    
-                    if (chapterList.length > 0) {
-                        setChapters(chapterList);
-                        console.log('Set chapters:', chapterList.length);
-                    } else {
-                        const fallback = generateFallbackChapters(transList);
-                        setChapters(fallback);
-                        console.log('Using fallback chapters:', fallback.length);
-                    }
-                } catch (err: any) {
-                    console.error('Chapter generation error:', err);
-                    const fallback = generateFallbackChapters(transList);
-                    setChapters(fallback);
-                    console.log('Generated fallback chapters from transcript');
-                } finally {
-                    setIsGeneratingChapters(false);
-                }
             }
         };
         
