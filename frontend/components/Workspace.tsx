@@ -144,10 +144,12 @@ const TranscriptList: React.FC<{ transcripts: TranscriptItem[]; currentTime: num
 const CinematicContentPanel: React.FC<{ course: HistoryItem, onBack?: () => void, isFullWidth: boolean }> = ({ course, onBack, isFullWidth }) => {
     const [activeTab, setActiveTab] = useState<'Chapters' | 'Transcripts'>('Chapters');
     const [isShrunk, setIsShrunk] = useState(false);
-    const [transcripts, setTranscripts] = useState<TranscriptItem[]>(MOCK_TRANSCRIPTS);
-    const [chapters, setChapters] = useState<Chapter[]>(MOCK_CHAPTERS);
+    const [transcripts, setTranscripts] = useState<TranscriptItem[]>([]);
+    const [chapters, setChapters] = useState<Chapter[]>([]);
     const [currentTime, setCurrentTime] = useState(0);
-    const [loading, setLoading] = useState(false);
+    const [isFetchingTranscript, setIsFetchingTranscript] = useState(false);
+    const [isGeneratingChapters, setIsGeneratingChapters] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [autoScroll, setAutoScroll] = useState(true);
     const playerRef = useRef<any>(null);
     const [videoId, setVideoId] = useState<string>('');
@@ -223,26 +225,127 @@ const CinematicContentPanel: React.FC<{ course: HistoryItem, onBack?: () => void
     useEffect(() => {
         const fetchData = async () => {
             if (!videoId) return;
-            setLoading(true);
+            
+            console.log('Fetching data for videoId:', videoId);
+            setError(null);
+            setTranscripts([]);
+            setChapters([]);
+            
+            let transList: any[] = [];
+            
             try {
+                setIsFetchingTranscript(true);
                 const transcriptRes = await fetch(`/api/transcript?videoId=${videoId}`);
+                console.log('Transcript response status:', transcriptRes.status);
+                
+                if (!transcriptRes.ok) {
+                    throw new Error(`Transcript API failed: ${transcriptRes.status}`);
+                }
+                
                 const transcriptData = await transcriptRes.json();
-                const transList = transcriptData.transcript?.snippets || [];
-                setTranscripts(transList.map((t: any) => ({ start: t.start, text: t.text, duration: t.duration })));
-
-                const chaptersRes = await fetch('/api/chapters', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ transcript: transList.map((t: any) => ({ text: t.text, start: t.start, duration: t.duration })) })
-                });
-                const chaptersData = await chaptersRes.json();
-                setChapters(chaptersData.chapters || []);
-            } catch (err) {
-                console.error('Failed to fetch transcript/chapters:', err);
+                console.log('Transcript data:', transcriptData);
+                
+                if (Array.isArray(transcriptData)) {
+                    transList = transcriptData;
+                } else if (transcriptData.transcript?.snippets) {
+                    transList = transcriptData.transcript.snippets;
+                } else if (transcriptData.data) {
+                    transList = transcriptData.data;
+                } else if (transcriptData.snippets) {
+                    transList = transcriptData.snippets;
+                }
+                
+                console.log('Normalized transcript count:', transList.length);
+                
+                if (transList.length === 0) {
+                    setError('No transcript available for this video.');
+                } else {
+                    const formattedTrans = transList.map((t: any) => ({ 
+                        start: t.start ?? 0, 
+                        text: t.text ?? '', 
+                        duration: t.duration ?? 0 
+                    }));
+                    setTranscripts(formattedTrans);
+                    console.log('Set transcripts:', formattedTrans.length);
+                }
+            } catch (err: any) {
+                console.error('Transcript fetch error:', err);
+                setError(err.message || 'Failed to fetch transcript');
             } finally {
-                setLoading(false);
+                setIsFetchingTranscript(false);
+            }
+            
+            if (transList.length > 0) {
+                try {
+                    setIsGeneratingChapters(true);
+                    const chaptersRes = await fetch('/api/chapters', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            transcript: transList.map((t: any) => ({ 
+                                text: t.text, 
+                                start: t.start, 
+                                duration: t.duration 
+                            })) 
+                        })
+                    });
+                    console.log('Chapters response status:', chaptersRes.status);
+                    
+                    if (!chaptersRes.ok) {
+                        const chaptersData = await chaptersRes.json();
+                        console.log('Chapters error response:', chaptersData);
+                        throw new Error(chaptersData.detail || 'Chapter generation failed');
+                    }
+                    
+                    const chaptersData = await chaptersRes.json();
+                    console.log('Chapters data:', chaptersData);
+                    
+                    let chapterList: any[] = [];
+                    if (Array.isArray(chaptersData)) {
+                        chapterList = chaptersData;
+                    } else if (chaptersData.chapters) {
+                        chapterList = chaptersData.chapters;
+                    } else if (chaptersData.data) {
+                        chapterList = chaptersData.data;
+                    }
+                    
+                    if (chapterList.length > 0) {
+                        setChapters(chapterList);
+                        console.log('Set chapters:', chapterList.length);
+                    } else {
+                        const fallback = generateFallbackChapters(transList);
+                        setChapters(fallback);
+                        console.log('Using fallback chapters:', fallback.length);
+                    }
+                } catch (err: any) {
+                    console.error('Chapter generation error:', err);
+                    const fallback = generateFallbackChapters(transList);
+                    setChapters(fallback);
+                    console.log('Generated fallback chapters from transcript');
+                } finally {
+                    setIsGeneratingChapters(false);
+                }
             }
         };
+        
+        const generateFallbackChapters = (transList: any[]): Chapter[] => {
+            if (transList.length === 0) return [];
+            const duration = transList[transList.length - 1].start + transList[transList.length - 1].duration;
+            const interval = Math.ceil(duration / 6);
+            const chapters: Chapter[] = [];
+            const labels = ['Introduction', 'Getting Started', 'Core Concepts', 'Practical Examples', 'Advanced Topics', 'Conclusion'];
+            
+            for (let i = 0; i < 6; i++) {
+                const time = i * interval;
+                chapters.push({
+                    time: formatTime(time),
+                    title: labels[i] || `Part ${i + 1}`,
+                    desc: `Timestamp: ${formatTime(time)}`
+                });
+            }
+            return chapters;
+        };
+        
         fetchData();
     }, [videoId]);
 
@@ -351,11 +454,38 @@ const CinematicContentPanel: React.FC<{ course: HistoryItem, onBack?: () => void
 
                     <div className="flex flex-col items-center w-full min-h-0">
                         <div className="w-full max-w-5xl flex flex-col">
-                            {loading ? (
-                                <div className="flex items-center justify-center py-20">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+                            {error && (
+                                <div className="flex flex-col items-center justify-center py-10 text-center">
+                                    <p className="text-red-500 dark:text-red-400 text-sm font-medium mb-2">{error}</p>
+                                    <p className="text-gray-500 dark:text-gray-400 text-xs">Try another video or check if captions are available.</p>
                                 </div>
-                            ) : (
+                            )}
+                            
+                            {isFetchingTranscript && !error && (
+                                <div className="flex items-center justify-center py-10">
+                                    <div className="flex items-center space-x-2">
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-500"></div>
+                                        <span className="text-gray-500 dark:text-gray-400 text-sm">Fetching transcript...</span>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {isGeneratingChapters && !error && (
+                                <div className="flex items-center justify-center py-10">
+                                    <div className="flex items-center space-x-2">
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                                        <span className="text-gray-500 dark:text-gray-400 text-sm">Generating chapters...</span>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {!isFetchingTranscript && !error && transcripts.length === 0 && chapters.length === 0 && videoId && (
+                                <div className="flex flex-col items-center justify-center py-10 text-center">
+                                    <p className="text-gray-500 dark:text-gray-400 text-sm">No transcript available for this video.</p>
+                                </div>
+                            )}
+                            
+                            {!isFetchingTranscript && !error && (transcripts.length > 0 || chapters.length > 0) && (
                                 <AnimatePresence mode="wait">
                                     {activeTab === 'Chapters' ? (
                                         <motion.div key="chapters" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full flex flex-col">
@@ -367,6 +497,12 @@ const CinematicContentPanel: React.FC<{ course: HistoryItem, onBack?: () => void
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
+                            )}
+                            
+                            {!isFetchingTranscript && !error && !videoId && (
+                                <div className="flex flex-col items-center justify-center py-10 text-center">
+                                    <p className="text-gray-500 dark:text-gray-400 text-sm">Paste a YouTube link to see transcript and chapters.</p>
+                                </div>
                             )}
                         </div>
                     </div>

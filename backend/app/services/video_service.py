@@ -2,6 +2,9 @@ from youtube_transcript_api import YouTubeTranscriptApi
 import google.generativeai as genai
 import os
 import json
+from dotenv import load_dotenv
+
+load_dotenv()
 
 async def get_youtube_transcript(video_id: str):
     try:
@@ -44,7 +47,7 @@ Transcript:
 {text}
 """
     
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-2.5-flash')
     response = model.generate_content(prompt)
     
     try:
