@@ -55,7 +55,7 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated }) => {
     const inputContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const apiKey = process.env.API_KEY;
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
         if (!apiKey || apiKey === "YOUR_API_KEY_HERE" || apiKey === "undefined") {
             console.warn("GEMINI_API_KEY is missing or invalid. AI features in AddContentView will be disabled.");
             return;

@@ -1,17 +1,22 @@
 from youtube_transcript_api import YouTubeTranscriptApi
-from openai import AsyncOpenAI
+import google.generativeai as genai
 import os
 import json
 
 async def get_youtube_transcript(video_id: str):
     try:
-        transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
-        return transcript_list
+        api = YouTubeTranscriptApi()
+        transcript_list = api.list(video_id)
+        try:
+            transcript = transcript_list.find_transcript(['en'])
+        except:
+            transcript = transcript_list.find_transcript(['en-US'])
+        return transcript.fetch()
     except Exception as e:
         raise Exception(f"Failed to fetch transcript: {str(e)}")
 
 async def generate_chapters(transcript_data):
-    api_key = os.environ.get("OPENAI_API_KEY")
+    api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         return [
             {"title": "Introduction", "time": "0:00", "desc": "Overview of the content"},
@@ -19,7 +24,7 @@ async def generate_chapters(transcript_data):
             {"title": "Conclusion", "time": "5:00", "desc": "Final thoughts and summary"}
         ]
         
-    client = AsyncOpenAI(api_key=api_key)
+    genai.configure(api_key=api_key)
     
     text_chunks = [f"[{int(item['start'])}] {item['text']}" for item in transcript_data]
     text = " ".join(text_chunks)
@@ -39,19 +44,16 @@ Transcript:
 {text}
 """
     
-    response = await client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant that generates video chapters from transcripts."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.7,
-        response_format={ "type": "json_object" }
-    )
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    response = model.generate_content(prompt)
     
-    result_text = response.choices[0].message.content
     try:
-        data = json.loads(result_text)
+        result_text = response.text
+        if result_text.startswith("```json"):
+            result_text = result_text[7:]
+        if result_text.endswith("```"):
+            result_text = result_text[:-3]
+        data = json.loads(result_text.strip())
         return data.get("chapters", [])
-    except:
+    except Exception as e:
         return []
