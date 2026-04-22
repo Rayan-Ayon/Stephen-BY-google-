@@ -31,6 +31,7 @@ export interface HistoryItem {
     type: string;
     time: string;
     videoUrl?: string;
+    thumbnailUrl?: string;
     day?: number;
     totalDays?: number;
     depth?: number;
@@ -97,6 +98,17 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
     const [isCreatingSpace, setIsCreatingSpace] = useState(false);
     const [deleteSpaceId, setDeleteSpaceId] = useState<string | null>(null);
     const [shareSpaceId, setShareSpaceId] = useState<string | null>(null);
+
+    // Recent Videos State (persisted to localStorage)
+    const [recentVideos, setRecentVideos] = useState<HistoryItem[]>(() => {
+        const saved = localStorage.getItem('stephen_recent_videos');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    // Persist recentVideos to localStorage
+    useEffect(() => {
+        localStorage.setItem('stephen_recent_videos', JSON.stringify(recentVideos));
+    }, [recentVideos]);
 
     // Mock History Items
     const [historyItems, setHistoryItems] = useState<HistoryItem[]>([
@@ -168,6 +180,15 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
 
     const handleCourseCreated = (course: HistoryItem) => {
         setHistoryItems([course, ...historyItems]);
+        
+        // Add to recent videos if it's a video type
+        if (course.type === 'video' && course.videoUrl) {
+            setRecentVideos(prev => {
+                const newRecents = [course, ...prev.filter(v => v.id !== course.id)].slice(0, 20);
+                return newRecents;
+            });
+        }
+        
         handleSelectCourse(course);
     };
 
@@ -219,7 +240,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
 
         switch (currentView) {
             case 'add_content':
-                return <AddContentView onCourseCreated={handleCourseCreated} />;
+                return <AddContentView onCourseCreated={handleCourseCreated} recentVideos={recentVideos} onSelectRecent={handleSelectCourse} />;
             case 'add_courses':
                  return (
                     <AddCoursesView 
@@ -243,7 +264,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             case 'learning_methods': return <div className="flex items-center justify-center h-full text-gray-500">Learning Methods Coming Soon</div>;
             case 'chrome_extension': return <div className="flex items-center justify-center h-full text-gray-500">Chrome Extension Coming Soon</div>;
             default:
-                return <AddContentView onCourseCreated={handleCourseCreated} />;
+                return <AddContentView onCourseCreated={handleCourseCreated} recentVideos={recentVideos} onSelectRecent={handleSelectCourse} />;
         }
     };
 

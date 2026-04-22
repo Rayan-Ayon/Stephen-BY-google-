@@ -1,15 +1,29 @@
 from youtube_transcript_api import YouTubeTranscriptApi
+import logging
+
+logger = logging.getLogger(__name__)
 
 async def get_youtube_transcript(video_id: str):
     try:
+        logger.info(f"Fetching transcript for video: {video_id}")
         api = YouTubeTranscriptApi()
         transcript_list = api.list(video_id)
         try:
             transcript = transcript_list.find_transcript(['en'])
+            logger.info(f"Found English transcript for {video_id}")
         except:
-            transcript = transcript_list.find_transcript(['en-US'])
-        return transcript.fetch()
+            try:
+                transcript = transcript_list.find_transcript(['en-US'])
+                logger.info(f"Found en-US transcript for {video_id}")
+            except Exception as e:
+                logger.warning(f"No English transcript found for {video_id}: {e}")
+                raise Exception(f"No transcript available for video {video_id}")
+        
+        result = transcript.fetch()
+        logger.info(f"Successfully fetched {len(result)} transcript segments")
+        return result
     except Exception as e:
+        logger.error(f"Failed to fetch transcript for {video_id}: {str(e)}")
         raise Exception(f"Failed to fetch transcript: {str(e)}")
 
 async def generate_chapters(transcript_data):

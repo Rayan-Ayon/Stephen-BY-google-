@@ -5,18 +5,53 @@ import { HistoryItem } from './Dashboard';
 import { PasteUrlModal, RecordLectureModal, PasteTextModal } from './modals';
 import { 
     UploadIcon, LinkIcon, MicIcon, ArrowUpIcon, PlusIcon, ClockIcon, 
-    ChevronDownIcon, CubeIcon, BrainIcon, ChevronLeftIcon, ClipboardIcon, CheckIcon
+    ChevronDownIcon, CubeIcon, BrainIcon, ChevronLeftIcon, ClipboardIcon, CheckIcon,
+    PlayIcon
 } from './icons';
 import { GoogleGenAI, Chat } from '@google/genai';
 
 interface AddContentViewProps {
   onCourseCreated: (course: HistoryItem) => void;
+  recentVideos: HistoryItem[];
+  onSelectRecent: (item: HistoryItem) => void;
 }
 
 interface Message {
   role: 'user' | 'model';
   text: string;
 }
+
+const formatRelativeTime = (timeString: string): string => {
+    if (timeString === 'Just now') return 'Just now';
+    
+    const now = new Date();
+    const match = timeString.match(/(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago/i);
+    if (!match) return timeString;
+    
+    const value = parseInt(match[1]);
+    const unit = match[2].toLowerCase();
+    
+    if (unit === 'second' || unit === 'minute' || unit === 'hour') {
+        if (unit === 'minute' && value >= 60) {
+            const hours = Math.floor(value / 60);
+            return `${hours}h ago`;
+        }
+        if (value < 1) return 'Just now';
+        if (unit === 'hour' && value >= 1 && value < 24) return `${value}h ago`;
+        if (unit === 'minute') return `${value}m ago`;
+        if (unit === 'second') return `${value}s ago`;
+    }
+    
+    if (unit === 'day') {
+        if (value === 1) return 'Yesterday';
+        if (value < 7) return `${value}d ago`;
+        if (value < 30) return `${Math.floor(value / 7)}w ago`;
+        if (value < 365) return `${Math.floor(value / 30)}mo ago`;
+        return `${Math.floor(value / 365)}y ago`;
+    }
+    
+    return timeString;
+};
 
 const models = [
     { name: 'Auto', free: true },
@@ -35,7 +70,7 @@ const TypingIndicator = () => (
     </div>
 );
 
-const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated }) => {
+const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated, recentVideos, onSelectRecent }) => {
     const [isPasteUrlModalOpen, setIsPasteUrlModalOpen] = useState(false);
     const [isPasteTextModalOpen, setIsPasteTextModalOpen] = useState(false);
     const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
@@ -335,6 +370,56 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated }) => {
                         )}
                     </div>
                 </div>
+
+                {recentVideos.length > 0 && (
+                    <div className="flex items-center justify-between mb-8 w-full px-4">
+                        <h2 className="text-xl font-bold text-black dark:text-white" style={{ fontFamily: "'Lora', serif" }}>Recents</h2>
+                        <button className="flex items-center text-[10px] dark:text-[#555] text-neutral-500 dark:hover:text-[#aaa] hover:text-black dark:bg-[#111] bg-white border dark:border-[#1e1e1e] border-neutral-200 px-3 py-1.5 rounded-[12px] font-bold uppercase tracking-[0.1em] transition-all hover:border-[#333]">
+                            View all
+                            <ChevronDownIcon className="w-3.5 h-3.5 ml-1" />
+                        </button>
+                    </div>
+                )}
+                
+                {recentVideos.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full px-4 mb-10">
+                        {recentVideos.slice(0, 8).map((video) => (
+                            <div 
+                                key={video.id}
+                                onClick={() => onSelectRecent(video)}
+                                className="group relative flex flex-col cursor-pointer"
+                            >
+                                <div className="relative aspect-video rounded-[16px] overflow-hidden bg-[#1a1a1a]">
+                                    {video.thumbnailUrl ? (
+                                        <img 
+                                            src={video.thumbnailUrl} 
+                                            alt={video.title}
+                                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-[#222]" />
+                                    )}
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
+                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
+                                                <PlayIcon className="w-5 h-5 text-black ml-1" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="mt-3">
+                                    <p className="text-[13px] font-semibold text-black dark:text-white line-clamp-2 leading-tight group-hover:text-orange-500 transition-colors">
+                                        {video.title}
+                                    </p>
+                                    <p className="text-[11px] text-[#666] mt-1 flex items-center">
+                                        <PlayIcon className="w-3 h-3 mr-1" />
+                                        {formatRelativeTime(video.time)}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 <div className="flex items-center justify-between mb-8 w-full px-4">
                      <h2 className="text-xl font-bold text-black dark:text-white" style={{ fontFamily: "'Lora', serif" }}>Spaces</h2>

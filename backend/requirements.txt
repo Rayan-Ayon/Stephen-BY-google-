@@ -5,3 +5,7 @@ openai
 pydantic
 python-dotenv
 uvicorn[standard]
+google-genai
+sqlalchemy
+aiosqlite
+httpx

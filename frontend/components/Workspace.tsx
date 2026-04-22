@@ -81,7 +81,7 @@ const groupTranscripts = (transcripts: TranscriptItem[], itemsPerGroup: number =
     return grouped;
 };
 
-const ChapterList: React.FC<{ chapters: Chapter[]; currentTime: number; onChapterClick: (time: number) => void }> = ({ chapters, currentTime, onChapterClick }) => {
+const ChapterList: React.FC<{ chapters: Chapter[]; currentTime: number; onChapterClick: (time: number) => void; autoScroll: boolean }> = ({ chapters, currentTime, onChapterClick, autoScroll }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const activeIndex = chapters.findIndex((ch, i) => {
         const currentChapterTime = parseTimeToSeconds(ch.time);
@@ -90,17 +90,17 @@ const ChapterList: React.FC<{ chapters: Chapter[]; currentTime: number; onChapte
     });
 
     useEffect(() => {
-        if (activeIndex !== -1 && containerRef.current) {
+        if (autoScroll && activeIndex !== -1 && containerRef.current) {
             const elements = containerRef.current.children;
             if (elements[activeIndex]) {
                 (elements[activeIndex] as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
-    }, [activeIndex]);
+    }, [activeIndex, autoScroll]);
 
     return (
-        <div className="flex-1 w-full pb-20" ref={containerRef}>
-            <div className="space-y-3">
+        <div className="flex-1 w-full pb-20">
+            <div className="space-y-3" ref={containerRef}>
                 {chapters.map((ch, i) => {
                     const isActive = i === activeIndex;
                     return (
@@ -125,23 +125,26 @@ const ChapterList: React.FC<{ chapters: Chapter[]; currentTime: number; onChapte
     );
 };
 
-const TranscriptList: React.FC<{ transcripts: TranscriptItem[]; currentTime: number; onTranscriptClick: (time: number) => void }> = ({ transcripts, currentTime, onTranscriptClick }) => {
+const TranscriptList: React.FC<{ transcripts: TranscriptItem[]; currentTime: number; onTranscriptClick: (time: number) => void; autoScroll: boolean }> = ({ transcripts, currentTime, onTranscriptClick, autoScroll }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     
-    const activeIndex = transcripts.findIndex((t) => currentTime >= t.start && currentTime < (t.start + (t.duration || 5)));
+    const activeIndex = transcripts.findIndex((t, i) => {
+        const nextStart = i < transcripts.length - 1 ? transcripts[i + 1].start : Infinity;
+        return currentTime >= t.start && currentTime < nextStart;
+    });
 
     useEffect(() => {
-        if (activeIndex !== -1 && containerRef.current) {
+        if (autoScroll && activeIndex !== -1 && containerRef.current) {
             const elements = containerRef.current.children;
             if (elements[activeIndex]) {
                 (elements[activeIndex] as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
-    }, [activeIndex]);
+    }, [activeIndex, autoScroll]);
 
     return (
-        <div className="flex-1 w-full pb-20" ref={containerRef}>
-            <div className="space-y-3">
+        <div className="flex-1 w-full pb-20">
+            <div className="space-y-3" ref={containerRef}>
                 {transcripts.map((item, i) => {
                     const isActive = i === activeIndex;
                     return (
@@ -271,16 +274,21 @@ const CinematicContentPanel: React.FC<{ course: HistoryItem, onBack?: () => void
                 setIsFetchingTranscript(true);
                 const transcriptRes = await fetch(`/api/transcript?videoId=${videoId}`);
                 console.log('Transcript response status:', transcriptRes.status);
+                console.log('Transcript response headers:', Object.fromEntries(transcriptRes.headers.entries()));
                 
                 if (!transcriptRes.ok) {
-                    throw new Error(`Transcript API failed: ${transcriptRes.status}`);
+                    const errorText = await transcriptRes.text();
+                    console.error('Transcript error response:', errorText);
+                    throw new Error(`Transcript API failed: ${transcriptRes.status} - ${errorText}`);
                 }
                 
                 const transcriptData = await transcriptRes.json();
-                console.log('Transcript data:', transcriptData);
+                console.log('Transcript data received:', JSON.stringify(transcriptData).slice(0, 500));
                 
                 if (Array.isArray(transcriptData)) {
                     transList = transcriptData;
+                } else if (Array.isArray(transcriptData.transcript)) {
+                    transList = transcriptData.transcript;
                 } else if (transcriptData.transcript?.snippets) {
                     transList = transcriptData.transcript.snippets;
                 } else if (transcriptData.data) {
@@ -477,11 +485,11 @@ const CinematicContentPanel: React.FC<{ course: HistoryItem, onBack?: () => void
                                 <AnimatePresence mode="wait">
                                     {activeTab === 'Chapters' ? (
                                         <motion.div key="chapters" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full flex flex-col">
-                                            <ChapterList chapters={chapters} currentTime={currentTime} onChapterClick={handleChapterClick} />
+                                            <ChapterList chapters={chapters} currentTime={currentTime} onChapterClick={handleChapterClick} autoScroll={autoScroll} />
                                         </motion.div>
                                     ) : (
                                         <motion.div key="transcripts" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="w-full flex flex-col">
-                                            <TranscriptList transcripts={transcripts} currentTime={currentTime} onTranscriptClick={handleTranscriptClick} />
+                                            <TranscriptList transcripts={transcripts} currentTime={currentTime} onTranscriptClick={handleTranscriptClick} autoScroll={autoScroll} />
                                         </motion.div>
                                     )}
                                 </AnimatePresence>

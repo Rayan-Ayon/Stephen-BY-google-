@@ -438,7 +438,7 @@ export const PasteTextModal: React.FC<{ onClose: () => void }> = ({ onClose }) =
     );
 };
 
-export const PasteUrlModal: React.FC<{ onClose: () => void, onCourseCreated: (course: { id: number; title: string; description: string; type: string; time: string; videoUrl?: string; isStructured?: boolean }) => void }> = ({ onClose, onCourseCreated }) => {
+export const PasteUrlModal: React.FC<{ onClose: () => void, onCourseCreated: (course: { id: number; title: string; description: string; type: string; time: string; videoUrl?: string; thumbnailUrl?: string; isStructured?: boolean }) => void }> = ({ onClose, onCourseCreated }) => {
     const [url, setUrl] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -448,26 +448,43 @@ export const PasteUrlModal: React.FC<{ onClose: () => void, onCourseCreated: (co
         return (match && match[2].length === 11) ? match[2] : null;
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!url || isLoading) return;
         setIsLoading(true);
+        
         const videoId = getYouTubeId(url) || 'g_IaVepNDT4';
         const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+        const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+        
+        let videoTitle = `Video: ${videoId}`;
+        
+        // Fetch real title from YouTube oEmbed API
+        try {
+            const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+            const response = await fetch(oembedUrl);
+            if (response.ok) {
+                const data = await response.json();
+                videoTitle = data.title || videoTitle;
+            }
+        } catch (error) {
+            console.error('Failed to fetch video title:', error);
+        }
 
         setTimeout(() => {
             setIsLoading(false);
             const course = {
                 id: Date.now(),
-                title: `Video: ${videoId}`,
+                title: videoTitle,
                 description: 'YouTube Video',
                 type: 'video',
                 time: 'Just now',
                 videoUrl: embedUrl,
+                thumbnailUrl: thumbnailUrl,
                 isStructured: false
             };
             onCourseCreated(course);
             onClose();
-        }, 1200);
+        }, 800);
     };
 
     return (
