@@ -178,14 +178,20 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
         }
     };
 
+    const extractYouTubeId = (url: string): string => {
+        const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+        return match ? match[1] : '';
+    };
+
     const handleCourseCreated = (course: HistoryItem) => {
         setHistoryItems([course, ...historyItems]);
         
-        // Add to recent videos if it's a video type
+        // Add to recent videos if it's a video type - dedupe by YouTube video ID
         if (course.type === 'video' && course.videoUrl) {
+            const videoId = extractYouTubeId(course.videoUrl);
             setRecentVideos(prev => {
-                const newRecents = [course, ...prev.filter(v => v.id !== course.id)].slice(0, 20);
-                return newRecents;
+                const filtered = prev.filter(v => extractYouTubeId(v.videoUrl) !== videoId);
+                return [course, ...filtered].slice(0, 20);
             });
         }
         

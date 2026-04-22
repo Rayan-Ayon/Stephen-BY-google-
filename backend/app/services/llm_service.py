@@ -2,26 +2,27 @@ import json
 import logging
 import time
 from typing import Any
-from google.genai import Client
+from google import genai
+from google.genai import types
 from app.core.config import GEMINI_API_KEY, GEMINI_MODEL
 
 logger = logging.getLogger(__name__)
 
-client = Client(api_key=GEMINI_API_KEY)
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 
 async def generate(prompt: str, response_schema: dict | None = None) -> dict:
     start_time = time.time()
     
     try:
-        config = {
-            "temperature": 0.7,
-            "max_output_tokens": 8192,
-        }
+        config = types.GenerateContentConfig(
+            temperature=0.7,
+            max_output_tokens=8192,
+        )
         
         if response_schema:
-            config["response_mime_type"] = "application/json"
-            config["response_schema"] = response_schema
+            config.response_mime_type = "application/json"
+            config.response_schema = response_schema
         
         response = client.models.generate_content(
             model=GEMINI_MODEL,
@@ -46,8 +47,9 @@ async def generate(prompt: str, response_schema: dict | None = None) -> dict:
         
     except Exception as e:
         duration = time.time() - start_time
-        logger.error(f"Generation failed after {duration:.2f}s: {str(e)}")
-        raise
+        error_msg = str(e)
+        logger.error(f"Generation failed after {duration:.2f}s: {error_msg}")
+        raise Exception(f"LLM generation failed: {error_msg}")
 
 
 async def generate_with_schema(

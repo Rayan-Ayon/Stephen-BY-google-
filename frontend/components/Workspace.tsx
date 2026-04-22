@@ -265,6 +265,26 @@ const CinematicContentPanel: React.FC<{ course: HistoryItem, onBack?: () => void
             
             console.log('Fetching data for videoId:', videoId);
             setError(null);
+            
+            // Check localStorage cache first
+            const cacheKey = `stephen_transcript_${videoId}`;
+            const cachedData = localStorage.getItem(cacheKey);
+            if (cachedData) {
+                console.log('Using cached transcript from localStorage');
+                const cached = JSON.parse(cachedData);
+                const transList = cached.transcript || [];
+                const groupedTrans = groupTranscripts(
+                    transList.map((t: any) => ({ start: t.start ?? 0, text: t.text ?? '', duration: t.duration ?? 0 })), 
+                    5
+                );
+                setTranscripts(groupedTrans);
+                const chapters = generateFallbackChapters(transList);
+                setChapters(chapters);
+                console.log('Loaded from cache - transcripts:', groupedTrans.length, 'chapters:', chapters.length);
+                return;
+            }
+            
+            // No cache - fetch from API
             setTranscripts([]);
             setChapters([]);
             
@@ -302,6 +322,10 @@ const CinematicContentPanel: React.FC<{ course: HistoryItem, onBack?: () => void
                 if (transList.length === 0) {
                     setError('No transcript available for this video.');
                 } else {
+                    // Save to localStorage cache
+                    localStorage.setItem(cacheKey, JSON.stringify({ transcript: transList }));
+                    console.log('Saved transcript to localStorage');
+                    
                     const formattedTrans = transList.map((t: any) => ({ 
                         start: t.start ?? 0, 
                         text: t.text ?? '', 
