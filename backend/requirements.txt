@@ -9,3 +9,4 @@ google-genai
 sqlalchemy
 aiosqlite
 httpx
+chromadb

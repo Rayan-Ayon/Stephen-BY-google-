@@ -3,7 +3,6 @@ import logging
 import time
 from typing import Any
 from google import genai
-from google.genai import types
 from app.core.config import GEMINI_API_KEY, GEMINI_MODEL
 
 logger = logging.getLogger(__name__)
@@ -15,29 +14,21 @@ async def generate(prompt: str, response_schema: dict | None = None) -> dict:
     start_time = time.time()
     
     try:
-        config = types.GenerateContentConfig(
-            temperature=0.7,
-            max_output_tokens=8192,
-        )
-        
-        if response_schema:
-            config.response_mime_type = "application/json"
-            config.response_schema = response_schema
-        
         response = client.models.generate_content(
             model=GEMINI_MODEL,
             contents=prompt,
-            config=config,
         )
         
         duration = time.time() - start_time
-        
-        try:
-            result = json.loads(response.text)
-        except json.JSONDecodeError:
-            result = response.text
+        text = response.text
         
         logger.info(f"Generated content in {duration:.2f}s | model={GEMINI_MODEL}")
+        logger.info(f"Raw response: {text[:200]}...")
+        
+        try:
+            result = json.loads(text)
+        except json.JSONDecodeError:
+            result = text
         
         return {
             "data": result,

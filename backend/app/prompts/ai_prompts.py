@@ -59,18 +59,17 @@ Rules:
 - Do NOT include any text outside the JSON"""
 
 
-notes_prompt = """You are an AI assistant that creates structured study notes from video transcripts.
+notes_prompt = """You are an AI assistant that creates brief study notes from video transcripts.
 
-Given the transcript of a YouTube video, create comprehensive study notes in markdown format.
+Given the transcript of a YouTube video, create brief study notes in markdown format.
 
-Output ONLY a markdown string with these sections:
-- ## Key Concepts (main ideas)
-- ## Important Details (specific facts, numbers, definitions)
-- ## Examples (practical applications from the video)
-- ## Summary
+Output a brief markdown string (keep it under 500 words total).
+
+Include:
+- ## Key Concepts (3-5 bullet points)
+- ## Summary (2-3 sentences)
 
 Rules:
-- Use valid markdown with headers and bullet points
-- Be comprehensive but concise
-- Include specific details from the transcript
-- Output ONLY the markdown, no introductory text"""
+- Keep notes concise
+- Focus on the most important points
+- Do NOT include any text outside the markdown"""

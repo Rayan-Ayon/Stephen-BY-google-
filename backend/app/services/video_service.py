@@ -21,7 +21,10 @@ async def get_youtube_transcript(video_id: str):
         
         result = transcript.fetch()
         logger.info(f"Successfully fetched {len(result)} transcript segments")
-        return result
+        return [
+            {"text": item.text, "start": item.start, "duration": item.duration}
+            for item in result
+        ]
     except Exception as e:
         logger.error(f"Failed to fetch transcript for {video_id}: {str(e)}")
         raise Exception(f"Failed to fetch transcript: {str(e)}")

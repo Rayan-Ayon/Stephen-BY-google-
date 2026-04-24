@@ -13,7 +13,7 @@ from app.prompts.ai_prompts import (
     quiz_prompt,
     notes_prompt,
 )
-from app.services.llm_service import generate_with_schema
+from app.services.ai_client import get_ai_response_json, get_ai_response, DEFAULT_MODEL
 from app.services.video_service import get_youtube_transcript
 
 logger = logging.getLogger(__name__)
@@ -148,42 +148,31 @@ async def get_or_generate_feature(
         
         if feature_type == "summary":
             prompt = summary_prompt + f"\n\nTRANSCRIPT:\n{transcript_text}"
-            schema = SUMMARY_SCHEMA
+            response_data = get_ai_response_json(prompt)
         elif feature_type == "flashcards":
             prompt = flashcard_prompt + f"\n\nTRANSCRIPT:\n{transcript_text}"
-            schema = FLASHCARD_SCHEMA
+            response_data = get_ai_response_json(prompt)
         elif feature_type == "quiz":
             prompt = quiz_prompt + f"\n\nTRANSCRIPT:\n{transcript_text}"
-            schema = QUIZ_SCHEMA
+            response_data = get_ai_response_json(prompt)
         elif feature_type == "notes":
             prompt = notes_prompt + f"\n\nTRANSCRIPT:\n{transcript_text}"
-            schema = None
+            response_data = {"notes": get_ai_response(prompt)}
         else:
             raise ValueError(f"Unknown feature type: {feature_type}")
         
-        try:
-            if schema:
-                response = await generate_with_schema(prompt, schema)
-            else:
-                response = await generate_with_schema(prompt, {"type": "string"})
-                response["data"] = {"notes": response["data"]}
-            
-            model_used = response.get("model", "unknown")
-            logger.info(f"Generated {feature_type} in {response.get('duration', 0):.2f}s | model={model_used}")
-            
-            await save_result(db, video_id, feature_type, response["data"], model_used)
-            
-            return {
-                "cached": False,
-                "source": "generated",
-                "videoId": video_id,
-                "data": response["data"],
-                "model": model_used,
-            }
-            
-        except Exception as e:
-            logger.error(f"Generation failed for {video_id}/{feature_type}: {e}")
-            raise Exception(f"Generation failed for {feature_type}. Please retry.")
+        model_used = DEFAULT_MODEL
+        logger.info(f"Generated {feature_type} using {model_used}")
+        
+        await save_result(db, video_id, feature_type, response_data, model_used)
+        
+        return {
+            "cached": False,
+            "source": "generated",
+            "videoId": video_id,
+            "data": response_data,
+            "model": model_used,
+        }
 
 
 async def delete_cached_feature(
