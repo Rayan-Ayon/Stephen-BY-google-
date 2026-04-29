@@ -5,6 +5,8 @@ from pydantic import BaseModel
 class VideoIdRequest(BaseModel):
     videoId: str
     forceRefresh: bool = False
+    count: Optional[int] = 10  # Number of flashcards to generate
+    focus: Optional[str] = ""  # Topics/focus area
 
 
 class FlashcardItem(BaseModel):
@@ -12,6 +14,7 @@ class FlashcardItem(BaseModel):
     answer: str
     difficulty: Literal["easy", "medium", "hard"]
     source_chunk_id: Optional[str] = None
+    source_timestamp: Optional[str] = None  # MM:SS format from ChromaDB metadata
 
 
 class QuizItem(BaseModel):

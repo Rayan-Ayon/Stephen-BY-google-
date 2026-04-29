@@ -169,25 +169,57 @@ class FlashcardAgent:
     """Generates Anki-style flashcards from context."""
     
     @staticmethod
-    def generate(chunks: List[Dict[str, Any]], video_id: str) -> Dict[str, Any]:
-        """Generate flashcards with source references."""
+    def generate(chunks: List[Dict[str, Any]], video_id: str, count: int = 10, focus: str = "") -> Dict[str, Any]:
+        """Generate flashcards with source references.
+        
+        Args:
+            chunks: List of text chunks from ChromaDB
+            video_id: YouTube video ID
+            count: Number of flashcards to generate (capped at 25)
+            focus: Topic/focus area to prioritize
+        """
         
         if not chunks:
             raise Exception("No context available for flashcard generation")
         
+        # Cap count at 25 for quality
+        num_cards = min(count, 25) if count else 10
+        
+        # Build context with actual timestamps from ChromaDB metadata
+        context_with_timestamps = []
+        for i, chunk in enumerate(chunks[:10]):  # Use up to 10 chunks for context
+            metadata = chunk.get('metadata', {})
+            # Try to get actual start_time from metadata, fallback to calculation
+            start_time = metadata.get('start_time', metadata.get('chunk_index', i) * 30)
+            minutes = int(start_time // 60)
+            seconds = int(start_time % 60)
+            timestamp_str = f"{minutes}:{seconds:02d}"
+            
+            context_with_timestamps.append({
+                'text': chunk['text'][:400],
+                'timestamp': timestamp_str,
+                'chunk_id': f"{video_id}_{metadata.get('chunk_index', i)}",
+                'start_time': start_time
+            })
+        
         context_text = "\n\n".join([
-            f"Source {i+1} (chunk_{chunks[i].get('metadata', {}).get('chunk_index', i)}): {chunk['text'][:500]}"
-            for i, chunk in enumerate(chunks[:5])
+            f"[{c['timestamp']}] (ID: {c['chunk_id']}) {c['text']}"
+            for c in context_with_timestamps
         ])
         
-        prompt = f"""You are an expert study flashcard creator. Based on the following video segments, create 5-10 Anki-style flashcards.
+        # Add focus area to prompt if provided
+        focus_clause = f"\nFOCUS AREA: The user specifically wants to focus on: {focus}" if focus else ""
+        
+        prompt = f"""You are an expert study flashcard creator. Based on the following video segments, create {num_cards} Anki-style flashcards.
+{focus_clause}
 
 REQUIREMENTS:
 1. Each card must be based ONLY on the provided sources
 2. Questions should test understanding, not just recall
 3. Answers should be concise but complete
-4. Each card must include a source_chunk_id for verification
+4. Each card must include a source_chunk_id and source_timestamp (MM:SS format) for verification
 5. Include difficulty level: easy, medium, or hard
+6. Distribute cards across different parts of the video when possible
 
 OUTPUT FORMAT (JSON):
 {{
@@ -196,7 +228,8 @@ OUTPUT FORMAT (JSON):
       "question": "Question text?",
       "answer": "Answer text",
       "difficulty": "easy|medium|hard",
-      "source_chunk_id": "videoId_chunkIndex"
+      "source_chunk_id": "videoId_chunkIndex",
+      "source_timestamp": "MM:SS"
     }}
   ]
 }}
@@ -204,16 +237,28 @@ OUTPUT FORMAT (JSON):
 VIDEO SEGMENTS:
 {context_text}
 
-Generate flashcards:"""
+Generate exactly {num_cards} flashcards:"""
 
         result = get_ai_response_json(prompt)
         
         flashcards = result.get("flashcards", [])
         
+        # Map timestamps from context to generated cards
         for i, card in enumerate(flashcards):
-            if "source_chunk_id" not in card or not card["source_chunk_id"]:
+            # Ensure source_chunk_id exists
+            if not card.get("source_chunk_id"):
                 chunk_meta = chunks[i % len(chunks)].get("metadata", {})
                 card["source_chunk_id"] = f"{video_id}_{chunk_meta.get('chunk_index', i)}"
+            
+            # Ensure source_timestamp exists - try to extract from context
+            if not card.get("source_timestamp"):
+                # Find matching chunk by chunk_id
+                chunk_id = card.get("source_chunk_id", "")
+                matching_context = next(
+                    (c for c in context_with_timestamps if c['chunk_id'] == chunk_id),
+                    context_with_timestamps[i % len(context_with_timestamps)]
+                )
+                card["source_timestamp"] = matching_context['timestamp']
         
         return {"flashcards": flashcards}
 
@@ -326,7 +371,9 @@ Generate notes:"""
 def generate_context_aware(
     video_id: str,
     feature_type: Literal["summary", "flashcards", "quiz", "notes"],
-    force_refresh: bool = False
+    force_refresh: bool = False,
+    count: int = 10,
+    focus: str = ""
 ) -> Dict[str, Any]:
     """
     Main entry point for context-aware generation.
@@ -344,7 +391,13 @@ def generate_context_aware(
     
     try:
         loop = asyncio.get_event_loop()
-        return loop.run_until_complete(generate_context_aware_async(video_id, feature_type))
+        return loop.run_until_complete(generate_context_aware_async(
+            video_id, 
+            feature_type,
+            force_refresh=force_refresh,
+            count=count,
+            focus=focus
+        ))
     except:
         return {}
 
@@ -352,7 +405,9 @@ def generate_context_aware(
 def generate_context_aware(
     video_id: str,
     feature_type: Literal["summary", "flashcards", "quiz", "notes"],
-    force_refresh: bool = False
+    force_refresh: bool = False,
+    count: int = 10,
+    focus: str = ""
 ) -> Dict[str, Any]:
     """
     Sync wrapper for context-aware generation.
@@ -362,7 +417,13 @@ def generate_context_aware(
         loop = asyncio.get_event_loop()
         if loop.is_running():
             raise Exception("Cannot use sync function in async context")
-        return loop.run_until_complete(generate_context_aware_async(video_id, feature_type, force_refresh))
+        return loop.run_until_complete(generate_context_aware_async(
+            video_id, 
+            feature_type,
+            force_refresh=force_refresh,
+            count=count,
+            focus=focus
+        ))
     except:
         return {"error": "Failed to generate context-aware content"}
 
@@ -370,13 +431,22 @@ def generate_context_aware(
 async def generate_context_aware_async(
     video_id: str,
     feature_type: Literal["summary", "flashcards", "quiz", "notes"],
-    force_refresh: bool = False
+    force_refresh: bool = False,
+    count: int = 10,
+    focus: str = ""
 ) -> Dict[str, Any]:
     """
     Async version of context-aware generation.
     Uses multi-agent orchestration to generate RAG-based content.
+    
+    Args:
+        video_id: YouTube video ID
+        feature_type: Type of content to generate
+        force_refresh: Force re-indexing
+        count: Number of items to generate (for flashcards/quiz)
+        focus: Topic/focus area for generation
     """
-    logger.info(f"Generating context-aware {feature_type} for {video_id}")
+    logger.info(f"Generating context-aware {feature_type} for {video_id} (count={count}, focus={focus})")
     
     await ContextAgent.ensure_chunks_indexed_async(video_id)
     
@@ -391,7 +461,7 @@ async def generate_context_aware_async(
     if feature_type == "summary":
         result = SummaryAgent.generate(chunks, video_id)
     elif feature_type == "flashcards":
-        result = FlashcardAgent.generate(chunks, video_id)
+        result = FlashcardAgent.generate(chunks, video_id, count=count, focus=focus)
     elif feature_type == "quiz":
         result = QuizAgent.generate(chunks, video_id)
     elif feature_type == "notes":

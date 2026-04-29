@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import TutorPanel from './TutorPanel';
+import TutorPanelErrorBoundary from './TutorPanelErrorBoundary';
 import { 
     ChevronLeftIcon, DoubleChevronUpIcon, DoubleChevronDownIcon, SparkleIcon, ChevronDownIcon, CheckCircleIcon,
     FileTextIcon, LockClosedIcon, XIcon, ViewSidebarIcon, MaximizeIcon, MinimizeIcon, BookOpenIcon, ShareIcon
@@ -166,7 +167,14 @@ const TranscriptList: React.FC<{ transcripts: TranscriptItem[]; currentTime: num
     );
 };
 
-const CinematicContentPanel: React.FC<{ course: HistoryItem, onBack?: () => void, isFullWidth: boolean }> = ({ course, onBack, isFullWidth }) => {
+interface CinematicContentPanelProps {
+    course: HistoryItem;
+    onBack?: () => void;
+    isFullWidth: boolean;
+    externalSeekRef?: React.MutableRefObject<((seconds: number) => void) | null> | React.RefObject<((seconds: number) => void) | null>;
+}
+
+const CinematicContentPanel: React.FC<CinematicContentPanelProps> = ({ course, onBack, isFullWidth, externalSeekRef }) => {
     const [activeTab, setActiveTab] = useState<'Chapters' | 'Transcripts'>('Chapters');
     const [isShrunk, setIsShrunk] = useState(false);
     const [transcripts, setTranscripts] = useState<TranscriptItem[]>([]);
@@ -259,6 +267,17 @@ const CinematicContentPanel: React.FC<{ course: HistoryItem, onBack?: () => void
         };
     }, [videoId]);
 
+    // Expose seek function to parent via ref
+    useEffect(() => {
+        if (externalSeekRef && playerRef.current) {
+            externalSeekRef.current = (seconds: number) => {
+                if (playerRef.current) {
+                    playerRef.current.seekTo(seconds, 'seconds');
+                }
+            };
+        }
+    }, [externalSeekRef, playerReady]);
+
     useEffect(() => {
         const fetchData = async () => {
             if (!videoId) return;
@@ -271,17 +290,24 @@ const CinematicContentPanel: React.FC<{ course: HistoryItem, onBack?: () => void
             const cachedData = localStorage.getItem(cacheKey);
             if (cachedData) {
                 console.log('Using cached transcript from localStorage');
-                const cached = JSON.parse(cachedData);
-                const transList = cached.transcript || [];
-                const groupedTrans = groupTranscripts(
-                    transList.map((t: any) => ({ start: t.start ?? 0, text: t.text ?? '', duration: t.duration ?? 0 })), 
-                    5
-                );
-                setTranscripts(groupedTrans);
-                const chapters = generateFallbackChapters(transList);
-                setChapters(chapters);
-                console.log('Loaded from cache - transcripts:', groupedTrans.length, 'chapters:', chapters.length);
-                return;
+                try {
+                    const cached = JSON.parse(cachedData);
+                    const transList = cached?.transcript || [];
+                    if (transList.length > 0) {
+                        const groupedTrans = groupTranscripts(
+                            transList.map((t: any) => ({ start: t.start ?? 0, text: t.text ?? '', duration: t.duration ?? 0 })), 
+                            5
+                        );
+                        setTranscripts(groupedTrans);
+                        const chapters = generateFallbackChapters(transList);
+                        setChapters(chapters);
+                        console.log('Loaded from cache - transcripts:', groupedTrans.length, 'chapters:', chapters.length);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('Corrupted localStorage data for', cacheKey, '- clearing');
+                    localStorage.removeItem(cacheKey);
+                }
             }
             
             // No cache - fetch from API
@@ -623,6 +649,9 @@ const Workspace: React.FC<WorkspaceProps> = ({ course, onBack }) => {
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
 
+    // Ref for video seek function - passed to both CinematicContentPanel and TutorPanel
+    const videoSeekRef = useRef<((seconds: number) => void) | null>(null);
+
     const startResizing = useCallback((e: React.MouseEvent) => { setIsResizing(true); e.preventDefault(); }, []);
     const stopResizing = useCallback(() => { setIsResizing(false); }, []);
     const resize = useCallback((e: MouseEvent) => {
@@ -659,7 +688,12 @@ const Workspace: React.FC<WorkspaceProps> = ({ course, onBack }) => {
                         <button onClick={() => setIsLeftSidebarOpen(true)} className="p-2 bg-white dark:bg-[#1a1a1a] rounded-full shadow-md border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"><ViewSidebarIcon className="w-5 h-5" /></button>
                     </div>
                 )}
-                <CinematicContentPanel course={course} onBack={onBack} isFullWidth={!isTutorOpen && (!course.isStructured || !isLeftSidebarOpen)} />
+                <CinematicContentPanel 
+                            course={course} 
+                            onBack={onBack} 
+                            isFullWidth={!isTutorOpen && (!course.isStructured || !isLeftSidebarOpen)}
+                            externalSeekRef={videoSeekRef}
+                        />
             </div>
 
             {isTutorOpen && (
@@ -671,7 +705,23 @@ const Workspace: React.FC<WorkspaceProps> = ({ course, onBack }) => {
             <AnimatePresence mode="wait">
                 {isTutorOpen && (
                     <motion.div initial={{ width: panelWidth, opacity: 1 }} animate={{ width: panelWidth, opacity: 1 }} exit={{ width: 0, opacity: 0 }} transition={{ duration: 0.4, ease: "easeInOut" }} style={{ width: panelWidth }} className="shrink-0 h-full overflow-hidden">
-                        <TutorPanel isPanelExpanded={false} setIsPanelExpanded={() => {}} isCoachMode={false} />
+                        <TutorPanelErrorBoundary course={course} onSeekTo={(seconds) => {
+                            if (videoSeekRef.current) {
+                                videoSeekRef.current(seconds);
+                            }
+                        }}>
+                            <TutorPanel 
+                                isPanelExpanded={false} 
+                                setIsPanelExpanded={() => {}} 
+                                isCoachMode={false}
+                                course={course}
+                                onSeekTo={(seconds) => {
+                                    if (videoSeekRef.current) {
+                                        videoSeekRef.current(seconds);
+                                    }
+                                }}
+                            />
+                        </TutorPanelErrorBoundary>
                     </motion.div>
                 )}
             </AnimatePresence>

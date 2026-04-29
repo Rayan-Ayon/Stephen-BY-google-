@@ -49,6 +49,8 @@ async def get_or_generate_feature(
     feature_type: FeatureType,
     use_rag: bool = True,
     force_refresh: bool = False,
+    count: int = 10,
+    focus: str = "",
 ) -> dict:
     """
     Generate AI feature with optional RAG context.
@@ -58,6 +60,8 @@ async def get_or_generate_feature(
         feature_type: summary, flashcards, quiz, or notes
         use_rag: Whether to use RAG (default True for context-aware)
         force_refresh: Force regeneration even if cached
+        count: Number of items to generate (for flashcards)
+        focus: Topic/focus area for generation
     """
     async with async_session_maker() as db:
         logger.info(f"Checking cache for {video_id}/{feature_type}")
@@ -83,12 +87,24 @@ async def get_or_generate_feature(
         if use_rag:
             logger.info(f"Using RAG for {feature_type}")
             try:
-                response_data = await generate_context_aware_async(video_id, feature_type)
+                response_data = await generate_context_aware_async(
+                    video_id, 
+                    feature_type,
+                    force_refresh=force_refresh,
+                    count=count,
+                    focus=focus
+                )
                 model_used = "openrouter/free (RAG)"
             except Exception as e:
                 logger.error(f"RAG generation failed: {e}, falling back to transcript")
                 try:
-                    response_data = generate_context_aware(video_id, feature_type)
+                    response_data = generate_context_aware(
+                        video_id, 
+                        feature_type,
+                        force_refresh=force_refresh,
+                        count=count,
+                        focus=focus
+                    )
                     model_used = "openrouter/free (fallback)"
                 except Exception as e2:
                     raise Exception(f"Generation failed: {e2}")

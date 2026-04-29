@@ -13,12 +13,40 @@ import {
     FlowChartIcon, BarChartIcon, LineChartIcon, PieChartIcon, VennDiagramIcon
 } from './icons';
 import { QuizModal, FlashcardModal, SummaryModal, PodcastModal } from './modals';
-import { FlashcardReviewController, demoCards } from './FlashcardUI';
+import { FlashcardReviewController, demoCards, CardData } from './FlashcardUI';
+import { HistoryItem } from './Dashboard';
+import { toast } from 'sonner';
+
+// Toast guard - prevents crash if sonner not initialized
+const safeToast = {
+    error: (msg: string) => {
+        if (typeof toast?.error === 'function') {
+            try { toast.error(msg); } catch (e) { console.warn('Toast error failed:', e); }
+        }
+    },
+    success: (msg: string) => {
+        if (typeof toast?.success === 'function') {
+            try { toast.success(msg); } catch (e) { console.warn('Toast success failed:', e); }
+        }
+    },
+    loading: (msg: string, opts?: any) => {
+        if (typeof toast?.loading === 'function') {
+            try { toast.loading(msg, opts); } catch (e) { console.warn('Toast loading failed:', e); }
+        }
+    },
+    info: (msg: string) => {
+        if (typeof toast?.info === 'function') {
+            try { toast.info(msg); } catch (e) { console.warn('Toast info failed:', e); }
+        }
+    }
+};
 
 interface TutorPanelProps {
     isPanelExpanded: boolean;
     setIsPanelExpanded: (expanded: boolean) => void;
     isCoachMode: boolean;
+    course?: HistoryItem;
+    onSeekTo?: (seconds: number) => void;
 }
 
 interface Message {
@@ -63,7 +91,7 @@ const MOCK_SUMMARY = `## Key Takeaways
 
 This course covers the essentials needed to start building your own GenAI applications.`;
 
-const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpanded, isCoachMode }) => {
+const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpanded, isCoachMode, course, onSeekTo }) => {
     const [activeTab, setActiveTab] = useState<'chat' | 'quiz' | 'flashcards' | 'summary' | 'podcast'>('chat');
     
     // Chat State
@@ -111,6 +139,184 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
     const [showFlashcardModal, setShowFlashcardModal] = useState(false);
     const [showSummaryModal, setShowSummaryModal] = useState(false);
     const [showPodcastModal, setShowPodcastModal] = useState(false);
+
+    // RAG Flashcard State
+    type IndexStatus = 'idle' | 'checking' | 'indexing' | 'ready' | 'error';
+    const [indexStatus, setIndexStatus] = useState<IndexStatus>('idle');
+    const [generatedCards, setGeneratedCards] = useState<CardData[]>([]);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [flashcardSettings, setFlashcardSettings] = useState({ count: 10, focus: '' });
+
+    // Helper: Extract videoId from URL
+    const getVideoId = (url: string): string => {
+        const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+        return match ? match[1] : '';
+    };
+
+    // Helper: Parse timestamp to seconds
+    const parseTimestampToSeconds = (ts: string): number => {
+        if (!ts) return 0;
+        const parts = ts.split(':');
+        if (parts.length === 2) {
+            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        }
+        return 0;
+    };
+
+    // Check index status on video change
+    useEffect(() => {
+        let isMounted = true;
+        const controller = new AbortController();
+        
+        const checkIndexStatus = async () => {
+            const videoId = getVideoId(course?.videoUrl || '');
+            if (!videoId || !isMounted) return;
+            
+            setIndexStatus('checking');
+            
+            try {
+                const res = await fetch(`/api/video/index-status?videoId=${videoId}`, {
+                    signal: controller.signal
+                });
+                const data = await res.json();
+                if (isMounted) {
+                    setIndexStatus(data?.isIndexed ? 'ready' : 'idle');
+                }
+            } catch {
+                if (isMounted) {
+                    setIndexStatus('idle');
+                }
+            }
+        };
+        
+        if (course?.videoUrl) {
+            checkIndexStatus();
+        }
+        
+        return () => {
+            isMounted = false;
+            controller.abort();
+        };
+    }, [course?.videoUrl]);
+
+    // Handle Analyze Video (first-time indexing)
+    const handleAnalyzeVideo = async () => {
+        const videoId = getVideoId(course?.videoUrl ?? '');
+        if (!videoId) {
+            safeToast.error("Unable to identify video");
+            return;
+        }
+        
+        setIndexStatus('indexing');
+        safeToast.loading("Teaching the AI about this video... this takes a moment", { duration: 4000 });
+        
+        try {
+            const res = await fetch('/api/video/index-transcript', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ videoId, forceRefresh: false })
+            });
+            
+            if (!res.ok) throw new Error("Indexing failed");
+            
+            setIndexStatus('ready');
+            safeToast.success("Video analyzed! You can now generate flashcards.");
+        } catch {
+            setIndexStatus('error');
+            safeToast.error("Failed to analyze video. Please try again.");
+        }
+    };
+
+    // Handle Generate Flashcards (main flow)
+    const handleGenerateFlashcards = async () => {
+        const videoId = getVideoId(course?.videoUrl || '');
+        if (!videoId) {
+            safeToast.error("Unable to identify video");
+            return;
+        }
+        
+        // If not indexed, trigger indexing first
+        if (indexStatus !== 'ready') {
+            await handleAnalyzeVideo();
+            if (indexStatus !== 'ready') return;
+        }
+        
+        setIsGenerating(true);
+        safeToast.info("Generating your custom flashcard set...");
+        
+        try {
+            console.log('📡 Calling flashcards API with videoId:', videoId);
+            const res = await fetch('/api/video/flashcards', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    videoId, 
+                    forceRefresh: true,
+                    count: flashcardSettings?.count ?? 10,
+                    focus: flashcardSettings?.focus ?? ''
+                })
+            });
+            
+            console.log('📡 Response status:', res.status);
+            
+            if (!res.ok) {
+                const errorText = await res.text();
+                console.error('📡 API Error:', errorText);
+                throw new Error(`Failed to generate: ${res.status}`);
+            }
+            
+            const response = await res.json();
+            console.log('📡 Response data:', JSON.stringify(response).slice(0, 500));
+            
+            const backendCards = response?.data?.flashcards || [];
+            console.log('📡 Backend cards count:', backendCards.length);
+            
+            // Map to CardData interface - safe with Array.isArray
+            const mappedCards: CardData[] = Array.isArray(backendCards) 
+                ? backendCards.map((card: any, index: number) => ({
+                    id: `generated-${Date.now()}-${index}`,
+                    question: card?.question ?? '',
+                    answer: card?.answer ?? '',
+                    explanation: undefined,
+                    source_chunk_id: card?.source_chunk_id ?? '',
+                    source_timestamp: card?.source_timestamp ?? '0:00'
+                }))
+                : [];
+            
+            setGeneratedCards(mappedCards);
+            setActiveDeckId(1);  // Trigger review mode
+            console.log('📡 Generated cards set, activeDeckId:', 1);
+            safeToast.success(`Created ${mappedCards.length} flashcards!`);
+            
+        } catch (err: any) {
+            const msg = err?.message || "Generation failed";
+            
+            if (msg.includes('SiliconFlow') || msg.includes('embedding')) {
+                safeToast.error("AI service unavailable. Please try again.");
+            } else if (msg.includes('Chroma') || msg.includes('vector')) {
+                safeToast.error("Database connection failed. Please refresh.");
+            } else {
+safeToast.error(msg);
+            }
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    // Handle Show Source (video seek)
+    const handleShowSource = (chunkId: string) => {
+        if (!chunkId) return;
+        
+        const card = generatedCards?.find?.((c: CardData) => c?.source_chunk_id === chunkId);
+        if (!card?.source_timestamp) return;
+        
+        const seconds = parseTimestampToSeconds(card.source_timestamp);
+        
+        // Safe callback - ensure onSeekTo exists before calling
+        if (typeof onSeekTo === 'function') {
+            try { onSeekTo(seconds); } catch (e) { console.warn('Seek failed:', e); }
+        }
+    };
 
     // Initialize GenAI
     useEffect(() => {
@@ -245,22 +451,46 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
     );
 
     // --- Generate Header for Flashcards/Quiz/Podcast ---
-    const GenerateHeader = ({ onAdjust }: { onAdjust: () => void }) => (
-        <div className="flex items-center space-x-3">
-            <button 
-                onClick={onAdjust}
-                className="p-2 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-white/10"
-            >
-                <AdjustIcon className="w-5 h-5" />
-            </button>
-            <button 
-                disabled 
-                className="px-6 py-2 bg-white text-black font-bold rounded-full text-xs cursor-not-allowed opacity-90 hover:opacity-100 transition-opacity"
-            >
-                Generate
-            </button>
-        </div>
-    );
+    const GenerateHeader = ({ onAdjust }: { onAdjust: () => void }) => {
+        const currentStatus = indexStatus ?? 'idle';
+        const isDisabled = currentStatus === 'checking' || currentStatus === 'indexing' || isGenerating;
+        
+        return (
+            <div className="flex items-center space-x-3">
+                <button 
+                    onClick={onAdjust}
+                    disabled={currentStatus !== 'ready'}
+                    className={`p-2 text-gray-400 hover:text-white rounded-full hover:bg-white/10 transition-colors ${
+                        currentStatus !== 'ready' ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                >
+                    <AdjustIcon className="w-5 h-5" />
+                </button>
+                
+                {currentStatus === 'idle' || currentStatus === 'error' ? (
+                    <button 
+                        onClick={handleAnalyzeVideo}
+                        disabled={currentStatus === 'checking'}
+                        className="px-6 py-2 bg-green-600 text-white font-bold rounded-full text-xs hover:bg-green-700 transition-colors"
+                    >
+                        {currentStatus === 'error' ? 'Retry Analysis' : 'Analyze Video'}
+                    </button>
+                ) : (
+                    <button 
+                        onClick={handleGenerateFlashcards}
+                        disabled={isDisabled}
+                        className={`px-6 py-2 bg-white text-black font-bold rounded-full text-xs transition-all ${
+                            isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-200'
+                        }`}
+                    >
+                        {currentStatus === 'indexing' ? 'Analyzing...' : 
+                         currentStatus === 'checking' ? 'Checking...' : 
+                         isGenerating ? 'Generating...' : 'Generate'}
+                    </button>
+                )}
+            </div>
+        );
+    };
 
     // --- Summary Header ---
     const SummaryHeaderRight = () => (
@@ -731,19 +961,14 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
     };
 
     const renderFlashcards = () => {
-        if (!loadedTabs.has('flashcards')) return renderShimmer();
+        if (!loadedTabs?.has('flashcards')) return renderShimmer();
 
-        const dummyCards = [
-            { q: "What is Generative AI?", a: "AI that can create new content like text, images, and audio." },
-            { q: "Define LLM", a: "Large Language Model - trained on vast amounts of text data." },
-            { q: "What is Prompt Engineering?", a: "The art of crafting inputs to get the best outputs from AI." }
-        ];
-        const currentCards = activeDeckId ? dummyCards : [];
+        const isReviewMode = activeDeckId && (generatedCards?.length ?? 0) > 0;
 
         return (
             <div className="flex-1 min-h-0 flex flex-col">
                 {/* ── Deck list view (Generate box + My Flashcards) ── */}
-                {!activeDeckId && (
+                {!isReviewMode && (
                     <div className="flex-1 flex flex-col p-6 overflow-y-auto gap-6">
                         <CreateCard 
                             title="Create Flashcard" 
@@ -752,17 +977,17 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                         />
                         <div className="space-y-4">
                             <h4 className="text-sm font-bold dark:text-gray-400 text-gray-600">My Flashcards</h4>
-                            {flashcards.map(deck => (
+                            {(flashcards ?? []).map(deck => (
                                 <div 
-                                    key={deck.id}
-                                    onClick={() => setActiveDeckId(deck.id)}
+                                    key={deck?.id}
+                                    onClick={() => setActiveDeckId(deck?.id)}
                                     className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl p-5 cursor-pointer hover:border-orange-500 transition-all group"
                                 >
-                                    <h4 className="font-bold dark:text-white text-black text-sm mb-3 group-hover:text-orange-500 transition-colors">{deck.title}</h4>
+                                    <h4 className="font-bold dark:text-white text-black text-sm mb-3 group-hover:text-orange-500 transition-colors">{deck?.title}</h4>
                                     <div className="flex flex-wrap gap-2">
-                                        <span className="text-[10px] font-bold text-purple-400 bg-purple-900/30 px-2 py-1 rounded-md border border-purple-500/20">Cards for today: {deck.count} cards</span>
+                                        <span className="text-[10px] font-bold text-purple-400 bg-purple-900/30 px-2 py-1 rounded-md border border-purple-500/20">Cards for today: {deck?.count} cards</span>
                                         <span className="text-[10px] font-bold text-blue-400 bg-blue-900/30 px-2 py-1 rounded-md border border-blue-500/20">Selected All Topics</span>
-                                        <span className="text-[10px] font-bold text-gray-500 py-1">{deck.topics}</span>
+                                        <span className="text-[10px] font-bold text-gray-500 py-1">{deck?.topics}</span>
                                     </div>
                                 </div>
                             ))}
@@ -771,12 +996,15 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                 )}
 
                 {/* ── Flashcard review view (Generate box hidden) ── */}
-                {activeDeckId && (
+                {isReviewMode && (
                     <div className="flex-1 min-h-0 flex flex-col">
                         <FlashcardReviewController 
-                            cards={demoCards} 
-                            onBack={() => setActiveDeckId(null)} 
-                            onShowSource={(id) => console.log('Show source:', id)} 
+                            cards={generatedCards ?? []}
+                            onBack={() => { 
+                                setActiveDeckId(null); 
+                                setGeneratedCards([]);
+                            }}
+                            onShowSource={handleShowSource}
                         />
                     </div>
                 )}
@@ -942,7 +1170,16 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
             {/* Modals */}
             <AnimatePresence>
                 {showQuizModal && <QuizModal onClose={() => setShowQuizModal(false)} />}
-                {showFlashcardModal && <FlashcardModal onClose={() => setShowFlashcardModal(false)} />}
+                {showFlashcardModal && (
+                    <FlashcardModal 
+                        onClose={() => setShowFlashcardModal(false)}
+                        onConfirm={(settings) => {
+                            setFlashcardSettings(settings);
+                            // One-click: close modal + trigger generation
+                            handleGenerateFlashcards();
+                        }}
+                    />
+                )}
                 {showSummaryModal && <SummaryModal onClose={() => setShowSummaryModal(false)} />}
                 {showPodcastModal && <PodcastModal onClose={() => setShowPodcastModal(false)} />}
             </AnimatePresence>

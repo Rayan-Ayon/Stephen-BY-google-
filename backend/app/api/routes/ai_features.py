@@ -31,7 +31,9 @@ async def create_flashcards(request: VideoIdRequest) -> FeatureResponse:
         return await get_or_generate_feature(
             request.videoId, 
             "flashcards",
-            force_refresh=request.forceRefresh
+            force_refresh=request.forceRefresh,
+            count=request.count,
+            focus=request.focus
         )
     except Exception as e:
         error_msg = str(e)
@@ -121,3 +123,32 @@ async def index_transcript(request: VideoIdRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=503, detail=str(e))
+
+
+@router.get("/video/index-status")
+async def get_index_status(videoId: str):
+    """
+    Check if a video's transcript has been indexed into ChromaDB.
+    Returns { "isIndexed": true/false, "videoId": str }
+    """
+    if not videoId:
+        raise HTTPException(status_code=400, detail="videoId is required")
+    
+    try:
+        from app.services.db_service import get_collection
+        
+        collection = get_collection("transcripts")
+        results = collection.get(where={"video_id": videoId}, limit=1)
+        
+        is_indexed = results and len(results.get('ids', [])) > 0
+        
+        return {
+            "videoId": videoId,
+            "isIndexed": is_indexed
+        }
+    except Exception as e:
+        # If collection doesn't exist or error, treat as not indexed
+        return {
+            "videoId": videoId,
+            "isIndexed": False
+        }

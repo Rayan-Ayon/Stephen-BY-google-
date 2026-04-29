@@ -13,7 +13,8 @@
     "framer-motion": "^11.3.12",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-player": "^3.4.0"
+    "react-player": "^3.4.0",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

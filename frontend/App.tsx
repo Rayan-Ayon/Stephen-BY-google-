@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { Toaster } from 'sonner';
 import Dashboard from './components/Dashboard';
 import LandingPage from './components/LandingPage';
 import AuthOverlay from './components/AuthOverlay';
@@ -100,6 +101,17 @@ const App: React.FC = () => {
           onSuccess={handleAuthSuccess}
         />
       )}
+
+      <Toaster 
+        position="bottom-right"
+        toastOptions={{
+          style: { 
+            background: '#1a1a1a', 
+            color: '#fff', 
+            border: '1px solid #333' 
+          }
+        }}
+      />
     </div>
   );
 };

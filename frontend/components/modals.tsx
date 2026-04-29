@@ -116,36 +116,60 @@ export const ShareSpaceModal: React.FC<{ onClose: () => void }> = ({ onClose }) 
     );
 };
 
-export const FlashcardModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
-    <BaseModal title="Create Flashcard Set" ctaText="Create Set" onCtaClick={onClose} onClose={onClose}>
-        <p className="text-sm dark:text-gray-400 text-neutral-500 -mt-6 mb-8 font-medium">Select specific concepts and customize your flashcard set</p>
-        <div className="space-y-6">
-            <div>
-                <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Number of flashcards <span className="text-red-500">*</span></label>
-                <input type="text" placeholder="e.g., 10" className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl p-4 focus:outline-none focus:ring-1 focus:ring-white transition-all text-white" />
-            </div>
-            <div>
-                <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Select topics</label>
-                <div className="mt-2 p-3 dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                        <span className="text-[12px] font-bold bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-white/5 flex items-center">
-                            Selected All Topics <XIcon className="w-3 h-3 ml-2 text-gray-500" />
-                        </span>
-                        <button className="text-[12px] font-bold text-gray-500 hover:text-white flex items-center">
-                            Show all items <ChevronDownIcon className="w-3 h-3 ml-1 -rotate-90" />
-                        </button>
-                    </div>
-                    <XIcon className="w-5 h-5 text-gray-600" />
+export const FlashcardModal: React.FC<{ onClose: () => void; onConfirm: (settings: { count: number; focus: string }) => void }> = ({ onClose, onConfirm }) => {
+    const [count, setCount] = useState('10');
+    const [focus, setFocus] = useState('');
+
+    const handleConfirm = () => {
+        onConfirm({
+            count: parseInt(count) || 10,
+            focus: focus.trim()
+        });
+    };
+
+    return (
+        <BaseModal title="Create Flashcard Set" ctaText="Create Set" onCtaClick={handleConfirm} onClose={onClose}>
+            <p className="text-sm dark:text-gray-400 text-neutral-500 -mt-6 mb-8 font-medium">Select specific concepts and customize your flashcard set</p>
+            <div className="space-y-6">
+                <div>
+                    <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Number of flashcards <span className="text-red-500">*</span></label>
+                    <input 
+                        type="text" 
+                        value={count}
+                        onChange={(e) => setCount(e.target.value)}
+                        placeholder="e.g., 10" 
+                        className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl p-4 focus:outline-none focus:ring-1 focus:ring-white transition-all text-white" 
+                    />
                 </div>
-                <p className="text-[11px] text-gray-500 mt-2 font-medium">Optional: Select concepts to focus on</p>
+                <div>
+                    <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Select topics</label>
+                    <div className="mt-2 p-3 dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                            <span className="text-[12px] font-bold bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-white/5 flex items-center">
+                                Selected All Topics <XIcon className="w-3 h-3 ml-2 text-gray-500" />
+                            </span>
+                            <button className="text-[12px] font-bold text-gray-500 hover:text-white flex items-center">
+                                Show all items <ChevronDownIcon className="w-3 h-3 ml-1 -rotate-90" />
+                            </button>
+                        </div>
+                        <XIcon className="w-5 h-5 text-gray-600" />
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-2 font-medium">Optional: Select concepts to focus on</p>
+                </div>
+                <div>
+                    <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">What should the flashcard focus on?</label>
+                    <textarea 
+                        value={focus}
+                        onChange={(e) => setFocus(e.target.value)}
+                        placeholder="Focus on the parts that are about..." 
+                        rows={4} 
+                        className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl p-4 focus:outline-none focus:ring-1 focus:ring-white transition-all text-white resize-none"
+                    ></textarea>
+                </div>
             </div>
-            <div>
-                <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">What should the flashcard focus on?</label>
-                <textarea placeholder="Focus on the parts that are about..." rows={4} className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl p-4 focus:outline-none focus:ring-1 focus:ring-white transition-all text-white resize-none"></textarea>
-            </div>
-        </div>
-    </BaseModal>
-);
+        </BaseModal>
+    );
+};
 
 export const QuizModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [difficulty, setDifficulty] = useState('Medium');
