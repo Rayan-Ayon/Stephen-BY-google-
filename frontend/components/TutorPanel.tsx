@@ -13,6 +13,7 @@ import {
     FlowChartIcon, BarChartIcon, LineChartIcon, PieChartIcon, VennDiagramIcon
 } from './icons';
 import { QuizModal, FlashcardModal, SummaryModal, PodcastModal } from './modals';
+import { FlashcardReviewController, demoCards } from './FlashcardUI';
 
 interface TutorPanelProps {
     isPanelExpanded: boolean;
@@ -740,68 +741,43 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
         const currentCards = activeDeckId ? dummyCards : [];
 
         return (
-            <div className="flex-1 flex flex-col p-6 overflow-y-auto">
-                <CreateCard 
-                    title="Create Flashcard" 
-                    desc="Create a flashcard set with preferred number of cards, types of topics, and more."
-                    rightElement={<GenerateHeader onAdjust={() => setShowFlashcardModal(true)} />}
-                />
-
+            <div className="flex-1 flex flex-col overflow-hidden">
+                {/* ── Deck list view (Generate box + My Flashcards) ── */}
                 {!activeDeckId && (
-                    <div className="space-y-4">
-                        <h4 className="text-sm font-bold dark:text-gray-400 text-gray-600 mb-2">My Flashcards</h4>
-                        {flashcards.map(deck => (
-                            <div 
-                                key={deck.id}
-                                onClick={() => setActiveDeckId(deck.id)}
-                                className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl p-5 cursor-pointer hover:border-orange-500 transition-all group"
-                            >
-                                <h4 className="font-bold dark:text-white text-black text-sm mb-3 group-hover:text-orange-500 transition-colors">{deck.title}</h4>
-                                <div className="flex flex-wrap gap-2">
-                                    <span className="text-[10px] font-bold text-purple-400 bg-purple-900/30 px-2 py-1 rounded-md border border-purple-500/20">Cards for today: {deck.count} cards</span>
-                                    <span className="text-[10px] font-bold text-blue-400 bg-blue-900/30 px-2 py-1 rounded-md border border-blue-500/20">Selected All Topics</span>
-                                    <span className="text-[10px] font-bold text-gray-500 py-1">{deck.topics}</span>
+                    <div className="flex-1 flex flex-col p-6 overflow-y-auto gap-6">
+                        <CreateCard 
+                            title="Create Flashcard" 
+                            desc="Create a flashcard set with preferred number of cards, types of topics, and more."
+                            rightElement={<GenerateHeader onAdjust={() => setShowFlashcardModal(true)} />}
+                        />
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-bold dark:text-gray-400 text-gray-600">My Flashcards</h4>
+                            {flashcards.map(deck => (
+                                <div 
+                                    key={deck.id}
+                                    onClick={() => setActiveDeckId(deck.id)}
+                                    className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl p-5 cursor-pointer hover:border-orange-500 transition-all group"
+                                >
+                                    <h4 className="font-bold dark:text-white text-black text-sm mb-3 group-hover:text-orange-500 transition-colors">{deck.title}</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        <span className="text-[10px] font-bold text-purple-400 bg-purple-900/30 px-2 py-1 rounded-md border border-purple-500/20">Cards for today: {deck.count} cards</span>
+                                        <span className="text-[10px] font-bold text-blue-400 bg-blue-900/30 px-2 py-1 rounded-md border border-blue-500/20">Selected All Topics</span>
+                                        <span className="text-[10px] font-bold text-gray-500 py-1">{deck.topics}</span>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 )}
 
+                {/* ── Flashcard review view (Generate box hidden) ── */}
                 {activeDeckId && (
-                    <div className="flex-1 flex flex-col">
-                        <button onClick={() => setActiveDeckId(null)} className="flex items-center text-xs font-bold text-gray-500 hover:text-white mb-4">
-                            <ChevronLeftIcon className="w-4 h-4 mr-1" /> Back to Decks
-                        </button>
-                        
-                        <div className="flex-1 flex flex-col items-center justify-center p-4">
-                            <div 
-                                className="w-full h-64 perspective-1000 cursor-pointer"
-                                onClick={() => setIsFlipped(!isFlipped)}
-                            >
-                                <motion.div
-                                    className="relative w-full h-full text-center transition-all duration-500 transform-style-3d"
-                                    animate={{ rotateY: isFlipped ? 180 : 0 }}
-                                >
-                                    <div className="absolute inset-0 backface-hidden bg-white dark:bg-[#1a1a1a] border dark:border-gray-800 border-neutral-200 rounded-2xl p-8 flex flex-col items-center justify-center shadow-sm">
-                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Question</span>
-                                        <p className="text-xl font-bold dark:text-white text-black">{currentCards[activeFlashcardIndex]?.q}</p>
-                                    </div>
-                                    <div className="absolute inset-0 backface-hidden bg-white dark:bg-[#1a1a1a] border dark:border-gray-800 border-neutral-200 rounded-2xl p-8 flex flex-col items-center justify-center shadow-sm transform rotate-y-180">
-                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Answer</span>
-                                        <p className="text-xl font-medium dark:text-gray-200 text-gray-800">{currentCards[activeFlashcardIndex]?.a}</p>
-                                    </div>
-                                </motion.div>
-                            </div>
-                            <div className="flex items-center space-x-8 mt-8">
-                                <button onClick={(e) => { e.stopPropagation(); setActiveFlashcardIndex(prev => Math.max(0, prev - 1)); setIsFlipped(false); }} disabled={activeFlashcardIndex === 0} className="p-3 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50">
-                                    <ChevronLeftIcon className="w-5 h-5 dark:text-white text-black" />
-                                </button>
-                                <span className="text-sm font-bold dark:text-white text-black">{activeFlashcardIndex + 1} / {currentCards.length}</span>
-                                <button onClick={(e) => { e.stopPropagation(); setActiveFlashcardIndex(prev => Math.min(currentCards.length - 1, prev + 1)); setIsFlipped(false); }} disabled={activeFlashcardIndex === currentCards.length - 1} className="p-3 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50">
-                                    <ChevronRightIcon className="w-5 h-5 dark:text-white text-black" />
-                                </button>
-                            </div>
-                        </div>
+                    <div className="flex-1 overflow-y-auto">
+                        <FlashcardReviewController 
+                            cards={demoCards} 
+                            onBack={() => setActiveDeckId(null)} 
+                            onShowSource={(id) => console.log('Show source:', id)} 
+                        />
                     </div>
                 )}
             </div>
