@@ -31,13 +31,18 @@ const safeToast = {
     },
     loading: (msg: string, opts?: any) => {
         if (typeof toast?.loading === 'function') {
-            try { toast.loading(msg, opts); } catch (e) { console.warn('Toast loading failed:', e); }
+            try { 
+                return toast.loading(msg, opts); 
+            } catch (e) { console.warn('Toast loading failed:', e); }
         }
     },
     info: (msg: string) => {
         if (typeof toast?.info === 'function') {
             try { toast.info(msg); } catch (e) { console.warn('Toast info failed:', e); }
         }
+    },
+    dismiss: () => {
+        try { toast.dismiss(); } catch (e) { /* ignore */ }
     }
 };
 
@@ -208,7 +213,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
         }
         
         setIndexStatus('indexing');
-        const loadingToast = safeToast.loading("Teaching the AI about this video... this takes a moment");
+        safeToast.loading("Teaching the AI about this video... this takes a moment");
         
         try {
             const res = await fetch('/api/video/index-transcript', {
@@ -220,16 +225,12 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
             if (!res.ok) throw new Error("Indexing failed");
             
             setIndexStatus('ready');
-            // Dismiss loading toast and show success
-            if (loadingToast) {
-                try { loadingToast.dismiss(); } catch {}
-            }
+            // Dismiss ALL toasts before showing success
+            safeToast.dismiss();
             safeToast.success("Video analyzed! You can now generate flashcards.");
         } catch {
             setIndexStatus('error');
-            if (loadingToast) {
-                try { loadingToast.dismiss(); } catch {}
-            }
+            safeToast.dismiss();
             safeToast.error("Failed to analyze video. Please try again.");
         }
     };
@@ -254,7 +255,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
         setActiveDeckId(1);
         setGeneratedCards(demoCards); // Show demo immediately!
         
-        const generatingToast = safeToast.loading("Generating your custom flashcard set...", { duration: 5000 });
+        safeToast.loading("Generating your custom flashcard set...", { duration: 3000 });
         
         // Get transcript from localStorage if available
         const cacheKey = `stephen_transcript_${videoId}`;
@@ -320,9 +321,8 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                 console.log('📡 API returned no cards, keeping demo cards');
             }
             
-            if (generatingToast) {
-                try { generatingToast.dismiss(); } catch {}
-            }
+            // Dismiss loading toast and show result
+            safeToast.dismiss();
             
             if (mappedCards.length > 0) {
                 safeToast.success(`Created ${mappedCards.length} flashcards!`);
@@ -332,9 +332,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
             
         } catch (err: any) {
             // Dismiss loading toast on error
-            if (generatingToast) {
-                try { generatingToast.dismiss(); } catch {}
-            }
+            safeToast.dismiss();
             
             const msg = err?.message || "Generation failed";
             
