@@ -2,36 +2,50 @@ import os
 import logging
 from typing import List, Dict, Any, Optional
 import chromadb
-from chromadb.types import Metadata
 from dotenv import load_dotenv
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-CHROMA_HOST = os.getenv("CHROMA_HOST")
 CHROMA_API_KEY = os.getenv("CHROMA_API_KEY")
+CHROMA_TENANT = os.getenv("CHROMA_TENANT")
+CHROMA_DATABASE = os.getenv("CHROMA_DATABASE")
 
-if not CHROMA_HOST:
+if not CHROMA_API_KEY:
     raise ValueError(
-        "CHROMA_HOST is not set in environment variables. "
-        "Please add CHROMA_HOST to your .env file."
+        "CHROMA_API_KEY is not set in environment variables. "
+        "Please add CHROMA_API_KEY to your .env file."
+    )
+
+if not CHROMA_TENANT:
+    raise ValueError(
+        "CHROMA_TENANT is not set in environment variables. "
+        "Please add CHROMA_TENANT to your .env file."
+    )
+
+if not CHROMA_DATABASE:
+    raise ValueError(
+        "CHROMA_DATABASE is not set in environment variables. "
+        "Please add CHROMA_DATABASE to your .env file."
     )
 
 _client = None
 
 
-def _get_client() -> chromadb.HttpClient:
+def _get_client() -> chromadb.CloudClient:
     global _client
     if _client is None:
-        logger.info(f"Connecting to ChromaDB at: {CHROMA_HOST}")
+        logger.info(f"Connecting to Chroma Cloud...")
         
-        kwargs = {"host": CHROMA_HOST}
-        if CHROMA_API_KEY:
-            kwargs["headers"] = {"Authorization": f"Bearer {CHROMA_API_KEY}"}
+        _client = chromadb.CloudClient(
+            api_key=CHROMA_API_KEY,
+            tenant=CHROMA_TENANT,
+            database=CHROMA_DATABASE
+        )
         
-        _client = chromadb.HttpClient(**kwargs)
-        logger.info("Connected to ChromaDB")
+        heartbeat = _client.heartbeat()
+        logger.info(f"Connected to Chroma Cloud. Heartbeat: {heartbeat}")
     
     return _client
 
