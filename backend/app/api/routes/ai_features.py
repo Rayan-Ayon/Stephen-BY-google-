@@ -33,7 +33,8 @@ async def create_flashcards(request: VideoIdRequest) -> FeatureResponse:
             "flashcards",
             force_refresh=request.forceRefresh,
             count=request.count,
-            focus=request.focus
+            focus=request.focus,
+            transcript_data=request.transcript  # Pass transcript if provided
         )
     except Exception as e:
         error_msg = str(e)

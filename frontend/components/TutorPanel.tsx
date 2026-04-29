@@ -208,7 +208,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
         }
         
         setIndexStatus('indexing');
-        safeToast.loading("Teaching the AI about this video... this takes a moment", { duration: 4000 });
+        const loadingToast = safeToast.loading("Teaching the AI about this video... this takes a moment");
         
         try {
             const res = await fetch('/api/video/index-transcript', {
@@ -220,9 +220,16 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
             if (!res.ok) throw new Error("Indexing failed");
             
             setIndexStatus('ready');
+            // Dismiss loading toast and show success
+            if (loadingToast) {
+                try { loadingToast.dismiss(); } catch {}
+            }
             safeToast.success("Video analyzed! You can now generate flashcards.");
         } catch {
             setIndexStatus('error');
+            if (loadingToast) {
+                try { loadingToast.dismiss(); } catch {}
+            }
             safeToast.error("Failed to analyze video. Please try again.");
         }
     };
@@ -242,7 +249,28 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
         }
         
         setIsGenerating(true);
-        safeToast.info("Generating your custom flashcard set...");
+        
+        // IMMEDIATELY show card UI with demo cards while loading
+        setActiveDeckId(1);
+        setGeneratedCards(demoCards); // Show demo immediately!
+        
+        const generatingToast = safeToast.loading("Generating your custom flashcard set...", { duration: 5000 });
+        
+        // Get transcript from localStorage if available
+        const cacheKey = `stephen_transcript_${videoId}`;
+        let transcriptData = null;
+        try {
+            const cached = localStorage.getItem(cacheKey);
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (parsed?.transcript && parsed.transcript.length > 0) {
+                    transcriptData = parsed.transcript;
+                    console.log('📡 Using cached transcript with', transcriptData.length, 'segments');
+                }
+            }
+        } catch (e) {
+            console.warn('Could not get transcript from localStorage:', e);
+        }
         
         try {
             console.log('📡 Calling flashcards API with videoId:', videoId);
@@ -253,7 +281,8 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                     videoId, 
                     forceRefresh: true,
                     count: flashcardSettings?.count ?? 10,
-                    focus: flashcardSettings?.focus ?? ''
+                    focus: flashcardSettings?.focus ?? '',
+                    transcript: transcriptData
                 })
             });
             
@@ -283,12 +312,30 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                 }))
                 : [];
             
-            setGeneratedCards(mappedCards);
-            setActiveDeckId(1);  // Trigger review mode
-            console.log('📡 Generated cards set, activeDeckId:', 1);
-            safeToast.success(`Created ${mappedCards.length} flashcards!`);
+            // REPLACE demo cards with real ones (or keep demo if empty)
+            if (mappedCards.length > 0) {
+                setGeneratedCards(mappedCards);
+                console.log('📡 Replaced demo cards with real data');
+            } else {
+                console.log('📡 API returned no cards, keeping demo cards');
+            }
+            
+            if (generatingToast) {
+                try { generatingToast.dismiss(); } catch {}
+            }
+            
+            if (mappedCards.length > 0) {
+                safeToast.success(`Created ${mappedCards.length} flashcards!`);
+            } else {
+                safeToast.info("Showing demo flashcards. Try generating again!");
+            }
             
         } catch (err: any) {
+            // Dismiss loading toast on error
+            if (generatingToast) {
+                try { generatingToast.dismiss(); } catch {}
+            }
+            
             const msg = err?.message || "Generation failed";
             
             if (msg.includes('SiliconFlow') || msg.includes('embedding')) {
@@ -980,7 +1027,10 @@ safeToast.error(msg);
                             {(flashcards ?? []).map(deck => (
                                 <div 
                                     key={deck?.id}
-                                    onClick={() => setActiveDeckId(deck?.id)}
+                                    onClick={() => {
+                                        setActiveDeckId(deck?.id);
+                                        setGeneratedCards(demoCards); // Show demo cards
+                                    }}
                                     className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl p-5 cursor-pointer hover:border-orange-500 transition-all group"
                                 >
                                     <h4 className="font-bold dark:text-white text-black text-sm mb-3 group-hover:text-orange-500 transition-colors">{deck?.title}</h4>
@@ -1005,6 +1055,7 @@ safeToast.error(msg);
                                 setGeneratedCards([]);
                             }}
                             onShowSource={handleShowSource}
+                            isGenerating={isGenerating}
                         />
                     </div>
                 )}

@@ -7,6 +7,7 @@ class VideoIdRequest(BaseModel):
     forceRefresh: bool = False
     count: Optional[int] = 10  # Number of flashcards to generate
     focus: Optional[str] = ""  # Topics/focus area
+    transcript: Optional[List[Dict[str, Any]]] = None  # Optional transcript data from frontend
 
 
 class FlashcardItem(BaseModel):

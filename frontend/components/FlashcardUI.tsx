@@ -278,9 +278,11 @@ function SpacedRepetitionView({ cards }: { cards: CardData[] }) {
 function FlippableFlashcard({
   card,
   onShowSource,
+  isGenerating,
 }: {
   card: CardData;
   onShowSource: (id: string) => void;
+  isGenerating?: boolean;
 }) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isStarred, setIsStarred] = useState(false);
@@ -351,9 +353,16 @@ function FlippableFlashcard({
 
           {/* Centered question */}
           <div className="flex-1 flex items-center justify-center px-4">
-            <p className="text-[19px] font-medium text-neutral-900 dark:text-neutral-100 text-center leading-relaxed select-none">
-              {card.question}
-            </p>
+            {isGenerating ? (
+              <div className="flex flex-col items-center justify-center gap-3">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
+                <p className="text-[14px] text-neutral-500 dark:text-neutral-400">Generating flashcards...</p>
+              </div>
+            ) : (
+              <p className="text-[19px] font-medium text-neutral-900 dark:text-neutral-100 text-center leading-relaxed select-none">
+                {card.question}
+              </p>
+            )}
           </div>
         </div>
 
@@ -422,15 +431,18 @@ export function FlashcardReviewController({
   cards,
   onBack,
   onShowSource,
+  isGenerating,
 }: {
   cards: CardData[];
   onBack: () => void;
   onShowSource: (id: string) => void;
+  isGenerating?: boolean;
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   // Changed default to 'fast' as requested
   const [reviewMode, setReviewMode] = useState<'spaced' | 'fast'>('fast');
 
+  // Don't show "no cards" - we always have demo cards as fallback
   if (!cards || cards.length === 0) {
     return <div className="p-4 text-sm text-neutral-500">No cards available</div>;
   }
@@ -503,6 +515,7 @@ export function FlashcardReviewController({
               key={currentCard.id}
               card={currentCard}
               onShowSource={onShowSource}
+              isGenerating={isGenerating}
             />
           </div>
           {/* Footer nav */}

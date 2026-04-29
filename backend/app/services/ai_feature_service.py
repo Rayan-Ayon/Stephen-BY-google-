@@ -51,6 +51,7 @@ async def get_or_generate_feature(
     force_refresh: bool = False,
     count: int = 10,
     focus: str = "",
+    transcript_data: list = None,
 ) -> dict:
     """
     Generate AI feature with optional RAG context.
@@ -62,6 +63,7 @@ async def get_or_generate_feature(
         force_refresh: Force regeneration even if cached
         count: Number of items to generate (for flashcards)
         focus: Topic/focus area for generation
+        transcript_data: Optional transcript from frontend (list of dicts)
     """
     async with async_session_maker() as db:
         logger.info(f"Checking cache for {video_id}/{feature_type}")
@@ -92,7 +94,8 @@ async def get_or_generate_feature(
                     feature_type,
                     force_refresh=force_refresh,
                     count=count,
-                    focus=focus
+                    focus=focus,
+                    transcript_data=transcript_data
                 )
                 model_used = "openrouter/free (RAG)"
             except Exception as e:

@@ -398,8 +398,11 @@ def generate_context_aware(
             count=count,
             focus=focus
         ))
-    except:
-        return {}
+    except Exception as e:
+        logger.error(f"❌ generate_context_aware failed: {type(e).__name__}: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return {"error": f"Failed to generate context-aware content: {str(e)}"}
 
 
 def generate_context_aware(
@@ -433,7 +436,8 @@ async def generate_context_aware_async(
     feature_type: Literal["summary", "flashcards", "quiz", "notes"],
     force_refresh: bool = False,
     count: int = 10,
-    focus: str = ""
+    focus: str = "",
+    transcript_data: list = None
 ) -> Dict[str, Any]:
     """
     Async version of context-aware generation.
@@ -445,18 +449,33 @@ async def generate_context_aware_async(
         force_refresh: Force re-indexing
         count: Number of items to generate (for flashcards/quiz)
         focus: Topic/focus area for generation
+        transcript_data: Optional transcript from frontend (list of dicts with text, start, duration)
     """
     logger.info(f"Generating context-aware {feature_type} for {video_id} (count={count}, focus={focus})")
     
-    await ContextAgent.ensure_chunks_indexed_async(video_id)
+    # Use provided transcript data if available, otherwise fetch from YouTube
+    transcript = None
+    if transcript_data and len(transcript_data) > 0:
+        logger.info(f"Using provided transcript with {len(transcript_data)} segments")
+        transcript = transcript_data
+    else:
+        try:
+            logger.info("No transcript provided, attempting to fetch from YouTube")
+            transcript = await get_youtube_transcript(video_id)
+        except Exception as e:
+            logger.error(f"Failed to get transcript: {e}")
+            # Try to use cached chunks anyway
+            pass
     
-    chunks = ContextAgent.retrieve_context(video_id, feature_type)
-    
-    if not chunks:
-        logger.warning(f"No chunks retrieved, using transcript fallback")
-        transcript = await get_youtube_transcript(video_id)
+    # Create chunks from transcript
+    if transcript and len(transcript) > 0:
         chunks_text = create_video_chunks(transcript, CHUNK_SIZE, CHUNK_OVERLAP)
-        chunks = [{"text": t, "metadata": {}} for t in chunks_text]
+        chunks = [{"text": t, "metadata": {"start_time": i * 30}} for i, t in enumerate(chunks_text)]
+    else:
+        # Try to get from ChromaDB
+        chunks = ContextAgent.retrieve_context(video_id, feature_type)
+        if not chunks:
+            raise Exception("No transcript or indexed content available for this video")
     
     if feature_type == "summary":
         result = SummaryAgent.generate(chunks, video_id)
