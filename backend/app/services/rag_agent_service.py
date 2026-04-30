@@ -94,7 +94,8 @@ class ContextAgent:
                 logger.warning("Cannot sync index while async loop running")
                 return False
             return loop.run_until_complete(ContextAgent.ensure_chunks_indexed_async(video_id))
-        except:
+        except Exception as e:
+            logger.error(f"Sync ensure_chunks_indexed failed: {type(e).__name__}: {e}")
             return False
 
 
@@ -183,11 +184,11 @@ class FlashcardAgent:
             raise Exception("No context available for flashcard generation")
         
         # Cap count at 25 for quality
-        num_cards = min(count, 25) if count else 10
+        num_cards = min(count, 5) if count else 5
         
         # Build context with actual timestamps from ChromaDB metadata
         context_with_timestamps = []
-        for i, chunk in enumerate(chunks[:10]):  # Use up to 10 chunks for context
+        for i, chunk in enumerate(chunks[:5]):  # Use up to 5 chunks (token-efficient for free tier)
             metadata = chunk.get('metadata', {})
             # Try to get actual start_time from metadata, fallback to calculation
             start_time = metadata.get('start_time', metadata.get('chunk_index', i) * 30)
@@ -196,7 +197,7 @@ class FlashcardAgent:
             timestamp_str = f"{minutes}:{seconds:02d}"
             
             context_with_timestamps.append({
-                'text': chunk['text'][:400],
+                'text': chunk['text'][:300],
                 'timestamp': timestamp_str,
                 'chunk_id': f"{video_id}_{metadata.get('chunk_index', i)}",
                 'start_time': start_time
@@ -287,8 +288,8 @@ class QuizAgent:
                 "chunk_id": f"{video_id}_{chunk_index}"
             })
         
-        context_text = "\n\n".join([
-            f"[{c['timestamp']}] (ID: {c['chunk_id']}) {c['text']}"
+        context_text = "\n".join([
+            f"[{c['timestamp']}] {c['text']}"
             for c in context_with_sources
         ])
         
@@ -376,21 +377,18 @@ def generate_context_aware(
     focus: str = ""
 ) -> Dict[str, Any]:
     """
-    Main entry point for context-aware generation.
-    Uses multi-agent orchestration to generate RAG-based content.
+    Sync wrapper for context-aware generation.
+    Cannot be called from within an async context (e.g., FastAPI handlers).
     """
-    logger.info(f"Generating context-aware {feature_type} for {video_id}")
-    
     import asyncio
+    import traceback
     try:
         loop = asyncio.get_event_loop()
         if loop.is_running():
-            raise Exception("Cannot use sync function in async context - use async version")
-    except:
-        pass
-    
-    try:
-        loop = asyncio.get_event_loop()
+            raise RuntimeError(
+                "Cannot use sync generate_context_aware() from async context. "
+                "Use generate_context_aware_async() instead."
+            )
         return loop.run_until_complete(generate_context_aware_async(
             video_id, 
             feature_type,
@@ -400,35 +398,8 @@ def generate_context_aware(
         ))
     except Exception as e:
         logger.error(f"❌ generate_context_aware failed: {type(e).__name__}: {e}")
-        import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        return {"error": f"Failed to generate context-aware content: {str(e)}"}
-
-
-def generate_context_aware(
-    video_id: str,
-    feature_type: Literal["summary", "flashcards", "quiz", "notes"],
-    force_refresh: bool = False,
-    count: int = 10,
-    focus: str = ""
-) -> Dict[str, Any]:
-    """
-    Sync wrapper for context-aware generation.
-    """
-    import asyncio
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            raise Exception("Cannot use sync function in async context")
-        return loop.run_until_complete(generate_context_aware_async(
-            video_id, 
-            feature_type,
-            force_refresh=force_refresh,
-            count=count,
-            focus=focus
-        ))
-    except:
-        return {"error": "Failed to generate context-aware content"}
+        logger.error(traceback.format_exc())
+        raise
 
 
 async def generate_context_aware_async(

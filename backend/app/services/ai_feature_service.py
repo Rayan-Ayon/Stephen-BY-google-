@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models import AIResult
 from app.db.session import async_session_maker
-from app.services.rag_agent_service import generate_context_aware_async, generate_context_aware
+from app.services.rag_agent_service import generate_context_aware_async
 
 logger = logging.getLogger(__name__)
 
@@ -99,18 +99,22 @@ async def get_or_generate_feature(
                 )
                 model_used = "openrouter/free (RAG)"
             except Exception as e:
-                logger.error(f"RAG generation failed: {e}, falling back to transcript")
+                logger.error(f"RAG generation failed: {type(e).__name__}: {e}")
+                # Retry async WITHOUT transcript (forces ChromaDB path)
                 try:
-                    response_data = generate_context_aware(
+                    logger.info("Retrying with ChromaDB context (no transcript)...")
+                    response_data = await generate_context_aware_async(
                         video_id, 
                         feature_type,
-                        force_refresh=force_refresh,
+                        force_refresh=True,
                         count=count,
-                        focus=focus
+                        focus=focus,
+                        transcript_data=None
                     )
-                    model_used = "openrouter/free (fallback)"
+                    model_used = "openrouter/free (retry)"
                 except Exception as e2:
-                    raise Exception(f"Generation failed: {e2}")
+                    logger.error(f"Retry also failed: {type(e2).__name__}: {e2}")
+                    raise Exception(f"All generation attempts failed. First error: {e}. Retry error: {e2}")
         else:
             raise Exception("Non-RAG generation not supported in new version")
         

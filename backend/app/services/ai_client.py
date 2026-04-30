@@ -19,7 +19,7 @@ if not OPENROUTER_API_KEY:
 client = OpenAI(
     api_key=OPENROUTER_API_KEY,
     base_url="https://openrouter.ai/api/v1",
-    timeout=30.0
+    timeout=90.0
 )
 
 FREE_ROUTER = "openrouter/free"
@@ -48,7 +48,11 @@ def get_ai_response(
                 
                 response = client.chat.completions.create(
                     model=model_to_use,
-                    messages=[{"role": "user", "content": prompt}]
+                    messages=[{"role": "user", "content": prompt}],
+                    extra_headers={
+                        "HTTP-Referer": "http://localhost:5173",
+                        "X-Title": "Stephen"
+                    }
                 )
                 
                 content = response.choices[0].message.content
@@ -104,11 +108,27 @@ def get_ai_response_json(
                 cleaned = cleaned[:-3]
             return json.loads(cleaned.strip())
         except json.JSONDecodeError:
+            # Try regex extraction
             json_match = re.search(r'\{[\s\S]*\}', cleaned)
             if json_match:
                 try:
                     return json.loads(json_match.group())
-                except:
+                except json.JSONDecodeError:
                     pass
-            logger.error(f"Failed to parse JSON. Response: {text[:200]}")
-            raise Exception(f"AI response was not valid JSON")
+            
+            # Try to repair truncated JSON (common with free-tier token limits)
+            for key in ["flashcards", "quiz", "bullets"]:
+                if f'"{key}"' in cleaned:
+                    # Find last complete object in array
+                    last_brace = cleaned.rfind('}')
+                    if last_brace > 0:
+                        repaired = cleaned[:last_brace + 1] + ']}'
+                        try:
+                            result = json.loads(repaired)
+                            logger.warning(f"Repaired truncated JSON for key '{key}' — partial results returned")
+                            return result
+                        except json.JSONDecodeError:
+                            pass
+            
+            logger.error(f"Failed to parse JSON. Response: {text[:300]}")
+            raise Exception(f"AI response was not valid JSON. First 200 chars: {text[:200]}")
