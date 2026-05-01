@@ -1,8 +1,10 @@
+import logging
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from app.schemas.ai_features import FeatureResponse, VideoIdRequest
 from app.services.ai_feature_service import get_or_generate_feature
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -139,7 +141,7 @@ async def get_index_status(videoId: str):
         from app.services.db_service import get_collection
         
         collection = get_collection("transcripts")
-        results = collection.get(where={"video_id": videoId}, limit=1)
+        results = collection.get(where={"video_id": video_id}, limit=1)
         
         is_indexed = results and len(results.get('ids', [])) > 0
         
@@ -152,4 +154,46 @@ async def get_index_status(videoId: str):
         return {
             "videoId": videoId,
             "isIndexed": False
+        }
+
+
+@router.get("/video/features")
+async def get_cached_features(videoId: str, type: str = "flashcards"):
+    """
+    Check if cached AI features exist for a video.
+    Returns cached data if available, or { "cached": false } if not.
+    Does NOT trigger generation — read-only, zero cost.
+    """
+    if not videoId:
+        raise HTTPException(status_code=400, detail="videoId is required")
+    if type not in ("summary", "flashcards", "quiz", "notes"):
+        raise HTTPException(status_code=400, detail="Invalid feature type")
+    
+    try:
+        from app.services.ai_feature_service import get_cached_result
+        from app.db.session import async_session_maker
+        import json
+        
+        async with async_session_maker() as db:
+            cached = await get_cached_result(db, videoId, type)
+            if cached:
+                return {
+                    "cached": True,
+                    "source": "db",
+                    "videoId": videoId,
+                    "data": json.loads(cached.payload_json),
+                    "model": cached.model_used,
+                    "createdAt": cached.created_at.isoformat(),
+                }
+            return {
+                "cached": False,
+                "videoId": videoId,
+                "data": None,
+            }
+    except Exception as e:
+        logger.error(f"Failed to fetch cached features: {e}")
+        return {
+            "cached": False,
+            "videoId": videoId,
+            "data": None,
         }

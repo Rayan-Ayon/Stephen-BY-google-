@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime
 from typing import Any, Literal
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,16 +33,29 @@ async def save_result(
     payload: Any,
     model_used: str,
 ) -> AIResult:
-    result = AIResult(
-        video_id=video_id,
-        feature_type=feature_type,
-        payload_json=json.dumps(payload),
-        model_used=model_used,
-    )
-    db.add(result)
-    await db.commit()
-    await db.refresh(result)
-    return result
+    # Check if a result already exists for this video+feature
+    existing = await get_cached_result(db, video_id, feature_type)
+    
+    if existing:
+        # Update the existing row instead of creating a duplicate
+        existing.payload_json = json.dumps(payload)
+        existing.model_used = model_used
+        existing.updated_at = datetime.utcnow()
+        await db.commit()
+        await db.refresh(existing)
+        return existing
+    else:
+        # Insert new row
+        result = AIResult(
+            video_id=video_id,
+            feature_type=feature_type,
+            payload_json=json.dumps(payload),
+            model_used=model_used,
+        )
+        db.add(result)
+        await db.commit()
+        await db.refresh(result)
+        return result
 
 
 async def get_or_generate_feature(

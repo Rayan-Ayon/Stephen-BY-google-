@@ -122,7 +122,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
     const [activeQuizId, setActiveQuizId] = useState<number | null>(null);
     const [quizAnswers, setQuizAnswers] = useState<{[key: number]: number}>({});
     
-    const [flashcards, setFlashcards] = useState<any[]>(MOCK_FLASHCARDS);
+    const [flashcards, setFlashcards] = useState<any[]>([]);
     const [activeDeckId, setActiveDeckId] = useState<number | null>(null);
     const [activeFlashcardIndex, setActiveFlashcardIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
@@ -203,6 +203,98 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
             controller.abort();
         };
     }, [course?.videoUrl]);
+
+    // Restore flashcards from cache on video change (localStorage first, then backend)
+    useEffect(() => {
+        let isMounted = true;
+        const controller = new AbortController();
+
+        const restoreFlashcards = async () => {
+            const videoId = getVideoId(course?.videoUrl || '');
+            if (!videoId || !isMounted) return;
+
+            // Layer 1: Check localStorage (instant, no network)
+            const localCacheKey = `stephen_flashcards_${videoId}`;
+            try {
+                const localData = localStorage.getItem(localCacheKey);
+                if (localData && isMounted) {
+                    const parsed = JSON.parse(localData);
+                    if (Array.isArray(parsed.cards) && parsed.cards.length > 0) {
+                        console.log('📦 Restored', parsed.cards.length, 'flashcards from localStorage');
+                        setGeneratedCards(parsed.cards);
+                        setFlashcards([{
+                            id: 1,
+                            title: parsed.title || course?.title || 'Flashcard Set',
+                            count: parsed.cards.length,
+                            lastStudied: parsed.generatedAt || 'Recently',
+                            topics: `${parsed.cards.length} cards`,
+                        }]);
+                        return; // Done — no need to hit backend
+                    }
+                }
+            } catch (e) {
+                console.warn('localStorage flashcard cache read failed:', e);
+            }
+
+            // Layer 2: Fallback to backend GET (if localStorage is empty)
+            try {
+                const res = await fetch(
+                    `/api/video/features?videoId=${videoId}&type=flashcards`,
+                    { signal: controller.signal }
+                );
+                if (!res.ok || !isMounted) return;
+
+                const result = await res.json();
+                console.log('📡 Backend cache response:', result?.cached, 'cards:', result?.data?.flashcards?.length ?? 0);
+
+                if (result?.cached && result?.data?.flashcards && isMounted) {
+                    const cachedCards: CardData[] = result.data.flashcards.map(
+                        (card: any, index: number) => ({
+                            id: `cached-${Date.now()}-${index}`,
+                            question: card?.question ?? '',
+                            answer: card?.answer ?? '',
+                            explanation: undefined,
+                            source_chunk_id: card?.source_chunk_id ?? '',
+                            source_timestamp: card?.source_timestamp ?? '0:00',
+                        })
+                    );
+
+                    setGeneratedCards(cachedCards);
+                    setFlashcards([{
+                        id: 1,
+                        title: course?.title || 'Flashcard Set',
+                        count: cachedCards.length,
+                        lastStudied: result.createdAt
+                            ? new Date(result.createdAt).toLocaleDateString()
+                            : 'Recently',
+                        topics: `${cachedCards.length} cards`,
+                    }]);
+
+                    // Backfill localStorage for next time
+                    localStorage.setItem(localCacheKey, JSON.stringify({
+                        cards: cachedCards,
+                        title: course?.title || 'Flashcard Set',
+                        generatedAt: new Date().toLocaleString(),
+                    }));
+
+                    console.log('📦 Loaded', cachedCards.length, 'cards from backend + saved to localStorage');
+                }
+            } catch (err: any) {
+                if (err?.name !== 'AbortError') {
+                    console.warn('Backend flashcard cache fetch failed:', err);
+                }
+            }
+        };
+
+        if (course?.videoUrl) {
+            restoreFlashcards();
+        }
+
+        return () => {
+            isMounted = false;
+            controller.abort();
+        };
+    }, [course?.videoUrl, course?.title]);
 
     // Handle Analyze Video (first-time indexing)
     const handleAnalyzeVideo = async () => {
@@ -316,6 +408,27 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
             // REPLACE demo cards with real ones (or keep demo if empty)
             if (mappedCards.length > 0) {
                 setGeneratedCards(mappedCards);
+                setFlashcards([{
+                    id: 1,
+                    title: course?.title || 'Flashcard Set',
+                    count: mappedCards.length,
+                    lastStudied: 'Just now',
+                    topics: `${mappedCards.length} cards`,
+                }]);
+                
+                // Persist to localStorage for instant restore on re-visit
+                const localCacheKey = `stephen_flashcards_${videoId}`;
+                try {
+                    localStorage.setItem(localCacheKey, JSON.stringify({
+                        cards: mappedCards,
+                        title: course?.title || 'Flashcard Set',
+                        generatedAt: new Date().toLocaleString(),
+                    }));
+                    console.log('💾 Saved', mappedCards.length, 'flashcards to localStorage');
+                } catch (e) {
+                    console.warn('Failed to save flashcards to localStorage:', e);
+                }
+                
                 console.log('📡 Replaced demo cards with real data');
             } else {
                 console.log('📡 API returned no cards, keeping demo cards');
@@ -1020,26 +1133,27 @@ safeToast.error(msg);
                             desc="Create a flashcard set with preferred number of cards, types of topics, and more."
                             rightElement={<GenerateHeader onAdjust={() => setShowFlashcardModal(true)} />}
                         />
-                        <div className="space-y-4">
-                            <h4 className="text-sm font-bold dark:text-gray-400 text-gray-600">My Flashcards</h4>
-                            {(flashcards ?? []).map(deck => (
-                                <div 
-                                    key={deck?.id}
-                                    onClick={() => {
-                                        setActiveDeckId(deck?.id);
-                                        setGeneratedCards(demoCards); // Show demo cards
-                                    }}
-                                    className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl p-5 cursor-pointer hover:border-orange-500 transition-all group"
-                                >
-                                    <h4 className="font-bold dark:text-white text-black text-sm mb-3 group-hover:text-orange-500 transition-colors">{deck?.title}</h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        <span className="text-[10px] font-bold text-purple-400 bg-purple-900/30 px-2 py-1 rounded-md border border-purple-500/20">Cards for today: {deck?.count} cards</span>
-                                        <span className="text-[10px] font-bold text-blue-400 bg-blue-900/30 px-2 py-1 rounded-md border border-blue-500/20">Selected All Topics</span>
-                                        <span className="text-[10px] font-bold text-gray-500 py-1">{deck?.topics}</span>
+                        {flashcards.length > 0 && (
+                            <div className="space-y-4">
+                                <h4 className="text-sm font-bold dark:text-gray-400 text-gray-600">My Flashcards</h4>
+                                {flashcards.map(deck => (
+                                    <div 
+                                        key={deck?.id}
+                                        onClick={() => {
+                                            setActiveDeckId(deck?.id);
+                                        }}
+                                        className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl p-5 cursor-pointer hover:border-orange-500 transition-all group"
+                                    >
+                                        <h4 className="font-bold dark:text-white text-black text-sm mb-3 group-hover:text-orange-500 transition-colors">{deck?.title}</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            <span className="text-[10px] font-bold text-purple-400 bg-purple-900/30 px-2 py-1 rounded-md border border-purple-500/20">Cards for today: {deck?.count} cards</span>
+                                            <span className="text-[10px] font-bold text-blue-400 bg-blue-900/30 px-2 py-1 rounded-md border border-blue-500/20">Selected All Topics</span>
+                                            <span className="text-[10px] font-bold text-gray-500 py-1">{deck?.topics}</span>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -1050,7 +1164,6 @@ safeToast.error(msg);
                             cards={generatedCards ?? []}
                             onBack={() => { 
                                 setActiveDeckId(null); 
-                                setGeneratedCards([]);
                             }}
                             onShowSource={handleShowSource}
                             isGenerating={isGenerating}
