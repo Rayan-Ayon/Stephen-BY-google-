@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenAI, Chat } from '@google/genai';
 import { 
@@ -77,7 +77,7 @@ const TypingIndicator = () => (
 
 // Mock Data for "Restored" Feel
 const MOCK_QUIZZES = [
-    { id: 1, title: "Generative AI Essentials Knowledge", questions: 5, status: "Completed", score: "80%", tags: ["Module 1", "Basics"] },
+    { id: 1, title: "Generative AI Essentials Knowledge", questions: 5, status: "Completed", score: "80%", tags: ["Module 1", "Basics"], generatedAt: Date.now() },
 ];
 
 const MOCK_FLASHCARDS = [
@@ -170,6 +170,16 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
     const [summaryError, setSummaryError] = useState<string | null>(null);
     const [summaries, setSummaries] = useState<any[]>([]);
     const [pendingSummaryTabId, setPendingSummaryTabId] = useState<string | null>(null);
+
+    // Computed: Combined My Sets sorted by newest first
+    const mySets = useMemo(() => {
+        const all = [
+            ...flashcards.map(f => ({ ...f, type: 'flashcards' })),
+            ...quizzes.map(q => ({ ...q, type: 'quiz' })),
+            ...summaries.map(s => ({ ...s, type: 'summary' })),
+        ];
+        return all.sort((a, b) => (b.generatedAt || 0) - (a.generatedAt || 0));
+    }, [flashcards, quizzes, summaries]);
 
     // ── Tab Manager Helpers ──
     const openFeatureTab = (type: WorkspaceTab['type'], title: string) => {
@@ -304,6 +314,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                             count: parsed.cards.length,
                             lastStudied: parsed.generatedAt || 'Recently',
                             topics: `${parsed.cards.length} cards`,
+                            generatedAt: parsed.generatedAt || Date.now(),
                         }]);
                         return; // Done — no need to hit backend
                     }
@@ -344,6 +355,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                             ? new Date(result.createdAt).toLocaleDateString()
                             : 'Recently',
                         topics: `${cachedCards.length} cards`,
+                        generatedAt: Date.now(),
                     }]);
 
                     // Backfill localStorage for next time
@@ -400,7 +412,8 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                                 count: parsed.bullets?.length || 0,
                                 lastStudied: 'Recently',
                                 type: 'summary',
-                                data: parsed
+                                data: parsed,
+                                generatedAt: Date.now()
                             }, ...prev]);
                         }
                         return;
@@ -572,6 +585,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                     count: mappedCards.length,
                     lastStudied: 'Just now',
                     topics: `${mappedCards.length} cards`,
+                    generatedAt: Date.now(),
                 }]);
                 
                 // Persist to localStorage for instant restore on re-visit
@@ -683,7 +697,8 @@ safeToast.error(msg);
                     count: data.bullets.length,
                     lastStudied: 'Just now',
                     type: 'summary',
-                    data
+                    data,
+                    generatedAt: Date.now()
                 }, ...filtered];
             });
 
@@ -1057,58 +1072,44 @@ safeToast.error(msg);
                         <h3 className="text-sm font-bold dark:text-gray-400 text-gray-500 uppercase tracking-wider">My Sets</h3>
                     </div>
                     
-                    {/* Flashcard sets */}
-                    {flashcards.length > 0 && flashcards.map((deck: any) => (
-                        <button
-                            key={`fc-${deck.id}`}
-                            onClick={() => {
-                                setActiveDeckId(deck.id);
-                                openFeatureTab('flashcards', deck.title || 'Flashcard Set');
-                            }}
-                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors text-left mb-2"
-                        >
-                            <FlashcardIcon className="w-5 h-5 text-red-500 shrink-0" />
-                            <div className="min-w-0">
-                                <p className="text-sm font-bold dark:text-white text-black truncate">{deck.title}</p>
-                                <p className="text-xs text-gray-500">{deck.count} cards · {deck.lastStudied}</p>
-                            </div>
-                        </button>
-                    ))}
+                    {mySets.length > 0 && mySets.map((item: any) => {
+                        const icons = {
+                            'flashcards': <FlashcardIcon className="w-5 h-5 text-red-500 shrink-0" />,
+                            'quiz': <QuizIcon className="w-5 h-5 text-orange-500 shrink-0" />,
+                            'summary': <SummaryIcon className="w-5 h-5 text-blue-500 shrink-0" />,
+                        };
+                        const titleMap = {
+                            'flashcards': `${item.count} cards · ${item.lastStudied}`,
+                            'quiz': `${item.questions} questions · ${item.score}`,
+                            'summary': `${item.count} points · ${item.lastStudied}`,
+                        };
+                        
+                        return (
+                            <button
+                                key={`${item.type}-${item.id}`}
+                                onClick={() => {
+                                    if (item.type === 'flashcards') {
+                                        setActiveDeckId(item.id);
+                                        openFeatureTab('flashcards', item.title || 'Flashcard Set');
+                                    } else if (item.type === 'quiz') {
+                                        setActiveQuizId(item.id);
+                                        openFeatureTab('quiz', item.title || 'Quiz');
+                                    } else if (item.type === 'summary') {
+                                        openFeatureTab('summary', item.title || 'Summary');
+                                    }
+                                }}
+                                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors text-left mb-2"
+                            >
+                                {icons[item.type]}
+                                <div className="min-w-0">
+                                    <p className="text-sm font-bold dark:text-white text-black truncate">{item.title}</p>
+                                    <p className="text-xs text-gray-500">{titleMap[item.type]}</p>
+                                </div>
+                            </button>
+                        );
+                    })}
 
-                    {/* Quiz sets */}
-                    {quizzes.length > 0 && quizzes.map((quiz: any) => (
-                        <button
-                            key={`qz-${quiz.id}`}
-                            onClick={() => {
-                                setActiveQuizId(quiz.id);
-                                openFeatureTab('quiz', quiz.title || 'Quiz');
-                            }}
-                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors text-left mb-2"
-                        >
-                            <QuizIcon className="w-5 h-5 text-orange-500 shrink-0" />
-                            <div className="min-w-0">
-                                <p className="text-sm font-bold dark:text-white text-black truncate">{quiz.title}</p>
-                                <p className="text-xs text-gray-500">{quiz.questions} questions · {quiz.score}</p>
-                            </div>
-                        </button>
-                    ))}
-
-                    {/* Summary sets */}
-                    {summaries.length > 0 && summaries.map((summary: any) => (
-                        <button
-                            key={`sm-${summary.id}`}
-                            onClick={() => openFeatureTab('summary', summary.title || 'Summary')}
-                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors text-left mb-2"
-                        >
-                            <SummaryIcon className="w-5 h-5 text-blue-500 shrink-0" />
-                            <div className="min-w-0">
-                                <p className="text-sm font-bold dark:text-white text-black truncate">{summary.title}</p>
-                                <p className="text-xs text-gray-500">{summary.count} points · {summary.lastStudied}</p>
-                            </div>
-                        </button>
-                    ))}
-
-                    {flashcards.length === 0 && quizzes.length === 0 && summaries.length === 0 && (
+                    {mySets.length === 0 && (
                         <p className="text-xs text-gray-500 text-center py-6">No generated sets yet. Click a feature above to get started.</p>
                     )}
                 </div>
