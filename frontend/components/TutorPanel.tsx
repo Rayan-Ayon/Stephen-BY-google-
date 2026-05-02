@@ -97,7 +97,19 @@ const MOCK_SUMMARY = `## Key Takeaways
 This course covers the essentials needed to start building your own GenAI applications.`;
 
 const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpanded, isCoachMode, course, onSeekTo }) => {
-    const [activeTab, setActiveTab] = useState<'chat' | 'quiz' | 'flashcards' | 'summary' | 'podcast'>('chat');
+    // ── Tab Manager State ──
+    interface WorkspaceTab {
+        id: string;
+        type: 'learn' | 'chat' | 'flashcards' | 'quiz' | 'summary' | 'podcast';
+        title: string;
+        closable: boolean;
+    }
+
+    const [workspaceTabs, setWorkspaceTabs] = useState<WorkspaceTab[]>([
+        { id: 'learn', type: 'learn', title: 'Learn Tab', closable: false }
+    ]);
+    const [activeTabId, setActiveTabId] = useState('learn');
+    const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
     
     // Chat State
     const [messages, setMessages] = useState<Message[]>([]);
@@ -151,6 +163,58 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
     const [generatedCards, setGeneratedCards] = useState<CardData[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [flashcardSettings, setFlashcardSettings] = useState({ count: 10, focus: '' });
+
+    // ── Tab Manager Helpers ──
+    const openFeatureTab = (type: WorkspaceTab['type'], title: string) => {
+        const existing = workspaceTabs.find(t => t.type === type);
+        if (existing) {
+            setActiveTabId(existing.id);
+            return;
+        }
+        const newTab: WorkspaceTab = {
+            id: `${type}-${Date.now()}`,
+            type,
+            title,
+            closable: true,
+        };
+        setWorkspaceTabs(prev => [...prev, newTab]);
+        setActiveTabId(newTab.id);
+    };
+
+    const closeTab = (tabId: string) => {
+        const tab = workspaceTabs.find(t => t.id === tabId);
+        if (!tab || !tab.closable) return;
+        const newTabs = workspaceTabs.filter(t => t.id !== tabId);
+        setWorkspaceTabs(newTabs);
+        if (activeTabId === tabId) {
+            setActiveTabId('learn');
+        }
+    };
+
+    const getActiveTabType = (): string => {
+        const tab = workspaceTabs.find(t => t.id === activeTabId);
+        return tab?.type || 'learn';
+    };
+
+    const handleTabDragStart = (tabId: string) => {
+        setDraggedTabId(tabId);
+    };
+
+    const handleTabDragOver = (e: React.DragEvent, targetTabId: string) => {
+        e.preventDefault();
+        if (!draggedTabId || draggedTabId === targetTabId) return;
+        const dragIndex = workspaceTabs.findIndex(t => t.id === draggedTabId);
+        const targetIndex = workspaceTabs.findIndex(t => t.id === targetTabId);
+        if (dragIndex === -1 || targetIndex === -1) return;
+        const reordered = [...workspaceTabs];
+        const [removed] = reordered.splice(dragIndex, 1);
+        reordered.splice(targetIndex, 0, removed);
+        setWorkspaceTabs(reordered);
+    };
+
+    const handleTabDragEnd = () => {
+        setDraggedTabId(null);
+    };
 
     // Helper: Extract videoId from URL
     const getVideoId = (url: string): string => {
@@ -500,13 +564,14 @@ safeToast.error(msg);
 
     // Simulate Loading for Tabs
     useEffect(() => {
-        if (['quiz', 'flashcards', 'podcast'].includes(activeTab) && !loadedTabs.has(activeTab)) {
+        const currentType = getActiveTabType();
+        if (['quiz', 'flashcards', 'podcast'].includes(currentType) && !loadedTabs.has(currentType)) {
             const timer = setTimeout(() => {
-                setLoadedTabs(prev => new Set(prev).add(activeTab));
+                setLoadedTabs(prev => new Set(prev).add(currentType));
             }, 1500); // 1.5s Shimmer Effect
             return () => clearTimeout(timer);
         }
-    }, [activeTab, loadedTabs]);
+    }, [activeTabId, loadedTabs]);
 
     // Outside click handlers
     useEffect(() => {
@@ -526,10 +591,10 @@ safeToast.error(msg);
 
     // Chat Auto-scroll
     useEffect(() => {
-        if (activeTab === 'chat' && chatContainerRef.current) {
+        if (getActiveTabType() === 'chat' && chatContainerRef.current) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
         }
-    }, [messages, isLoading, activeTab]);
+    }, [messages, isLoading, activeTabId]);
 
     // Podcast Progress Simulation
     useEffect(() => {
@@ -740,7 +805,7 @@ safeToast.error(msg);
             <h3 className="text-xl font-bold dark:text-gray-300 text-neutral-600 mb-10 tracking-tight">Learn with Stephen</h3>
             
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 w-full max-w-md">
-                <button onClick={() => { setActiveTab('quiz'); setShowQuizModal(true); }} className="flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl border dark:border-white/5 dark:bg-white/5 bg-neutral-100 border-neutral-200 text-xs font-bold dark:text-gray-400 text-neutral-600 hover:dark:bg-white/10 hover:bg-neutral-200 transition-all">
+                <button onClick={() => { openFeatureTab('quiz', 'Quiz'); setShowQuizModal(true); }} className="flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl border dark:border-white/5 dark:bg-white/5 bg-neutral-100 border-neutral-200 text-xs font-bold dark:text-gray-400 text-neutral-600 hover:dark:bg-white/10 hover:bg-neutral-200 transition-all">
                     <QuizIcon className="w-4 h-4" /> <span>Quiz</span>
                 </button>
                 <button className="flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl border dark:border-white/5 dark:bg-white/5 bg-neutral-100 border-neutral-200 text-xs font-bold dark:text-gray-400 text-neutral-600 hover:dark:bg-white/10 hover:bg-neutral-200 transition-all">
@@ -749,7 +814,7 @@ safeToast.error(msg);
                 <button onClick={() => setIsVoiceMode(true)} className="flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl border dark:border-white/5 dark:bg-white/5 bg-neutral-100 border-neutral-200 text-xs font-bold dark:text-gray-400 text-neutral-600 hover:dark:bg-white/10 hover:bg-neutral-200 transition-all">
                     <WaveformIcon className="w-4 h-4" /> <span>Voice Mode</span>
                 </button>
-                <button onClick={() => { setActiveTab('flashcards'); setShowFlashcardModal(true); }} className="flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl border dark:border-white/5 dark:bg-white/5 bg-neutral-100 border-neutral-200 text-xs font-bold dark:text-gray-400 text-neutral-600 hover:dark:bg-white/10 hover:bg-neutral-200 transition-all">
+                <button onClick={() => { openFeatureTab('flashcards', 'Flashcards'); setShowFlashcardModal(true); }} className="flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl border dark:border-white/5 dark:bg-white/5 bg-neutral-100 border-neutral-200 text-xs font-bold dark:text-gray-400 text-neutral-600 hover:dark:bg-white/10 hover:bg-neutral-200 transition-all">
                     <FlashcardIcon className="w-4 h-4" /> <span>Flashcards</span>
                 </button>
                 <button className="flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl border dark:border-white/5 dark:bg-white/5 bg-neutral-100 border-neutral-200 text-xs font-bold dark:text-gray-400 text-neutral-600 hover:dark:bg-white/10 hover:bg-neutral-200 transition-all">
@@ -776,6 +841,107 @@ safeToast.error(msg);
             
             <h2 className="text-2xl font-bold text-black dark:text-white mb-2">Listening...</h2>
             <p className="text-gray-500 text-sm">Speak clearly into your microphone</p>
+        </div>
+    );
+
+    const renderLearnTab = () => (
+        <div className="flex flex-col h-full">
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Generate Section */}
+                <div>
+                    <h3 className="text-sm font-bold dark:text-gray-400 text-gray-500 mb-3 uppercase tracking-wider">Generate</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                        {[
+                            { type: 'podcast' as const, label: 'Podcast', icon: <PodcastIcon className="w-5 h-5" />, color: 'text-purple-500' },
+                            { type: 'summary' as const, label: 'Summary', icon: <SummaryIcon className="w-5 h-5" />, color: 'text-blue-500' },
+                            { type: 'quiz' as const, label: 'Quiz', icon: <QuizIcon className="w-5 h-5" />, color: 'text-orange-500' },
+                            { type: 'flashcards' as const, label: 'Flashcards', icon: <FlashcardIcon className="w-5 h-5" />, color: 'text-red-500' },
+                            { type: 'chat' as const, label: 'Chat', icon: <BrainIcon className="w-5 h-5" />, color: 'text-cyan-500' },
+                        ].map((feature) => (
+                            <button
+                                key={feature.label}
+                                onClick={() => openFeatureTab(feature.type, feature.label)}
+                                className="flex items-center justify-between p-4 rounded-xl border dark:border-gray-800 border-neutral-200 dark:bg-[#1a1a1a] bg-white hover:border-gray-400 dark:hover:border-gray-600 transition-all group"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <span className={feature.color}>{feature.icon}</span>
+                                    <span className="text-sm font-bold dark:text-white text-black">{feature.label}</span>
+                                </div>
+                                <AdjustIcon className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* My Sets Section */}
+                <div>
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-bold dark:text-gray-400 text-gray-500 uppercase tracking-wider">My Sets</h3>
+                    </div>
+                    
+                    {/* Flashcard sets */}
+                    {flashcards.length > 0 && flashcards.map((deck: any) => (
+                        <button
+                            key={`fc-${deck.id}`}
+                            onClick={() => {
+                                setActiveDeckId(deck.id);
+                                openFeatureTab('flashcards', deck.title || 'Flashcard Set');
+                            }}
+                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors text-left mb-2"
+                        >
+                            <FlashcardIcon className="w-5 h-5 text-red-500 shrink-0" />
+                            <div className="min-w-0">
+                                <p className="text-sm font-bold dark:text-white text-black truncate">{deck.title}</p>
+                                <p className="text-xs text-gray-500">{deck.count} cards · {deck.lastStudied}</p>
+                            </div>
+                        </button>
+                    ))}
+
+                    {/* Quiz sets */}
+                    {quizzes.length > 0 && quizzes.map((quiz: any) => (
+                        <button
+                            key={`qz-${quiz.id}`}
+                            onClick={() => {
+                                setActiveQuizId(quiz.id);
+                                openFeatureTab('quiz', quiz.title || 'Quiz');
+                            }}
+                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors text-left mb-2"
+                        >
+                            <QuizIcon className="w-5 h-5 text-orange-500 shrink-0" />
+                            <div className="min-w-0">
+                                <p className="text-sm font-bold dark:text-white text-black truncate">{quiz.title}</p>
+                                <p className="text-xs text-gray-500">{quiz.questions} questions · {quiz.score}</p>
+                            </div>
+                        </button>
+                    ))}
+
+                    {flashcards.length === 0 && quizzes.length === 0 && (
+                        <p className="text-xs text-gray-500 text-center py-6">No generated sets yet. Click a feature above to get started.</p>
+                    )}
+                </div>
+            </div>
+
+            {/* Chat Input — pinned at bottom of Learn Tab */}
+            <div className="shrink-0 p-4 border-t dark:border-white/10 border-neutral-200">
+                <div className="flex items-center gap-2 dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl px-4 py-2">
+                    <input
+                        type="text"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); }}}
+                        placeholder="Ask anything"
+                        className="flex-1 bg-transparent text-sm dark:text-white text-black placeholder-gray-500 outline-none"
+                    />
+                    <button
+                        onClick={() => openFeatureTab('chat', 'Chat')}
+                        className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-xs font-bold hover:opacity-80 transition-opacity"
+                    >
+                        <SparkleIcon className="w-3.5 h-3.5" />
+                        AI
+                    </button>
+                </div>
+            </div>
         </div>
     );
 
@@ -1257,76 +1423,78 @@ safeToast.error(msg);
     // --- Main Render ---
     return (
         <div className={`h-full flex flex-col dark:bg-[#0a0a0a] bg-white border-l dark:border-white/10 border-neutral-200 transition-all duration-300 relative z-40 ${isPanelExpanded ? 'w-full' : 'w-full'} pt-20`}>
-            {/* Header Tabs */}
-            <div className="flex items-center px-4 py-3 border-b dark:border-white/10 border-neutral-200 overflow-x-auto no-scrollbar gap-2 shrink-0">
-                <button 
-                    onClick={() => setActiveTab('chat')}
-                    className={`flex items-center px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-                        activeTab === 'chat' 
-                        ? 'dark:bg-white/10 bg-white dark:text-white text-black shadow-sm border dark:border-white/5 border-gray-200' 
-                        : 'text-gray-500 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/5'
-                    }`}
+            
+            {/* Dynamic Tab Bar (Browser-style) */}
+            <div className="flex items-center px-2 py-2 border-b dark:border-white/10 border-neutral-200 overflow-x-auto no-scrollbar gap-1 shrink-0">
+                {workspaceTabs.map((tab) => {
+                    const isActive = tab.id === activeTabId;
+                    const isDragging = tab.id === draggedTabId;
+                    return (
+                        <div
+                            key={tab.id}
+                            draggable={workspaceTabs.length > 1}
+                            onDragStart={() => handleTabDragStart(tab.id)}
+                            onDragOver={(e) => handleTabDragOver(e, tab.id)}
+                            onDragEnd={handleTabDragEnd}
+                            onClick={() => setActiveTabId(tab.id)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer select-none max-w-[160px] group ${
+                                isDragging ? 'opacity-50' : ''
+                            } ${
+                                isActive
+                                ? 'dark:bg-white/10 bg-white dark:text-white text-black shadow-sm border dark:border-white/5 border-gray-200'
+                                : 'text-gray-500 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/5'
+                            }`}
+                        >
+                            {isActive && (
+                                <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] shrink-0" />
+                            )}
+                            <span className="truncate">{tab.title}</span>
+                            {tab.closable && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); closeTab(tab.id); }}
+                                    className="shrink-0 p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                                >
+                                    <XIcon className="w-3 h-3" />
+                                </button>
+                            )}
+                        </div>
+                    );
+                })}
+                {/* "+" Add Tab Button */}
+                <button
+                    onClick={() => setActiveTabId('learn')}
+                    className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
                 >
-                    {activeTab === 'chat' ? (
-                        <div className={`w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] mr-2`} />
-                    ) : (
-                        <BrainIcon className="w-3.5 h-3.5 mr-1.5" />
-                    )}
-                    <span>Chat</span>
+                    <PlusIcon className="w-4 h-4" />
                 </button>
-                <button 
-                    onClick={() => setActiveTab('flashcards')}
-                    className={`flex items-center px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-                        activeTab === 'flashcards' 
-                        ? 'dark:bg-white/10 bg-white dark:text-white text-black shadow-sm border dark:border-white/5 border-gray-200' 
-                        : 'text-gray-500 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/5'
-                    }`}
+                {/* Fullscreen toggle */}
+                <button
+                    onClick={() => setIsPanelExpanded(!isPanelExpanded)}
+                    className="shrink-0 ml-auto p-1.5 rounded-lg text-gray-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
                 >
-                    <FlashcardIcon className="w-3.5 h-3.5 mr-1.5" />
-                    <span>Flashcards</span>
-                </button>
-                <button 
-                    onClick={() => setActiveTab('quiz')}
-                    className={`flex items-center px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-                        activeTab === 'quiz' 
-                        ? 'dark:bg-white/10 bg-white dark:text-white text-black shadow-sm border dark:border-white/5 border-gray-200' 
-                        : 'text-gray-500 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/5'
-                    }`}
-                >
-                    <QuizIcon className="w-3.5 h-3.5 mr-1.5" />
-                    <span>Quizzes</span>
-                </button>
-                <button 
-                    onClick={() => setActiveTab('podcast')}
-                    className={`flex items-center px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-                        activeTab === 'podcast' 
-                        ? 'dark:bg-white/10 bg-white dark:text-white text-black shadow-sm border dark:border-white/5 border-gray-200' 
-                        : 'text-gray-500 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/5'
-                    }`}
-                >
-                    <PodcastIcon className="w-3.5 h-3.5 mr-1.5" />
-                    <span>Podcast</span>
-                </button>
-                <button 
-                    onClick={() => setActiveTab('summary')}
-                    className={`flex items-center px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-                        activeTab === 'summary' 
-                        ? 'dark:bg-white/10 bg-white dark:text-white text-black shadow-sm border dark:border-white/5 border-gray-200' 
-                        : 'text-gray-500 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/5'
-                    }`}
-                >
-                    <SummaryIcon className="w-3.5 h-3.5 mr-1.5" />
-                    <span>Summary</span>
+                    <MaximizeIcon className="w-4 h-4" />
                 </button>
             </div>
-            
+
             {/* Content Area */}
             <div className="flex-1 flex flex-col overflow-hidden relative">
-                {activeTab === 'chat' && renderChat()}
-                {activeTab === 'quiz' && renderQuiz()}
-                {activeTab === 'flashcards' && renderFlashcards()}
-                {activeTab === 'summary' && renderSummary()}
-                {activeTab === 'podcast' && renderPodcast()}
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={activeTabId}
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        transition={{ duration: 0.15 }}
+                        className="flex-1 flex flex-col overflow-hidden"
+                    >
+                        {getActiveTabType() === 'learn' && renderLearnTab()}
+                        {getActiveTabType() === 'chat' && renderChat()}
+                        {getActiveTabType() === 'quiz' && renderQuiz()}
+                        {getActiveTabType() === 'flashcards' && renderFlashcards()}
+                        {getActiveTabType() === 'summary' && renderSummary()}
+                        {getActiveTabType() === 'podcast' && renderPodcast()}
+                    </motion.div>
+                </AnimatePresence>
             </div>
 
             {/* Modals */}
