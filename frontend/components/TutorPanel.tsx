@@ -164,6 +164,13 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
     const [isGenerating, setIsGenerating] = useState(false);
     const [flashcardSettings, setFlashcardSettings] = useState({ count: 10, focus: '' });
 
+    // Summary State
+    const [summaryData, setSummaryData] = useState<{ paragraph: string; bullets: { text: string; timestamp: string }[] } | null>(null);
+    const [isSummaryGenerating, setIsSummaryGenerating] = useState(false);
+    const [summaryError, setSummaryError] = useState<string | null>(null);
+    const [summaries, setSummaries] = useState<any[]>([]);
+    const [pendingSummaryTabId, setPendingSummaryTabId] = useState<string | null>(null);
+
     // ── Tab Manager Helpers ──
     const openFeatureTab = (type: WorkspaceTab['type'], title: string) => {
         const existing = workspaceTabs.find(t => t.type === type);
@@ -179,6 +186,11 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
         };
         setWorkspaceTabs(prev => [...prev, newTab]);
         setActiveTabId(newTab.id);
+        
+        // Auto-generate summary when opening summary tab
+        if (type === 'summary') {
+            setPendingSummaryTabId(newTab.id);
+        }
     };
 
     const closeTab = (tabId: string) => {
@@ -360,6 +372,88 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
         };
     }, [course?.videoUrl, course?.title]);
 
+    // Restore summary from cache on video change
+    useEffect(() => {
+        let isMounted = true;
+        const controller = new AbortController();
+
+        const restoreSummary = async () => {
+            const videoId = getVideoId(course?.videoUrl || '');
+            if (!videoId || !isMounted) return;
+
+            // Layer 1: Check localStorage
+            const localCacheKey = `stephen_summary_${videoId}`;
+            try {
+                const localData = localStorage.getItem(localCacheKey);
+                if (localData && isMounted) {
+                    const parsed = JSON.parse(localData);
+                    if (parsed.paragraph || (parsed.bullets && parsed.bullets.length > 0)) {
+                        console.log('📦 Restored summary from localStorage');
+                        setSummaryData(parsed);
+                        
+                        // Add to summaries for My Sets
+                        if (!summaries.find(s => s.videoId === videoId)) {
+                            setSummaries(prev => [{
+                                id: `summary-${Date.now()}`,
+                                videoId,
+                                title: course?.title || 'Summary',
+                                count: parsed.bullets?.length || 0,
+                                lastStudied: 'Recently',
+                                type: 'summary',
+                                data: parsed
+                            }, ...prev]);
+                        }
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn('localStorage summary cache read failed:', e);
+            }
+
+            // Layer 2: Fallback to backend GET
+            try {
+                const res = await fetch(
+                    `/api/video/features?videoId=${videoId}&type=summary`,
+                    { signal: controller.signal }
+                );
+                if (!res.ok || !isMounted) return;
+
+                const result = await res.json();
+                if (result?.cached && result?.data && isMounted) {
+                    const data = {
+                        paragraph: result.data.paragraph || '',
+                        bullets: result.data.bullets || []
+                    };
+                    setSummaryData(data);
+                    // Backfill localStorage
+                    localStorage.setItem(localCacheKey, JSON.stringify(data));
+                    console.log('📦 Loaded summary from backend');
+                }
+            } catch (err: any) {
+                if (err?.name !== 'AbortError') {
+                    console.warn('Backend summary cache fetch failed:', err);
+                }
+            }
+        };
+
+        if (course?.videoUrl) {
+            restoreSummary();
+        }
+
+        return () => {
+            isMounted = false;
+            controller.abort();
+        };
+    }, [course?.videoUrl]);
+
+    // Auto-generate summary when opening summary tab
+    useEffect(() => {
+        if (pendingSummaryTabId && !isSummaryGenerating && !summaryData) {
+            setPendingSummaryTabId(null);
+            handleGenerateSummary();
+        }
+    }, [pendingSummaryTabId, isSummaryGenerating, summaryData]);
+
     // Handle Analyze Video (first-time indexing)
     const handleAnalyzeVideo = async () => {
         const videoId = getVideoId(course?.videoUrl ?? '');
@@ -522,6 +616,89 @@ safeToast.error(msg);
             }
         } finally {
             setIsGenerating(false);
+        }
+    };
+
+    // Handle Generate Summary
+    const handleGenerateSummary = async () => {
+        const videoId = getVideoId(course?.videoUrl || '');
+        if (!videoId) {
+            safeToast.error("Unable to identify video");
+            return;
+        }
+
+        // Check if indexed first
+        if (indexStatus !== 'ready') {
+            await handleAnalyzeVideo();
+            if (indexStatus !== 'ready') return;
+        }
+
+        setIsSummaryGenerating(true);
+        safeToast.loading("Generating your summary...", { duration: 3000 });
+
+        // Get cached transcript
+        const cacheKey = `stephen_transcript_${videoId}`;
+        let transcriptData = null;
+        try {
+            const cached = localStorage.getItem(cacheKey);
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (parsed?.transcript && parsed.transcript.length > 0) {
+                    transcriptData = parsed.transcript;
+                }
+            }
+        } catch (e) {
+            console.warn('Could not get transcript from localStorage:', e);
+        }
+
+        try {
+            const res = await fetch('/api/video/summary', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    videoId, 
+                    forceRefresh: true,
+                    transcript: transcriptData
+                })
+            });
+
+            if (!res.ok) throw new Error(`Failed: ${res.status}`);
+
+            const response = await res.json();
+            const data = {
+                paragraph: response?.data?.paragraph || '',
+                bullets: response?.data?.bullets || []
+            };
+
+            setSummaryData(data);
+            setSummaryError(null);
+
+            // Add to summaries for My Sets
+            setSummaries(prev => {
+                const filtered = prev.filter(s => s.videoId !== videoId);
+                return [{
+                    id: `summary-${Date.now()}`,
+                    videoId,
+                    title: course?.title || 'Summary',
+                    count: data.bullets.length,
+                    lastStudied: 'Just now',
+                    type: 'summary',
+                    data
+                }, ...filtered];
+            });
+
+            // Persist to localStorage
+            const localCacheKey = `stephen_summary_${videoId}`;
+            localStorage.setItem(localCacheKey, JSON.stringify(data));
+
+            safeToast.dismiss();
+            safeToast.success(data.bullets.length > 0 ? `Generated ${data.bullets.length} key points!` : 'Summary generated!');
+        } catch (err: any) {
+            safeToast.dismiss();
+            setSummaryError(err?.message || "Summary generation failed");
+            safeToast.error(err?.message || "Summary generation failed. Try again later.");
+        } finally {
+            setIsSummaryGenerating(false);
         }
     };
 
@@ -916,7 +1093,22 @@ safeToast.error(msg);
                         </button>
                     ))}
 
-                    {flashcards.length === 0 && quizzes.length === 0 && (
+                    {/* Summary sets */}
+                    {summaries.length > 0 && summaries.map((summary: any) => (
+                        <button
+                            key={`sm-${summary.id}`}
+                            onClick={() => openFeatureTab('summary', summary.title || 'Summary')}
+                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors text-left mb-2"
+                        >
+                            <SummaryIcon className="w-5 h-5 text-blue-500 shrink-0" />
+                            <div className="min-w-0">
+                                <p className="text-sm font-bold dark:text-white text-black truncate">{summary.title}</p>
+                                <p className="text-xs text-gray-500">{summary.count} points · {summary.lastStudied}</p>
+                            </div>
+                        </button>
+                    ))}
+
+                    {flashcards.length === 0 && quizzes.length === 0 && summaries.length === 0 && (
                         <p className="text-xs text-gray-500 text-center py-6">No generated sets yet. Click a feature above to get started.</p>
                     )}
                 </div>
@@ -1341,22 +1533,102 @@ safeToast.error(msg);
     };
 
     const renderSummary = () => {
-        // Removed shimmer check to show content immediately as requested
+        const hasSummary = summaryData && (summaryData.paragraph || (summaryData.bullets && summaryData.bullets.length > 0));
+        
         return (
-            <div className="flex-1 flex flex-col p-6 overflow-y-auto">
-                <CreateCard 
-                    title="Generate Summary" 
-                    desc="Create a summary from content. Choose detailed, cheat sheet, or short formats."
-                    rightElement={<SummaryHeaderRight />}
-                />
-                <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6 shadow-sm">
-                    <div className="prose dark:prose-invert max-w-none text-sm">
-                        <div dangerouslySetInnerHTML={{ __html: MOCK_SUMMARY.replace(/\n/g, '<br/>') }} />
-                    </div>
-                    <div className="mt-6 flex justify-end space-x-2">
-                        <button className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"><CopyIcon className="w-4 h-4" /></button>
-                        <button className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"><ShareIcon className="w-4 h-4" /></button>
-                    </div>
+            <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Header with back button */}
+                <div className="shrink-0 px-4 py-3 border-b dark:border-white/10 border-neutral-200 flex items-center justify-between">
+                    <button 
+                        onClick={() => setActiveTabId('learn')}
+                        className="flex items-center gap-2 text-sm dark:text-gray-400 text-gray-600 hover:text-black dark:hover:text-white transition-colors"
+                    >
+                        <ChevronLeftIcon className="w-4 h-4" />
+                        Back to Learn
+                    </button>
+                    {hasSummary && (
+                        <button 
+                            onClick={() => handleGenerateSummary()}
+                            disabled={isSummaryGenerating}
+                            className="text-xs text-orange-500 hover:text-orange-600 font-medium"
+                        >
+                            {isSummaryGenerating ? 'Regenerating...' : 'Regenerate'}
+                        </button>
+                    )}
+                </div>
+                
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-6">
+                    {isSummaryGenerating && (
+                        <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6">
+                            <div className="animate-pulse space-y-4">
+                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4/5"></div>
+                            </div>
+                            <p className="text-center text-sm text-gray-500 mt-4">Generating summary...</p>
+                        </div>
+                    )}
+                    
+                    {summaryError && !isSummaryGenerating && (
+                        <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6 text-center">
+                            <p className="text-red-500 text-sm mb-4">{summaryError}</p>
+                            <button 
+                                onClick={() => {
+                                    setSummaryError(null);
+                                    handleGenerateSummary();
+                                }}
+                                className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold rounded-full transition-colors"
+                            >
+                                Try Again
+                            </button>
+                        </div>
+                    )}
+                    
+                    {hasSummary && !isSummaryGenerating && !summaryError && (
+                        <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6 shadow-sm space-y-6">
+                            {/* Paragraph */}
+                            {summaryData.paragraph && (
+                                <div className="text-base leading-relaxed dark:text-gray-300 text-gray-700">
+                                    {summaryData.paragraph}
+                                </div>
+                            )}
+                            
+                            {/* Bullets with timestamps */}
+                            {summaryData.bullets && summaryData.bullets.length > 0 && (
+                                <div className="space-y-3">
+                                    {summaryData.bullets.map((bullet, idx) => (
+                                        <div key={idx} className="flex items-start gap-3">
+                                            <span className="shrink-0 mt-1">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                                            </span>
+                                            <div className="flex-1">
+                                                <span className="text-sm dark:text-gray-300 text-gray-700">{bullet.text}</span>
+                                                {bullet.timestamp && (
+                                                    <span className="ml-2 text-xs font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-full">
+                                                        {bullet.timestamp}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            
+                            {/* Action buttons */}
+                            <div className="mt-6 flex justify-end space-x-2 pt-4 border-t dark:border-gray-700 border-gray-200">
+                                <button className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"><CopyIcon className="w-4 h-4" /></button>
+                                <button className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"><ShareIcon className="w-4 h-4" /></button>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {!hasSummary && !isSummaryGenerating && !summaryError && (
+                        <div className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl p-8 text-center">
+                            <p className="text-sm text-gray-500">Generating summary...</p>
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -1510,7 +1782,7 @@ safeToast.error(msg);
                         }}
                     />
                 )}
-                {showSummaryModal && <SummaryModal onClose={() => setShowSummaryModal(false)} />}
+                {showSummaryModal && <SummaryModal onClose={() => setShowSummaryModal(false)} onGenerate={handleGenerateSummary} />}
                 {showPodcastModal && <PodcastModal onClose={() => setShowPodcastModal(false)} />}
             </AnimatePresence>
         </div>

@@ -297,8 +297,13 @@ export const PodcastModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     );
 }
 
-export const SummaryModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+export const SummaryModal: React.FC<{ onClose: () => void; onGenerate?: () => void }> = ({ onClose, onGenerate }) => {
     const [selectedTemplate, setSelectedTemplate] = useState('Detailed Summary');
+
+    const handleGenerate = () => {
+        if (onGenerate) onGenerate();
+        onClose();
+    };
     
     const templates = [
         { id: 'Detailed Summary', title: 'Detailed Summary', desc: 'Comprehensive summary with key points and context' },
@@ -311,7 +316,7 @@ export const SummaryModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         <BaseModal 
             title="Customize Summary" 
             ctaText="Generate Summary" 
-            onCtaClick={onClose} 
+            onCtaClick={handleGenerate} 
             onClose={onClose}
         >
             <p className="text-sm dark:text-gray-500 text-neutral-500 -mt-6 mb-8 font-medium">Select specific prompts and ranges for your summary set</p>
