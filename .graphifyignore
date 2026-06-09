@@ -1,0 +1,7 @@
+# .graphifyignore
+# Ignore all documentation and media so we don't need an LLM API Key
+*.md
+*.pdf
+*.txt
+docs/
+images/

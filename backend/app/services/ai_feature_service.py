@@ -1,4 +1,4 @@
-import json
+﻿import json
 import logging
 from datetime import datetime
 from typing import Any, Literal
@@ -128,7 +128,22 @@ async def get_or_generate_feature(
                     model_used = "openrouter/free (retry)"
                 except Exception as e2:
                     logger.error(f"Retry also failed: {type(e2).__name__}: {e2}")
-                    raise Exception(f"All generation attempts failed. First error: {e}. Retry error: {e2}")
+
+                    err_str = str(e2).lower()
+                    if any(code in err_str for code in ["401", "403", "503", "rate limit"]):
+                        logger.warning("Falling back to procedural mock data due to API error.")
+                        from app.services.ai_client import _generate_mock_quiz, _generate_mock_flashcards
+
+                        if feature_type == "quiz":
+                            response_data = _generate_mock_quiz(count=count or 5)
+                            model_used = "mock-fallback"
+                        elif feature_type == "flashcards":
+                            response_data = _generate_mock_flashcards(count=count or 10)
+                            model_used = "mock-fallback"
+                        else:
+                            raise Exception(f"All generation attempts failed. First: {e}. Retry: {e2}")
+                    else:
+                        raise Exception(f"All generation attempts failed. First: {e}. Retry: {e2}")
         else:
             raise Exception("Non-RAG generation not supported in new version")
         

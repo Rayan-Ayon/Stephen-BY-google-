@@ -31,24 +31,23 @@ const BaseModal: React.FC<ModalProps> = ({ onClose, title, children, ctaText, on
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 30, scale: 0.95 }}
                 transition={{ duration: 0.3, ease: 'easeOut' }}
-                className="relative dark:bg-[#0d0d0d] bg-white dark:text-gray-300 text-neutral-800 w-full max-w-[500px] rounded-[32px] border dark:border-white/10 border-neutral-200 shadow-2xl overflow-hidden"
+                className="relative dark:bg-[#0d0d0d] bg-white dark:text-gray-300 text-neutral-800 w-full max-w-[700px] rounded-[32px] border dark:border-white/10 border-neutral-200 shadow-2xl overflow-hidden"
             >
                 <div className="flex items-center justify-between px-8 py-7">
                     <div className="flex items-center gap-3">
-                        {icon && <div className="text-white">{icon}</div>}
-                        <h2 className="text-[20px] font-bold dark:text-white text-black tracking-tight leading-none">{title}</h2>
+                        {icon && <div className="text-white bg-[#1a1a1a] p-2 rounded-lg border border-white/10">{icon}</div>}
+                        <h2 className="text-[20px] font-medium dark:text-white text-black tracking-tight leading-none">{title}</h2>
                     </div>
-                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-800/50 transition-colors"><XIcon className="w-5 h-5 text-gray-500" /></button>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-800/50 transition-colors"><XIcon className="w-5 h-5 text-gray-400" /></button>
                 </div>
                 <div className="px-8 pb-8">{children}</div>
                 {showFooter && (
                     <div className="px-8 py-6 border-t dark:border-white/5 border-neutral-200 flex justify-end items-center space-x-3">
-                         <button onClick={onClose} className="px-6 py-2.5 text-[14px] font-bold rounded-xl dark:bg-[#1a1a1a] bg-neutral-100 dark:text-white text-black hover:opacity-80 transition-all">Cancel</button>
                          {ctaText && (
                             <button 
                                 onClick={onCtaClick} 
                                 disabled={ctaDisabled} 
-                                className={`px-6 py-2.5 text-[14px] font-bold rounded-xl transition-colors disabled:opacity-50 shadow-lg ${danger ? 'bg-red-900/80 text-white hover:bg-red-800' : 'bg-white text-black hover:bg-neutral-200'}`}
+                                className={`px-6 py-2.5 text-[14px] font-bold rounded-full transition-colors disabled:opacity-50 shadow-lg ${danger ? 'bg-red-900/80 text-white hover:bg-red-800' : 'bg-blue-600 text-white hover:bg-blue-500'}`}
                             >
                                 {ctaText}
                             </button>
@@ -171,75 +170,72 @@ export const FlashcardModal: React.FC<{ onClose: () => void; onConfirm: (setting
     );
 };
 
-export const QuizModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+export const QuizModal: React.FC<{ onClose: () => void, onGenerate?: (config: { difficulty: string; numQuestions: string; topic: string }) => void }> = ({ onClose, onGenerate }) => {
     const [difficulty, setDifficulty] = useState('Medium');
-    const [selectedTypes, setSelectedTypes] = useState(['Multiple Choice']);
+    const [numQuestions, setNumQuestions] = useState('Standard');
+    const [topic, setTopic] = useState('');
 
-    const toggleType = (type: string) => {
-        setSelectedTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
+    const handleGenerate = () => {
+        if (onGenerate) onGenerate({ difficulty, numQuestions, topic });
+        onClose();
     };
 
-    const typeClasses = (type: string) => `flex-1 text-[13px] font-bold py-3 border rounded-xl transition-all ${
-        selectedTypes.includes(type) 
-        ? 'dark:bg-[#1a1a1a] border-white text-white' 
-        : 'dark:bg-transparent dark:border-gray-800 dark:text-gray-500 hover:border-gray-600'
-    }`;
-
-    const diffClasses = (diff: string) => `flex-1 flex items-center justify-center space-x-2 py-3 border rounded-xl transition-all font-bold text-[13px] ${
-        difficulty === diff 
-        ? 'dark:bg-[#1a1a1a] border-white text-white' 
-        : 'dark:bg-transparent dark:border-gray-800 dark:text-gray-500 hover:border-gray-600'
+    const pillClasses = (isSelected: boolean) => `flex-1 py-2.5 text-[13px] font-bold rounded-full border transition-all flex items-center justify-center space-x-1.5 ${
+        isSelected 
+        ? 'dark:bg-[#1a2333] dark:border-blue-500/30 bg-blue-50 border-blue-200 text-blue-600 dark:text-blue-400' 
+        : 'dark:bg-transparent dark:border-gray-800 bg-white border-neutral-200 dark:text-gray-400 text-neutral-600 hover:dark:bg-[#1a1a1a] hover:bg-neutral-50'
     }`;
 
     return (
-        <BaseModal title="Customize Quiz" ctaText="Generate" onCtaClick={onClose} onClose={onClose}>
-             <p className="text-sm dark:text-gray-400 text-neutral-500 -mt-6 mb-8 font-medium">Create quiz sets with preferred question types, difficulty, and more.</p>
-            <div className="space-y-6">
-                <div>
-                    <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Question Types <span className="text-red-500">*</span></label>
-                    <div className="grid grid-cols-2 gap-2">
-                        {['Multiple Choice', 'Free Response', 'True or False', 'Fill in the blank'].map(type => (
-                            <button key={type} onClick={() => toggleType(type)} className={typeClasses(type)}>
-                                {selectedTypes.includes(type) && <CheckCircleIcon className="w-3.5 h-3.5 inline mr-1.5" />}
-                                {type}
-                            </button>
-                        ))}
+        <BaseModal title="Customise quiz" ctaText="Generate" onCtaClick={handleGenerate} onClose={onClose} icon={<FileTextIcon className="w-5 h-5" />}>
+            <div className="space-y-6 pt-2">
+                <div className="grid grid-cols-2 gap-6">
+                    <div>
+                        <label className="text-sm font-medium dark:text-white text-neutral-800 block mb-3">Number of questions</label>
+                        <div className="flex space-x-2">
+                            {['Fewer', 'Standard', 'More'].map(opt => {
+                                const label = opt === 'Standard' ? 'Standard (default)' : opt;
+                                return (
+                                    <button key={opt} onClick={() => setNumQuestions(opt)} className={pillClasses(numQuestions === opt)}>
+                                        {numQuestions === opt && <CheckIcon className="w-3.5 h-3.5" />}
+                                        <span>{label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium dark:text-white text-neutral-800 block mb-3">Level of difficulty</label>
+                        <div className="flex space-x-2">
+                            {['Easy', 'Medium', 'Hard'].map(opt => {
+                                const label = opt === 'Medium' ? 'Medium (default)' : opt;
+                                return (
+                                    <button key={opt} onClick={() => setDifficulty(opt)} className={pillClasses(difficulty === opt)}>
+                                        {difficulty === opt && <CheckIcon className="w-3.5 h-3.5" />}
+                                        <span>{label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
-                 <div>
-                    <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Difficulty <span className="text-red-500">*</span></label>
-                    <div className="flex space-x-2">
-                         {['Easy', 'Medium', 'Hard'].map((label, index) => (
-                             <button key={label} onClick={() => setDifficulty(label)} className={diffClasses(label)}>
-                                <div className="flex space-x-0.5">
-                                    {[0, 1, 2].map(i => (
-                                        <StarIcon key={i} className={`w-3 h-3 ${index >= i ? (difficulty === label ? 'text-yellow-400' : 'text-gray-500') : 'text-transparent'}`} />
-                                    ))}
-                                </div>
-                                <span>{label}</span>
-                             </button>
-                         ))}
-                    </div>
-                </div>
-                 <div>
-                    <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Number of Questions</label>
-                    <input type="text" defaultValue="10" className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl p-4 text-white focus:outline-none focus:ring-1 focus:ring-white transition-all" />
-                </div>
+                
                 <div>
-                    <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Topics</label>
-                    <div className="p-3 dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl flex items-center justify-between">
-                         <div className="flex items-center space-x-2">
-                            <span className="text-[12px] font-bold bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-white/5">Selected All Topics x</span>
-                            <span className="text-[12px] font-bold text-gray-500">Select topics for this set</span>
-                         </div>
-                         <XIcon className="w-5 h-5 text-gray-600" />
-                    </div>
-                </div>
-                <div>
-                    <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">What should the quiz focus on?</label>
-                    <textarea placeholder="Focus on the parts that are about..." rows={3} className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl p-4 text-white focus:outline-none focus:ring-1 focus:ring-white transition-all resize-none"></textarea>
+                    <label className="text-sm font-medium dark:text-white text-neutral-800 block mb-3">What should the topic be?</label>
+                    <textarea 
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
+                        placeholder="Things to try
+• Create a quiz to help me prepare for my history exam on Ancient Egypt
+• The quiz must have 30 questions (maximum of 50 questions allowed)
+• The quiz must be restricted to a specific source (e.g. 'the article about Italy')
+• The quiz must focus solely on the key concepts of physics" 
+                        rows={6} 
+                        className="w-full dark:bg-[#111] bg-white border border-blue-500 rounded-xl p-4 text-[13px] text-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all resize-none font-medium placeholder-gray-500 dark:placeholder-gray-400"
+                    ></textarea>
                 </div>
             </div>
+            {/* Override BaseModal's default CTA button in Footer to make it prominent blue if we can't easily, actually we can just use global CSS or override via onCtaClick since BaseModal might not allow exact color overrides without adding a new prop. Let's add a custom style block to override just this modal's primary button if needed, or update BaseModal if we want. Actually BaseModal uses 'bg-white text-black' by default. Let's hide BaseModal's footer and put our own for exact match. */}
         </BaseModal>
     );
 };

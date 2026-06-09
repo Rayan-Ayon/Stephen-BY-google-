@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenAI, Chat } from '@google/genai';
@@ -77,7 +77,7 @@ const TypingIndicator = () => (
 
 // Mock Data for "Restored" Feel
 const MOCK_QUIZZES = [
-    { id: 1, title: "Generative AI Essentials Knowledge", questions: 5, status: "Completed", score: "80%", tags: ["Module 1", "Basics"], generatedAt: Date.now() },
+    { id: 1, title: "Generative AI Essentials Knowledge", questions: 5, status: "Completed", score: "80%", tags: ["Module 1", "Basics"] },
 ];
 
 const MOCK_FLASHCARDS = [
@@ -97,7 +97,7 @@ const MOCK_SUMMARY = `## Key Takeaways
 This course covers the essentials needed to start building your own GenAI applications.`;
 
 const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpanded, isCoachMode, course, onSeekTo }) => {
-    // ── Tab Manager State ──
+    // â”€â”€ Tab Manager State â”€â”€
     interface WorkspaceTab {
         id: string;
         type: 'learn' | 'chat' | 'flashcards' | 'quiz' | 'summary' | 'podcast';
@@ -130,9 +130,13 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
     const contextMenuRef = useRef<HTMLDivElement>(null);
 
     // Feature Data States (Initialized with mock data to "restore" old elements)
-    const [quizzes, setQuizzes] = useState<any[]>(MOCK_QUIZZES);
+    const [quizzes, setQuizzes] = useState<any[]>(MOCK_QUIZZES.map(q => ({ ...q, generatedAt: Date.now() })));
     const [activeQuizId, setActiveQuizId] = useState<number | null>(null);
     const [quizAnswers, setQuizAnswers] = useState<{[key: number]: number}>({});
+    const [quizViewingState, setQuizViewingState] = useState<'none' | 'generating' | 'active'>('none');
+    const [quizData, setQuizData] = useState<any[]>([]);
+    const [expandedHint, setExpandedHint] = useState<string | null>(null);
+    const [pendingQuizGenerationId, setPendingQuizGenerationId] = useState<number | null>(null);
     
     const [flashcards, setFlashcards] = useState<any[]>([]);
     const [activeDeckId, setActiveDeckId] = useState<number | null>(null);
@@ -181,7 +185,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
         return all.sort((a, b) => (b.generatedAt || 0) - (a.generatedAt || 0));
     }, [flashcards, quizzes, summaries]);
 
-    // ── Tab Manager Helpers ──
+    // â”€â”€ Tab Manager Helpers â”€â”€
     const openFeatureTab = (type: WorkspaceTab['type'], title: string) => {
         const existing = workspaceTabs.find(t => t.type === type);
         if (existing) {
@@ -210,6 +214,99 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
         setWorkspaceTabs(newTabs);
         if (activeTabId === tabId) {
             setActiveTabId('learn');
+        }
+    };
+
+    const handleGenerateQuiz = async (config?: { difficulty?: string; numQuestions?: string; topic?: string }) => {
+        const videoId = getVideoId(course?.videoUrl || '');
+        if (!videoId) {
+            safeToast.error("No video loaded. Please open a video first.");
+            return;
+        }
+
+        setLoadedTabs(prev => { const next = new Set(prev); next.delete('quiz'); return next; });
+        openFeatureTab('quiz', 'Quiz');
+        setQuizViewingState('generating');
+        setQuizData([]);
+        setActiveQuizId(null);
+
+        const pendingId = Date.now();
+        setPendingQuizGenerationId(pendingId);
+
+        try {
+            if (indexStatus !== 'ready') {
+                await handleAnalyzeVideo();
+            }
+
+            const res = await fetch('/api/video/quiz', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    videoId,
+                    forceRefresh: true,
+                    count: parseInt(config?.numQuestions ?? '5'),
+                    focus: config?.topic ?? '',
+                }),
+            });
+
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(`Quiz generation failed (${res.status}): ${errText}`);
+            }
+
+            const response = await res.json();
+            const rawQuestions: any[] = response?.data?.quiz ?? [];
+
+            if (rawQuestions.length === 0) {
+                throw new Error("AI returned no questions. Please try again.");
+            }
+
+            const mappedQuestions = rawQuestions.map((q: any, idx: number) => ({
+                id: `q${idx + 1}`,
+                question: q.question ?? '',
+                options: Array.isArray(q.options) ? q.options : [],
+                correct: q.correct ?? 0,
+                hint: q.hint ?? '',
+                source_chunk_id: q.source_chunk_id ?? '',
+            }));
+
+            const newQuizId = Date.now();
+            const newQuizMeta = {
+                id: newQuizId,
+                title: config?.topic ? `Quiz: ${config.topic}` : course?.title ?? 'Quiz',
+                questions: mappedQuestions.length,
+                status: 'Not Started',
+                score: 'N/A',
+                generatedAt: Date.now(),
+            };
+
+            setQuizData(mappedQuestions);
+            setQuizzes(prev => [newQuizMeta, ...prev]);
+            setActiveQuizId(newQuizId);
+            setQuizAnswers({});
+            setExpandedHint(null);
+            setQuizViewingState('active');
+
+            safeToast.success(`Quiz ready! ${mappedQuestions.length} questions generated.`);
+
+        } catch (err: any) {
+            setQuizViewingState('none');
+            setQuizData([]);
+            setActiveQuizId(null);
+
+            const msg = err?.message ?? 'Quiz generation failed.';
+
+            if (msg.includes('503') || msg.includes('502')) {
+                safeToast.error("AI service is busy. Please try again in a moment.");
+            } else if (msg.includes('401') || msg.includes('403')) {
+                safeToast.error("API key issue. Check your OpenRouter key in backend .env.");
+            } else if (msg.includes('timeout') || msg.includes('network')) {
+                safeToast.error("Connection timed out. Check your internet and try again.");
+            } else {
+                safeToast.error(msg);
+            }
+        } finally {
+            setPendingQuizGenerationId(null);
         }
     };
 
@@ -306,17 +403,17 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                 if (localData && isMounted) {
                     const parsed = JSON.parse(localData);
                     if (Array.isArray(parsed.cards) && parsed.cards.length > 0) {
-                        console.log('📦 Restored', parsed.cards.length, 'flashcards from localStorage');
+                        console.log('ðŸ“¦ Restored', parsed.cards.length, 'flashcards from localStorage');
                         setGeneratedCards(parsed.cards);
                         setFlashcards([{
                             id: 1,
                             title: parsed.title || course?.title || 'Flashcard Set',
                             count: parsed.cards.length,
-                            lastStudied: parsed.generatedAt || 'Recently',
+                            lastStudied: parsed.lastStudied || 'Recently',
                             topics: `${parsed.cards.length} cards`,
                             generatedAt: parsed.generatedAt || Date.now(),
                         }]);
-                        return; // Done — no need to hit backend
+                        return; // Done â€” no need to hit backend
                     }
                 }
             } catch (e) {
@@ -332,7 +429,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                 if (!res.ok || !isMounted) return;
 
                 const result = await res.json();
-                console.log('📡 Backend cache response:', result?.cached, 'cards:', result?.data?.flashcards?.length ?? 0);
+                console.log('ðŸ“¡ Backend cache response:', result?.cached, 'cards:', result?.data?.flashcards?.length ?? 0);
 
                 if (result?.cached && result?.data?.flashcards && isMounted) {
                     const cachedCards: CardData[] = result.data.flashcards.map(
@@ -362,10 +459,10 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                     localStorage.setItem(localCacheKey, JSON.stringify({
                         cards: cachedCards,
                         title: course?.title || 'Flashcard Set',
-                        generatedAt: new Date().toLocaleString(),
+                        generatedAt: Date.now(),
                     }));
 
-                    console.log('📦 Loaded', cachedCards.length, 'cards from backend + saved to localStorage');
+                    console.log('ðŸ“¦ Loaded', cachedCards.length, 'cards from backend + saved to localStorage');
                 }
             } catch (err: any) {
                 if (err?.name !== 'AbortError') {
@@ -400,7 +497,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                 if (localData && isMounted) {
                     const parsed = JSON.parse(localData);
                     if (parsed.paragraph || (parsed.bullets && parsed.bullets.length > 0)) {
-                        console.log('📦 Restored summary from localStorage');
+                        console.log('ðŸ“¦ Restored summary from localStorage');
                         setSummaryData(parsed);
                         
                         // Add to summaries for My Sets
@@ -440,7 +537,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                     setSummaryData(data);
                     // Backfill localStorage
                     localStorage.setItem(localCacheKey, JSON.stringify(data));
-                    console.log('📦 Loaded summary from backend');
+                    console.log('ðŸ“¦ Loaded summary from backend');
                 }
             } catch (err: any) {
                 if (err?.name !== 'AbortError') {
@@ -529,7 +626,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                 const parsed = JSON.parse(cached);
                 if (parsed?.transcript && parsed.transcript.length > 0) {
                     transcriptData = parsed.transcript;
-                    console.log('📡 Using cached transcript with', transcriptData.length, 'segments');
+                    console.log('ðŸ“¡ Using cached transcript with', transcriptData.length, 'segments');
                 }
             }
         } catch (e) {
@@ -537,7 +634,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
         }
         
         try {
-            console.log('📡 Calling flashcards API with videoId:', videoId);
+            console.log('ðŸ“¡ Calling flashcards API with videoId:', videoId);
             const res = await fetch('/api/video/flashcards', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -550,19 +647,19 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                 })
             });
             
-            console.log('📡 Response status:', res.status);
+            console.log('ðŸ“¡ Response status:', res.status);
             
             if (!res.ok) {
                 const errorText = await res.text();
-                console.error('📡 API Error:', errorText);
+                console.error('ðŸ“¡ API Error:', errorText);
                 throw new Error(`Failed to generate: ${res.status}`);
             }
             
             const response = await res.json();
-            console.log('📡 Response data:', JSON.stringify(response).slice(0, 500));
+            console.log('ðŸ“¡ Response data:', JSON.stringify(response).slice(0, 500));
             
             const backendCards = response?.data?.flashcards || [];
-            console.log('📡 Backend cards count:', backendCards.length);
+            console.log('ðŸ“¡ Backend cards count:', backendCards.length);
             
             // Map to CardData interface - safe with Array.isArray
             const mappedCards: CardData[] = Array.isArray(backendCards) 
@@ -594,16 +691,16 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                     localStorage.setItem(localCacheKey, JSON.stringify({
                         cards: mappedCards,
                         title: course?.title || 'Flashcard Set',
-                        generatedAt: new Date().toLocaleString(),
+                        generatedAt: Date.now(),
                     }));
-                    console.log('💾 Saved', mappedCards.length, 'flashcards to localStorage');
+                    console.log('ðŸ’¾ Saved', mappedCards.length, 'flashcards to localStorage');
                 } catch (e) {
                     console.warn('Failed to save flashcards to localStorage:', e);
                 }
                 
-                console.log('📡 Replaced demo cards with real data');
+                console.log('ðŸ“¡ Replaced demo cards with real data');
             } else {
-                console.log('📡 API returned no cards, keeping demo cards');
+                console.log('ðŸ“¡ API returned no cards, keeping demo cards');
             }
             
             // Dismiss loading toast and show result
@@ -1075,13 +1172,19 @@ safeToast.error(msg);
                     {mySets.length > 0 && mySets.map((item: any) => {
                         const icons = {
                             'flashcards': <FlashcardIcon className="w-5 h-5 text-red-500 shrink-0" />,
-                            'quiz': <QuizIcon className="w-5 h-5 text-orange-500 shrink-0" />,
+                            'quiz': pendingQuizGenerationId !== null
+                            ? (
+                                <div className="w-5 h-5 shrink-0 flex items-center justify-center">
+                                    <div className="w-4 h-4 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+                                </div>
+                            )
+                            : <QuizIcon className="w-5 h-5 text-orange-500 shrink-0" />,
                             'summary': <SummaryIcon className="w-5 h-5 text-blue-500 shrink-0" />,
                         };
                         const titleMap = {
-                            'flashcards': `${item.count} cards · ${item.lastStudied}`,
-                            'quiz': `${item.questions} questions · ${item.score}`,
-                            'summary': `${item.count} points · ${item.lastStudied}`,
+                            'flashcards': `${item.count} cards Â· ${item.lastStudied}`,
+                            'quiz': `${item.questions} questions Â· ${item.score}`,
+                            'summary': `${item.count} points Â· ${item.lastStudied}`,
                         };
                         
                         return (
@@ -1115,7 +1218,7 @@ safeToast.error(msg);
                 </div>
             </div>
 
-            {/* Chat Input — pinned at bottom of Learn Tab */}
+            {/* Chat Input â€” pinned at bottom of Learn Tab */}
             <div className="shrink-0 p-4 border-t dark:border-white/10 border-neutral-200">
                 <div className="flex items-center gap-2 dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl px-4 py-2">
                     <input
@@ -1404,10 +1507,109 @@ safeToast.error(msg);
     );
 
     const renderQuiz = () => {
+        // BRANCH A - Generating state (bypasses loadedTabs check for instant shimmer)
+        if (quizViewingState === 'generating') {
+            return (
+                <div className="flex-1 flex flex-col items-center justify-center p-6 gap-6">
+                    <div className="flex items-center space-x-3">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-orange-500" />
+                        <span className="text-gray-400 text-sm font-medium">
+                            Generating your quiz with OpenRouter AI...
+                        </span>
+                    </div>
+                    <div className="w-full space-y-4">
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <div key={i} className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl p-5 h-[120px] relative overflow-hidden">
+                                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
+                            </div>
+                        ))}
+                    </div>
+                    <style>{`
+                        @keyframes shimmer {
+                            100% { transform: translateX(100%); }
+                        }
+                    `}</style>
+                </div>
+            );
+        }
+
+        // BRANCH B - Tab not yet loaded
         if (!loadedTabs.has('quiz')) return renderShimmer();
 
-        const activeQuiz = quizzes.find(q => q.id === activeQuizId);
-        
+        // BRANCH C - Active quiz session
+        if (quizViewingState === 'active') {
+            const activeQuiz = quizzes.find(q => q.id === activeQuizId);
+            if (!activeQuiz) {
+                setQuizViewingState('none');
+                return null;
+            }
+            return (
+                <div className="flex-1 flex flex-col p-6 overflow-y-auto">
+                    <div className="flex items-center justify-between mb-6">
+                        <button onClick={() => setQuizViewingState('none')} className="flex items-center text-xs font-bold text-gray-500 hover:text-white">
+                            <ChevronLeftIcon className="w-4 h-4 mr-1" /> Back
+                        </button>
+                        <span className="text-xs font-bold text-orange-500 bg-orange-500/10 px-2 py-1 rounded uppercase">Question 1/5</span>
+                    </div>
+                    <div className="p-5 rounded-2xl dark:bg-[#1a1a1a] bg-neutral-50 border dark:border-gray-800 border-neutral-200">
+                        <h4 className="font-bold dark:text-white text-black mb-4 text-lg">{quizData[0]?.question || ''}</h4>
+                        <div className="space-y-3">
+                            {(quizData[0]?.options || []).map((opt: string, i: number) => (
+                                <button 
+                                    key={i}
+                                    onClick={() => setQuizAnswers({...quizAnswers, [activeQuiz.id]: i})}
+                                    className={`w-full text-left p-3 rounded-xl border transition-all flex items-center ${
+                                        quizAnswers[activeQuiz.id] === i 
+                                        ? 'border-orange-500 bg-orange-500/10 dark:text-white text-black' 
+                                        : 'dark:border-gray-700 border-gray-300 dark:text-gray-300 text-gray-700 hover:bg-gray-100 dark:hover:bg-white/5'
+                                    }`}
+                                >
+                                    <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${
+                                        quizAnswers[activeQuiz.id] === i ? 'border-orange-500' : 'border-gray-400'
+                                    }`}>
+                                        {quizAnswers[activeQuiz.id] === i && <div className="w-2.5 h-2.5 bg-orange-500 rounded-full" />}
+                                    </div>
+                                    {opt}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="mt-6">
+                            <button 
+                                onClick={() => setExpandedHint(expandedHint === 'q1' ? null : 'q1')}
+                                className="w-full py-3 dark:bg-[#222] bg-neutral-200 rounded-2xl flex items-center justify-center space-x-2 hover:opacity-80 transition-opacity"
+                            >
+                                <span className="text-sm font-bold dark:text-gray-300 text-gray-700">Hint</span>
+                                <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ${expandedHint === 'q1' ? 'rotate-180' : ''}`} />
+                            </button>
+                            <AnimatePresence>
+                                {expandedHint === 'q1' && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="overflow-hidden mt-3"
+                                    >
+                                        <div className="dark:bg-[#1a1a24] bg-blue-50 border dark:border-blue-900/30 border-blue-200 rounded-2xl p-4 flex items-start space-x-3">
+                                            <div className="shrink-0 mt-0.5">
+                                                <SparkleIcon className="w-5 h-5 text-blue-400" />
+                                            </div>
+                                            <p className="text-sm dark:text-gray-300 text-blue-900 leading-relaxed font-medium">
+                                                {quizData[0]?.hint || ''}
+                                            </p>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                        <div className="mt-6 flex justify-end">
+                            <button className="px-6 py-2 bg-white text-black font-bold rounded-lg hover:bg-gray-200 transition-colors">Next Question</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // BRANCH D - Idle / list view (default)
         return (
             <div className="flex-1 flex flex-col p-6 overflow-y-auto">
                 <CreateCard 
@@ -1436,46 +1638,10 @@ safeToast.error(msg);
                         ))}
                     </div>
                 )}
-
-                {activeQuiz && (
-                    <div className="space-y-6">
-                        <div className="flex items-center justify-between">
-                            <button onClick={() => setActiveQuizId(null)} className="flex items-center text-xs font-bold text-gray-500 hover:text-white">
-                                <ChevronLeftIcon className="w-4 h-4 mr-1" /> Back
-                            </button>
-                            <span className="text-xs font-bold text-orange-500 bg-orange-500/10 px-2 py-1 rounded uppercase">Question 1/5</span>
-                        </div>
-                        <div className="p-5 rounded-2xl dark:bg-[#1a1a1a] bg-neutral-50 border dark:border-gray-800 border-neutral-200">
-                            <h4 className="font-bold dark:text-white text-black mb-4 text-lg">What is the primary function of a Transformer model?</h4>
-                            <div className="space-y-3">
-                                {['Image Generation', 'Sequence Transduction', 'Database Management', 'Network Routing'].map((opt, i) => (
-                                    <button 
-                                        key={i}
-                                        onClick={() => setQuizAnswers({...quizAnswers, [activeQuiz.id]: i})}
-                                        className={`w-full text-left p-3 rounded-xl border transition-all flex items-center ${
-                                            quizAnswers[activeQuiz.id] === i 
-                                            ? 'border-orange-500 bg-orange-500/10 dark:text-white text-black' 
-                                            : 'dark:border-gray-700 border-gray-300 dark:text-gray-300 text-gray-700 hover:bg-gray-100 dark:hover:bg-white/5'
-                                        }`}
-                                    >
-                                        <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${
-                                            quizAnswers[activeQuiz.id] === i ? 'border-orange-500' : 'border-gray-400'
-                                        }`}>
-                                            {quizAnswers[activeQuiz.id] === i && <div className="w-2.5 h-2.5 bg-orange-500 rounded-full" />}
-                                        </div>
-                                        {opt}
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="mt-6 flex justify-end">
-                                <button className="px-6 py-2 bg-white text-black font-bold rounded-lg hover:bg-gray-200 transition-colors">Next Question</button>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         );
     };
+;
 
     const renderFlashcards = () => {
         if (!loadedTabs?.has('flashcards')) return renderShimmer();
@@ -1484,7 +1650,7 @@ safeToast.error(msg);
 
         return (
             <div className="flex-1 min-h-0 flex flex-col">
-                {/* ── Deck list view (Generate box + My Flashcards) ── */}
+                {/* â”€â”€ Deck list view (Generate box + My Flashcards) â”€â”€ */}
                 {!isReviewMode && (
                     <div className="flex-1 flex flex-col p-6 overflow-y-auto gap-6">
                         <CreateCard 
@@ -1516,7 +1682,7 @@ safeToast.error(msg);
                     </div>
                 )}
 
-                {/* ── Flashcard review view (Generate box hidden) ── */}
+                {/* â”€â”€ Flashcard review view (Generate box hidden) â”€â”€ */}
                 {isReviewMode && (
                     <div className="flex-1 min-h-0 flex flex-col">
                         <FlashcardReviewController 
@@ -1665,7 +1831,7 @@ safeToast.error(msg);
                         <div className="absolute inset-0 rounded-full border-4 border-white/10"></div>
                     </div>
                     <h3 className="text-lg font-bold dark:text-white text-black mb-1">Generative AI Essentials</h3>
-                    <p className="text-xs text-gray-500 mb-6">Episode 1 • 12 min</p>
+                    <p className="text-xs text-gray-500 mb-6">Episode 1 â€¢ 12 min</p>
                     
                     <div className="w-full max-w-sm flex items-center space-x-4">
                         <span className="text-xs text-gray-500 font-mono">00:00</span>
@@ -1772,7 +1938,7 @@ safeToast.error(msg);
 
             {/* Modals */}
             <AnimatePresence>
-                {showQuizModal && <QuizModal onClose={() => setShowQuizModal(false)} />}
+                {showQuizModal && <QuizModal onClose={() => setShowQuizModal(false)} onGenerate={handleGenerateQuiz} />}
                 {showFlashcardModal && (
                     <FlashcardModal 
                         onClose={() => setShowFlashcardModal(false)}
@@ -1791,3 +1957,6 @@ safeToast.error(msg);
 };
 
 export default TutorPanel;
+
+
+
