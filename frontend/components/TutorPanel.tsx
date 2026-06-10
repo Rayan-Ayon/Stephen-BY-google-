@@ -1,4 +1,4 @@
-﻿
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenAI, Chat } from '@google/genai';
@@ -96,6 +96,70 @@ const MOCK_SUMMARY = `## Key Takeaways
 
 This course covers the essentials needed to start building your own GenAI applications.`;
 
+// Robust mock quiz questions for instant local generation
+const MOCK_QUIZ_QUESTIONS = [
+    {
+        id: 'q1',
+        question: 'What does the creator identify as the fundamental reason why many AI prompts fail in standard workflows?',
+        options: [
+            'The lack of a repeatable system and the "fresh argument" nature of LLM chats',
+            'The technical limitations of current LLMs like Claude and ChatGPT',
+            'Users being inherently poor at describing scenes to the AI',
+            'Insufficient training data for domain-specific topics',
+        ],
+        correct: 0,
+        hint: 'Think about how each new conversation with an LLM starts without memory of prior context or established patterns.',
+    },
+    {
+        id: 'q2',
+        question: 'Which architectural innovation is most responsible for enabling modern large language models to process long-range dependencies in text?',
+        options: [
+            'Recurrent Neural Networks (RNNs)',
+            'Convolutional Neural Networks (CNNs)',
+            'The Transformer self-attention mechanism',
+            'Gradient boosted decision trees',
+        ],
+        correct: 2,
+        hint: 'This mechanism allows every token in a sequence to attend to every other token simultaneously, regardless of distance.',
+    },
+    {
+        id: 'q3',
+        question: 'In the context of Retrieval-Augmented Generation (RAG), what is the primary purpose of the vector index?',
+        options: [
+            'To compress the model weights for faster inference',
+            'To store and efficiently retrieve semantically similar document chunks',
+            'To fine-tune the base model on domain-specific data',
+            'To enforce output formatting constraints on the LLM',
+        ],
+        correct: 1,
+        hint: 'The vector index enables similarity search — finding chunks whose meaning is closest to the user query.',
+    },
+    {
+        id: 'q4',
+        question: 'What distinguishes a "foundation model" from a task-specific model?',
+        options: [
+            'Foundation models are always smaller and faster to train',
+            'Foundation models are trained on narrow domain datasets only',
+            'Foundation models are trained on broad data and can be adapted to many downstream tasks',
+            'Foundation models cannot be fine-tuned after pre-training',
+        ],
+        correct: 2,
+        hint: 'The key property is their general-purpose nature — trained once at scale, adapted many times.',
+    },
+    {
+        id: 'q5',
+        question: 'Which technique allows a model to generate structured, step-by-step reasoning before producing a final answer?',
+        options: [
+            'Temperature scaling',
+            'Chain-of-Thought (CoT) prompting',
+            'Beam search decoding',
+            'Dropout regularization',
+        ],
+        correct: 1,
+        hint: 'This prompting strategy instructs the model to "think out loud" before committing to an answer.',
+    },
+];
+
 const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpanded, isCoachMode, course, onSeekTo }) => {
     // â”€â”€ Tab Manager State â”€â”€
     interface WorkspaceTab {
@@ -137,6 +201,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
     const [quizData, setQuizData] = useState<any[]>([]);
     const [expandedHint, setExpandedHint] = useState<string | null>(null);
     const [pendingQuizGenerationId, setPendingQuizGenerationId] = useState<number | null>(null);
+    const [chatHistory, setChatHistory] = useState<Array<{ id: number; title: string; generatedAt: number }>>([]);
     
     const [flashcards, setFlashcards] = useState<any[]>([]);
     const [activeDeckId, setActiveDeckId] = useState<number | null>(null);
@@ -181,9 +246,10 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
             ...flashcards.map(f => ({ ...f, type: 'flashcards' })),
             ...quizzes.map(q => ({ ...q, type: 'quiz' })),
             ...summaries.map(s => ({ ...s, type: 'summary' })),
+            ...chatHistory.map(c => ({ ...c, type: 'chat' as const })),
         ];
         return all.sort((a, b) => (b.generatedAt || 0) - (a.generatedAt || 0));
-    }, [flashcards, quizzes, summaries]);
+    }, [flashcards, quizzes, summaries, chatHistory]);
 
     // â”€â”€ Tab Manager Helpers â”€â”€
     const openFeatureTab = (type: WorkspaceTab['type'], title: string) => {
@@ -270,19 +336,31 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                 source_chunk_id: q.source_chunk_id ?? '',
             }));
 
-            const newQuizId = Date.now();
+            const sourceKey = videoId;
+            const existingQuiz = quizzes.find(q => q.sourceKey === sourceKey);
+            const stableQuizId = existingQuiz ? existingQuiz.id : Date.now();
             const newQuizMeta = {
-                id: newQuizId,
+                id: stableQuizId,
                 title: config?.topic ? `Quiz: ${config.topic}` : course?.title ?? 'Quiz',
                 questions: mappedQuestions.length,
                 status: 'Not Started',
                 score: 'N/A',
                 generatedAt: Date.now(),
+                sourceKey,
             };
 
+            setQuizzes(prev => {
+                const existingIdx = prev.findIndex(q => q.sourceKey === sourceKey);
+                if (existingIdx >= 0) {
+                    const next = [...prev];
+                    next[existingIdx] = newQuizMeta;
+                    return next;
+                }
+                return [newQuizMeta, ...prev];
+            });
+
+            setActiveQuizId(stableQuizId);
             setQuizData(mappedQuestions);
-            setQuizzes(prev => [newQuizMeta, ...prev]);
-            setActiveQuizId(newQuizId);
             setQuizAnswers({});
             setExpandedHint(null);
             setQuizViewingState('active');
@@ -308,6 +386,80 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
         } finally {
             setPendingQuizGenerationId(null);
         }
+    };
+
+    // --- Mock Quiz Generation: instant shimmer → active (no backend needed) ---
+    const handleMockQuizGeneration = () => {
+        // 1. Open or switch to the quiz tab immediately
+        const existing = workspaceTabs.find(t => t.type === 'quiz');
+        if (existing) {
+            setActiveTabId(existing.id);
+        } else {
+            const newTab = {
+                id: `quiz-${Date.now()}`,
+                type: 'quiz' as const,
+                title: 'Quiz',
+                closable: true,
+            };
+            setWorkspaceTabs(prev => [...prev, newTab]);
+            setActiveTabId(newTab.id);
+        }
+
+        // 2. Immediately enter generating state — sidebar spinner activates
+        const pendingId = Date.now();
+        setQuizViewingState('generating');
+        setQuizData([]);
+        setActiveQuizId(null);
+        setPendingQuizGenerationId(pendingId);
+        setLoadedTabs(prev => { const next = new Set(prev); next.delete('quiz'); return next; });
+
+                // 3. After 2.5 s, resolve with mock data
+        setTimeout(() => {
+            const sourceKey = course?.videoUrl ?? course?.title ?? 'default-quiz';
+            const existingQuiz = quizzes.find(q => q.sourceKey === sourceKey);
+            const stableQuizId = existingQuiz ? existingQuiz.id : Date.now();
+            const newQuizMeta = {
+                id: stableQuizId,
+                title: course?.title ?? 'AI Video Quiz',
+                questions: MOCK_QUIZ_QUESTIONS.length,
+                status: 'Not Started',
+                score: 'N/A',
+                generatedAt: Date.now(),
+                sourceKey,
+            };
+
+            setQuizzes(prev => {
+                const existingIdx = prev.findIndex(q => q.sourceKey === sourceKey);
+                if (existingIdx >= 0) {
+                    const next = [...prev];
+                    next[existingIdx] = newQuizMeta;
+                    return next;
+                }
+                return [newQuizMeta, ...prev];
+            });
+
+            setQuizData(MOCK_QUIZ_QUESTIONS);
+            setActiveQuizId(stableQuizId);
+            setQuizAnswers({});
+            setExpandedHint(null);
+            setQuizViewingState('active');
+            setPendingQuizGenerationId(null);
+            safeToast.success('Quiz generated successfully!');
+        }, 2500);    };
+
+    const handleQuizBack = () => {
+        setActiveTabId('learn');
+        setActiveQuizId(null);
+        setQuizViewingState('none');
+        setExpandedHint(null);
+    };
+
+    const handleChatBack = () => {
+        if (messages.length === 0) {
+            setInputValue('');
+        }
+        const chatTab = workspaceTabs.find(t => t.type === 'chat');
+        if (chatTab) closeTab(chatTab.id);
     };
 
     const getActiveTabType = (): string => {
@@ -897,9 +1049,11 @@ safeToast.error(msg);
     }, [isPlaying]);
 
     const handleSendMessage = async () => {
-        if (!inputValue.trim() || isLoading || !chat) return;
+        if (!inputValue.trim() || isLoading) return;
 
         const userText = inputValue;
+        const isFirstMessage = messages.length === 0;
+
         setInputValue('');
         setMessages(prev => [...prev, { role: 'user', text: userText }]);
         setIsLoading(true);
@@ -908,26 +1062,22 @@ safeToast.error(msg);
             textareaRef.current.style.height = '48px';
         }
 
+        // Persist chat history on FIRST user message
+        if (isFirstMessage) {
+            const titleWords = userText.trim().split(/\s+/).slice(0, 3).join(' ');
+            const newChatEntry = {
+                id: Date.now(),
+                title: titleWords || 'New Chat',
+                generatedAt: Date.now(),
+            };
+            setChatHistory(prev => [newChatEntry, ...prev]);
+        }
+
         try {
-            const stream = await chat.sendMessageStream({ message: userText });
-            let firstChunk = true;
-            
-            for await (const chunk of stream) {
-                const chunkText = chunk.text;
-                if (firstChunk) {
-                    setMessages(prev => [...prev, { role: 'model', text: chunkText }]);
-                    firstChunk = false;
-                } else {
-                    setMessages(prev => {
-                        const newMessages = [...prev];
-                        const lastMessage = newMessages[newMessages.length - 1];
-                        if (lastMessage && lastMessage.role === 'model') {
-                            lastMessage.text += chunkText;
-                        }
-                        return newMessages;
-                    });
-                }
-            }
+            // Fixed mock response with 500ms delay
+            const fixedResponse = "thank you ayon , will be add a ai to answer you later";
+            await new Promise(r => setTimeout(r, 500));
+            setMessages(prev => [...prev, { role: 'model', text: fixedResponse }]);
         } catch (error) {
             console.error("Chat Error:", error);
             setMessages(prev => [...prev, { role: 'model', text: "I'm having trouble connecting right now. Please try again." }]);
@@ -1144,9 +1294,7 @@ safeToast.error(msg);
                         {[
                             { type: 'podcast' as const, label: 'Podcast', icon: <PodcastIcon className="w-5 h-5" />, color: 'text-purple-500' },
                             { type: 'summary' as const, label: 'Summary', icon: <SummaryIcon className="w-5 h-5" />, color: 'text-blue-500' },
-                            { type: 'quiz' as const, label: 'Quiz', icon: <QuizIcon className="w-5 h-5" />, color: 'text-orange-500' },
                             { type: 'flashcards' as const, label: 'Flashcards', icon: <FlashcardIcon className="w-5 h-5" />, color: 'text-red-500' },
-                            { type: 'chat' as const, label: 'Chat', icon: <BrainIcon className="w-5 h-5" />, color: 'text-cyan-500' },
                         ].map((feature) => (
                             <button
                                 key={feature.label}
@@ -1160,6 +1308,17 @@ safeToast.error(msg);
                                 <AdjustIcon className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </button>
                         ))}
+                        {/* Quiz: clicks directly into instant mock generation — bypasses Create Quiz card */}
+                        <button
+                            onClick={handleMockQuizGeneration}
+                            className="flex items-center justify-between p-4 rounded-xl border dark:border-gray-800 border-neutral-200 dark:bg-[#1a1a1a] bg-white hover:border-orange-500/60 dark:hover:border-orange-500/60 transition-all group"
+                        >
+                            <div className="flex items-center gap-3">
+                                <span className="text-orange-500"><QuizIcon className="w-5 h-5" /></span>
+                                <span className="text-sm font-bold dark:text-white text-black">Quiz</span>
+                            </div>
+                            <AdjustIcon className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </button>
                     </div>
                 </div>
 
@@ -1180,11 +1339,13 @@ safeToast.error(msg);
                             )
                             : <QuizIcon className="w-5 h-5 text-orange-500 shrink-0" />,
                             'summary': <SummaryIcon className="w-5 h-5 text-blue-500 shrink-0" />,
+                            'chat': <BrainIcon className="w-5 h-5 text-cyan-500 shrink-0" />,
                         };
                         const titleMap = {
-                            'flashcards': `${item.count} cards Â· ${item.lastStudied}`,
-                            'quiz': `${item.questions} questions Â· ${item.score}`,
-                            'summary': `${item.count} points Â· ${item.lastStudied}`,
+                            'flashcards': `${item.count} cards · ${item.lastStudied}`,
+                            'quiz': `${item.questions} questions · ${item.score}`,
+                            'summary': `${item.count} points · ${item.lastStudied}`,
+                            'chat': new Date(item.generatedAt).toLocaleDateString(),
                         };
                         
                         return (
@@ -1196,9 +1357,12 @@ safeToast.error(msg);
                                         openFeatureTab('flashcards', item.title || 'Flashcard Set');
                                     } else if (item.type === 'quiz') {
                                         setActiveQuizId(item.id);
+                                        setQuizViewingState('active');
                                         openFeatureTab('quiz', item.title || 'Quiz');
                                     } else if (item.type === 'summary') {
                                         openFeatureTab('summary', item.title || 'Summary');
+                                    } else if (item.type === 'chat') {
+                                        openFeatureTab('chat', item.title || 'Chat');
                                     }
                                 }}
                                 className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors text-left mb-2"
@@ -1218,8 +1382,20 @@ safeToast.error(msg);
                 </div>
             </div>
 
-            {/* Chat Input â€” pinned at bottom of Learn Tab */}
+            {/* Chat Input â€” pinned at bottom of Learn Tab with pill header */}
             <div className="shrink-0 p-4 border-t dark:border-white/10 border-neutral-200">
+                {/* Pill header: "Chatting in: [â—� New Chat]" */}
+                <div className="mb-2 flex items-center gap-2">
+                    <span className="text-xs font-medium dark:text-gray-400 text-gray-500">Chatting in:</span>
+                    <button
+                        onClick={() => openFeatureTab('chat', 'Chat')}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-xs font-bold hover:opacity-80 transition-opacity"
+                    >
+                        <span className="text-cyan-500">â—�</span>
+                        <span>New Chat</span>
+                    </button>
+                </div>
+                {/* Input field */}
                 <div className="flex items-center gap-2 dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl px-4 py-2">
                     <input
                         type="text"
@@ -1230,11 +1406,11 @@ safeToast.error(msg);
                         className="flex-1 bg-transparent text-sm dark:text-white text-black placeholder-gray-500 outline-none"
                     />
                     <button
-                        onClick={() => openFeatureTab('chat', 'Chat')}
-                        className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-xs font-bold hover:opacity-80 transition-opacity"
+                        onClick={handleSendMessage}
+                        disabled={!inputValue.trim() || isLoading}
+                        className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 text-white rounded-full text-xs font-bold hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <SparkleIcon className="w-3.5 h-3.5" />
-                        AI
+                        <ArrowUpIcon className="w-3.5 h-3.5" />
                     </button>
                 </div>
             </div>
@@ -1243,6 +1419,12 @@ safeToast.error(msg);
 
     const renderChat = () => (
         <div className="flex flex-col h-full relative">
+            {/* Top-left Back button */}
+            <div className="p-4 pb-0">
+                <button onClick={handleChatBack} className="flex items-center text-xs font-bold text-gray-500 hover:text-white">
+                    <ChevronLeftIcon className="w-4 h-4 mr-1" /> Back
+                </button>
+            </div>
             <AnimatePresence>
                 {isVoiceMode && (
                     <motion.div 
@@ -1507,34 +1689,50 @@ safeToast.error(msg);
     );
 
     const renderQuiz = () => {
-        // BRANCH A - Generating state (bypasses loadedTabs check for instant shimmer)
+        // BRANCH A - Generating state: premium 5-box shimmer, no backend spinner text
         if (quizViewingState === 'generating') {
             return (
-                <div className="flex-1 flex flex-col items-center justify-center p-6 gap-6">
-                    <div className="flex items-center space-x-3">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-orange-500" />
-                        <span className="text-gray-400 text-sm font-medium">
-                            Generating your quiz with OpenRouter AI...
-                        </span>
+                <div className="flex-1 flex flex-col p-6 gap-4 overflow-hidden">
+                    {/* Subtle header shimmer label */}
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="h-3 w-28 rounded-full dark:bg-white/10 bg-neutral-200 relative overflow-hidden">
+                            <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                        </div>
+                        <div className="h-3 w-16 rounded-full dark:bg-white/10 bg-neutral-200 relative overflow-hidden">
+                            <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_ease-in-out_infinite_0.15s] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                        </div>
                     </div>
-                    <div className="w-full space-y-4">
-                        {[1, 2, 3, 4, 5].map(i => (
-                            <div key={i} className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl p-5 h-[120px] relative overflow-hidden">
-                                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
+                    {/* 5 question skeleton boxes */}
+                    <div className="flex flex-col gap-3">
+                        {[120, 100, 130, 100, 110].map((h, i) => (
+                            <div
+                                key={i}
+                                className="dark:bg-[#141414] bg-neutral-100 border dark:border-white/5 border-neutral-200 rounded-2xl relative overflow-hidden"
+                                style={{ height: `${h}px` }}
+                            >
+                                {/* Inner content lines */}
+                                <div className="absolute inset-0 p-5 flex flex-col gap-3">
+                                    <div className="h-3 rounded-full dark:bg-white/8 bg-neutral-300/60" style={{ width: `${72 + i * 4}%` }} />
+                                    <div className="h-2.5 rounded-full dark:bg-white/5 bg-neutral-200/80" style={{ width: `${55 + i * 3}%` }} />
+                                    <div className="h-2.5 rounded-full dark:bg-white/5 bg-neutral-200/80" style={{ width: `${45 + i * 2}%` }} />
+                                </div>
+                                {/* Travelling shimmer sweep */}
+                                <div
+                                    className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent"
+                                    style={{ animation: `shimmer 1.6s ease-in-out infinite ${i * 0.12}s` }}
+                                />
                             </div>
                         ))}
                     </div>
                     <style>{`
                         @keyframes shimmer {
-                            100% { transform: translateX(100%); }
+                            0%   { transform: translateX(-100%); }
+                            100% { transform: translateX(200%); }
                         }
                     `}</style>
                 </div>
             );
         }
-
-        // BRANCH B - Tab not yet loaded
-        if (!loadedTabs.has('quiz')) return renderShimmer();
 
         // BRANCH C - Active quiz session
         if (quizViewingState === 'active') {
@@ -1546,7 +1744,7 @@ safeToast.error(msg);
             return (
                 <div className="flex-1 flex flex-col p-6 overflow-y-auto">
                     <div className="flex items-center justify-between mb-6">
-                        <button onClick={() => setQuizViewingState('none')} className="flex items-center text-xs font-bold text-gray-500 hover:text-white">
+                        <button onClick={handleQuizBack} className="flex items-center text-xs font-bold text-gray-500 hover:text-white">
                             <ChevronLeftIcon className="w-4 h-4 mr-1" /> Back
                         </button>
                         <span className="text-xs font-bold text-orange-500 bg-orange-500/10 px-2 py-1 rounded uppercase">Question 1/5</span>
@@ -1609,6 +1807,9 @@ safeToast.error(msg);
             );
         }
 
+        // BRANCH B - Tab not yet loaded
+        if (!loadedTabs.has('quiz')) return renderShimmer();
+
         // BRANCH D - Idle / list view (default)
         return (
             <div className="flex-1 flex flex-col p-6 overflow-y-auto">
@@ -1623,7 +1824,7 @@ safeToast.error(msg);
                         {quizzes.map((q) => (
                             <div 
                                 key={q.id}
-                                onClick={() => setActiveQuizId(q.id)}
+                                                onClick={() => { setActiveQuizId(q.id); setQuizViewingState('active'); }}
                                 className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl p-5 cursor-pointer hover:border-orange-500 transition-all group"
                             >
                                 <div className="flex justify-between items-start mb-3">
