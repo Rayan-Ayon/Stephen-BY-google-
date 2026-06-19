@@ -3,20 +3,43 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleIcon, EyeIcon, EyeSlashIcon, XIcon } from './icons';
 import { AuthType } from '../App';
+import { supabase } from '../supabaseClient';
 
 interface AuthOverlayProps {
   type: 'login' | 'signup';
   setType: (type: AuthType) => void;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (email: string) => void;
 }
 
 const AuthOverlay: React.FC<AuthOverlayProps> = ({ type, setType, onClose, onSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const isLogin = type === 'login';
+
+  const handleSubmit = async () => {
+    if (!email || !password || loading) return;
+    setLoading(true);
+    setError('');
+    try {
+      if (isLogin) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) throw signInError;
+      } else {
+        const { error: signUpError } = await supabase.auth.signUp({ email, password });
+        if (signUpError) throw signUpError;
+      }
+      onSuccess(email);
+    } catch (err: any) {
+      setError(err.message || 'An authentication error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -69,6 +92,7 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ type, setType, onClose, onSuc
 
         {/* Form */}
         <div className="w-full space-y-4 mb-4">
+          {error && <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-3 text-sm text-red-400 text-left">{error}</div>}
           <div className="text-left">
             <input
               type="email"
@@ -104,13 +128,13 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ type, setType, onClose, onSuc
         )}
 
         <button
-          onClick={onSuccess}
+          onClick={handleSubmit}
           className={`w-full py-4 rounded-2xl font-bold text-white text-lg mb-8 transition-colors ${
-            email && password ? 'bg-neutral-900 dark:bg-white dark:text-black' : 'bg-neutral-400 dark:bg-gray-700 cursor-not-allowed'
+            email && password && !loading ? 'bg-neutral-900 dark:bg-white dark:text-black' : 'bg-neutral-400 dark:bg-gray-700 cursor-not-allowed'
           }`}
-          disabled={!email || !password}
+          disabled={!email || !password || loading}
         >
-          {isLogin ? 'Login' : 'Sign In'}
+          {loading ? 'Processing...' : isLogin ? 'Login' : 'Sign Up'}
         </button>
 
         <div className="text-sm text-gray-500 font-medium">

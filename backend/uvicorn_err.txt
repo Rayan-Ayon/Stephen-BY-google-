@@ -1,0 +1,8 @@
+C:\Users\Ayonbhai\AppData\Roaming\Python\Python313\site-packages\requests\__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.2) or chardet (6.0.0.post1)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+INFO:     Started server process [27292]
+INFO:     Waiting for application startup.
+2026-06-18 00:55:10,698 - app.main - INFO - Initializing database...
+2026-06-18 00:55:10,730 - app.main - INFO - Database initialized
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)

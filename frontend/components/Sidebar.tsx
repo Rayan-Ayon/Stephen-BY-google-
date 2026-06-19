@@ -31,6 +31,8 @@ interface SidebarProps {
   onRenameSpace: (id: string, newTitle: string) => void;
   onDeleteSpace: (id: string) => void;
   onShareSpace: (id: string) => void;
+  userEmail: string;
+  onLogout: () => void;
 }
 
 const navConfig = [
@@ -70,7 +72,8 @@ const navConfig = [
 const Sidebar: React.FC<SidebarProps> = ({ 
     toggleTheme, theme, onNavigate, activeItem, 
     sidebarMode, setSidebarMode, isExpanded, setIsExpanded,
-    spaces, onCreateSpace, onRenameSpace, onDeleteSpace, onShareSpace
+    spaces, onCreateSpace, onRenameSpace, onDeleteSpace, onShareSpace,
+    userEmail, onLogout
 }) => {
     const [profileOpen, setProfileOpen] = useState(false);
     const [sidebarSettingsOpen, setSidebarSettingsOpen] = useState(false);
@@ -500,7 +503,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     <div className="pt-1 pb-1">
                                         <div className={`border-t ${theme === 'dark' ? 'border-gray-800' : 'border-neutral-200'}`}></div>
                                     </div>
-                                    <button className={`w-full text-left text-sm flex items-center px-3 py-2.5 rounded-xl ${hoverClasses} dark:text-gray-300 text-neutral-700 hover:text-red-500 dark:hover:text-red-400`}>
+                                    <button 
+                                        onClick={onLogout}
+                                        className={`w-full text-left text-sm flex items-center px-3 py-2.5 rounded-xl ${hoverClasses} dark:text-gray-300 text-neutral-700 hover:text-red-500 dark:hover:text-red-400`}
+                                    >
                                         <LogoutIcon className="w-4 h-4 mr-3" /> 
                                         Log out
                                     </button>
@@ -522,7 +528,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                             <AnimatePresence>
                                 {isExpanded && (
                                     <motion.div initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0 }} className="ml-3 text-left overflow-hidden">
-                                        <p className={`font-semibold text-[15px] truncate ${theme === 'dark' ? 'text-[#eee]' : 'text-neutral-900'}`}>AyonLogy</p>
+                                        <p className={`font-semibold text-[15px] truncate ${theme === 'dark' ? 'text-[#eee]' : 'text-neutral-900'}`}>{userEmail.split('@')[0]}</p>
                                     </motion.div>
                                 )}
                             </AnimatePresence>

@@ -50,6 +50,9 @@ interface DashboardProps {
     theme: Theme;
     initialView: string;
     onExit: () => void;
+    userEmail: string;
+    spaceCode: string;
+    onLogout: () => void;
 }
 
 const ShimmerLoader = () => (
@@ -75,7 +78,11 @@ const ShimmerLoader = () => (
     </div>
 );
 
-const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, onExit }) => {
+const isInstitutionalSpace = (code: string): boolean => {
+    return !!code && code !== 'Personal Sandbox';
+};
+
+const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, onExit, userEmail, spaceCode, onLogout }) => {
     const [currentView, setCurrentView] = useState(initialView);
     const [selectedCourse, setSelectedCourse] = useState<HistoryItem | null>(null);
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
@@ -246,6 +253,57 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
 
         switch (currentView) {
             case 'add_content':
+                if (isInstitutionalSpace(spaceCode)) {
+                    return (
+                        <div className="flex-1 h-full bg-[#0b0b0b] p-8 lg:p-12 overflow-y-auto">
+                            <div className="max-w-4xl mx-auto space-y-8">
+                                <div>
+                                    <h1 className="text-3xl font-bold text-white mb-2">Welcome to {spaceCode} Workspace</h1>
+                                    <p className="text-gray-400 text-sm">Your institutional learning environment</p>
+                                </div>
+
+                                <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-5 flex items-start gap-4">
+                                    <div className="shrink-0 mt-0.5">
+                                        <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p className="text-amber-200 text-sm font-medium">You are currently viewing materials assigned by your institution.</p>
+                                        <p className="text-amber-400/60 text-xs mt-1">Content is curated and managed by your {spaceCode} administrators.</p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h2 className="text-lg font-semibold text-white mb-4">Assigned Content</h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {recentVideos.length > 0 ? (
+                                            recentVideos.map((item) => (
+                                                <div
+                                                    key={item.id}
+                                                    onClick={() => handleSelectCourse(item)}
+                                                    className="group cursor-pointer rounded-2xl bg-[#141414] border border-neutral-800 p-5 hover:border-neutral-600 transition-all"
+                                                >
+                                                    <h3 className="text-white font-medium text-sm mb-1 group-hover:text-amber-300 transition-colors">{item.title}</h3>
+                                                    <p className="text-gray-500 text-xs line-clamp-2">{item.description}</p>
+                                                    <div className="flex items-center gap-2 mt-3">
+                                                        <span className="text-[10px] uppercase tracking-wider text-gray-600 bg-neutral-800 px-2 py-0.5 rounded-full">{item.type}</span>
+                                                        <span className="text-[10px] text-gray-600">{item.time}</span>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="col-span-full text-center py-16 text-gray-600">
+                                                <p className="text-sm">No content has been assigned yet.</p>
+                                                <p className="text-xs mt-1 text-gray-700">Check back later for updates from your institution.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }
                 return <AddContentView onCourseCreated={handleCourseCreated} recentVideos={recentVideos} onSelectRecent={handleSelectCourse} />;
             case 'add_courses':
                  return (
@@ -290,6 +348,8 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                 onRenameSpace={handleRenameSpace}
                 onDeleteSpace={(id) => setDeleteSpaceId(id)}
                 onShareSpace={(id) => setShareSpaceId(id)}
+                userEmail={userEmail}
+                onLogout={onLogout}
             />
             
             <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
