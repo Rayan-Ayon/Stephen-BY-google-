@@ -106,16 +106,65 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
     const [deleteSpaceId, setDeleteSpaceId] = useState<string | null>(null);
     const [shareSpaceId, setShareSpaceId] = useState<string | null>(null);
 
-    // Recent Videos State (persisted to localStorage)
-    const [recentVideos, setRecentVideos] = useState<HistoryItem[]>(() => {
-        const saved = localStorage.getItem('stephen_recent_videos');
-        return saved ? JSON.parse(saved) : [];
-    });
+    // Recent Videos State — starts empty; populated per-user via scoped localStorage + server fetch
+    const [recentVideos, setRecentVideos] = useState<HistoryItem[]>([]);
 
-    // Persist recentVideos to localStorage
+    // Persist recentVideos to a per-user localStorage key (write-through cache)
     useEffect(() => {
-        localStorage.setItem('stephen_recent_videos', JSON.stringify(recentVideos));
-    }, [recentVideos]);
+        if (!userEmail) return;
+        localStorage.setItem(`recents_${userEmail}`, JSON.stringify(recentVideos));
+    }, [recentVideos, userEmail]);
+
+    // Reset state on email change, then hydrate from scoped localStorage + server
+    useEffect(() => {
+        if (!userEmail) return;
+
+        // 1. Immediately clear stale data so old account's videos never linger
+        setRecentVideos([]);
+
+        // 2. Fast-fill from per-user localStorage cache
+        const storageKey = `recents_${userEmail}`;
+        const cached = localStorage.getItem(storageKey);
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    setRecentVideos(parsed);
+                }
+            } catch { /* ignore corrupt cache */ }
+        }
+
+        // 3. Fetch fresh data from server — overrides localStorage when it arrives
+        const controller = new AbortController();
+        fetch(`/api/user/recent-videos?userEmail=${encodeURIComponent(userEmail)}`, {
+            signal: controller.signal,
+        })
+            .then((res) => {
+                if (!res.ok) throw new Error('Failed to fetch');
+                return res.json();
+            })
+            .then((data) => {
+                if (Array.isArray(data) && data.length > 0) {
+                    const mapped: HistoryItem[] = data.map((item: any) => ({
+                        id: item.id,
+                        title: item.title,
+                        description: item.description || '',
+                        type: item.contentType || 'video',
+                        time: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '',
+                        videoUrl: item.videoUrl || '',
+                        thumbnailUrl: item.thumbnailUrl || '',
+                        isStructured: false,
+                    }));
+                    setRecentVideos(mapped);
+                }
+            })
+            .catch((err) => {
+                if (err.name !== 'AbortError') {
+                    console.warn('Failed to fetch recent videos from server, using localStorage:', err);
+                }
+            });
+        return () => controller.abort();
+    }, [userEmail]);
 
     // Mock History Items
     const [historyItems, setHistoryItems] = useState<HistoryItem[]>([
@@ -200,6 +249,23 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                 const filtered = prev.filter(v => extractYouTubeId(v.videoUrl) !== videoId);
                 return [course, ...filtered].slice(0, 20);
             });
+
+            // Write-through: save to backend (fire-and-forget, never blocks UI)
+            if (userEmail) {
+                fetch('/api/user/recent-video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        videoId,
+                        title: course.title,
+                        description: course.description || '',
+                        videoUrl: course.videoUrl,
+                        thumbnailUrl: course.thumbnailUrl || '',
+                        contentType: course.type,
+                        userEmail,
+                    }),
+                }).catch((err) => console.warn('Failed to sync recent video to server:', err));
+            }
         }
         
         handleSelectCourse(course);
@@ -233,7 +299,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
 
     const renderContent = () => {
         if (selectedCourse) {
-            return <Workspace course={selectedCourse} showHeader={false} onBack={() => setSelectedCourse(null)} />;
+            return <Workspace course={selectedCourse} showHeader={false} onBack={() => setSelectedCourse(null)} userEmail={userEmail} />;
         }
 
         if (isCreatingSpace) {

@@ -5,8 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 
-from app.api.routes import videos, ai_features
-from app.db.session import init_db
+from app.api.routes import videos, ai_features, recent_videos
+from app.db.session import init_db, backfill_user_email
 
 load_dotenv()
 
@@ -22,6 +22,14 @@ async def lifespan(app: FastAPI):
     logger.info("Initializing database...")
     await init_db()
     logger.info("Database initialized")
+
+    logger.info("Backfilling orphan user_email rows...")
+    try:
+        await backfill_user_email()
+        logger.info("Backfill complete")
+    except Exception as e:
+        logger.warning(f"Backfill skipped or failed (non-fatal): {e}")
+
     yield
     logger.info("Shutting down...")
 
@@ -38,6 +46,7 @@ app.add_middleware(
 
 app.include_router(videos.router, prefix="/api")
 app.include_router(ai_features.router, prefix="/api")
+app.include_router(recent_videos.router, prefix="/api")
 
 
 @app.get("/api/health")

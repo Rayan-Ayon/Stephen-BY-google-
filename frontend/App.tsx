@@ -125,6 +125,7 @@ const App: React.FC = () => {
           onAuth={(type) => setAuthType(type)}
           toggleTheme={toggleTheme}
           theme={theme}
+          userEmail={userEmail}
         />
       )}
 

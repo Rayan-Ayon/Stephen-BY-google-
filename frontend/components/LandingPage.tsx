@@ -10,6 +10,7 @@ interface LandingPageProps {
   onAuth: (type: AuthType) => void;
   toggleTheme: () => void;
   theme: Theme;
+  userEmail: string;
 }
 
 const universities = [
@@ -134,7 +135,7 @@ const DustText = ({ text, theme }: { text: string, theme: Theme }) => {
     );
 };
 
-const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, toggleTheme, theme }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, toggleTheme, theme, userEmail }) => {
     const [currentView, setCurrentView] = useState<'home' | 'enterprise'>('home');
     const [enterpriseType, setEnterpriseType] = useState<'business' | 'team' | 'universities' | 'government'>('business');
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -388,7 +389,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
                         See Features
                     </button>
                     <button
-                        onClick={() => onStartLearning()}
+                        onClick={() => userEmail ? onStartLearning() : onAuth('signup')}
                         className={`group relative font-semibold px-8 py-3.5 rounded-full text-base overflow-hidden border ${theme === 'dark' ? 'text-white border-white/20' : 'text-black border-black/20'}`}
                     >
                         <div className={`absolute inset-0 w-full h-full bg-gradient-to-r ${theme === 'dark' ? 'from-transparent via-white/20 to-transparent' : 'from-transparent via-black/10 to-transparent'} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`} />
@@ -491,7 +492,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
                     </div>
                     
                     <button
-                        onClick={() => onStartLearning()}
+                        onClick={() => userEmail ? onStartLearning() : onAuth('signup')}
                         className={`group relative px-10 py-4 rounded-full flex items-center space-x-2 transition-all duration-300 border ${
                             theme === 'dark' 
                             ? 'bg-black text-white border-white/20 hover:border-white/40' 
@@ -675,12 +676,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
                             <button onClick={toggleTheme} className={`p-2 rounded-full ${theme === 'dark' ? 'text-neutral-400 hover:bg-neutral-800' : 'text-neutral-500 hover:bg-neutral-200'} transition-colors`}>
                                 {theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
                             </button>
-                            <button onClick={() => onAuth('login')} className={`px-5 py-2.5 text-sm font-bold rounded-full ${theme === 'dark' ? 'text-white hover:bg-neutral-800' : 'text-black hover:bg-neutral-100'} transition-colors`}>
-                                Log in
-                            </button>
-                            <button onClick={() => onAuth('signup')} className={`px-5 py-2.5 text-sm font-bold rounded-full bg-white text-black hover:opacity-90 transition-opacity border ${theme === 'dark' ? 'border-transparent' : 'border-gray-300'}`}>
-                                Sign up for free
-                            </button>
+                            {userEmail ? (
+                                <div className="w-9 h-9 rounded-full bg-neutral-700 border border-neutral-600 flex items-center justify-center text-xs text-neutral-300 font-bold select-none">
+                                    {userEmail[0].toUpperCase()}
+                                </div>
+                            ) : (
+                                <>
+                                    <button onClick={() => onAuth('login')} className={`px-5 py-2.5 text-sm font-bold rounded-full ${theme === 'dark' ? 'text-white hover:bg-neutral-800' : 'text-black hover:bg-neutral-100'} transition-colors`}>
+                                        Log in
+                                    </button>
+                                    <button onClick={() => onAuth('signup')} className={`px-5 py-2.5 text-sm font-bold rounded-full bg-white text-black hover:opacity-90 transition-opacity border ${theme === 'dark' ? 'border-transparent' : 'border-gray-300'}`}>
+                                        Sign up for free
+                                    </button>
+                                </>
+                            )}
                             
                             <div className="relative">
                                 <button 

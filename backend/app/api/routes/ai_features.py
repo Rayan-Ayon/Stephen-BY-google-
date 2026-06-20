@@ -14,9 +14,10 @@ async def create_summary(request: VideoIdRequest) -> FeatureResponse:
         raise HTTPException(status_code=400, detail="videoId is required")
     try:
         return await get_or_generate_feature(
-            request.videoId, 
+            request.videoId,
             "summary",
-            force_refresh=request.forceRefresh
+            force_refresh=request.forceRefresh,
+            user_email=request.userEmail,
         )
     except Exception as e:
         error_msg = str(e)
@@ -31,12 +32,13 @@ async def create_flashcards(request: VideoIdRequest) -> FeatureResponse:
         raise HTTPException(status_code=400, detail="videoId is required")
     try:
         return await get_or_generate_feature(
-            request.videoId, 
+            request.videoId,
             "flashcards",
             force_refresh=request.forceRefresh,
             count=request.count,
             focus=request.focus,
-            transcript_data=request.transcript  # Pass transcript if provided
+            transcript_data=request.transcript,
+            user_email=request.userEmail,
         )
     except Exception as e:
         error_msg = str(e)
@@ -51,9 +53,10 @@ async def create_quiz(request: VideoIdRequest) -> FeatureResponse:
         raise HTTPException(status_code=400, detail="videoId is required")
     try:
         return await get_or_generate_feature(
-            request.videoId, 
+            request.videoId,
             "quiz",
-            force_refresh=request.forceRefresh
+            force_refresh=request.forceRefresh,
+            user_email=request.userEmail,
         )
     except Exception as e:
         error_msg = str(e)
@@ -68,9 +71,10 @@ async def create_notes(request: VideoIdRequest) -> FeatureResponse:
         raise HTTPException(status_code=400, detail="videoId is required")
     try:
         return await get_or_generate_feature(
-            request.videoId, 
+            request.videoId,
             "notes",
-            force_refresh=request.forceRefresh
+            force_refresh=request.forceRefresh,
+            user_email=request.userEmail,
         )
     except Exception as e:
         error_msg = str(e)
@@ -158,7 +162,7 @@ async def get_index_status(videoId: str):
 
 
 @router.get("/video/features")
-async def get_cached_features(videoId: str, type: str = "flashcards"):
+async def get_cached_features(videoId: str, type: str = "flashcards", userEmail: str = ""):
     """
     Check if cached AI features exist for a video.
     Returns cached data if available, or { "cached": false } if not.
@@ -175,7 +179,7 @@ async def get_cached_features(videoId: str, type: str = "flashcards"):
         import json
         
         async with async_session_maker() as db:
-            cached = await get_cached_result(db, videoId, type)
+            cached = await get_cached_result(db, videoId, type, user_email=userEmail)
             if cached:
                 return {
                     "cached": True,

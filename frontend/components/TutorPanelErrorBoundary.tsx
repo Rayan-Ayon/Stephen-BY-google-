@@ -1,10 +1,11 @@
-import React, { Component, ReactNode } from 'react';
+import React, { Component, ReactNode, Children, cloneElement, ReactElement } from 'react';
 import { HistoryItem } from './Dashboard';
 
 interface Props {
     children: ReactNode;
     course?: HistoryItem;
     onSeekTo?: (seconds: number) => void;
+    userEmail: string;
 }
 
 interface State {
@@ -77,7 +78,12 @@ class TutorPanelErrorBoundary extends Component<Props, State> {
             );
         }
 
-        return this.props.children;
+        return Children.map(this.props.children, (child) => {
+            if (React.isValidElement(child)) {
+                return cloneElement(child as ReactElement<any>, { userEmail: this.props.userEmail });
+            }
+            return child;
+        });
     }
 }
 

@@ -22,6 +22,7 @@ interface WorkspaceProps {
     course: HistoryItem;
     showHeader: boolean;
     onBack?: () => void;
+    userEmail: string;
 }
 
 interface TranscriptItem {
@@ -642,7 +643,7 @@ const CourseraSidebar = ({ title, onClose, onBack }: { title: string, onClose: (
     );
 };
 
-const Workspace: React.FC<WorkspaceProps> = ({ course, onBack }) => {
+const Workspace: React.FC<WorkspaceProps> = ({ course, onBack, userEmail }) => {
     const [panelWidth, setPanelWidth] = useState(480);
     const [isResizing, setIsResizing] = useState(false);
     const [isTutorOpen, setIsTutorOpen] = useState(true);
@@ -709,12 +710,13 @@ const Workspace: React.FC<WorkspaceProps> = ({ course, onBack }) => {
                             if (videoSeekRef.current) {
                                 videoSeekRef.current(seconds);
                             }
-                        }}>
+                        }} userEmail={userEmail}>
                             <TutorPanel 
                                 isPanelExpanded={false} 
                                 setIsPanelExpanded={() => {}} 
                                 isCoachMode={false}
                                 course={course}
+                                userEmail={userEmail}
                                 onSeekTo={(seconds) => {
                                     if (videoSeekRef.current) {
                                         videoSeekRef.current(seconds);

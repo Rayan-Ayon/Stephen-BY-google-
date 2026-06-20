@@ -17,11 +17,14 @@ async def get_cached_result(
     db: AsyncSession,
     video_id: str,
     feature_type: FeatureType,
+    user_email: str = "",
 ) -> AIResult | None:
     stmt = select(AIResult).where(
         AIResult.video_id == video_id,
         AIResult.feature_type == feature_type,
     )
+    if user_email:
+        stmt = stmt.where(AIResult.user_email == user_email)
     result = await db.execute(stmt)
     return result.scalars().first()
 
@@ -32,9 +35,10 @@ async def save_result(
     feature_type: FeatureType,
     payload: Any,
     model_used: str,
+    user_email: str = "",
 ) -> AIResult:
-    # Check if a result already exists for this video+feature
-    existing = await get_cached_result(db, video_id, feature_type)
+    # Check if a result already exists for this video+feature+user
+    existing = await get_cached_result(db, video_id, feature_type, user_email)
     
     if existing:
         # Update the existing row instead of creating a duplicate
@@ -51,6 +55,7 @@ async def save_result(
             feature_type=feature_type,
             payload_json=json.dumps(payload),
             model_used=model_used,
+            user_email=user_email,
         )
         db.add(result)
         await db.commit()
@@ -66,6 +71,7 @@ async def get_or_generate_feature(
     count: int = 10,
     focus: str = "",
     transcript_data: list = None,
+    user_email: str = "",
 ) -> dict:
     """
     Generate AI feature with optional RAG context.
@@ -83,7 +89,7 @@ async def get_or_generate_feature(
         logger.info(f"Checking cache for {video_id}/{feature_type}")
         
         if not force_refresh:
-            cached = await get_cached_result(db, video_id, feature_type)
+            cached = await get_cached_result(db, video_id, feature_type, user_email)
             
             if cached:
                 logger.info(f"Cache HIT: {video_id}/{feature_type}")
@@ -147,7 +153,7 @@ async def get_or_generate_feature(
         else:
             raise Exception("Non-RAG generation not supported in new version")
         
-        await save_result(db, video_id, feature_type, response_data, model_used)
+        await save_result(db, video_id, feature_type, response_data, model_used, user_email)
         
         return {
             "cached": False,

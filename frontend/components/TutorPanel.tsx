@@ -52,6 +52,7 @@ interface TutorPanelProps {
     isCoachMode: boolean;
     course?: HistoryItem;
     onSeekTo?: (seconds: number) => void;
+    userEmail: string;
 }
 
 interface Message {
@@ -160,7 +161,7 @@ const MOCK_QUIZ_QUESTIONS = [
     },
 ];
 
-const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpanded, isCoachMode, course, onSeekTo }) => {
+const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpanded, isCoachMode, course, onSeekTo, userEmail }) => {
     // â”€â”€ Tab Manager State â”€â”€
     interface WorkspaceTab {
         id: string;
@@ -312,6 +313,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                     forceRefresh: true,
                     count: parseInt(config?.numQuestions ?? '5'),
                     focus: config?.topic ?? '',
+                    userEmail,
                 }),
             });
 
@@ -515,7 +517,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
             setIndexStatus('checking');
             
             try {
-                const res = await fetch(`/api/video/index-status?videoId=${videoId}`, {
+                const res = await fetch(`/api/video/index-status?videoId=${videoId}&userEmail=${encodeURIComponent(userEmail)}`, {
                     signal: controller.signal
                 });
                 const data = await res.json();
@@ -575,7 +577,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
             // Layer 2: Fallback to backend GET (if localStorage is empty)
             try {
                 const res = await fetch(
-                    `/api/video/features?videoId=${videoId}&type=flashcards`,
+                    `/api/video/features?videoId=${videoId}&type=flashcards&userEmail=${encodeURIComponent(userEmail)}`,
                     { signal: controller.signal }
                 );
                 if (!res.ok || !isMounted) return;
@@ -675,7 +677,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
             // Layer 2: Fallback to backend GET
             try {
                 const res = await fetch(
-                    `/api/video/features?videoId=${videoId}&type=summary`,
+                    `/api/video/features?videoId=${videoId}&type=summary&userEmail=${encodeURIComponent(userEmail)}`,
                     { signal: controller.signal }
                 );
                 if (!res.ok || !isMounted) return;
@@ -731,7 +733,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
             const res = await fetch('/api/video/index-transcript', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ videoId, forceRefresh: false })
+                body: JSON.stringify({ videoId, forceRefresh: false, userEmail })
             });
             
             if (!res.ok) throw new Error("Indexing failed");
@@ -795,7 +797,8 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
                     forceRefresh: true,
                     count: flashcardSettings?.count ?? 10,
                     focus: flashcardSettings?.focus ?? '',
-                    transcript: transcriptData
+                    transcript: transcriptData,
+                    userEmail,
                 })
             });
             
@@ -921,7 +924,8 @@ safeToast.error(msg);
                 body: JSON.stringify({ 
                     videoId, 
                     forceRefresh: true,
-                    transcript: transcriptData
+                    transcript: transcriptData,
+                    userEmail,
                 })
             });
 

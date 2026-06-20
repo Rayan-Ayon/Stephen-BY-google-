@@ -528,7 +528,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                             <AnimatePresence>
                                 {isExpanded && (
                                     <motion.div initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0 }} className="ml-3 text-left overflow-hidden">
-                                        <p className={`font-semibold text-[15px] truncate ${theme === 'dark' ? 'text-[#eee]' : 'text-neutral-900'}`}>{userEmail.split('@')[0]}</p>
+                                        <p className={`font-semibold text-[15px] truncate ${theme === 'dark' ? 'text-[#eee]' : 'text-neutral-900'}`}>{userEmail}</p>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
