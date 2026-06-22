@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShieldCheckIcon,
@@ -8,6 +8,7 @@ import {
   XIcon,
   CheckCircleIcon,
 } from './icons';
+import { PartnershipRequest, getPendingRequests, approvePartnershipRequest } from '../utils/mockDb';
 
 interface MetricCardData {
   label: string;
@@ -16,19 +17,10 @@ interface MetricCardData {
   accent?: 'orange' | 'warning' | 'default';
 }
 
-interface PendingTenant {
-  id: string;
-  organization: string;
-  domain: string;
-  requestedSeats: number;
-  adminEmail: string;
-  planClass: string;
-  status: 'pending' | 'approved' | 'denied';
-}
-
 interface ApprovalResult {
   tenantId: string;
   passkey: string;
+  email: string;
 }
 
 const MetricCard: React.FC<MetricCardData> = ({ label, value, subValue, accent }) => {
@@ -61,8 +53,8 @@ const MetricCard: React.FC<MetricCardData> = ({ label, value, subValue, accent }
 };
 
 const PendingTenantRow: React.FC<{
-  tenant: PendingTenant;
-  onApprove: (tenant: PendingTenant) => void;
+  tenant: PartnershipRequest;
+  onApprove: (tenant: PartnershipRequest) => void;
   onDeny: (id: string) => void;
 }> = ({ tenant, onApprove, onDeny }) => (
   <motion.tr
@@ -73,23 +65,19 @@ const PendingTenantRow: React.FC<{
   >
     <td className="px-6 py-4">
       <div className="flex flex-col">
-        <span className="text-sm font-medium text-white">{tenant.organization}</span>
-        <span className="text-xs text-neutral-500">{tenant.domain}</span>
+        <span className="text-sm font-medium text-white">{tenant.name}</span>
+        <span className="text-xs text-neutral-500">{tenant.orgName}</span>
       </div>
     </td>
     <td className="px-6 py-4">
-      <span className="text-sm font-semibold text-white" style={{ fontFamily: "'Lora', serif" }}>
-        {tenant.requestedSeats.toLocaleString()}
-      </span>
-      <span className="text-xs text-neutral-500 ml-1">Learners</span>
+      <span className="text-sm text-neutral-300">{tenant.email}</span>
     </td>
     <td className="px-6 py-4">
-      <span className="text-sm text-neutral-300">{tenant.adminEmail}</span>
+      <span className="text-sm text-neutral-400">{tenant.phone}</span>
     </td>
     <td className="px-6 py-4">
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#FF5500] bg-[#FF5500]/10 px-2.5 py-1 rounded-full">
-        <CrownIcon className="w-3 h-3" />
-        {tenant.planClass}
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-400 bg-neutral-500/10 px-2.5 py-1 rounded-full border border-neutral-500/20">
+        Pending Review
       </span>
     </td>
     <td className="px-6 py-4 text-right">
@@ -152,6 +140,14 @@ const ApprovalModal: React.FC<{
       <div className="space-y-4 mb-8">
         <div className="bg-[#000000] border border-[#1A1A1A] rounded-xl px-4 py-3.5">
           <p className="text-[10px] uppercase tracking-[0.15em] text-neutral-500 font-semibold mb-1">
+            Admin Email
+          </p>
+          <p className="text-sm text-white font-medium">
+            {result.email}
+          </p>
+        </div>
+        <div className="bg-[#000000] border border-[#1A1A1A] rounded-xl px-4 py-3.5">
+          <p className="text-[10px] uppercase tracking-[0.15em] text-neutral-500 font-semibold mb-1">
             Tenant ID
           </p>
           <p className="text-sm font-mono text-white font-medium tracking-wide">
@@ -189,30 +185,29 @@ const ApprovalModal: React.FC<{
 );
 
 const SuperAdminView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
-  const [tenants, setTenants] = useState<PendingTenant[]>([
-    {
-      id: 'tenant_dhaka_001',
-      organization: 'Dhaka University (du.ac.bd)',
-      domain: 'du.ac.bd',
-      requestedSeats: 500,
-      adminEmail: 'ayonburg@gmail.com',
-      planClass: 'Enterprise Core Tier',
-      status: 'pending',
-    },
-  ]);
+  const [requests, setRequests] = useState<PartnershipRequest[]>([]);
   const [approvalResult, setApprovalResult] = useState<ApprovalResult | null>(null);
   const [navIndex, setNavIndex] = useState(0);
 
-  const handleApprove = (tenant: PendingTenant) => {
-    setApprovalResult({
-      tenantId: `org_du_72cb1a`,
-      passkey: `STPH-DHAKA-2026-X9`,
-    });
-    setTenants((prev) => prev.filter((t) => t.id !== tenant.id));
+  useEffect(() => {
+    setRequests(getPendingRequests());
+  }, []);
+
+  const handleApprove = (req: PartnershipRequest) => {
+    const passkey = approvePartnershipRequest(req.id);
+    if (passkey) {
+      const orgSlug = req.orgName.replace(/\s+/g, '_').toLowerCase();
+      setApprovalResult({
+        tenantId: `org_${orgSlug}_${req.id.slice(-4)}`,
+        passkey,
+        email: req.email,
+      });
+      setRequests((prev) => prev.filter((r) => r.id !== req.id));
+    }
   };
 
   const handleDeny = (id: string) => {
-    setTenants((prev) => prev.filter((t) => t.id !== id));
+    setRequests((prev) => prev.filter((r) => r.id !== id));
   };
 
   const navItems = [
@@ -288,7 +283,7 @@ const SuperAdminView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
             />
             <MetricCard
               label="Pending Pipeline Approvals"
-              value={3}
+              value={requests.length}
               accent="warning"
             />
           </div>
@@ -302,19 +297,19 @@ const SuperAdminView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
             <table className="w-full">
               <thead>
                 <tr className="text-left text-[10px] uppercase tracking-[0.15em] text-neutral-500 border-b border-[#1A1A1A]">
-                  <th className="px-6 py-4 font-semibold">Organization</th>
-                  <th className="px-6 py-4 font-semibold">Requested Seats</th>
-                  <th className="px-6 py-4 font-semibold">Target Admin</th>
-                  <th className="px-6 py-4 font-semibold">Plan Class</th>
+                  <th className="px-6 py-4 font-semibold">Contact Name</th>
+                  <th className="px-6 py-4 font-semibold">Email Address</th>
+                  <th className="px-6 py-4 font-semibold">Phone</th>
+                  <th className="px-6 py-4 font-semibold">Status</th>
                   <th className="px-6 py-4 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 <AnimatePresence mode="popLayout">
-                  {tenants.map((tenant) => (
+                  {requests.map((req) => (
                     <PendingTenantRow
-                      key={tenant.id}
-                      tenant={tenant}
+                      key={req.id}
+                      tenant={req}
                       onApprove={handleApprove}
                       onDeny={handleDeny}
                     />
@@ -322,7 +317,7 @@ const SuperAdminView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                 </AnimatePresence>
               </tbody>
             </table>
-            {tenants.length === 0 && (
+            {requests.length === 0 && (
               <div className="px-6 py-12 text-center">
                 <p className="text-sm text-neutral-500">All pending requests resolved.</p>
               </div>

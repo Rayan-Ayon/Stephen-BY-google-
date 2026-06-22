@@ -6,7 +6,17 @@ export interface Tenant {
   status: 'pending' | 'active';
 }
 
+export interface PartnershipRequest {
+  id: string;
+  name: string;
+  email: string;
+  orgName: string;
+  phone: string;
+  status: 'pending' | 'approved';
+}
+
 const MOCK_KEY = 'stephen_mock_tenants';
+const PARTNERSHIP_KEY = 'stephen_partnership_requests';
 
 const defaultTenant: Tenant = {
   id: 'org_du_72cb1a',
@@ -15,10 +25,23 @@ const defaultTenant: Tenant = {
   status: 'pending',
 };
 
+const defaultPartnershipRequest: PartnershipRequest = {
+  id: 'pr_001',
+  name: 'Sayed Rahman',
+  email: 'speakbangla.always@gmail.com',
+  orgName: 'University',
+  phone: '+8801712345678',
+  status: 'pending',
+};
+
 export function initMockDb(): void {
   const existing = localStorage.getItem(MOCK_KEY);
   if (!existing) {
     localStorage.setItem(MOCK_KEY, JSON.stringify([defaultTenant]));
+  }
+  const existingPartnerships = localStorage.getItem(PARTNERSHIP_KEY);
+  if (!existingPartnerships) {
+    localStorage.setItem(PARTNERSHIP_KEY, JSON.stringify([defaultPartnershipRequest]));
   }
 }
 
@@ -32,12 +55,14 @@ function saveTenants(tenants: Tenant[]): void {
 }
 
 export function getTenantByPasskey(passkey: string): Tenant | undefined {
-  return getTenants().find(t => t.passkey === passkey);
+  const cleanPasskey = passkey.trim().toUpperCase();
+  return getTenants().find(t => t.passkey === cleanPasskey);
 }
 
 export function activateTenant(passkey: string, password: string): boolean {
+  const cleanPasskey = passkey.trim().toUpperCase();
   const tenants = getTenants();
-  const idx = tenants.findIndex(t => t.passkey === passkey && t.status === 'pending');
+  const idx = tenants.findIndex(t => t.passkey === cleanPasskey && t.status === 'pending');
   if (idx === -1) return false;
   tenants[idx].password = password;
   tenants[idx].status = 'active';
@@ -46,9 +71,84 @@ export function activateTenant(passkey: string, password: string): boolean {
 }
 
 export function validateTenantLogin(email: string, password: string, passkey: string): boolean {
-  const tenant = getTenants().find(
-    t => t.email === email && t.passkey === passkey && t.status === 'active'
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanPasskey = passkey.trim().toUpperCase();
+  const cleanPassword = password.trim();
+
+  const allTenants = getTenants();
+
+  let tenant = allTenants.find(
+    t => t.email === cleanEmail && t.passkey === cleanPasskey && t.status === 'active'
   );
-  if (!tenant) return false;
-  return tenant.password === password;
+
+  if (!tenant) {
+    const pendingIdx = allTenants.findIndex(
+      t => t.email === cleanEmail && t.passkey === cleanPasskey && t.status === 'pending'
+    );
+    if (pendingIdx !== -1) {
+      console.log("MockDB Debug: Auto-activating pending tenant for", cleanEmail);
+      allTenants[pendingIdx].password = cleanPassword;
+      allTenants[pendingIdx].status = 'active';
+      saveTenants(allTenants);
+      tenant = allTenants[pendingIdx];
+    }
+  }
+
+  if (!tenant) {
+    console.log("MockDB Debug: No tenant found for email=", cleanEmail, "passkey=", cleanPasskey);
+    console.log("MockDB Debug: Available tenants:", JSON.stringify(allTenants));
+    return false;
+  }
+
+  const passwordMatch = tenant.password === cleanPassword;
+  console.log("MockDB Debug: Login result for", cleanEmail, "- password match:", passwordMatch);
+  return passwordMatch;
+}
+
+export function addPartnershipRequest(
+  request: Omit<PartnershipRequest, 'id' | 'status'>
+): PartnershipRequest {
+  const requests = getPartnershipRequests();
+  const newRequest: PartnershipRequest = {
+    ...request,
+    id: `pr_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    status: 'pending',
+  };
+  requests.push(newRequest);
+  localStorage.setItem(PARTNERSHIP_KEY, JSON.stringify(requests));
+  return newRequest;
+}
+
+export function getPendingRequests(): PartnershipRequest[] {
+  const raw = localStorage.getItem(PARTNERSHIP_KEY);
+  const requests: PartnershipRequest[] = raw ? JSON.parse(raw) : [];
+  return requests.filter(r => r.status === 'pending');
+}
+
+function getPartnershipRequests(): PartnershipRequest[] {
+  const raw = localStorage.getItem(PARTNERSHIP_KEY);
+  return raw ? JSON.parse(raw) : [];
+}
+
+export function approvePartnershipRequest(id: string): string | null {
+  const requests = getPartnershipRequests();
+  const idx = requests.findIndex(r => r.id === id && r.status === 'pending');
+  if (idx === -1) return null;
+
+  requests[idx].status = 'approved';
+  localStorage.setItem(PARTNERSHIP_KEY, JSON.stringify(requests));
+
+  const orgSlug = requests[idx].orgName.replace(/\s+/g, '_').toUpperCase();
+  const passkey = `STPH-${orgSlug}-2026`;
+  const tenants = getTenants();
+  const newTenant: Tenant = {
+    id: `org_${orgSlug.toLowerCase()}_${Date.now().toString(36)}`,
+    email: requests[idx].email.trim().toLowerCase(),
+    passkey,
+    status: 'pending',
+  };
+  tenants.push(newTenant);
+  saveTenants(tenants);
+
+  return passkey;
 }

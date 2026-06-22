@@ -13,6 +13,7 @@ import {
     AdjustIcon 
 } from './icons';
 import { Theme } from '../App';
+import { addPartnershipRequest } from '../utils/mockDb';
 
 interface EnterpriseViewProps {
     theme: Theme;
@@ -77,6 +78,13 @@ const EnterpriseView: React.FC<EnterpriseViewProps> = ({ theme, onStartLearning,
             setFormErrors(errors);
             return;
         }
+
+        addPartnershipRequest({
+            name: `${formValues.firstName} ${formValues.lastName}`.trim(),
+            email: formValues.email,
+            orgName: formValues.orgType,
+            phone: formValues.phone,
+        });
 
         setIsSubmitted(true);
     };

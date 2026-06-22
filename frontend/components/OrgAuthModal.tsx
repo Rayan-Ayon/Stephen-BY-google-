@@ -18,7 +18,7 @@ const OrgAuthModal: React.FC<OrgAuthModalProps> = ({ onClose, onAccess }) => {
     e.preventDefault();
     setAuthError('');
 
-    if (validateTenantLogin(email, password, passkey)) {
+    if (validateTenantLogin(email.trim(), password.trim(), passkey.trim())) {
       onAccess();
     } else {
       setAuthError('Invalid credentials or workspace not activated.');
