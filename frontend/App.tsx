@@ -4,6 +4,10 @@ import { supabase } from './supabaseClient';
 import Dashboard from './components/Dashboard';
 import LandingPage from './components/LandingPage';
 import AuthOverlay from './components/AuthOverlay';
+import SuperAdminView from './components/SuperAdminView';
+import OrgManagerView from './components/OrgManagerView';
+import ActivationView from './components/ActivationView';
+import { initMockDb } from './utils/mockDb';
 
 export type Theme = 'light' | 'dark';
 export type AuthType = 'login' | 'signup' | null;
@@ -49,6 +53,19 @@ const App: React.FC = () => {
   const [sessionChecked, setSessionChecked] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [spaceCode, setSpaceCode] = useState('');
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isOrgManager, setIsOrgManager] = useState(false);
+
+  useEffect(() => {
+    initMockDb();
+    const path = window.location.pathname;
+    if (path === '/super-admin') {
+      setIsSuperAdmin(true);
+    }
+    if (path === '/org-space') {
+      setIsOrgManager(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -97,6 +114,46 @@ const App: React.FC = () => {
     setShowDashboard(false);
   };
 
+  const isActivation = window.location.pathname === '/activate';
+
+  if (isActivation) {
+    return (
+      <ActivationView
+        onComplete={() => {
+          window.history.pushState({}, '', '/');
+          window.location.reload();
+        }}
+      />
+    );
+  }
+
+  const handleOrgAccess = () => {
+    window.history.pushState({}, '', '/org-space');
+    setIsOrgManager(true);
+  };
+
+  if (isOrgManager) {
+    return (
+      <OrgManagerView
+        onExit={() => {
+          window.history.pushState({}, '', '/');
+          setIsOrgManager(false);
+        }}
+      />
+    );
+  }
+
+  if (isSuperAdmin) {
+    return (
+      <SuperAdminView
+        onExit={() => {
+          window.history.pushState({}, '', '/');
+          setIsSuperAdmin(false);
+        }}
+      />
+    );
+  }
+
   if (!sessionChecked) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0F0F0F]">
@@ -126,6 +183,7 @@ const App: React.FC = () => {
           toggleTheme={toggleTheme}
           theme={theme}
           userEmail={userEmail}
+          onOrgAccess={handleOrgAccess}
         />
       )}
 

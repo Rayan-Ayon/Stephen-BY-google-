@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Theme, AuthType } from '../App';
-import { SunIcon, MoonIcon, BrainIcon, UploadIcon, FlashcardIcon, TrophyIcon, EdgramIcon, DebatePodiumIcon, QuestionMarkIcon, ArrowUpRightIcon } from './icons';
+import { SunIcon, MoonIcon, BrainIcon, UploadIcon, FlashcardIcon, TrophyIcon, EdgramIcon, DebatePodiumIcon, QuestionMarkIcon, ArrowUpRightIcon, BuildingLibraryIcon } from './icons';
 import EnterpriseView from './EnterpriseView';
+import OrgAuthModal from './OrgAuthModal';
 
 interface LandingPageProps {
   onStartLearning: (view?: string) => void;
@@ -11,6 +12,7 @@ interface LandingPageProps {
   toggleTheme: () => void;
   theme: Theme;
   userEmail: string;
+  onOrgAccess: () => void;
 }
 
 const universities = [
@@ -135,8 +137,9 @@ const DustText = ({ text, theme }: { text: string, theme: Theme }) => {
     );
 };
 
-const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, toggleTheme, theme, userEmail }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, toggleTheme, theme, userEmail, onOrgAccess }) => {
     const [currentView, setCurrentView] = useState<'home' | 'enterprise'>('home');
+    const [showOrgAuth, setShowOrgAuth] = useState(false);
     const [enterpriseType, setEnterpriseType] = useState<'business' | 'team' | 'universities' | 'government'>('business');
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -544,6 +547,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
                                         onClick={() => {
                                             if (link.key === 'pricing') {
                                                 onStartLearning('pricing');
+                                            } else if (link.key === 'enterprise') {
+                                                setCurrentView('enterprise');
+                                                setEnterpriseType('business');
+                                                setActiveDropdown(null);
                                             } else if (!link.hasDropdown) {
                                                 if (link.key === 'edgram') onStartLearning('edgram');
                                                 else onStartLearning(link.key);
@@ -677,11 +684,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
                                 {theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
                             </button>
                             {userEmail ? (
-                                <div className="w-9 h-9 rounded-full bg-neutral-700 border border-neutral-600 flex items-center justify-center text-xs text-neutral-300 font-bold select-none">
-                                    {userEmail[0].toUpperCase()}
-                                </div>
+                                <>
+                                    <button
+                                        onClick={() => setShowOrgAuth(true)}
+                                        className="px-3.5 py-2 text-sm font-semibold rounded-full border border-[#333] text-neutral-400 hover:border-[#FF5500] hover:text-[#FF5500] transition-all duration-200"
+                                    >
+                                        Institution Login
+                                    </button>
+                                    <div className="w-9 h-9 rounded-full bg-neutral-700 border border-neutral-600 flex items-center justify-center text-xs text-neutral-300 font-bold select-none">
+                                        {userEmail[0].toUpperCase()}
+                                    </div>
+                                </>
                             ) : (
                                 <>
+                                    <button
+                                        onClick={() => setShowOrgAuth(true)}
+                                        className="px-3.5 py-2 text-sm font-semibold rounded-full border border-[#333] text-neutral-400 hover:border-[#FF5500] hover:text-[#FF5500] transition-all duration-200"
+                                    >
+                                        Institution Login
+                                    </button>
                                     <button onClick={() => onAuth('login')} className={`px-5 py-2.5 text-sm font-bold rounded-full ${theme === 'dark' ? 'text-white hover:bg-neutral-800' : 'text-black hover:bg-neutral-100'} transition-colors`}>
                                         Log in
                                     </button>
@@ -779,6 +800,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
                     </div>
                 </footer>
             </div>
+
+            <AnimatePresence>
+              {showOrgAuth && (
+                <OrgAuthModal
+                  onClose={() => setShowOrgAuth(false)}
+                  onAccess={() => {
+                    setShowOrgAuth(false);
+                    onOrgAccess();
+                  }}
+                />
+              )}
+            </AnimatePresence>
         </div>
     );
 };
