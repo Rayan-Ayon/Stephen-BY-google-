@@ -62,7 +62,11 @@ const App: React.FC = () => {
     if (path === '/super-admin') {
       setIsSuperAdmin(true);
     }
+    const orgSession = localStorage.getItem('stephen_active_tenant_session');
     if (path === '/org-space') {
+      setIsOrgManager(true);
+    } else if (orgSession && path === '/') {
+      window.history.pushState({}, '', '/org-space');
       setIsOrgManager(true);
     }
   }, []);
@@ -136,6 +140,7 @@ const App: React.FC = () => {
     return (
       <OrgManagerView
         onExit={() => {
+          localStorage.removeItem('stephen_active_tenant_session');
           window.history.pushState({}, '', '/');
           setIsOrgManager(false);
         }}

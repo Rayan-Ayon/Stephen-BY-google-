@@ -19,6 +19,11 @@ const OrgAuthModal: React.FC<OrgAuthModalProps> = ({ onClose, onAccess }) => {
     setAuthError('');
 
     if (validateTenantLogin(email.trim(), password.trim(), passkey.trim())) {
+      localStorage.setItem('stephen_active_tenant_session', JSON.stringify({
+        email: email.trim(),
+        passkey: passkey.trim(),
+        role: 'org_manager',
+      }));
       onAccess();
     } else {
       setAuthError('Invalid credentials or workspace not activated.');
