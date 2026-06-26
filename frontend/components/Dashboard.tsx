@@ -20,6 +20,7 @@ import QuickGuideModal from './QuickGuideModal';
 import ContactUsSlide from './ContactUsSlide';
 import HawkingFab from './HawkingFab';
 import ResearchLabView from './ResearchLabView';
+import LearningMethodsView from './LearningMethodsView';
 import SpaceView from './SpaceView';
 import { DeleteSpaceModal, ShareSpaceModal } from './modals';
 import { Theme } from '../App';
@@ -394,7 +395,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                  );
             case 'competitions': return <CompetitionView />;
             case 'projects': return <ProjectsView onNavigate={handleNavigate} />;
-            case 'discover': return <DiscoverView />;
+            case 'discover': return <DiscoverView email={userEmail} />;
             case 'edgram': return <EdgramView />;
             case 'debate': return <DebateView initialMessage={debateInitialMessage} />;
             case 'tracker': return <TrackerView />;
@@ -404,7 +405,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             case 'invite_earn': return <InviteEarnView onContactUs={() => setIsContactUsOpen(true)} />;
             case 'research_lab': return <ResearchLabView />;
             case 'create_space': return <div className="flex items-center justify-center h-full text-gray-500">Create Space Coming Soon</div>; // Fallback if navigated via other means, though sidebar handles logic
-            case 'learning_methods': return <div className="flex items-center justify-center h-full text-gray-500">Learning Methods Coming Soon</div>;
+            case 'learning_methods': return <LearningMethodsView />;
             case 'chrome_extension': return <div className="flex items-center justify-center h-full text-gray-500">Chrome Extension Coming Soon</div>;
             default:
                 return <AddContentView onCourseCreated={handleCourseCreated} recentVideos={recentVideos} onSelectRecent={handleSelectCourse} />;

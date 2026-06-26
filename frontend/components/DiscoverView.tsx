@@ -1,73 +1,214 @@
 
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+    ShareIcon, CloudyIcon, SunIcon, TrendingUpIcon, TrendingDownIcon,
+    XIcon, RefreshIcon
+} from './icons';
+import { SourceConfig, DiscoverPhase } from './discover/types';
+import DiscoverOnboarding from './discover/DiscoverOnboarding';
+import DiscoverGrid from './discover/DiscoverGrid';
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import { ShareIcon, DotsHorizontalIcon, PlusIcon, XIcon, CloudyIcon, SunIcon, TrendingUpIcon, TrendingDownIcon } from './icons';
+const processingLogs: string[] = [
+    '[KERNEL] Initializing cross-mapping pipeline v2.4.1...',
+    '[YOUTUBE] Scanning 5 channels · 142 videos queued',
+    '[TWITTER] Streaming timeline · 8 accounts · 2400 tweets processed',
+    '[REDDIT] Crawling r/MachineLearning, r/deeplearning, r/singularity ...',
+    '[NEWS] Parsing 3 RSS feeds · deduplication active',
+    '[JOURNAL] Querying arXiv, NeurIPS, JMLR · 89 preprints found',
+    '[EMBEDDING] Generating vector representations · dim=4096',
+    '[CLUSTER] Community detection · k=12 · modularity=0.73',
+    '[CROSS-MAP] Linking entities across YouTube ↔ Twitter ↔ arXiv',
+    '[CROSS-MAP] Confidence threshold 0.75 · 340 edges established',
+    '[FILTER] Applying domain weights · AI=0.85 Quantum=0.62 Bio=0.31',
+    '[RANK] Scoring by cross-source signal strength',
+    '[COMPLETE] Feed matrix generated · 8 cross-mapped cards ready',
+];
 
-const DiscoverView = () => {
+interface DiscoverViewProps {
+    email?: string;
+}
+
+const defaultConfig: SourceConfig = {
+    youtube: ['3Blue1Brown', 'TwoMinutePapers', 'YannicKilcher', 'Sentdex', 'Lex Fridman'],
+    twitter: ['@kareem_carr', '@ylecun', '@AndrewYNg', '@miramurati', '@jimfanvision'],
+    reddit: ['r/MachineLearning', 'r/singularity', 'r/deeplearning', 'r/artificial', 'r/compsci'],
+    news: ['MIT Technology Review', 'Nature News', 'arXiv Blog', 'ScienceDaily', 'Wired AI'],
+    journal: ['NeurIPS Proceedings', 'Nature Machine Intelligence', 'JMLR', 'ICLR Papers', 'IEEE TPAMI'],
+};
+
+const DiscoverView: React.FC<DiscoverViewProps> = ({ email = 'ayonburg@gmail.com' }) => {
+    const userEmail = email;
+    const stateKey = `discover_phase_${userEmail}`;
+    const configKey = `discover_config_${userEmail}`;
+    const lastPhaseRef = useRef<DiscoverPhase>('welcome');
+
+    const [phase, setPhase] = useState<DiscoverPhase>(() => {
+        try {
+            const stored = localStorage.getItem(stateKey);
+            if (stored === 'feed') return 'feed';
+        } catch {}
+        return 'welcome';
+    });
+    const [sourceConfig, setSourceConfig] = useState<SourceConfig>(() => {
+        try {
+            const stored = localStorage.getItem(configKey);
+            if (stored) return JSON.parse(stored);
+        } catch {}
+        return defaultConfig;
+    });
+    const [logIndex, setLogIndex] = useState(0);
+    const [activeLogs, setActiveLogs] = useState<string[]>([]);
+    const logEndRef = useRef<HTMLDivElement>(null);
+
+    // Processing simulation
+    useEffect(() => {
+        if (phase !== 'processing') return;
+        setActiveLogs([]);
+        setLogIndex(0);
+        const interval = setInterval(() => {
+            setLogIndex(prev => {
+                const next = prev + 1;
+                setActiveLogs(logs => [...logs, processingLogs[prev]].slice(-8));
+                if (next >= processingLogs.length) {
+                    clearInterval(interval);
+                    setTimeout(() => setPhase('feed'), 400);
+                    return next;
+                }
+                return next;
+            });
+        }, 320);
+        return () => clearInterval(interval);
+    }, [phase]);
+
+    useEffect(() => {
+        logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [activeLogs]);
+
+    // Persist phase and config to localStorage on every change
+    useEffect(() => {
+        try {
+            localStorage.setItem(stateKey, phase);
+            localStorage.setItem(configKey, JSON.stringify(sourceConfig));
+        } catch {}
+    }, [phase, sourceConfig, stateKey, configKey]);
+
+    const handleStartOnboarding = () => {
+        lastPhaseRef.current = phase;
+        setPhase('onboarding');
+    };
+    const handleOnboardingComplete = () => setPhase('processing');
+
     return (
         <div className="flex-1 flex h-full overflow-hidden dark:bg-black bg-neutral-100 dark:text-gray-300 text-neutral-800">
-            <div className="flex-1 overflow-y-auto p-6 lg:p-8 pt-24">
-                <header className="flex items-center justify-between mb-8">
-                    <div className="flex items-center space-x-4">
-                        <h1 className="text-2xl font-bold dark:text-white text-black" style={{ fontFamily: "'Lora', serif" }}>Discover</h1>
-                        <div className="flex items-center space-x-1 dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-lg p-1">
-                            <button className="px-3 py-1 text-sm rounded-md dark:bg-gray-700 bg-neutral-200 dark:text-white text-black font-medium">For You</button>
-                            <button className="px-3 py-1 text-sm rounded-md text-gray-500 dark:text-gray-400 dark:hover:bg-gray-800 hover:bg-neutral-100 transition-colors">Top</button>
-                            <button className="px-3 py-1 text-sm rounded-md text-gray-500 dark:text-gray-400 dark:hover:bg-gray-800 hover:bg-neutral-100 transition-colors">Topics</button>
-                        </div>
-                    </div>
-                     <button className="flex items-center text-sm font-semibold dark:text-gray-300 text-neutral-700 dark:hover:text-white hover:text-black dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 px-4 py-2 rounded-lg transition-colors hover:bg-neutral-50">
-                        <ShareIcon className="w-4 h-4 mr-2" />
-                        Share
-                    </button>
-                </header>
 
-                <main className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                    {/* Main Article */}
-                    <div className="lg:col-span-2 xl:col-span-2 dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6 shadow-sm">
-                        <h2 className="text-3xl font-bold dark:text-white text-black mb-3" style={{ fontFamily: "'Lora', serif" }}>AI deepfakes flood social media after Hurricane Melissa</h2>
-                        <p className="text-xs text-gray-500 mb-4">Published 2 hours ago</p>
-                        <div className="w-full h-80 rounded-lg overflow-hidden mb-4">
-                            <img src="https://images.unsplash.com/photo-1561553543-e4c7b6809b5a?q=80&w=2938&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Hurricane" className="w-full h-full object-cover"/>
-                        </div>
-                        <p className="dark:text-gray-400 text-neutral-600 mb-4">Fake videos of sharks in pools and destroyed airports gained millions of views, undermining safety messages as the storm killed dozens.</p>
-                        <div className="flex items-center justify-between text-gray-500">
-                             <div className="text-sm">... 84 sources</div>
-                             <DotsHorizontalIcon className="w-5 h-5"/>
-                        </div>
-                    </div>
-                    {/* Other articles */}
-                    {Array(5).fill(0).map((_, i) => (
-                        <div key={i} className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-5 shadow-sm">
-                            <div className="w-full h-40 rounded-lg overflow-hidden mb-4">
-                               <img src={`https://picsum.photos/seed/${i+10}/400/300`} alt="Article" className="w-full h-full object-cover"/>
+            {/* Main Content Area */}
+            <div className="flex-1 overflow-y-auto p-6 lg:p-8 pt-24">
+
+                {phase === 'welcome' && (
+                    <div className="h-full flex flex-col items-center justify-center text-center">
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5 }}
+                            className="max-w-xl"
+                        >
+                            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-blue-500/20 border border-emerald-500/30 flex items-center justify-center">
+                                <svg className="w-10 h-10 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
+                                </svg>
                             </div>
-                            <h3 className="text-lg font-bold dark:text-white text-black mb-2" style={{ fontFamily: "'Lora', serif" }}>Nvidia CEO dines with Samsung, Hyundai chiefs</h3>
-                            <p className="text-xs text-gray-500 mb-3">Published {i+3} hours ago</p>
-                            <div className="flex items-center justify-between text-gray-500">
-                                <div className="text-sm">... {49 - i*5} sources</div>
-                                <DotsHorizontalIcon className="w-5 h-5"/>
-                            </div>
-                        </div>
-                    ))}
-                </main>
-            </div>
-            
-            <aside className="w-96 border-l dark:border-gray-800 border-neutral-200 p-6 pt-24 overflow-y-auto hidden lg:block shrink-0 dark:bg-black bg-neutral-50">
-                <div className="bg-gradient-to-br dark:from-teal-500/20 from-teal-500/10 dark:to-green-500/20 to-green-500/10 border dark:border-teal-500/30 border-teal-500/40 rounded-xl p-5 mb-6 relative shadow-sm">
-                    <button className="absolute top-3 right-3 dark:text-gray-400 text-neutral-600 dark:hover:text-white hover:text-black"><XIcon className="w-4 h-4"/></button>
-                    <h3 className="font-bold dark:text-white text-black mb-2">Make it yours</h3>
-                    <p className="text-sm dark:text-gray-300 text-neutral-700 mb-4">Select topics and interests to customize your Discover experience</p>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                        {['Tech & Science', 'Finance', 'Arts & Culture', 'Sports', 'Entertainment'].map(topic => (
-                            <button key={topic} className="text-sm dark:bg-black/20 bg-white/60 dark:hover:bg-black/40 hover:bg-white border dark:border-white/20 border-black/10 rounded-full px-3 py-1 shadow-sm transition-colors">
-                                {topic}
+                            <h1 className="text-4xl font-bold dark:text-white text-black mb-3 font-serif">Multi-Source Discovery</h1>
+                            <p className="dark:text-gray-500 text-neutral-600 text-sm mb-8 leading-relaxed max-w-md mx-auto">
+                                Cross-map content from YouTube, X, Reddit, news, and journals into a unified, ranked feed.
+                                Configure your sources, then let the engine find the signal across platforms.
+                            </p>
+                            <button
+                                onClick={handleStartOnboarding}
+                                className="px-8 py-3.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-500 transition-colors shadow-lg shadow-emerald-900/20 text-sm"
+                            >
+                                Configure Your Discovery Engine
                             </button>
-                        ))}
+                        </motion.div>
                     </div>
-                    <button className="w-full bg-teal-400 text-black font-semibold py-2 rounded-lg hover:bg-teal-300 transition-colors">Save Interests</button>
-                </div>
+                )}
+
+                {phase === 'processing' && (
+                    <div className="h-full flex flex-col items-center justify-center">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="w-full max-w-lg"
+                        >
+                            <div className="flex items-center gap-3 mb-6">
+                                <RefreshIcon className="w-5 h-5 text-emerald-400 animate-spin" />
+                                <h2 className="text-lg font-bold dark:text-white text-black font-serif">Generating Your Discovery Feed</h2>
+                            </div>
+                            <div className="dark:bg-[#121212] bg-white border dark:border-white/10 border-gray-200 rounded-xl p-5 font-mono text-xs leading-relaxed h-64 overflow-y-auto custom-scrollbar">
+                                {activeLogs.map((log, i) => (
+                                    <motion.div
+                                        key={`${i}-${log}`}
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        className={log.includes('COMPLETE') ? 'text-emerald-400' : 'dark:text-gray-400 text-neutral-600'}
+                                    >
+                                        {log}
+                                    </motion.div>
+                                ))}
+                                <div ref={logEndRef} />
+                            </div>
+                            <div className="mt-4 flex items-center gap-2 text-xs dark:text-gray-600 text-neutral-500">
+                                <div className="w-32 h-1.5 dark:bg-neutral-800 bg-neutral-200 rounded-full overflow-hidden">
+                                    <motion.div
+                                        className="h-full bg-emerald-500 rounded-full"
+                                        initial={{ width: '0%' }}
+                                        animate={{ width: `${(logIndex / processingLogs.length) * 100}%` }}
+                                        transition={{ duration: 0.3 }}
+                                    />
+                                </div>
+                                <span>{Math.round((logIndex / processingLogs.length) * 100)}%</span>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+
+                {phase === 'feed' && (
+                    <>
+                        <header className="flex items-center justify-between mb-8">
+                            <div className="flex items-center space-x-4">
+                                <h1 className="text-2xl font-bold dark:text-white text-black font-serif">Discovery Feed</h1>
+                                <div className="flex items-center space-x-1 dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 rounded-lg p-1">
+                                    <button className="px-3 py-1 text-sm rounded-md dark:bg-gray-700 bg-neutral-200 dark:text-white text-black font-medium">Cross-Mapped</button>
+                                    <button className="px-3 py-1 text-sm rounded-md text-gray-500 dark:hover:bg-gray-800 hover:bg-neutral-100 transition-colors">Latest</button>
+                                    <button className="px-3 py-1 text-sm rounded-md text-gray-500 dark:hover:bg-gray-800 hover:bg-neutral-100 transition-colors">Trending</button>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <span className="hidden sm:flex text-xs dark:text-gray-600 text-neutral-500 items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                    5 platforms · {sourceConfig.youtube.length + sourceConfig.twitter.length + sourceConfig.reddit.length + sourceConfig.news.length + sourceConfig.journal.length} sources
+                                </span>
+                                <button
+                                    onClick={handleStartOnboarding}
+                                    className="flex items-center text-sm font-semibold dark:text-gray-300 text-neutral-700 dark:hover:text-white hover:text-black dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 px-4 py-2 rounded-lg transition-colors hover:bg-neutral-50"
+                                >
+                                    <RefreshIcon className="w-4 h-4 mr-2" />
+                                    Reconfigure
+                                </button>
+                                <button className="flex items-center text-sm font-semibold dark:text-gray-300 text-neutral-700 dark:hover:text-white hover:text-black dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 px-4 py-2 rounded-lg transition-colors hover:bg-neutral-50">
+                                    <ShareIcon className="w-4 h-4 mr-2" />
+                                    Share Feed
+                                </button>
+                            </div>
+                        </header>
+                        <DiscoverGrid />
+                    </>
+                )}
+
+            </div>
+
+            {/* Right Sidebar — preserved exactly */}
+            <aside className="w-96 border-l dark:border-gray-800 border-neutral-200 p-6 pt-24 overflow-y-auto hidden lg:block shrink-0 dark:bg-black bg-neutral-50">
 
                 <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-xl p-5 mb-6 shadow-sm">
                     <div className="flex justify-between items-start">
@@ -125,6 +266,19 @@ const DiscoverView = () => {
                  </div>
 
             </aside>
+
+            {/* Onboarding Modal */}
+            <AnimatePresence>
+                {phase === 'onboarding' && (
+                    <DiscoverOnboarding
+                        sourceConfig={sourceConfig}
+                        onUpdateConfig={setSourceConfig}
+                        onComplete={handleOnboardingComplete}
+                        onClose={() => setPhase(lastPhaseRef.current)}
+                    />
+                )}
+            </AnimatePresence>
+
         </div>
     );
 };
