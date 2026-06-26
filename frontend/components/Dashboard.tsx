@@ -23,6 +23,14 @@ import ResearchLabView from './ResearchLabView';
 import SpaceView from './SpaceView';
 import { DeleteSpaceModal, ShareSpaceModal } from './modals';
 import { Theme } from '../App';
+import {
+  initMockDb,
+  getSpaces,
+  addSpace,
+  updateSpace,
+  deleteSpace,
+  type Space,
+} from '../utils/mockDb';
 
 export interface HistoryItem {
     id: number;
@@ -38,11 +46,6 @@ export interface HistoryItem {
     level?: string;
     learningReason?: string;
     isStructured?: boolean;
-}
-
-interface Space {
-    id: string;
-    title: string;
 }
 
 interface DashboardProps {
@@ -188,6 +191,15 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
         }
     ]);
 
+    // Load spaces from localStorage on mount
+    useEffect(() => {
+        initMockDb();
+        const stored = getSpaces();
+        if (stored.length > 0) {
+            setSpaces(stored);
+        }
+    }, []);
+
     useEffect(() => {
         if (initialView) {
             setCurrentView(initialView);
@@ -273,10 +285,10 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
 
     const handleCreateSpace = () => {
         setIsCreatingSpace(true);
-        // Simulate creation delay and shimmer effect
         setTimeout(() => {
-            const newId = (spaces.length + 1).toString();
-            const newSpace = { id: newId, title: `Untitled Space (${newId})` };
+            const newId = `space_${Date.now()}`;
+            const newSpace: Space = { id: newId, title: `Untitled Space (${spaces.length + 1})` };
+            addSpace(newSpace);
             setSpaces(prev => [...prev, newSpace]);
             setIsCreatingSpace(false);
             setCurrentView(`space_${newId}`);
@@ -284,14 +296,16 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
     };
 
     const handleRenameSpace = (id: string, newTitle: string) => {
+        updateSpace(id, { title: newTitle });
         setSpaces(prev => prev.map(s => s.id === id ? { ...s, title: newTitle } : s));
     };
 
     const handleDeleteSpace = () => {
         if (deleteSpaceId) {
+            deleteSpace(deleteSpaceId);
             setSpaces(prev => prev.filter(s => s.id !== deleteSpaceId));
             if (currentView === `space_${deleteSpaceId}`) {
-                setCurrentView('add_content'); // Fallback view
+                setCurrentView('add_content');
             }
             setDeleteSpaceId(null);
         }
@@ -307,12 +321,11 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
         }
 
         if (currentView.startsWith('space_')) {
-            const spaceId = currentView.split('_')[1];
-            const space = spaces.find(s => s.id === spaceId);
+            const spaceId = currentView.slice('space_'.length);
+            const space = spaces.find(s => s.id === spaceId) || spaces[0];
             if (space) {
                 return <SpaceView space={space} />;
             } else {
-                // If space doesn't exist (e.g. deleted), show fallback
                 return <div className="flex items-center justify-center h-full text-gray-500">Space not found</div>;
             }
         }

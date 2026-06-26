@@ -6,6 +6,25 @@ export interface Tenant {
   status: 'pending' | 'active';
 }
 
+export interface Space {
+  id: string;
+  title: string;
+  isInstitutional?: boolean;
+  institutionName?: string;
+  logoColor?: string;
+}
+
+export interface LibraryItem {
+  id: string;
+  title: string;
+  fileSize: string;
+  status: 'processing' | 'ready';
+  currentStep: 'idle' | 'parsing' | 'vectorizing' | 'synthesizing' | 'complete';
+  audioUrl?: string;
+  flashcardCount: number;
+  timestamp: string;
+}
+
 export interface PartnershipRequest {
   id: string;
   name: string;
@@ -17,12 +36,32 @@ export interface PartnershipRequest {
 
 const MOCK_KEY = 'stephen_mock_tenants';
 const PARTNERSHIP_KEY = 'stephen_partnership_requests';
+const LIBRARY_KEY = 'stephen_mock_library';
+const SPACES_KEY = 'stephen_mock_spaces';
 
 const defaultTenant: Tenant = {
   id: 'org_du_72cb1a',
   email: 'admin@du.ac.bd',
   passkey: 'STPH-DHAKA-2026-X9',
   status: 'pending',
+};
+
+const defaultInstitutionalSpace: Space = {
+  id: 'space_buet_001',
+  title: 'BUET Portal',
+  isInstitutional: true,
+  institutionName: 'BUET',
+  logoColor: 'emerald',
+};
+
+const defaultLibraryItem: LibraryItem = {
+  id: 'lib_default_001',
+  title: 'Attention Is All You Need.pdf',
+  fileSize: '2.4 MB',
+  status: 'ready',
+  currentStep: 'complete',
+  flashcardCount: 12,
+  timestamp: new Date().toISOString(),
 };
 
 const defaultPartnershipRequest: PartnershipRequest = {
@@ -42,6 +81,15 @@ export function initMockDb(): void {
   const existingPartnerships = localStorage.getItem(PARTNERSHIP_KEY);
   if (!existingPartnerships) {
     localStorage.setItem(PARTNERSHIP_KEY, JSON.stringify([defaultPartnershipRequest]));
+  }
+  const existingLib = localStorage.getItem(LIBRARY_KEY);
+  if (!existingLib) {
+    localStorage.setItem(LIBRARY_KEY, JSON.stringify([defaultLibraryItem]));
+  }
+  const existingSpaces = localStorage.getItem(SPACES_KEY);
+  const parsedSpaces = existingSpaces ? JSON.parse(existingSpaces) : [];
+  if (parsedSpaces.length === 0) {
+    localStorage.setItem(SPACES_KEY, JSON.stringify([defaultInstitutionalSpace]));
   }
 }
 
@@ -128,6 +176,86 @@ export function getPendingRequests(): PartnershipRequest[] {
 function getPartnershipRequests(): PartnershipRequest[] {
   const raw = localStorage.getItem(PARTNERSHIP_KEY);
   return raw ? JSON.parse(raw) : [];
+}
+
+export function getLibraryItems(): LibraryItem[] {
+  const raw = localStorage.getItem(LIBRARY_KEY);
+  return raw ? JSON.parse(raw) : [];
+}
+
+function saveLibraryItems(items: LibraryItem[]): void {
+  localStorage.setItem(LIBRARY_KEY, JSON.stringify(items));
+}
+
+export function addLibraryItem(item: LibraryItem): void {
+  const items = getLibraryItems();
+  items.push(item);
+  saveLibraryItems(items);
+}
+
+export function updateLibraryItemStatus(
+  id: string,
+  step: LibraryItem['currentStep'],
+  status: LibraryItem['status']
+): void {
+  const items = getLibraryItems();
+  const idx = items.findIndex(i => i.id === id);
+  if (idx !== -1) {
+    items[idx].currentStep = step;
+    items[idx].status = status;
+    saveLibraryItems(items);
+  }
+}
+
+export function removeLibraryItem(id: string): void {
+  const items = getLibraryItems().filter(i => i.id !== id);
+  saveLibraryItems(items);
+}
+
+export function getSpaces(): Space[] {
+  const raw = localStorage.getItem(SPACES_KEY);
+  if (!raw) {
+    const seed = [defaultInstitutionalSpace];
+    localStorage.setItem(SPACES_KEY, JSON.stringify(seed));
+    return seed;
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      const seed = [defaultInstitutionalSpace];
+      localStorage.setItem(SPACES_KEY, JSON.stringify(seed));
+      return seed;
+    }
+    return parsed;
+  } catch {
+    const seed = [defaultInstitutionalSpace];
+    localStorage.setItem(SPACES_KEY, JSON.stringify(seed));
+    return seed;
+  }
+}
+
+function saveSpaces(items: Space[]): void {
+  localStorage.setItem(SPACES_KEY, JSON.stringify(items));
+}
+
+export function addSpace(space: Space): void {
+  const items = getSpaces();
+  items.push(space);
+  saveSpaces(items);
+}
+
+export function updateSpace(id: string, updates: Partial<Space>): void {
+  const items = getSpaces();
+  const idx = items.findIndex(s => s.id === id);
+  if (idx !== -1) {
+    items[idx] = { ...items[idx], ...updates };
+    saveSpaces(items);
+  }
+}
+
+export function deleteSpace(id: string): void {
+  const items = getSpaces().filter(s => s.id !== id);
+  saveSpaces(items);
 }
 
 export function approvePartnershipRequest(id: string): string | null {

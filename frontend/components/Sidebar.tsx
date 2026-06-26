@@ -9,13 +9,9 @@ import {
     ProfessorStudentIcon, DebatePodiumIcon, EdgramIcon, GlobeIcon,
     LocationTrackerIcon, LearningMethodIcon, ChevronDownIcon, CrownIcon,
     ViewSidebarIcon, CheckCircleIcon, DollarIcon, SidebarToggleIcon, CubeIcon, DotsHorizontalIcon, TrashIcon, ShareIcon, PencilIcon, ChevronRightIcon,
-    HomeIcon
+    HomeIcon, ShieldCheckIcon
 } from './icons';
-
-interface Space {
-    id: string;
-    title: string;
-}
+import type { Space } from '../utils/mockDb';
 
 interface SidebarProps {
   toggleTheme: () => void;
@@ -300,10 +296,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     >
                                         <button 
                                             onClick={() => onNavigate(`space_${space.id}`)} 
-                                            className={`w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === `space_${space.id}` ? activeClasses : ''}`}
+                                            className={`w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === `space_${space.id}` ? (space.isInstitutional ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300' : activeClasses) : ''}`}
                                         >
                                             <div className={`${activeItem === `space_${space.id}` ? 'text-current' : iconColor} shrink-0 transition-transform duration-200`}>
-                                                {hoveredSpaceId === space.id && isExpanded ? (
+                                                {space.isInstitutional ? (
+                                                    <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                                                        <ShieldCheckIcon className="w-4 h-4 text-emerald-400" />
+                                                    </div>
+                                                ) : hoveredSpaceId === space.id && isExpanded ? (
                                                     <ChevronRightIcon className="w-5 h-5" />
                                                 ) : (
                                                     <CubeIcon className="w-5 h-5" />
@@ -330,11 +330,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                                 onClick={(e) => e.stopPropagation()}
                                                             />
                                                         ) : (
-                                                            <span className="font-medium text-[15px] whitespace-nowrap overflow-hidden block">{space.title}</span>
+                                                            <span className={`font-medium text-[15px] whitespace-nowrap overflow-hidden block ${space.isInstitutional ? 'text-emerald-200' : ''}`}>{space.title}</span>
                                                         )}
                                                     </motion.div>
                                                 )}
                                             </AnimatePresence>
+                                            
+                                            {/* Institutional verification badge */}
+                                            {space.isInstitutional && isExpanded && (
+                                                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(52,211,153,0.5)] shrink-0 ml-2" />
+                                            )}
                                             
                                             {/* Three Dots Button - Only visible on hover and when expanded */}
                                             {isExpanded && hoveredSpaceId === space.id && editingSpaceId !== space.id && (
