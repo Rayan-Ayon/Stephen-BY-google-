@@ -17,6 +17,7 @@ import {
 } from './competitions/types';
 import {
     heroEvents, gridEvents, defaultPreferences, domainOptions,
+    allFormalSourcesList, historyBenchmarks,
 } from './competitions/seeds';
 
 // ── Onboarding Flow (4 panes) ──
@@ -40,12 +41,16 @@ interface OnboardingFlowProps {
     preferences: PreferenceVector;
     onUpdate: (p: PreferenceVector) => void;
     onComplete: () => void;
+    onClose: () => void;
 }
 
-const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ preferences, onUpdate, onComplete }) => {
+const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ preferences, onUpdate, onComplete, onClose }) => {
     const [step, setStep] = useState(1);
     const [localPrefs, setLocalPrefs] = useState<PreferenceVector>(preferences);
     const [customDomain, setCustomDomain] = useState('');
+    const [subSourceChips, setSubSourceChips] = useState<string[]>(preferences.allFormalSubSources);
+    const [manualLinkInput, setManualLinkInput] = useState('');
+    const [manualLinkNames, setManualLinkNames] = useState<string[]>(preferences.manualLinkNames);
 
     const update = (patch: Partial<PreferenceVector>) => {
         const next = { ...localPrefs, ...patch };
@@ -74,8 +79,14 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ preferences, onUpdate, 
         update({ sources: next });
     };
 
-    const toggleExecution = () => {
-        update({ executionType: localPrefs.executionType === 'online' ? 'offline' : 'online' as ExecutionType });
+    const toggleExecutionType = (type: 'online' | 'offline') => {
+        const current = [...localPrefs.executionType];
+        if (current.includes(type)) {
+            if (current.length === 1) return;
+            update({ executionType: current.filter(t => t !== type) });
+        } else {
+            update({ executionType: [...current, type] });
+        }
     };
 
     return (
@@ -83,6 +94,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ preferences, onUpdate, 
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
+                onClick={() => onClose()}
                 className="absolute inset-0 bg-black/80 backdrop-blur-sm"
             />
             <motion.div
@@ -90,6 +102,14 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ preferences, onUpdate, 
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 className="relative w-full max-w-2xl bg-[#0a0a0a] border border-white/10 rounded-3xl shadow-2xl overflow-hidden z-10 max-h-[90vh] flex flex-col"
             >
+                {/* Close X button */}
+                <button
+                    onClick={() => onClose()}
+                    className="absolute top-4 right-4 z-20 p-2 rounded-full hover:bg-white/10 text-gray-500 hover:text-white transition-colors"
+                >
+                    <XIcon className="w-5 h-5" />
+                </button>
+
                 {/* Header */}
                 <div className="px-8 py-5 border-b border-white/5 shrink-0">
                     <div className="flex items-center justify-between">
@@ -193,27 +213,122 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ preferences, onUpdate, 
                                         </button>
                                     ))}
                                 </div>
-                                <div className="flex items-center gap-3 p-4 rounded-xl border bg-[#111] border-white/10 mb-6">
+
+                                {/* All Formal Sources toggle */}
+                                <div className="flex items-center gap-3 p-4 rounded-xl border bg-[#111] border-white/10 mb-4">
                                     <button
-                                        onClick={() => toggleSource('All Formal')}
+                                        onClick={() => {
+                                            if (localPrefs.sources.includes('All Formal')) {
+                                                setSubSourceChips([]);
+                                                update({
+                                                    sources: localPrefs.sources.filter(s => s !== 'All Formal'),
+                                                    allFormalSubSources: [],
+                                                });
+                                            } else {
+                                                const all = [...allFormalSourcesList];
+                                                setSubSourceChips(all);
+                                                update({
+                                                    sources: [...localPrefs.sources, 'All Formal'],
+                                                    allFormalSubSources: all,
+                                                });
+                                            }
+                                        }}
                                         className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                                            localPrefs.sources.includes('All Formal')
+                                            subSourceChips.length === 12
                                                 ? 'bg-emerald-600 border-emerald-600'
                                                 : 'border-gray-600'
                                         }`}
                                     >
-                                        {localPrefs.sources.includes('All Formal') && <CheckIcon className="w-3.5 h-3.5 text-white" />}
+                                        {subSourceChips.length === 12 && <CheckIcon className="w-3.5 h-3.5 text-white" />}
                                     </button>
                                     <span className="text-sm text-gray-400">All Formal Sources</span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="text"
-                                        placeholder="+ Add Custom Competition Link"
-                                        value={localPrefs.customSources.length > 0 ? localPrefs.customSources.join(', ') : ''}
-                                        onChange={e => update({ customSources: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
-                                        className="flex-1 bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 text-white placeholder-gray-500"
-                                    />
+
+                                {/* Sub-source chips — only active chips with remove */}
+                                <AnimatePresence>
+                                    {subSourceChips.length > 0 && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            className="overflow-hidden mb-4"
+                                        >
+                                            <div className="flex flex-wrap gap-2 p-3 rounded-lg bg-white/5 border border-white/10">
+                                                {subSourceChips.map(src => (
+                                                    <span
+                                                        key={src}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/15 border border-emerald-500/30 text-emerald-300"
+                                                    >
+                                                        {src}
+                                                        <button
+                                                            onClick={() => {
+                                                                const next = subSourceChips.filter(s => s !== src);
+                                                                setSubSourceChips(next);
+                                                                update({ allFormalSubSources: next });
+                                                            }}
+                                                            className="hover:text-white ml-1 transition-colors"
+                                                        >
+                                                            <XIcon className="w-3 h-3" />
+                                                        </button>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
+                                {/* Custom link input + Add button */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="+ Add Custom Competition Link"
+                                            value={manualLinkInput}
+                                            onChange={e => setManualLinkInput(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter' && manualLinkInput.trim()) {
+                                                    const name = manualLinkInput.trim().replace(/^https?:\/\//, '').split('/')[0].split('.')[0];
+                                                    const next = [...manualLinkNames, name];
+                                                    setManualLinkNames(next);
+                                                    update({ manualLinkNames: next });
+                                                    setManualLinkInput('');
+                                                }
+                                            }}
+                                            className="flex-1 bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 text-white placeholder-gray-500"
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                if (!manualLinkInput.trim()) return;
+                                                const name = manualLinkInput.trim().replace(/^https?:\/\//, '').split('/')[0].split('.')[0];
+                                                const next = [...manualLinkNames, name];
+                                                setManualLinkNames(next);
+                                                update({ manualLinkNames: next });
+                                                setManualLinkInput('');
+                                            }}
+                                            className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-500 transition-colors shrink-0"
+                                        >
+                                            Add
+                                        </button>
+                                    </div>
+                                    {manualLinkNames.length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {manualLinkNames.map((name, i) => (
+                                                <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-900/20 border border-emerald-500/30 rounded-full text-xs text-emerald-300">
+                                                    {name}
+                                                    <button
+                                                        onClick={() => {
+                                                            const next = manualLinkNames.filter((_, idx) => idx !== i);
+                                                            setManualLinkNames(next);
+                                                            update({ manualLinkNames: next });
+                                                        }}
+                                                        className="hover:text-white"
+                                                    >
+                                                        <XIcon className="w-3 h-3" />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </motion.div>
                         )}
@@ -239,9 +354,9 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ preferences, onUpdate, 
                                         <label className="block text-sm font-semibold text-gray-300 mb-2">Execution Type</label>
                                         <div className="flex gap-2">
                                             <button
-                                                onClick={() => update({ executionType: 'online' })}
+                                                onClick={() => toggleExecutionType('online')}
                                                 className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${
-                                                    localPrefs.executionType === 'online'
+                                                    localPrefs.executionType.includes('online')
                                                         ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
                                                         : 'bg-[#111] border-white/10 text-gray-400'
                                                 }`}
@@ -249,9 +364,9 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ preferences, onUpdate, 
                                                 Online
                                             </button>
                                             <button
-                                                onClick={() => update({ executionType: 'offline' })}
+                                                onClick={() => toggleExecutionType('offline')}
                                                 className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${
-                                                    localPrefs.executionType === 'offline'
+                                                    localPrefs.executionType.includes('offline')
                                                         ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
                                                         : 'bg-[#111] border-white/10 text-gray-400'
                                                 }`}
@@ -262,7 +377,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ preferences, onUpdate, 
                                     </div>
 
                                     <AnimatePresence>
-                                        {localPrefs.executionType === 'offline' && (
+                                        {localPrefs.executionType.includes('offline') && (
                                             <motion.div
                                                 initial={{ opacity: 0, height: 0 }}
                                                 animate={{ opacity: 1, height: 'auto' }}
@@ -328,8 +443,8 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ preferences, onUpdate, 
                                             {/* Team Scale */}
                                             <div>
                                                 <label className="block text-sm font-semibold text-gray-300 mb-3">Team Scale</label>
-                                                <div className="grid grid-cols-3 gap-3">
-                                                    {(['solo', 'small', 'large'] as TeamScale[]).map(scale => (
+                                                <div className="grid grid-cols-4 gap-2">
+                                                    {(['solo', 'small', 'large', 'any'] as TeamScale[]).map(scale => (
                                                         <button
                                                             key={scale}
                                                             onClick={() => update({ teamScale: scale })}
@@ -339,7 +454,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ preferences, onUpdate, 
                                                                     : 'bg-[#111] border-white/10 text-gray-400 hover:border-white/30'
                                                             }`}
                                                         >
-                                                            {scale === 'solo' ? 'Solo' : scale === 'small' ? '2-3 People' : '3-5 People'}
+                                                            {scale === 'solo' ? 'Solo' : scale === 'small' ? '2-3' : scale === 'large' ? '3-5' : 'Any'}
                                                         </button>
                                                     ))}
                                                 </div>
@@ -373,6 +488,32 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ preferences, onUpdate, 
                                                 <p className="text-[10px] text-gray-600 mt-1">
                                                     Based on your domain breadth ({localPrefs.domains.length} areas), team preference, and target difficulty.
                                                 </p>
+                                            </div>
+
+                                            {/* Scraped data from your history */}
+                                            <div className="p-5 rounded-xl bg-[#111] border border-white/10">
+                                                <p className="text-xs font-semibold text-gray-400 mb-3 flex items-center gap-2">
+                                                    <DatabaseIcon className="w-4 h-4 text-emerald-400" />
+                                                    Scraped data from your history
+                                                </p>
+                                                <div className="space-y-3">
+                                                    {historyBenchmarks.map(b => (
+                                                        <div key={b.label}>
+                                                            <div className="flex justify-between text-xs mb-1">
+                                                                <span className="text-gray-400">{b.label}</span>
+                                                                <span className="text-emerald-400 font-medium">{b.percentage}%</span>
+                                                            </div>
+                                                            <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                                                <motion.div
+                                                                    initial={{ width: 0 }}
+                                                                    animate={{ width: `${b.percentage}%` }}
+                                                                    transition={{ duration: 0.6, ease: 'easeOut' }}
+                                                                    className="h-full rounded-full bg-emerald-500"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </motion.div>
                                     )}
@@ -583,6 +724,7 @@ const EventCard: React.FC<{ event: CompetitionEvent }> = ({ event }) => (
 // ── Main Competition View ──
 const CompetitionView: React.FC = () => {
     const [isConfigured, setIsConfigured] = useState(false);
+    const [showWizard, setShowWizard] = useState(false);
     const [preferences, setPreferences] = useState<PreferenceVector>(defaultPreferences);
     const [heroIndex, setHeroIndex] = useState(0);
     const [activeFilter, setActiveFilter] = useState('All');
@@ -620,15 +762,44 @@ const CompetitionView: React.FC = () => {
         setIsConfigured(true);
     };
 
-    // ── Onboarding Phase ──
-    if (!isConfigured) {
+    // ── Welcome Screen ──
+    if (!isConfigured && !showWizard) {
         return (
             <div className="flex-1 flex h-full overflow-hidden dark:bg-black bg-neutral-100">
-                <OnboardingFlow
-                    preferences={preferences}
-                    onUpdate={setPreferences}
-                    onComplete={handleCompleteOnboarding}
-                />
+                <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="max-w-xl"
+                    >
+                        <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-blue-500/20 border border-emerald-500/30 flex items-center justify-center">
+                            <TrophyIcon className="w-10 h-10 text-emerald-400" />
+                        </div>
+                        <h1 className="text-4xl font-bold dark:text-white text-black mb-3 font-serif">Competition Aggregator Hub</h1>
+                        <p className="dark:text-gray-500 text-neutral-600 text-sm mb-8 leading-relaxed max-w-md mx-auto">
+                            Discover, track, and compete across the world's top AI and engineering challenges — all in one personalized feed.
+                        </p>
+                        <ul className="text-left space-y-3 mb-8 max-w-sm mx-auto">
+                            {[
+                                { icon: BrainIcon, text: 'Filter by domain — AI, Robotics, Space, Quantum, Biotech & more' },
+                                { icon: GlobeIcon, text: 'Aggregate from Kaggle, Google, Facebook, Anthropic & formal sources' },
+                                { icon: SparkleIcon, text: 'Win-probability scoring & skill-target match for every event' },
+                            ].map((item, i) => (
+                                <li key={i} className="flex items-center gap-3 dark:text-gray-400 text-neutral-600 text-sm">
+                                    <item.icon className="w-4 h-4 text-emerald-400 shrink-0" />
+                                    {item.text}
+                                </li>
+                            ))}
+                        </ul>
+                        <button
+                            onClick={() => setShowWizard(true)}
+                            className="px-8 py-3.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-500 transition-colors shadow-lg shadow-emerald-900/20 text-sm"
+                        >
+                            Let's Start
+                        </button>
+                    </motion.div>
+                </div>
             </div>
         );
     }
@@ -660,7 +831,7 @@ const CompetitionView: React.FC = () => {
                             </button>
                         </div>
                         <button
-                            onClick={() => { setIsConfigured(false); }}
+                            onClick={() => setShowWizard(true)}
                             className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-700/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-700/30 transition-colors"
                         >
                             <SettingsIcon className="w-4 h-4" />
@@ -773,6 +944,18 @@ const CompetitionView: React.FC = () => {
                     </AnimatePresence>
                 </div>
             </div>
+
+            {/* ── Onboarding Wizard Overlay ── */}
+            {showWizard && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <OnboardingFlow
+                        preferences={preferences}
+                        onUpdate={setPreferences}
+                        onComplete={handleCompleteOnboarding}
+                        onClose={() => setShowWizard(false)}
+                    />
+                </div>
+            )}
         </div>
     );
 };

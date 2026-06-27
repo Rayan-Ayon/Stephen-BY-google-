@@ -1,7 +1,7 @@
 
 export type CompetitionSource = 'Kaggle' | 'Google' | 'Facebook' | 'Anthropic' | 'Custom Link' | 'All Formal';
-export type ExecutionType = 'online' | 'offline';
-export type TeamScale = 'solo' | 'small' | 'large';
+export type ExecutionType = ('online' | 'offline')[];
+export type TeamScale = 'solo' | 'small' | 'large' | 'any';
 
 export interface CompetitionEvent {
     id: string;
@@ -23,6 +23,8 @@ export interface PreferenceVector {
     domains: string[];
     sources: CompetitionSource[];
     customSources: string[];
+    allFormalSubSources: string[];
+    manualLinkNames: string[];
     minPrizeTier: string;
     executionType: ExecutionType;
     targetCountry: string;
