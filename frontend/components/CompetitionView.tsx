@@ -1,82 +1,423 @@
-import React, { useState, useEffect, useRef } from 'react';
+
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    SearchIcon, AdjustIcon, DotsHorizontalIcon, 
-    ChevronDownIcon, StarIcon, TrophyIcon, 
+import {
+    SearchIcon, AdjustIcon, DotsHorizontalIcon,
+    ChevronDownIcon, StarIcon, TrophyIcon,
     GlobeIcon, ClockIcon, CheckCircleIcon, UsersIcon,
     ListBulletIcon, FlagIcon, FlaskIcon, XIcon, TagIcon,
-    ChevronLeftIcon, ChevronRightIcon
+    ChevronLeftIcon, ChevronRightIcon, BrainIcon, CubeIcon,
+    LightningIcon, FireIcon, MicroscopeIcon, MapPinIcon,
+    SparkleIcon, DatabaseIcon, GoogleIcon, SettingsIcon,
+    BarChartIcon, DollarIcon, PlusIcon, CheckIcon,
 } from './icons';
+import {
+    CompetitionEvent, CompetitionSource, ExecutionType,
+    TeamScale, PreferenceVector,
+} from './competitions/types';
+import {
+    heroEvents, gridEvents, defaultPreferences, domainOptions,
+} from './competitions/seeds';
 
-interface CompData {
-    id: number;
-    title: string;
-    description: string;
-    category: string;
-    teams: string;
-    prize: string;
-    status: string;
-    image: string;
-    logo: string;
-    isFeatured?: boolean;
-    timeLeft?: string;
-    type?: string; // e.g., "Code Competition"
+// ── Onboarding Flow (4 panes) ──
+const sourceMeta: { key: CompetitionSource; label: string; icon: React.ReactNode }[] = [
+    { key: 'Kaggle', label: 'Kaggle', icon: <DatabaseIcon className="w-5 h-5" /> },
+    { key: 'Google', label: 'Google', icon: <GoogleIcon className="w-5 h-5" /> },
+    { key: 'Facebook', label: 'Facebook', icon: <UsersIcon className="w-5 h-5" /> },
+    { key: 'Anthropic', label: 'Anthropic', icon: <BrainIcon className="w-5 h-5" /> },
+];
+
+const domainIcons: Record<string, React.ReactNode> = {
+    AI: <BrainIcon className="w-4 h-4" />,
+    Robotics: <CubeIcon className="w-4 h-4" />,
+    Space: <GlobeIcon className="w-4 h-4" />,
+    'Vibe-coding': <LightningIcon className="w-4 h-4" />,
+    Quantum: <FireIcon className="w-4 h-4" />,
+    Biotech: <FlaskIcon className="w-4 h-4" />,
+};
+
+interface OnboardingFlowProps {
+    preferences: PreferenceVector;
+    onUpdate: (p: PreferenceVector) => void;
+    onComplete: () => void;
 }
 
-// Extended Mock Data
-const allCompetitionsData: CompData[] = [
-    { id: 5, title: 'AI Mathematical Olympiad - Progress Prize 1', description: 'Solve international-level math competitions using AI models.', category: 'Featured', type: 'Code Competition', teams: '1076 Teams', prize: '$2,207,152', status: '3 months to go', image: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=2070&auto=format&fit=crop', logo: 'https://cdn-icons-png.flaticon.com/512/2111/2111466.png' },
-    { id: 9, title: 'Santa 2025 - Christmas Tree Packing Challenge', description: 'How many Christmas trees can fit in a box? Help solve a classic optimization problem with a festive twist.', category: 'Featured', type: 'Optimization', teams: '2753 Teams', prize: '$50,000', status: '23 days to go', image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=2069&auto=format&fit=crop', logo: 'https://cdn-icons-png.flaticon.com/512/2111/2111466.png' },
-    { id: 6, title: 'Vesuvius Challenge - Ink Detection', description: 'Build a model to virtually unwrap and read ancient scrolls.', category: 'Research', type: 'Code Competition', teams: '585 Teams', prize: '$200,000', status: 'A month to go', image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=2070&auto=format&fit=crop', logo: 'https://cdn-icons-png.flaticon.com/512/2111/2111466.png' },
-    { id: 7, title: 'Google Tunix Hack - Train a model to show its work', description: 'Teach a LLM to reason using Tunix, Google\'s new JAX-native library for LLM post-training.', category: 'Featured', type: 'Hackathon', teams: '135 Teams', prize: '$100,000', status: '5 days to go', image: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?q=80&w=2070&auto=format&fit=crop', logo: 'https://cdn-icons-png.flaticon.com/512/2111/2111466.png' },
-    { id: 10, title: 'Predicting Loan Payback', description: 'Playground Series - Season 5, Episode 11', category: 'Playground', type: 'Tabular', teams: '3724 Teams', prize: 'Swag', status: 'A month ago', image: 'https://images.unsplash.com/photo-1579621970795-87facc2f976d?q=80&w=2070&auto=format&fit=crop', logo: 'https://cdn-icons-png.flaticon.com/512/2111/2111466.png' },
-    { id: 8, title: 'CSIRO - Image2Biomass Prediction', description: 'Predict biomass using the provided satellite imagery.', category: 'Research', type: 'Code Competition', teams: '3169 Teams', prize: '$75,000', status: '21 days to go', image: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1932&auto=format&fit=crop', logo: 'https://cdn-icons-png.flaticon.com/512/2111/2111466.png' },
-    { id: 11, title: 'Recod.ai/LUC - Scientific Image Forgery Detection', description: 'Develop methods that can accurately detect and segment copy-move forgeries within biomedical research images.', category: 'Research', type: 'Code Competition', teams: '1451 Teams', prize: '$55,000', status: '8 days to go', image: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=2070&auto=format&fit=crop', logo: 'https://cdn-icons-png.flaticon.com/512/2111/2111466.png' },
-    { id: 1, title: 'Titanic - Machine Learning from Disaster', description: 'Start here! Predict survival on the Titanic and get familiar with ML basics.', category: 'Getting Started', type: 'Getting Started', teams: '15390 Teams', prize: 'Knowledge', status: 'Ongoing', image: 'https://images.unsplash.com/photo-1500076656116-558758c991c1?q=80&w=2071&auto=format&fit=crop', logo: 'https://cdn-icons-png.flaticon.com/512/2111/2111466.png' },
-];
+const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ preferences, onUpdate, onComplete }) => {
+    const [step, setStep] = useState(1);
+    const [localPrefs, setLocalPrefs] = useState<PreferenceVector>(preferences);
+    const [customDomain, setCustomDomain] = useState('');
 
-const banners = [
-    { id: 1, title: 'Nuclear Elimination', image: 'https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?q=80&w=2070&auto=format&fit=crop', bgColor: 'bg-teal-950', theme: 'International Day' },
-    { id: 2, title: 'Freeze Weapons', image: 'https://images.unsplash.com/photo-1534067783941-51c9c23eaec3?q=80&w=2069&auto=format&fit=crop', bgColor: 'bg-white', theme: 'Freeze' },
-    { id: 3, title: 'Science is the Future', image: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=2070&auto=format&fit=crop', bgColor: 'bg-purple-900', theme: 'Let\'s Learn' },
-];
+    const update = (patch: Partial<PreferenceVector>) => {
+        const next = { ...localPrefs, ...patch };
+        setLocalPrefs(next);
+        onUpdate(next);
+    };
 
-const FilterDropdown: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    const toggleDomain = (d: string) => {
+        const next = localPrefs.domains.includes(d)
+            ? localPrefs.domains.filter(x => x !== d)
+            : [...localPrefs.domains, d];
+        update({ domains: next });
+    };
+
+    const addCustomDomain = () => {
+        const val = customDomain.trim();
+        if (!val || localPrefs.domains.includes(val)) return;
+        update({ domains: [...localPrefs.domains, val] });
+        setCustomDomain('');
+    };
+
+    const toggleSource = (source: CompetitionSource) => {
+        const next = localPrefs.sources.includes(source)
+            ? localPrefs.sources.filter(s => s !== source)
+            : [...localPrefs.sources, source];
+        update({ sources: next });
+    };
+
+    const toggleExecution = () => {
+        update({ executionType: localPrefs.executionType === 'online' ? 'offline' : 'online' as ExecutionType });
+    };
+
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.98 }}
-            className="absolute top-20 right-6 w-[360px] md:w-[450px] dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-neutral-200 rounded-2xl shadow-2xl z-[60] overflow-hidden flex flex-col"
-        >
-            <div className="p-6 overflow-y-auto max-h-[600px] custom-scrollbar">
-                <div className="mb-6">
-                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3 block">Tags</label>
-                    <div className="relative">
-                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                        <input type="text" placeholder="Search for tags" className="w-full pl-9 pr-4 py-2.5 rounded-full border dark:border-gray-700 border-gray-300 dark:bg-[#111] bg-white text-sm dark:text-white focus:outline-none transition-colors" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div
+                initial={{ opacity: 0, scale: 0.97, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                className="relative w-full max-w-2xl bg-[#0a0a0a] border border-white/10 rounded-3xl shadow-2xl overflow-hidden z-10 max-h-[90vh] flex flex-col"
+            >
+                {/* Header */}
+                <div className="px-8 py-5 border-b border-white/5 shrink-0">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-lg font-bold text-white font-serif leading-none mb-0.5">
+                                Personalize Your Competition Feed
+                            </h2>
+                            <p className="text-xs text-gray-500">Configure your preference vectors</p>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            {[1, 2, 3, 4].map(s => (
+                                <div
+                                    key={s}
+                                    className={`w-2 h-2 rounded-full transition-colors ${s <= step ? 'bg-emerald-500' : 'bg-gray-700'}`}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                    <div className="w-full h-1 bg-gray-800 rounded-full mt-3 overflow-hidden">
+                        <motion.div
+                            className="h-full bg-emerald-500 rounded-full"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(step / 4) * 100}%` }}
+                        />
                     </div>
                 </div>
-                <div className="mb-6">
-                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3 block">Status</label>
-                    <div className="flex flex-wrap gap-2">
-                        {['Active', 'Entered', 'Completed'].map(s => <button key={s} className="px-4 py-1.5 rounded-full border dark:border-gray-700 border-gray-300 text-sm dark:text-gray-300 text-gray-700 hover:border-black dark:hover:border-white transition-colors">{s}</button>)}
-                    </div>
-                </div>
-            </div>
-            <div className="p-4 border-t dark:border-gray-800 border-neutral-200 flex justify-end space-x-3 bg-white dark:bg-[#1a1a1a]">
-                <button onClick={onClose} className="px-4 py-2 font-bold text-sm dark:text-white text-black">Clear</button>
-                <button onClick={onClose} className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black font-bold text-sm rounded-full">Done</button>
-            </div>
-        </motion.div>
-    );
-}
 
-// Button Controlled Carousel for Pills
-const NavCarousel: React.FC<{ 
-    items: string[], 
-    activeFilter: string, 
-    setActiveFilter: (f: string) => void 
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                    <AnimatePresence mode="wait">
+                        {/* ─── Pane 1: Domains ─── */}
+                        {step === 1 && (
+                            <motion.div key="p1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
+                                <h3 className="text-xl font-bold text-white mb-1">Select Your Domains</h3>
+                                <p className="text-sm text-gray-500 mb-5">Choose the fields you want to track in competitions.</p>
+                                <div className="flex flex-wrap gap-3 mb-6">
+                                    {domainOptions.map(d => (
+                                        <button
+                                            key={d}
+                                            onClick={() => toggleDomain(d)}
+                                            className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold transition-all border ${
+                                                localPrefs.domains.includes(d)
+                                                    ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
+                                                    : 'bg-[#111] border-white/10 text-gray-400 hover:border-white/30'
+                                            }`}
+                                        >
+                                            {domainIcons[d]}
+                                            {d}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="+ Add Custom Domain String"
+                                        value={customDomain}
+                                        onChange={e => setCustomDomain(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') addCustomDomain(); }}
+                                        className="flex-1 bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 text-white placeholder-gray-500"
+                                    />
+                                    <button
+                                        onClick={addCustomDomain}
+                                        className="p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 transition-colors"
+                                    >
+                                        <PlusIcon className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                {localPrefs.domains.filter(d => !domainOptions.includes(d)).length > 0 && (
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        {localPrefs.domains.filter(d => !domainOptions.includes(d)).map(d => (
+                                            <span key={d} className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-900/20 border border-emerald-500/30 rounded-full text-xs text-emerald-300">
+                                                {d}
+                                                <button onClick={() => toggleDomain(d)} className="hover:text-white"><XIcon className="w-3 h-3" /></button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </motion.div>
+                        )}
+
+                        {/* ─── Pane 2: Sources ─── */}
+                        {step === 2 && (
+                            <motion.div key="p2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
+                                <h3 className="text-xl font-bold text-white mb-1">Select Competition Sources</h3>
+                                <p className="text-sm text-gray-500 mb-5">Toggle the platforms you want to pull events from.</p>
+                                <div className="grid grid-cols-2 gap-3 mb-6">
+                                    {sourceMeta.map(s => (
+                                        <button
+                                            key={s.key}
+                                            onClick={() => toggleSource(s.key)}
+                                            className={`flex items-center gap-3 p-4 rounded-xl border text-left transition-all ${
+                                                localPrefs.sources.includes(s.key)
+                                                    ? 'bg-emerald-500/10 border-emerald-500/40 text-white'
+                                                    : 'bg-[#111] border-white/10 text-gray-500 hover:border-white/30'
+                                            }`}
+                                        >
+                                            <div className={`p-2 rounded-lg ${localPrefs.sources.includes(s.key) ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-800 text-gray-500'}`}>
+                                                {s.icon}
+                                            </div>
+                                            <span className="text-sm font-semibold">{s.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="flex items-center gap-3 p-4 rounded-xl border bg-[#111] border-white/10 mb-6">
+                                    <button
+                                        onClick={() => toggleSource('All Formal')}
+                                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                                            localPrefs.sources.includes('All Formal')
+                                                ? 'bg-emerald-600 border-emerald-600'
+                                                : 'border-gray-600'
+                                        }`}
+                                    >
+                                        {localPrefs.sources.includes('All Formal') && <CheckIcon className="w-3.5 h-3.5 text-white" />}
+                                    </button>
+                                    <span className="text-sm text-gray-400">All Formal Sources</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="+ Add Custom Competition Link"
+                                        value={localPrefs.customSources.length > 0 ? localPrefs.customSources.join(', ') : ''}
+                                        onChange={e => update({ customSources: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                                        className="flex-1 bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 text-white placeholder-gray-500"
+                                    />
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* ─── Pane 3: Parameters ─── */}
+                        {step === 3 && (
+                            <motion.div key="p3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
+                                <h3 className="text-xl font-bold text-white mb-1">Set Your Parameters</h3>
+                                <p className="text-sm text-gray-500 mb-5">Configure search constraints and preferences.</p>
+
+                                <div className="space-y-5">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-300 mb-2">Minimum Prize Tier ($)</label>
+                                        <input
+                                            type="number"
+                                            value={localPrefs.minPrizeTier}
+                                            onChange={e => update({ minPrizeTier: e.target.value })}
+                                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-300 mb-2">Execution Type</label>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => update({ executionType: 'online' })}
+                                                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${
+                                                    localPrefs.executionType === 'online'
+                                                        ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
+                                                        : 'bg-[#111] border-white/10 text-gray-400'
+                                                }`}
+                                            >
+                                                Online
+                                            </button>
+                                            <button
+                                                onClick={() => update({ executionType: 'offline' })}
+                                                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${
+                                                    localPrefs.executionType === 'offline'
+                                                        ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
+                                                        : 'bg-[#111] border-white/10 text-gray-400'
+                                                }`}
+                                            >
+                                                Offline
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <AnimatePresence>
+                                        {localPrefs.executionType === 'offline' && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                className="space-y-4 overflow-hidden"
+                                            >
+                                                <div>
+                                                    <label className="block text-sm font-semibold text-gray-300 mb-2">Target Country</label>
+                                                    <input
+                                                        type="text"
+                                                        value={localPrefs.targetCountry}
+                                                        onChange={e => update({ targetCountry: e.target.value })}
+                                                        placeholder="e.g. Switzerland"
+                                                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-semibold text-gray-300 mb-2">Target City</label>
+                                                    <input
+                                                        type="text"
+                                                        value={localPrefs.targetCity}
+                                                        onChange={e => update({ targetCity: e.target.value })}
+                                                        placeholder="e.g. Zurich"
+                                                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                                                    />
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* ─── Pane 4: Deep Diagnostics ─── */}
+                        {step === 4 && (
+                            <motion.div key="p4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
+                                <h3 className="text-xl font-bold text-white mb-1">Deep Diagnostics</h3>
+                                <p className="text-sm text-gray-500 mb-5">Fine-tune your profile or skip to get started.</p>
+
+                                <div className="flex items-center gap-3 p-4 rounded-xl border bg-[#111] border-white/10 mb-6">
+                                    <button
+                                        onClick={() => update({ showAdvanced: !localPrefs.showAdvanced })}
+                                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                                            localPrefs.showAdvanced
+                                                ? 'bg-emerald-600 border-emerald-600'
+                                                : 'border-gray-600'
+                                        }`}
+                                    >
+                                        {localPrefs.showAdvanced && <CheckIcon className="w-3.5 h-3.5 text-white" />}
+                                    </button>
+                                    <span className="text-sm text-gray-300 font-medium">More Details</span>
+                                    <span className="text-xs text-gray-600">(Skip if you prefer quick start)</span>
+                                </div>
+
+                                <AnimatePresence>
+                                    {localPrefs.showAdvanced && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            className="space-y-6 overflow-hidden"
+                                        >
+                                            {/* Team Scale */}
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-300 mb-3">Team Scale</label>
+                                                <div className="grid grid-cols-3 gap-3">
+                                                    {(['solo', 'small', 'large'] as TeamScale[]).map(scale => (
+                                                        <button
+                                                            key={scale}
+                                                            onClick={() => update({ teamScale: scale })}
+                                                            className={`py-3 rounded-xl text-sm font-semibold border transition-colors ${
+                                                                localPrefs.teamScale === scale
+                                                                    ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
+                                                                    : 'bg-[#111] border-white/10 text-gray-400 hover:border-white/30'
+                                                            }`}
+                                                        >
+                                                            {scale === 'solo' ? 'Solo' : scale === 'small' ? '2-3 People' : '3-5 People'}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Difficulty Slider */}
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-300 mb-3">
+                                                    Target Difficulty: <span className="text-emerald-400">{localPrefs.difficulty}/10</span>
+                                                </label>
+                                                <input
+                                                    type="range"
+                                                    min={1}
+                                                    max={10}
+                                                    value={localPrefs.difficulty}
+                                                    onChange={e => update({ difficulty: parseInt(e.target.value) })}
+                                                    className="w-full h-2 bg-gray-800 rounded-full appearance-none cursor-pointer accent-emerald-500"
+                                                />
+                                                <div className="flex justify-between text-xs text-gray-600 mt-1">
+                                                    <span>Beginner</span>
+                                                    <span>Expert</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Win Probability Preview */}
+                                            <div className="p-5 rounded-xl bg-gradient-to-r from-emerald-900/20 to-blue-900/20 border border-emerald-500/20">
+                                                <p className="text-xs text-gray-500 mb-1">Estimated Win Probability</p>
+                                                <p className="text-2xl font-bold text-emerald-400 font-serif">
+                                                    {Math.max(5, 40 - localPrefs.difficulty * 3 + (localPrefs.teamScale === 'solo' ? 10 : localPrefs.teamScale === 'small' ? 5 : 0))}%
+                                                </p>
+                                                <p className="text-[10px] text-gray-600 mt-1">
+                                                    Based on your domain breadth ({localPrefs.domains.length} areas), team preference, and target difficulty.
+                                                </p>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
+                                {!localPrefs.showAdvanced && (
+                                    <div className="p-5 rounded-xl bg-gray-900/30 border border-white/5 text-center">
+                                        <p className="text-sm text-gray-500">Advanced diagnostics skipped. Defaulting to balanced profile.</p>
+                                    </div>
+                                )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
+                {/* Footer */}
+                <div className="px-8 py-5 border-t border-white/5 shrink-0 flex justify-between items-center">
+                    {step > 1 ? (
+                        <button onClick={() => setStep(step - 1)} className="px-6 py-2.5 text-sm font-bold text-gray-400 hover:text-white transition-colors">
+                            Back
+                        </button>
+                    ) : <div />}
+                    {step < 4 ? (
+                        <button onClick={() => setStep(step + 1)} className="px-8 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-500 transition-colors">
+                            Next
+                        </button>
+                    ) : (
+                        <button
+                            onClick={onComplete}
+                            className="px-8 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-500 transition-colors shadow-lg shadow-emerald-900/20"
+                        >
+                            Activate My Feed
+                        </button>
+                    )}
+                </div>
+            </motion.div>
+        </div>
+    );
+};
+
+// ── Nav Carousel (from existing view) ──
+const NavCarousel: React.FC<{
+    items: string[];
+    activeFilter: string;
+    setActiveFilter: (f: string) => void;
 }> = ({ items, activeFilter, setActiveFilter }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -98,47 +439,34 @@ const NavCarousel: React.FC<{
 
     const scroll = (direction: 'left' | 'right') => {
         if (scrollRef.current) {
-            const scrollAmount = 200;
-            scrollRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+            scrollRef.current.scrollBy({ left: direction === 'left' ? -200 : 200, behavior: 'smooth' });
         }
     };
 
     return (
         <div className="relative group flex items-center w-full">
             {showLeftArrow && (
-                <button 
-                    onClick={() => scroll('left')}
-                    className="absolute left-0 z-10 p-1.5 bg-white dark:bg-[#1a1a1a] rounded-full shadow-md border border-gray-200 dark:border-gray-800 text-gray-500 hover:text-black dark:hover:text-white transition-all -ml-2"
-                >
+                <button onClick={() => scroll('left')} className="absolute left-0 z-10 p-1.5 bg-white dark:bg-[#1a1a1a] rounded-full shadow-md border border-gray-200 dark:border-gray-800 text-gray-500 hover:text-black dark:hover:text-white transition-all -ml-2">
                     <ChevronLeftIcon className="w-4 h-4" />
                 </button>
             )}
-            
-            <div 
-                ref={scrollRef}
-                onScroll={checkScroll}
-                className="flex items-center space-x-2 overflow-hidden scroll-smooth w-full px-1 py-1"
-            >
+            <div ref={scrollRef} onScroll={checkScroll} className="flex items-center space-x-2 overflow-hidden scroll-smooth w-full px-1 py-1">
                 {items.map(filter => (
                     <button
                         key={filter}
                         onClick={() => setActiveFilter(filter)}
                         className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all border shrink-0 ${
-                            activeFilter === filter 
-                            ? 'dark:bg-white bg-black dark:text-black text-white dark:border-white border-black' 
-                            : 'dark:bg-[#1a1a1a] bg-neutral-50 dark:text-gray-400 text-neutral-600 dark:border-gray-800 border-neutral-200 hover:dark:border-gray-600'
+                            activeFilter === filter
+                                ? 'dark:bg-white bg-black dark:text-black text-white dark:border-white border-black'
+                                : 'dark:bg-[#1a1a1a] bg-neutral-50 dark:text-gray-400 text-neutral-600 dark:border-gray-800 border-neutral-200 hover:dark:border-gray-600'
                         }`}
                     >
                         {filter}
                     </button>
                 ))}
             </div>
-
             {showRightArrow && (
-                <button 
-                    onClick={() => scroll('right')}
-                    className="absolute right-0 z-10 p-1.5 bg-white dark:bg-[#1a1a1a] rounded-full shadow-md border border-gray-200 dark:border-gray-800 text-gray-500 hover:text-black dark:hover:text-white transition-all -mr-2"
-                >
+                <button onClick={() => scroll('right')} className="absolute right-0 z-10 p-1.5 bg-white dark:bg-[#1a1a1a] rounded-full shadow-md border border-gray-200 dark:border-gray-800 text-gray-500 hover:text-black dark:hover:text-white transition-all -mr-2">
                     <ChevronRightIcon className="w-4 h-4" />
                 </button>
             )}
@@ -146,268 +474,184 @@ const NavCarousel: React.FC<{
     );
 };
 
-// Expanded Nav with All Competitions on Right of Featured
-const ExpandedNav: React.FC<{ onSelect: (filter: string) => void }> = ({ onSelect }) => {
-    const items = [
-        { label: 'Featured', desc: 'Premier challenges with prizes', icon: <StarIcon className="w-6 h-6"/> },
-        { label: 'All Competitions', desc: 'Everything, past & present', icon: <ListBulletIcon className="w-6 h-6"/> }, // Right of Featured
-        { label: 'Getting Started', desc: 'Approachable ML fundamentals', icon: <FlagIcon className="w-6 h-6"/> },
-        { label: 'Research', desc: 'Scientific and scholarly challenges', icon: <FlaskIcon className="w-6 h-6"/> },
-        { label: 'Community', desc: 'Created by fellow Kagglers', icon: <UsersIcon className="w-6 h-6"/> },
-    ];
-
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const [showLeftArrow, setShowLeftArrow] = useState(false);
-    const [showRightArrow, setShowRightArrow] = useState(true);
-
-    const checkScroll = () => {
-        if (scrollRef.current) {
-            const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-            setShowLeftArrow(scrollLeft > 0);
-            setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
-        }
-    };
-
-    useEffect(() => {
-        checkScroll();
-        window.addEventListener('resize', checkScroll);
-        return () => window.removeEventListener('resize', checkScroll);
-    }, []);
-
-    const scroll = (direction: 'left' | 'right') => {
-        if (scrollRef.current) {
-            const scrollAmount = 300;
-            scrollRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
-        }
-    };
-
-    return (
-        <div className="relative w-full group">
-            {showLeftArrow && (
-                <button 
-                    onClick={() => scroll('left')}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white dark:bg-[#1a1a1a] rounded-full shadow-lg border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 hover:scale-110 transition-all -ml-2"
-                >
-                    <ChevronLeftIcon className="w-5 h-5" />
-                </button>
-            )}
-            
-            <div 
-                ref={scrollRef}
-                onScroll={checkScroll}
-                className="w-full overflow-hidden flex space-x-4 pb-4 pt-1 scroll-smooth"
-            >
-                {items.map((item, idx) => (
-                    <button 
-                        key={idx}
-                        onClick={() => onSelect(item.label)}
-                        className="flex-shrink-0 flex flex-col justify-between w-64 h-32 p-5 rounded-2xl border dark:border-gray-800 border-neutral-200 dark:bg-[#1a1a1a] bg-white hover:border-black dark:hover:border-white transition-all text-left group shadow-sm hover:shadow-md"
-                    >
-                        <div className="flex justify-between items-start w-full">
-                            <span className="font-bold text-base dark:text-white text-black leading-tight pr-2">{item.label}</span>
-                            <div className="text-gray-400 group-hover:text-black dark:group-hover:text-white transition-colors">
-                                {item.icon}
-                            </div>
-                        </div>
-                        <span className="text-xs dark:text-gray-400 text-gray-500 font-medium group-hover:text-gray-800 dark:group-hover:text-gray-200 transition-colors line-clamp-2">
-                            {item.desc}
-                        </span>
-                    </button>
-                ))}
-            </div>
-
-            {showRightArrow && (
-                <button 
-                    onClick={() => scroll('right')}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white dark:bg-[#1a1a1a] rounded-full shadow-lg border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 hover:scale-110 transition-all -mr-2"
-                >
-                    <ChevronRightIcon className="w-5 h-5" />
-                </button>
-            )}
-        </div>
-    );
+// ── Source icon lookup ──
+const sourceIcon = (src: CompetitionSource): React.ReactNode => {
+    switch (src) {
+        case 'Kaggle': return <DatabaseIcon className="w-3.5 h-3.5" />;
+        case 'Google': return <GoogleIcon className="w-3.5 h-3.5" />;
+        case 'Facebook': return <UsersIcon className="w-3.5 h-3.5" />;
+        case 'Anthropic': return <BrainIcon className="w-3.5 h-3.5" />;
+        default: return <GlobeIcon className="w-3.5 h-3.5" />;
+    }
 };
 
-const BannerCarousel = () => {
-    const [index, setIndex] = useState(0);
-
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setIndex((prev) => (prev + 1) % banners.length);
-        }, 3000);
-        return () => clearInterval(timer);
-    }, []);
-
-    return (
-        <div className="w-full max-w-7xl mx-auto px-6 pt-10 pb-4">
-            <div className="relative h-[240px] md:h-[320px] w-full rounded-[32px] overflow-hidden shadow-xl border dark:border-white/5 border-neutral-200">
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={banners[index].id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.8 }}
-                        className={`absolute inset-0 ${banners[index].bgColor}`}
-                    >
-                        <img src={banners[index].image} alt={banners[index].title} className="w-full h-full object-cover opacity-60 mix-blend-overlay" />
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/20 to-transparent flex flex-col justify-center px-12 md:px-20">
-                            <motion.span initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="text-white/80 font-bold text-xs uppercase tracking-widest mb-3">{banners[index].theme}</motion.span>
-                            <motion.h2 initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }} className="text-white text-3xl md:text-5xl font-bold max-w-lg leading-tight mb-8" style={{ fontFamily: "'Lora', serif" }}>{banners[index].title}</motion.h2>
-                            <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }}>
-                                <button className="px-8 py-3 bg-white text-black font-bold rounded-full hover:bg-neutral-200 transition-colors text-sm">Learn More</button>
-                            </motion.div>
-                        </div>
-                    </motion.div>
-                </AnimatePresence>
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2">
-                    {banners.map((_, i) => <div key={i} className={`h-1 rounded-full transition-all duration-300 ${i === index ? 'w-8 bg-white' : 'w-2 bg-white/30'}`} />)}
-                </div>
-            </div>
-        </div>
-    );
+const sourceColor = (src: CompetitionSource): string => {
+    switch (src) {
+        case 'Kaggle': return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+        case 'Google': return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+        case 'Facebook': return 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20';
+        case 'Anthropic': return 'text-purple-400 bg-purple-500/10 border-purple-500/20';
+        default: return 'text-gray-400 bg-gray-500/10 border-gray-500/20';
+    }
 };
 
-const AllCompetitionsList: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-    return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 px-6 pb-20">
-            {/* Header Area with Chip and Close Button */}
-            <div className="flex flex-col space-y-4 mb-6">
-                <div className="flex items-center space-x-2">
-                    <button 
-                        onClick={onClose}
-                        className="flex items-center space-x-2 px-4 py-1.5 rounded-full dark:bg-[#333] bg-neutral-200 dark:text-white text-black text-sm font-bold hover:opacity-80 transition-opacity"
-                    >
-                        <span>All competitions</span>
-                        <XIcon className="w-4 h-4" />
-                    </button>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold dark:text-white text-black">Results</h2>
-                    <div className="flex items-center space-x-3">
-                        <button className="text-xs font-bold text-gray-500 hover:text-black dark:hover:text-white flex items-center">
-                            Recently Launched <ChevronDownIcon className="w-3 h-3 ml-1" />
-                        </button>
-                        <button className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10 rounded">
-                            <ListBulletIcon className="w-5 h-5" />
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* List View */}
-            <div className="space-y-4">
-                {allCompetitionsData.map((comp, idx) => (
-                    <div key={`${comp.id}-${idx}`} className="flex items-start p-4 dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-xl hover:border-gray-400 dark:hover:border-gray-600 transition-all group cursor-pointer">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 mr-4 border dark:border-gray-700 border-gray-200">
-                            <img src={comp.image} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="flex-grow min-w-0">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h3 className="font-bold text-base dark:text-white text-black truncate group-hover:text-blue-500 transition-colors">{comp.title}</h3>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">{comp.description}</p>
-                                </div>
-                                <div className="text-right shrink-0 ml-4">
-                                    <p className="font-bold text-sm dark:text-white text-black">{comp.prize}</p>
-                                    <button className="text-gray-400 hover:text-black dark:hover:text-white mt-1 ml-auto block">
-                                        <DotsHorizontalIcon className="w-5 h-5 ml-auto" />
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="flex items-center mt-3 text-[11px] text-gray-500 font-medium space-x-3">
-                                {comp.category && (
-                                    <span className={`px-2 py-0.5 rounded ${comp.category.includes('Featured') ? 'bg-blue-500/10 text-blue-500' : 'bg-green-500/10 text-green-500'}`}>
-                                        {comp.category}
-                                    </span>
-                                )}
-                                {comp.type && (
-                                    <span className="dark:text-gray-400 text-gray-600">• {comp.type}</span>
-                                )}
-                                <span className="dark:text-gray-400 text-gray-600">• {comp.teams}</span>
-                                <span className={comp.status.includes('go') ? 'text-orange-500' : ''}>• {comp.status}</span>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
-
-const CompetitionCard: React.FC<{ data: CompData }> = ({ data }) => (
-    <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-xl overflow-hidden hover:border-gray-400 dark:hover:border-gray-600 transition-all group cursor-pointer flex flex-col h-full shadow-sm hover:shadow-md">
-        <div className="h-32 overflow-hidden relative border-b dark:border-gray-800 border-neutral-100">
-            <img src={data.image} alt={data.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            <div className="absolute top-3 left-3 w-10 h-10 rounded-lg bg-white p-1.5 shadow-sm border border-gray-100">
-                <img src={data.logo} alt="Logo" className="w-full h-full object-contain" />
-            </div>
-        </div>
-        <div className="p-5 flex flex-col flex-grow">
-            <h3 className="font-bold text-[15px] dark:text-white text-black mb-2 line-clamp-2 group-hover:text-blue-500 transition-colors leading-snug">{data.title}</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 line-clamp-2 flex-grow leading-relaxed">{data.description}</p>
-            
-            <div className="flex items-center justify-between text-[11px] font-medium pt-3 mt-auto border-t dark:border-gray-800 border-gray-100">
-                <div className="text-gray-600 dark:text-gray-400">
-                    <span className="font-bold dark:text-white text-black">{data.prize}</span>
-                    <span className="mx-1.5 text-gray-300 dark:text-gray-600">|</span>
-                    <span>{data.teams}</span>
-                </div>
-                <span className={`${data.status.includes('go') ? 'text-orange-500' : 'text-gray-400'}`}>
-                    {data.status}
+// ── Competition Card ──
+const EventCard: React.FC<{ event: CompetitionEvent }> = ({ event }) => (
+    <motion.div
+        layout
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className={`bg-[#161b22] border rounded-2xl p-5 flex flex-col transition-all hover:shadow-lg hover:shadow-emerald-900/5 ${
+            event.isHighlighted ? 'border-emerald-500/40' : 'border-gray-800/60'
+        }`}
+    >
+        {/* Tags row */}
+        <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+            {event.tags.map(tag => (
+                <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/15">
+                    {domainIcons[tag] || <TagIcon className="w-3 h-3" />}
+                    {tag}
                 </span>
+            ))}
+        </div>
+
+        {/* Title & Description */}
+        <h3 className="text-sm font-bold text-white mb-1.5 leading-snug">{event.title}</h3>
+        <p className="text-xs text-gray-400 mb-3 line-clamp-2 leading-relaxed">{event.description}</p>
+
+        {/* Source + Meta row */}
+        <div className="flex items-center justify-between mb-4">
+            <span className={`inline-flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-full border ${sourceColor(event.source)}`}>
+                {sourceIcon(event.source)}
+                {event.source}
+            </span>
+            <div className="flex items-center gap-2 text-[10px] text-gray-500">
+                <TrophyIcon className="w-3 h-3" />
+                <span className="font-semibold text-gray-300">{event.rewardPool}</span>
             </div>
         </div>
-    </div>
+
+        {/* Info row */}
+        <div className="flex items-center gap-3 text-[10px] text-gray-500 mb-4 flex-wrap">
+            <span className="flex items-center gap-1">
+                <BarChartIcon className="w-3 h-3" />
+                {Array.from({ length: 5 }, (_, i) => (
+                    <span key={i} className={i < Math.round(event.difficulty / 2) ? 'text-amber-400' : 'text-gray-700'}>★</span>
+                ))}
+            </span>
+            <span className="flex items-center gap-1">
+                <UsersIcon className="w-3 h-3" />
+                {event.teamConstraints === 'solo' ? 'Solo' : event.teamConstraints === 'small' ? '2-3' : '3-5'}
+            </span>
+            {event.region && (
+                <span className="flex items-center gap-1">
+                    <MapPinIcon className="w-3 h-3" />
+                    {event.region.city}
+                </span>
+            )}
+            <span className={`flex items-center gap-1 ml-auto font-medium ${event.daysLeft > 0 ? 'text-orange-400' : 'text-gray-600'}`}>
+                <ClockIcon className="w-3 h-3" />
+                {event.daysLeft > 0 ? `${event.daysLeft}d left` : 'Ended'}
+            </span>
+        </div>
+
+        {/* Scorecard */}
+        <div className="mt-auto pt-3 border-t border-gray-800 space-y-2.5">
+            <div>
+                <div className="flex justify-between text-[10px] font-medium mb-1">
+                    <span className="text-gray-500 flex items-center gap-1"><SparkleIcon className="w-3 h-3" /> Dynamic Win Probability</span>
+                    <span className="text-emerald-400">{event.computedWinRate}%</span>
+                </div>
+                <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${event.computedWinRate}%` }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                        className="h-full rounded-full bg-emerald-500"
+                    />
+                </div>
+            </div>
+            <div className="flex justify-between text-[10px] font-medium">
+                <span className="text-gray-500 flex items-center gap-1"><CheckCircleIcon className="w-3 h-3" /> Stephen Skill Target Match</span>
+                <span className="text-amber-400">{Math.round(event.computedWinRate / 10)}/10</span>
+            </div>
+        </div>
+    </motion.div>
 );
 
+// ── Main Competition View ──
 const CompetitionView: React.FC = () => {
-    const [activeFilter, setActiveFilter] = useState('Featured');
+    const [isConfigured, setIsConfigured] = useState(false);
+    const [preferences, setPreferences] = useState<PreferenceVector>(defaultPreferences);
+    const [heroIndex, setHeroIndex] = useState(0);
+    const [activeFilter, setActiveFilter] = useState('All');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [showCompactNav, setShowCompactNav] = useState(false);
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
-    const pillFilters = [
-        'Featured', 'All competitions', 'Getting Started', 'Research', 'Community', 'Playground', 'Simulations', 'Hackathons'
-    ];
+    // 2-second hero auto-cycle
+    useEffect(() => {
+        if (!isConfigured) return;
+        const t = setInterval(() => setHeroIndex(prev => (prev + 1) % heroEvents.length), 2000);
+        return () => clearInterval(t);
+    }, [isConfigured]);
 
-    const handleScroll = () => {
-        if (scrollContainerRef.current) {
-            const threshold = 400; 
-            setShowCompactNav(scrollContainerRef.current.scrollTop > threshold);
-        }
+    const allFilters = useMemo(() => {
+        const tags = new Set<string>();
+        heroEvents.forEach(e => e.tags.forEach(t => tags.add(t)));
+        gridEvents.forEach(e => e.tags.forEach(t => tags.add(t)));
+        return ['All', ...Array.from(tags).sort()];
+    }, []);
+
+    const allEvents = useMemo(() => [...heroEvents, ...gridEvents], []);
+
+    const filteredEvents = useMemo(() => {
+        return allEvents.filter(e => {
+            if (activeFilter !== 'All' && !e.tags.includes(activeFilter)) return false;
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase();
+                if (!e.title.toLowerCase().includes(q) && !e.description.toLowerCase().includes(q)) return false;
+            }
+            return true;
+        });
+    }, [allEvents, activeFilter, searchQuery]);
+
+    const handleCompleteOnboarding = () => {
+        setIsConfigured(true);
     };
 
-    // Close handler for the "All Competitions" page view
-    const closeAllCompetitions = () => {
-        setActiveFilter('Featured');
-    };
+    // ── Onboarding Phase ──
+    if (!isConfigured) {
+        return (
+            <div className="flex-1 flex h-full overflow-hidden dark:bg-black bg-neutral-100">
+                <OnboardingFlow
+                    preferences={preferences}
+                    onUpdate={setPreferences}
+                    onComplete={handleCompleteOnboarding}
+                />
+            </div>
+        );
+    }
 
-    // When "All Competitions" is active, we are in a different "page mode"
-    const isAllCompetitionsView = activeFilter === 'All competitions';
-
+    // ── Main View Phase ──
     return (
-        <div 
-            ref={scrollContainerRef}
-            onScroll={handleScroll}
-            className="flex-1 flex flex-col h-full overflow-y-auto dark:bg-black bg-white custom-scrollbar relative"
-        >
-            
-            {/* Sticky Header with Search */}
-            <div className="sticky top-0 z-40 dark:bg-black/95 bg-white/95 backdrop-blur-md border-b dark:border-gray-800 border-neutral-200 transition-all duration-300">
+        <div className="flex-1 flex flex-col h-full overflow-hidden dark:bg-black bg-white">
+            {/* Sticky Header */}
+            <div className="sticky top-0 z-40 dark:bg-black/95 bg-white/95 backdrop-blur-md border-b dark:border-gray-800 border-neutral-200">
                 <div className="max-w-7xl mx-auto px-6 py-4">
                     <div className="flex gap-4">
                         <div className="relative group flex-grow">
                             <div className="absolute left-5 top-1/2 -translate-y-1/2 dark:text-gray-400 text-gray-500">
                                 <SearchIcon className="w-5 h-5" />
                             </div>
-                            <input 
-                                type="text" 
-                                placeholder="Search competitions" 
-                                className="w-full h-[48px] pl-14 pr-32 dark:bg-[#1a1a1a] bg-neutral-100 dark:border-transparent border-neutral-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm dark:text-white transition-all"
+                            <input
+                                type="text"
+                                placeholder="Search competitions"
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                className="w-full h-[48px] pl-14 pr-32 dark:bg-[#1a1a1a] bg-neutral-100 dark:border-transparent border-neutral-200 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm dark:text-white transition-all"
                             />
-                            <button 
+                            <button
                                 onClick={() => setIsFilterOpen(!isFilterOpen)}
                                 className={`absolute right-2 top-1/2 -translate-y-1/2 flex items-center space-x-2 px-4 py-1.5 border rounded-full text-xs font-bold transition-colors ${isFilterOpen ? 'bg-black text-white border-black dark:bg-white dark:text-black' : 'dark:bg-black bg-white border-neutral-200 dark:border-gray-800 dark:text-gray-300 text-neutral-700 hover:dark:bg-gray-900'}`}
                             >
@@ -415,149 +659,119 @@ const CompetitionView: React.FC = () => {
                                 <span>Filters</span>
                             </button>
                         </div>
+                        <button
+                            onClick={() => { setIsConfigured(false); }}
+                            className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-700/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-700/30 transition-colors"
+                        >
+                            <SettingsIcon className="w-4 h-4" />
+                            Preferences
+                        </button>
                     </div>
-
-                    {/* Compact Nav (Pills) - Shown when scrolled down AND NOT in All Competitions view (as that view has its own header) */}
-                    <AnimatePresence>
-                        {showCompactNav && !isAllCompetitionsView && (
-                            <motion.div 
-                                initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                                animate={{ height: 'auto', opacity: 1, marginTop: 12 }}
-                                exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                                className="overflow-hidden"
-                            >
-                                <NavCarousel 
-                                    items={pillFilters} 
-                                    activeFilter={activeFilter} 
-                                    setActiveFilter={setActiveFilter} 
-                                />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
                 </div>
-
-                {/* Filter Dropdown */}
-                <AnimatePresence>
-                    {isFilterOpen && <FilterDropdown onClose={() => setIsFilterOpen(false)} />}
-                </AnimatePresence>
             </div>
 
             {/* Scrollable Content */}
-            <div className="max-w-7xl mx-auto w-full">
-                
-                {/* Condition: If "All Competitions" is active, show the List View "Page", else show Home View */}
-                {isAllCompetitionsView ? (
-                    <div className="pt-6">
-                        <AllCompetitionsList onClose={closeAllCompetitions} />
-                    </div>
-                ) : (
-                    <div className="px-6 pb-20">
-                        {/* Banner */}
-                        <BannerCarousel />
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+                <div className="max-w-7xl mx-auto w-full px-6 pb-16">
 
-                        {/* Expanded Nav (Big Buttons) */}
-                        <div className="mb-12 mt-4">
-                            <ExpandedNav onSelect={setActiveFilter} />
-                        </div>
-
-                        <div className="space-y-16">
-                            {/* Getting Started */}
-                            <section>
-                                <div className="mb-6">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <div className="flex items-center space-x-3">
-                                            <FlagIcon className="w-6 h-6 dark:text-white text-black" />
-                                            <h2 className="text-xl font-bold dark:text-white text-black">Getting Started</h2>
+                    {/* ── Hero Carousel ── */}
+                    <div className="pt-8 pb-8">
+                        <div className="relative h-[280px] md:h-[340px] w-full rounded-[32px] overflow-hidden shadow-xl border dark:border-white/5 border-neutral-200">
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={heroEvents[heroIndex].id}
+                                    initial={{ x: 100, opacity: 0 }}
+                                    animate={{ x: 0, opacity: 1 }}
+                                    exit={{ x: -100, opacity: 0 }}
+                                    transition={{ duration: 0.4, ease: 'easeInOut' }}
+                                    className="absolute inset-0"
+                                >
+                                    <img
+                                        src={`https://images.unsplash.com/photo-${[
+                                            '1635070041078-e363dbe005cb?w=1200&h=600&fit=crop',
+                                            '1509228468518-180dd4864904?w=1200&h=600&fit=crop',
+                                            '1464822759023-fed622ff2c3b?w=1200&h=600&fit=crop',
+                                            '1579621970795-87facc2f976d?w=1200&h=600&fit=crop',
+                                            '1532094349884-543bc11b234d?w=1200&h=600&fit=crop',
+                                            '1500382017468-9049fed747ef?w=1200&h=600&fit=crop',
+                                        ][heroEvents.indexOf(heroEvents[heroIndex]) % 6]}`}
+                                        alt={heroEvents[heroIndex].title}
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent flex flex-col justify-center px-10 md:px-16">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            {heroEvents[heroIndex].tags.map(tag => (
+                                                <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 backdrop-blur-sm">
+                                                    {domainIcons[tag]}{tag}
+                                                </span>
+                                            ))}
                                         </div>
-                                        <button className="text-sm font-bold text-blue-500 hover:text-blue-400 transition-colors">See all</button>
-                                    </div>
-                                    <p className="text-sm dark:text-gray-400 text-neutral-500">Competitions with approachable ML fundamentals.</p>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    {allCompetitionsData.filter(c => c.category === 'Getting Started').map(comp => <CompetitionCard key={comp.id} data={comp} />)}
-                                </div>
-                            </section>
-
-                            {/* Featured */}
-                            <section>
-                                <div className="flex items-center justify-between mb-8">
-                                    <div className="flex items-center space-x-3">
-                                        <StarIcon className="w-6 h-6 dark:text-white text-black" />
-                                        <h2 className="text-xl font-bold dark:text-white text-black">Featured Competitions</h2>
-                                    </div>
-                                    <div className="flex items-center space-x-4">
-                                        <button className="flex items-center space-x-2 text-sm font-bold dark:text-gray-400 text-neutral-600 hover:text-white">
-                                            <span>Hotness</span>
-                                            <ChevronDownIcon className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    {allCompetitionsData.filter(c => c.category === 'Featured').map(comp => <CompetitionCard key={comp.id} data={comp} />)}
-                                </div>
-                            </section>
-
-                            {/* Spotlight */}
-                            <section>
-                                <div className="mb-6">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <div className="flex items-center space-x-3">
-                                            <UsersIcon className="w-6 h-6 dark:text-white text-black" />
-                                            <h2 className="text-xl font-bold dark:text-white text-black">Community Spotlight</h2>
-                                        </div>
-                                        <button className="text-sm font-bold text-blue-500 hover:text-blue-400 transition-colors">See all</button>
-                                    </div>
-                                    <p className="text-sm dark:text-gray-400 text-neutral-500">Selected research and community competitions to explore.</p>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    {allCompetitionsData.slice(0, 3).map(comp => <CompetitionCard key={`spot-${comp.id}`} data={{...comp, prize: '$9,000', status: '13 hours to go'}} />)}
-                                </div>
-                            </section>
-
-                            {/* Recently Ended */}
-                            <section>
-                                <div className="mb-6">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <div className="flex items-center space-x-3">
-                                            <ClockIcon className="w-6 h-6 dark:text-white text-black" />
-                                            <h2 className="text-xl font-bold dark:text-white text-black">Recently Ended</h2>
-                                        </div>
-                                        <button className="text-sm font-bold text-blue-500 hover:text-blue-400 transition-colors">See all</button>
-                                    </div>
-                                </div>
-                                <div className="space-y-3">
-                                    {[1, 2, 3].map(i => (
-                                        <div key={i} className="flex items-center justify-between p-4 dark:bg-[#1a1a1a] bg-neutral-50 rounded-xl hover:dark:bg-[#222] transition-colors cursor-pointer group border dark:border-gray-800 border-neutral-200">
-                                            <div className="flex items-center space-x-4">
-                                                <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center overflow-hidden border dark:border-white/5">
-                                                    <img src={`https://picsum.photos/seed/${i + 70}/100/100`} className="w-full h-full object-cover" />
-                                                </div>
-                                                <div>
-                                                    <h4 className="font-bold dark:text-white text-black text-sm group-hover:text-blue-500 transition-colors">NFL Big Data Bowl 202{i}</h4>
-                                                    <p className="text-xs text-gray-500">{14 + i} days ago • {50000 * i}$ • {278 * i} Teams</p>
-                                                </div>
-                                            </div>
-                                            <button className="p-2 text-gray-500 hover:text-white transition-colors">
-                                                <DotsHorizontalIcon className="w-5 h-5" />
+                                        <motion.h2
+                                            initial={{ y: 10, opacity: 0 }}
+                                            animate={{ y: 0, opacity: 1 }}
+                                            transition={{ delay: 0.1 }}
+                                            className="text-white text-2xl md:text-4xl font-bold max-w-xl leading-tight mb-3 font-serif"
+                                        >
+                                            {heroEvents[heroIndex].title}
+                                        </motion.h2>
+                                        <motion.p
+                                            initial={{ y: 10, opacity: 0 }}
+                                            animate={{ y: 0, opacity: 1 }}
+                                            transition={{ delay: 0.2 }}
+                                            className="text-gray-300 text-sm max-w-md mb-5 line-clamp-2"
+                                        >
+                                            {heroEvents[heroIndex].description}
+                                        </motion.p>
+                                        <motion.div
+                                            initial={{ y: 10, opacity: 0 }}
+                                            animate={{ y: 0, opacity: 1 }}
+                                            transition={{ delay: 0.3 }}
+                                            className="flex items-center gap-4"
+                                        >
+                                            <button className="px-6 py-2.5 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-500 transition-colors text-sm">
+                                                View Challenge
                                             </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-                        </div>
-
-                        {/* Bottom CTA */}
-                        <div className="pt-24 pb-12 flex flex-col items-center text-center">
-                            <h2 className="text-4xl font-bold dark:text-white text-black mb-10 tracking-tight" style={{ fontFamily: "'Lora', serif" }}>
-                                Didn't find what you were looking for?
-                            </h2>
-                            <button className="px-10 py-4 dark:bg-white bg-black dark:text-black text-white font-bold rounded-full hover:opacity-90 transition-all text-sm shadow-2xl">
-                                Explore all competitions
-                            </button>
+                                            <span className="flex items-center gap-1.5 text-sm text-gray-300">
+                                                <TrophyIcon className="w-4 h-4 text-amber-400" />
+                                                {heroEvents[heroIndex].rewardPool}
+                                            </span>
+                                        </motion.div>
+                                    </div>
+                                </motion.div>
+                            </AnimatePresence>
+                            {/* Dot indicators */}
+                            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2">
+                                {heroEvents.map((_, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => setHeroIndex(i)}
+                                        className={`h-1.5 rounded-full transition-all duration-300 ${i === heroIndex ? 'w-6 bg-white' : 'w-1.5 bg-white/30 hover:bg-white/50'}`}
+                                    />
+                                ))}
+                            </div>
                         </div>
                     </div>
-                )}
 
+                    {/* ── Filter Pills ── */}
+                    <div className="mb-6">
+                        <NavCarousel items={allFilters} activeFilter={activeFilter} setActiveFilter={setActiveFilter} />
+                    </div>
+
+                    {/* ── Results count ── */}
+                    <div className="text-sm text-gray-500 mb-5">
+                        {filteredEvents.length} competition{filteredEvents.length !== 1 ? 's' : ''}
+                        {activeFilter !== 'All' && <> in <span className="text-emerald-400 font-medium">{activeFilter}</span></>}
+                    </div>
+
+                    {/* ── Event Grid ── */}
+                    <AnimatePresence mode="popLayout">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {filteredEvents.map(event => (
+                                <EventCard key={event.id} event={event} />
+                            ))}
+                        </div>
+                    </AnimatePresence>
+                </div>
             </div>
         </div>
     );
