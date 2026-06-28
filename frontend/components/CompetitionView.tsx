@@ -723,7 +723,12 @@ const EventCard: React.FC<{ event: CompetitionEvent }> = ({ event }) => (
 
 // ── Main Competition View ──
 const CompetitionView: React.FC = () => {
-    const [isConfigured, setIsConfigured] = useState(false);
+    const [isConfigured, setIsConfigured] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('stephen_competitions_configured') === 'true';
+        }
+        return false;
+    });
     const [showWizard, setShowWizard] = useState(false);
     const [preferences, setPreferences] = useState<PreferenceVector>(defaultPreferences);
     const [heroIndex, setHeroIndex] = useState(0);
@@ -760,6 +765,8 @@ const CompetitionView: React.FC = () => {
 
     const handleCompleteOnboarding = () => {
         setIsConfigured(true);
+        setShowWizard(false);
+        localStorage.setItem('stephen_competitions_configured', 'true');
     };
 
     // ── Welcome Screen ──
