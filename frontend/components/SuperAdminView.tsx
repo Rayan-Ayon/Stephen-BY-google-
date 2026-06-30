@@ -311,33 +311,45 @@ const SuperAdminView: React.FC = () => {
 
                             {/* Card 3: Trust Gate */}
                             <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5">
-                                <h3 className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-4">
-                                    Trust Gate — Core Pending Verifications Queue
-                                </h3>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-[10px] font-medium uppercase tracking-wider text-neutral-500">
+                                        Trust Gate — Core Pending Verifications Queue
+                                    </h3>
+                                    <button
+                                        onClick={() => { setCurrentSection('users'); setCurrentSubView('tenant_provisioning'); }}
+                                        className="text-[10px] text-neutral-400 hover:text-white font-medium uppercase tracking-wider transition-colors"
+                                    >
+                                        + View More
+                                    </button>
+                                </div>
                                 <div className="space-y-3">
                                     {pendingTenants.map(t => (
-                                        <div key={t.email} className="flex items-center justify-between p-3 rounded-lg bg-neutral-900/50 border border-neutral-800">
-                                            <div className="min-w-0 flex-1 mr-3">
-                                                <p className="text-sm font-medium text-white">{t.name}</p>
-                                                <p className="text-xs text-neutral-500">{t.org}</p>
-                                                <p className="text-xs text-neutral-600 truncate">{t.email}</p>
-                                            </div>
-                                            <div className="shrink-0 mr-3">
-                                                <span className={`inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full border ${
+                                        <div key={t.email} className="bg-[#050505] border border-neutral-800 rounded-lg p-3.5 space-y-3 mb-3 flex flex-col">
+                                            {/* Top Row: Info & Status Badge */}
+                                            <div className="flex justify-between items-start w-full gap-2">
+                                                <div className="min-w-0">
+                                                    <h4 className="text-xs font-semibold text-white tracking-tight truncate">
+                                                        {t.name}
+                                                    </h4>
+                                                    <p className="text-[11px] text-neutral-500 font-mono truncate mt-0.5">
+                                                        {t.org}
+                                                    </p>
+                                                </div>
+                                                <span className={`text-[9px] shrink-0 px-1.5 py-0.5 rounded border font-medium uppercase tracking-wider ${
                                                     t.status === 'pending'
-                                                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
-                                                        : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                                                        ? 'bg-amber-500/5 text-amber-400 border-amber-500/20'
+                                                        : 'bg-emerald-500/5 text-emerald-400 border-emerald-500/20'
                                                 }`}>
-                                                    {t.status === 'pending' ? 'Pending Verification Review' : 'Automated Check Cleared'}
+                                                    {t.status === 'pending' ? 'Pending' : 'Cleared'}
                                                 </span>
                                             </div>
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                <button className="text-xs font-medium text-red-400 hover:bg-red-950/20 px-3 py-1.5 rounded-lg border border-neutral-800 transition-all">
-                                                    <XIcon className="w-3 h-3 inline mr-1" />
+
+                                            {/* Bottom Row: Full-Width Actions Grid */}
+                                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-900 w-full">
+                                                <button className="text-center text-[11px] text-red-400 hover:bg-red-950/20 border border-neutral-800 font-medium py-1.5 rounded-md transition-all">
                                                     Deny
                                                 </button>
-                                                <button className="text-xs font-semibold text-black bg-white hover:bg-neutral-200 px-4 py-1.5 rounded-lg transition-all">
-                                                    <CheckIcon className="w-3 h-3 inline mr-1" />
+                                                <button className="text-center text-[11px] bg-white text-black hover:bg-neutral-200 font-semibold py-1.5 rounded-md transition-all whitespace-nowrap">
                                                     Approve & Provision Passkey
                                                 </button>
                                             </div>
