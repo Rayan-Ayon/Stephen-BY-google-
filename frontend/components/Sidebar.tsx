@@ -9,7 +9,7 @@ import {
     ProfessorStudentIcon, DebatePodiumIcon, EdgramIcon, GlobeIcon,
     LocationTrackerIcon, LearningMethodIcon, ChevronDownIcon, CrownIcon,
     ViewSidebarIcon, CheckCircleIcon, DollarIcon, SidebarToggleIcon, CubeIcon, DotsHorizontalIcon, TrashIcon, ShareIcon, PencilIcon, ChevronRightIcon,
-    HomeIcon, ShieldCheckIcon
+    HomeIcon, ShieldCheckIcon, UserIcon
 } from './icons';
 import type { Space } from '../utils/mockDb';
 
@@ -434,6 +434,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 className={`absolute bottom-full left-0 right-0 mb-3 w-full border rounded-2xl shadow-xl overflow-visible ${theme === 'dark' ? 'bg-[#1a1a1a] border-gray-800' : 'bg-white border-neutral-200'}`}
                             >
                                 <div className="p-1.5 space-y-0.5 relative">
+                                    <button onClick={() => { onNavigate('profile'); setProfileOpen(false); }} className={`w-full text-left text-sm flex items-center px-3 py-2.5 rounded-xl ${hoverClasses} dark:text-gray-300 text-neutral-700`}>
+                                        <UserIcon className="w-4 h-4 mr-3 text-emerald-400" />
+                                        Profile Workspace
+                                    </button>
                                     <button onClick={() => { onNavigate('settings'); setProfileOpen(false); }} className={`w-full text-left text-sm flex items-center px-3 py-2.5 rounded-xl ${hoverClasses} dark:text-gray-300 text-neutral-700`}>
                                         <SettingsIcon className="w-4 h-4 mr-3" /> 
                                         Settings

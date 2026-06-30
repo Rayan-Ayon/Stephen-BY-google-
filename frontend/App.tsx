@@ -150,12 +150,7 @@ const App: React.FC = () => {
 
   if (isSuperAdmin) {
     return (
-      <SuperAdminView
-        onExit={() => {
-          window.history.pushState({}, '', '/');
-          setIsSuperAdmin(false);
-        }}
-      />
+      <SuperAdminView />
     );
   }
 
