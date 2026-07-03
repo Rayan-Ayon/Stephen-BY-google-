@@ -5,7 +5,7 @@ import Dashboard from './components/Dashboard';
 import LandingPage from './components/LandingPage';
 import AuthOverlay from './components/AuthOverlay';
 import SuperAdminView from './components/SuperAdminView';
-import OrgManagerView from './components/OrgManagerView';
+import OrgSpaceView from './components/OrgSpaceView';
 import ActivationView from './components/ActivationView';
 import { initMockDb } from './utils/mockDb';
 
@@ -138,7 +138,7 @@ const App: React.FC = () => {
 
   if (isOrgManager) {
     return (
-      <OrgManagerView
+      <OrgSpaceView
         onExit={() => {
           localStorage.removeItem('stephen_active_tenant_session');
           window.history.pushState({}, '', '/');
