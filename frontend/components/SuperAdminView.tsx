@@ -155,6 +155,54 @@ const billingData: Record<string, { col1: string; col2: string; col3: string }[]
 
 const btnBase = 'w-full flex items-center justify-between text-xs px-3 py-1.5 rounded-md transition-all text-neutral-400 hover:text-white hover:bg-neutral-900';
 
+// ── New subview data ──
+
+const compilerPipelines = [
+    { name: 'PDF Ingestion Pipeline Node 01', status: 'PROCESSING', pct: 84 },
+    { name: 'Vectorization Core 04', status: 'IDLE', pct: 0 },
+    { name: 'Audio Synthesis Core 02', status: 'COMPILING', pct: 62 },
+];
+
+const courseCatalog = [
+    { name: 'Advanced Quantum Electronics v3.1', tenant: 'BUET University Space', stage: 'Curriculum Vector Approval' },
+    { name: 'Autonomous Systems Architecture', tenant: 'MIT Robotics Lab Node', stage: 'Syllabus Ingestion Queue' },
+    { name: 'Introduction to NLP Engineering', tenant: 'Google Workspace Hub', stage: 'AI Compilation Complete' },
+];
+
+const adminKeys = [
+    { name: 'Ayon // Primary Root Admin', key: 'root-admin-••••a1b2' },
+    { name: 'System_Automator_Core // Agentic Service Key', key: 'svc-agent-••••c3d4' },
+];
+
+const tenantSpaces = [
+    { org: 'BUET University Space', email: 'speakbangla.always@gmail.com', seats: '2,450', endpoint: 'buet.stephen-infra.net' },
+    { org: 'MIT Robotics Lab Node', email: 'rostova@mit.edu', seats: '1,820', endpoint: 'mit-robotics.stephen-infra.net' },
+    { org: 'Google Workspace Hub', email: 'admin@google.com', seats: '4,200', endpoint: 'google.stephen-infra.net' },
+];
+
+const aiMetrics = [
+    { label: 'Total Model Ingestion Payload', value: '42.1M Tokens / hr' },
+    { label: 'Core Safety Firewall Intercepts', value: '0 Flags Triggered today' },
+    { label: 'Model Routing Latency Index', value: '12.4ms Base Edge Target' },
+];
+
+const anomalyAlerts = [
+    { exam: 'Term Exam 02 - Signals', institution: 'BUET University Space', indicator: 'Tab-Focus Focus Loss Timeout', score: 'Risk Level: Low', action: 'Dismiss Alert', critical: false },
+    { exam: 'Machine Learning Baseline', institution: 'MIT Robotics Lab Node', indicator: 'Simultaneous Token Input Signature Spikes', score: 'Risk Level: CRITICAL', action: 'Lock Node Session', critical: true },
+];
+
+const shardHealth = [
+    { id: 'shard-alpha-01', pools: '24 active', throughput: '3.2 GB/s', status: 'OPERATIONAL' as const },
+    { id: 'shard-beta-02', pools: '18 active', throughput: '2.8 GB/s', status: 'OPERATIONAL' as const },
+    { id: 'shard-gamma-03', pools: '12 active', throughput: '1.1 GB/s', status: 'DEGRADED' as const },
+    { id: 'shard-delta-04', pools: '30 active', throughput: '4.5 GB/s', status: 'OPERATIONAL' as const },
+];
+
+const moderationEntries = [
+    { user: 'Farhan', node: 'BUET Node', text: 'generated an automated flashcard deck compilation on Vector Space Analysis for shared peer study groups.' },
+    { user: 'System', node: null, text: 'Resource space sharing pool between BUET Space Node and MIT Robotics Space updated.' },
+];
+
 // ── Component ──
 
 const SuperAdminView: React.FC = () => {
@@ -432,7 +480,340 @@ const SuperAdminView: React.FC = () => {
                     </>
                 )}
 
-                {currentSubView !== 'dashboard_main' && currentSubView !== 'billing_metrics' && (
+                {currentSection === 'learning' && (
+                    <>
+                        <h2 className="text-2xl font-semibold tracking-tight text-white mb-6">
+                            Global Curriculum Ingestion Panel // Cross-Tenant Compilation Sync
+                        </h2>
+                        <div className="grid grid-cols-2 gap-6 mb-6">
+                            <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5">
+                                <h3 className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-4">
+                                    Core AI Compiler Cluster Status
+                                </h3>
+                                <div className="space-y-4">
+                                    {compilerPipelines.map(p => (
+                                        <div key={p.name}>
+                                            <div className="flex items-center justify-between text-xs mb-1.5">
+                                                <span className="text-neutral-400">{p.name}</span>
+                                                <span className={`font-mono text-[10px] font-semibold ${
+                                                    p.status === 'PROCESSING' ? 'text-amber-400' :
+                                                    p.status === 'COMPILING' ? 'text-amber-300' :
+                                                    'text-neutral-500'
+                                                }`}>
+                                                    {p.status === 'PROCESSING' ? `[PROCESSING - ${p.pct}%]` :
+                                                     p.status === 'COMPILING' ? `[COMPILING]` :
+                                                     `[IDLE]`}
+                                                </span>
+                                            </div>
+                                            <div className="w-full h-1 bg-neutral-900 rounded-full overflow-hidden">
+                                                <div className={`h-full rounded-full ${
+                                                    p.status === 'PROCESSING' ? 'bg-amber-500' :
+                                                    p.status === 'COMPILING' ? 'bg-amber-400' :
+                                                    'bg-neutral-700'
+                                                }`} style={{ width: `${p.pct || 4}%` }} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl overflow-hidden">
+                                <h3 className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 px-5 pt-5 pb-3 border-b border-neutral-800">
+                                    Global Course Catalog Validation
+                                </h3>
+                                <table className="w-full border-collapse text-left text-xs">
+                                    <thead>
+                                        <tr className="border-b border-neutral-800">
+                                            <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Course Identifier</th>
+                                            <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Tenant Node Location</th>
+                                            <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Verification Stage</th>
+                                            <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Action Target</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {courseCatalog.map(c => (
+                                            <tr key={c.name} className="border-b border-neutral-800 last:border-b-0">
+                                                <td className="px-5 py-3.5 text-white font-medium">{c.name}</td>
+                                                <td className="px-5 py-3.5 text-neutral-400">{c.tenant}</td>
+                                                <td className="px-5 py-3.5 text-neutral-400 font-mono text-[10px]">{c.stage}</td>
+                                                <td className="px-5 py-3.5">
+                                                    <button className="text-[10px] font-medium text-amber-400 hover:text-amber-300 transition-colors mr-3">[Authorize]</button>
+                                                    <button className="text-[10px] font-medium text-neutral-500 hover:text-white transition-colors">[Hold]</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {currentSection === 'users' && (
+                    <>
+                        <h2 className="text-2xl font-semibold tracking-tight text-white mb-6">
+                            Global Identity Matrix // Multi-Tenant Tenant Controls
+                        </h2>
+                        <div className="grid grid-cols-1 gap-6">
+                            <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5">
+                                <h3 className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-4">
+                                    System Admins Registry
+                                </h3>
+                                <div className="space-y-3">
+                                    {adminKeys.map(a => (
+                                        <div key={a.key} className="flex items-center justify-between bg-[#050505] border border-neutral-800 rounded-lg px-4 py-3">
+                                            <div>
+                                                <p className="text-xs font-medium text-white">{a.name}</p>
+                                                <p className="text-[11px] text-neutral-500 font-mono mt-0.5">{a.key}</p>
+                                            </div>
+                                            <span className="bg-neutral-900 border border-neutral-800 text-neutral-300 px-2 py-0.5 rounded text-[11px] font-mono">
+                                                {a.key.includes('root') ? 'ROOT' : 'SERVICE'}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl overflow-hidden">
+                                <h3 className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 px-5 pt-5 pb-3 border-b border-neutral-800">
+                                    Tenant Administrative Spaces
+                                </h3>
+                                <table className="w-full border-collapse text-left text-xs">
+                                    <thead>
+                                        <tr className="border-b border-neutral-800">
+                                            <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Organization Target Space</th>
+                                            <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Primary Controller Email</th>
+                                            <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Mapped Seats</th>
+                                            <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Network Endpoint Cluster</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {tenantSpaces.map(t => (
+                                            <tr key={t.org} className="border-b border-neutral-800 last:border-b-0">
+                                                <td className="px-5 py-3.5 text-white font-medium">{t.org}</td>
+                                                <td className="px-5 py-3.5 text-neutral-400 font-mono text-[11px]">{t.email}</td>
+                                                <td className="px-5 py-3.5 text-neutral-400 font-mono">{t.seats}</td>
+                                                <td className="px-5 py-3.5 text-neutral-400 font-mono text-[11px]">{t.endpoint}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="flex items-center gap-4 px-1">
+                                <button className="text-[11px] text-red-400 hover:text-red-300 border border-neutral-800 hover:border-red-800 px-4 py-2 rounded-md transition-all font-medium">[Revoke Token]</button>
+                                <button className="text-[11px] text-amber-400 hover:text-amber-300 border border-neutral-800 hover:border-amber-700 px-4 py-2 rounded-md transition-all font-medium">[Migrate Database Shard]</button>
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {currentSection === 'ai' && (
+                    <>
+                        <h2 className="text-2xl font-semibold tracking-tight text-white mb-6">
+                            AI Core Infrastructure // Model Routing & Ingestion Guardrails
+                        </h2>
+                        <div className="grid grid-cols-3 gap-4 mb-6">
+                            {aiMetrics.map(m => (
+                                <div key={m.label} className="bg-[#0a0a0a] border border-amber-500/20 rounded-lg p-4">
+                                    <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-1">{m.label}</p>
+                                    <p className="text-lg font-semibold tracking-tight text-amber-300">{m.value}</p>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5 space-y-5">
+                            <h3 className="text-[10px] font-medium uppercase tracking-wider text-neutral-500">
+                                Parameter Workspace Configuration
+                            </h3>
+                            <div>
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-2">Default Global Base Fallback Model</p>
+                                <div className="bg-transparent border border-neutral-800 rounded-lg px-4 py-2.5 text-sm text-neutral-300 w-full">
+                                    Claude 3.5 Sonnet // Primary Pipeline
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-2">Prompt Ingestion Safety Token Threshold</p>
+                                <div className="bg-transparent border border-neutral-800 rounded-lg px-4 py-2.5 text-sm text-neutral-300 w-full">
+                                    4,096 tokens per session window
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-2">Strict Output Context Evaluation</p>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-5 rounded-full bg-amber-500 flex items-center p-0.5 justify-end">
+                                        <div className="w-3.5 h-3.5 rounded-full bg-white shadow" />
+                                    </div>
+                                    <span className="text-xs text-amber-400 font-medium">TRUE // Restrict Speculative Decoding</span>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {currentSection === 'assessments' && (
+                    <>
+                        <h2 className="text-2xl font-semibold tracking-tight text-white mb-6">
+                            Global Examination Telemetry Node // Anomalous Behavior Monitor
+                        </h2>
+                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl overflow-hidden">
+                            <table className="w-full border-collapse text-left text-xs">
+                                <thead>
+                                    <tr className="border-b border-neutral-800">
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Evaluation Target</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Mapped Institution Node</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Logged Indicator</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">System Integrity Assessment Score</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Operational Response Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {anomalyAlerts.map(a => (
+                                        <tr key={a.exam} className="border-b border-neutral-800 last:border-b-0">
+                                            <td className="px-5 py-3.5 text-white font-medium">{a.exam}</td>
+                                            <td className="px-5 py-3.5 text-neutral-400">{a.institution}</td>
+                                            <td className="px-5 py-3.5 text-neutral-400 font-mono text-[10px]">{a.indicator}</td>
+                                            <td className="px-5 py-3.5">
+                                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
+                                                    a.critical
+                                                        ? 'text-red-400 bg-red-500/5 border-red-500/20'
+                                                        : 'text-amber-400 bg-amber-500/5 border-amber-500/20'
+                                                }`}>
+                                                    {a.score}
+                                                </span>
+                                            </td>
+                                            <td className="px-5 py-3.5">
+                                                <button className={`text-[10px] font-medium transition-colors ${
+                                                    a.critical
+                                                        ? 'text-red-400 hover:text-red-300'
+                                                        : 'text-neutral-500 hover:text-white'
+                                                }`}>
+                                                    [{a.action}]
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                )}
+
+                {currentSection === 'analytics' && (
+                    <>
+                        <h2 className="text-2xl font-semibold tracking-tight text-white mb-6">
+                            Global Telemetry Dashboard // Infrastructure Capacity Allocation
+                        </h2>
+                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5 mb-6">
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-4">
+                                Global Query Load (24h) // Primary Traffic vs Cache Hit Ratio
+                            </p>
+                            <svg viewBox="0 0 800 150" className="w-full h-32">
+                                <polyline points="0,130 40,120 80,125 120,90 160,100 200,70 240,80 280,50 320,65 360,40 400,55 440,25 480,35 520,60 560,45 600,20 640,30 680,55 720,40 760,15 800,35" fill="none" stroke="#b45309" strokeWidth="2" />
+                                <polyline points="0,135 40,128 80,130 120,105 160,112 200,85 240,92 280,70 320,80 360,60 400,72 440,50 480,58 520,78 560,65 600,45 640,52 680,72 720,58 760,42 800,55" fill="none" stroke="#404040" strokeWidth="1.5" opacity="0.7" />
+                            </svg>
+                        </div>
+                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl overflow-hidden">
+                            <table className="w-full border-collapse text-left text-xs">
+                                <thead>
+                                    <tr className="border-b border-neutral-800">
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Shard ID</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Active Connection Pools</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Read/Write Throughput Target</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Operational Status Flag</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {shardHealth.map(s => (
+                                        <tr key={s.id} className="border-b border-neutral-800 last:border-b-0">
+                                            <td className="px-5 py-3.5 text-white font-mono text-[11px]">{s.id}</td>
+                                            <td className="px-5 py-3.5 text-neutral-400 font-mono">{s.pools}</td>
+                                            <td className="px-5 py-3.5 text-neutral-400 font-mono">{s.throughput}</td>
+                                            <td className="px-5 py-3.5">
+                                                <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded border ${
+                                                    s.status === 'OPERATIONAL'
+                                                        ? 'text-emerald-400 bg-emerald-500/5 border-emerald-500/20'
+                                                        : 'text-red-400 bg-red-500/5 border-red-500/20'
+                                                }`}>
+                                                    {s.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                )}
+
+                {currentSection === 'community' && (
+                    <>
+                        <h2 className="text-2xl font-semibold tracking-tight text-white mb-6">
+                            Cross-Tenant Peer Collaboration Framework // Global Moderation Feed
+                        </h2>
+                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5 space-y-4">
+                            {moderationEntries.map((entry, i) => (
+                                <div key={i} className="flex items-start gap-3 p-4 bg-[#050505] border border-neutral-800 rounded-lg">
+                                    <div className="w-7 h-7 rounded-full bg-neutral-900 border border-neutral-700 flex items-center justify-center shrink-0 mt-0.5">
+                                        <span className="text-[10px] font-semibold text-neutral-400">{entry.user.charAt(0)}</span>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-neutral-300 leading-relaxed">
+                                            <span className="font-semibold text-white">User '{entry.user}'</span>
+                                            {entry.node && <span className="text-neutral-500"> ({entry.node})</span>}
+                                            {' '}{entry.text}
+                                        </p>
+                                        <div className="flex items-center gap-4 mt-3">
+                                            <button className="text-[10px] font-medium text-neutral-500 hover:text-amber-400 transition-colors">[Flag Log Entry]</button>
+                                            <button className="text-[10px] font-medium text-neutral-500 hover:text-white transition-colors">[Pin To Global Knowledge Base]</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
+
+                {currentSubView === 'settings' && (
+                    <>
+                        <h2 className="text-2xl font-semibold tracking-tight text-white mb-6">
+                            Global Environment Parameters // System Core Constant Overrides
+                        </h2>
+                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5 space-y-6 max-w-2xl">
+                            <div>
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-2">
+                                    Base Application Production Endpoint URL
+                                </p>
+                                <div className="bg-transparent border border-neutral-800 rounded-lg px-4 py-2.5 text-sm text-neutral-300 font-mono w-full">
+                                    https://api.stephen-infra.net/v3
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-2">
+                                    Maintenance State Control Switcher
+                                </p>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs font-medium text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-md">
+                                        [Live Node Execution Mode]
+                                    </span>
+                                    <span className="text-xs font-medium text-neutral-500 border border-neutral-800 px-3 py-1.5 rounded-md">
+                                        [Halt All Ingestion Handshakes]
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-2">
+                                    Global System Diagnostic Reporting Velocity
+                                </p>
+                                <div className="bg-transparent border border-neutral-800 rounded-lg px-4 py-2.5 text-sm text-neutral-300 w-full">
+                                    Real-time Streaming Matrix Ingestion // 1s Intervals
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {currentSubView !== 'dashboard_main' && currentSubView !== 'billing_metrics'
+                    && currentSection !== 'learning' && currentSection !== 'users'
+                    && currentSection !== 'ai' && currentSection !== 'assessments'
+                    && currentSection !== 'analytics' && currentSection !== 'community'
+                    && currentSubView !== 'settings' && (
                     <div className="flex items-center justify-center h-full">
                         <p className="text-sm text-neutral-600">
                             {currentSubView.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}

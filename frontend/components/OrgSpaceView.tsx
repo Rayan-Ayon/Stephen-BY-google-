@@ -4,6 +4,7 @@ import {
     BookOpenIcon, LockClosedIcon, SettingsIcon,
     UsersIcon, DollarIcon, ClockIcon, TrendingUpIcon,
     ChevronDownIcon, CheckCircleIcon, CubeIcon,
+    GlobeIcon, DatabaseIcon,
 } from './icons';
 
 // ── Types ──
@@ -92,6 +93,49 @@ const licenseAudit = [
 ];
 
 const btnBase = 'w-full flex items-center justify-between text-xs px-3 py-1.5 rounded-md transition-all text-neutral-400 hover:text-white hover:bg-neutral-900';
+
+// ── New subview data ──
+
+const overviewMetrics = [
+    { label: 'Node Deployment Status', value: 'OPERATIONAL', subtext: '14ms Latency Edge' },
+    { label: 'Active Token Ingestion Velocity', value: '242.8k tokens/sec', subtext: '' },
+    { label: 'System Sync Compliance', value: '99.98%', subtext: 'Verification Vector Check' },
+];
+
+const infrastructureTasks = [
+    'SSO Node Handshake Success — 12 bridges synchronized',
+    'Context Database Re-indexed — 340 vector shards compacted',
+    'SAML Gateway Refreshed — Certificate rotation complete',
+    'Edge CDN Cache Primed — 2.4M embeddings distributed',
+    'Audit Log Flush — 48hr retention window trimmed',
+];
+
+const riskProfiles = [
+    { rank: 1, name: 'Tanvir', id: 'WS-S-TB21', hours: '489 min', deficiency: 'Quiz Accuracy: 58%', status: 'FLAGGED – REQUIRED REVIEW' },
+    { rank: 2, name: 'Rahim', id: 'WS-S-TB23', hours: '412 min', deficiency: 'Project Score: 4.8/10', status: 'PENDING ACTION' },
+    { rank: 3, name: 'Imran', id: 'WS-S-TB35', hours: '341 min', deficiency: 'Exams Avg: 4.0/10', status: 'PENDING ACTION' },
+];
+
+const skillDomains = [
+    { label: 'Machine Learning Foundations', pct: 84 },
+    { label: 'System Orchestration', pct: 71 },
+    { label: 'Context Architecture', pct: 68 },
+];
+
+const courseModules = [
+    { name: 'Python Vector Processing v2.4', sync: 92, seats: '4,850', route: '/sys-core-py', live: false },
+    { name: 'Multi-Agent LLM Orchestration', sync: 100, seats: '4,110', route: '/llm-agents', live: true },
+];
+
+const vectorDocs = [
+    { file: 'BUET_EEE_Exam_Pool_2026.pdf', chunks: '1,420 Vectors', model: 'text-embedding-3-large', status: 'Encrypted & Mapped' },
+    { file: 'MIT_Robotics_Lab_Node_Context.json', chunks: '890 Vectors', model: 'text-embedding-3-large', status: 'Active Context Room' },
+];
+
+const identityProviders = [
+    { name: 'Google Workspace Connection Hub', accounts: '3,200', status: 'Active Synchronized Tunnel', token: '24h' },
+    { name: 'Microsoft Entra ID Integration Gateway', accounts: '1,650', status: 'Active Synchronized Tunnel', provisioning: 'Active' },
+];
 
 // ── Helpers ──
 
@@ -356,7 +400,238 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                     </>
                 )}
 
-                {currentSubView !== 'daily_engagements' && currentSubView !== 'license_seats' && (
+                {currentSubView === 'overview_main' && (
+                    <>
+                        <h2 className="text-2xl font-semibold tracking-tight text-white mb-6">
+                            Node Infrastructure Command // System Health & Ingestion
+                        </h2>
+                        <div className="grid grid-cols-3 gap-4 mb-6">
+                            {overviewMetrics.map(m => (
+                                <div key={m.label} className="bg-[#0a0a0a] border border-neutral-800 rounded-lg p-4">
+                                    <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-1">{m.label}</p>
+                                    <p className="text-2xl font-semibold tracking-tight text-white">{m.value}</p>
+                                    {m.subtext && <p className="text-xs text-neutral-400 mt-1 font-mono">{m.subtext}</p>}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5 mb-6">
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-4">Throughput Velocity (24h)</p>
+                            <svg viewBox="0 0 600 120" className="w-full h-24">
+                                <polyline points="0,90 40,70 80,80 120,40 160,50 200,20 240,35 280,55 320,30 360,45 400,15 440,25 480,50 520,35 560,10 600,30" fill="none" stroke="#555" strokeWidth="1.5" />
+                                <polyline points="0,95 40,75 80,85 120,45 160,55 200,25 240,40 280,60 320,35 360,50 400,20 440,30 480,55 520,40 560,15 600,35" fill="none" stroke="#888" strokeWidth="0.8" opacity="0.5" />
+                            </svg>
+                        </div>
+                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5">
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-4">Infrastructure Task Log</p>
+                            <div className="space-y-2">
+                                {infrastructureTasks.map((task, i) => (
+                                    <div key={i} className="flex items-start gap-3 py-2 border-b border-neutral-800 last:border-b-0">
+                                        <ClockIcon className="w-3.5 h-3.5 text-neutral-600 mt-0.5 shrink-0" />
+                                        <p className="text-xs text-neutral-400">{task}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {currentSubView === 'performance_analytics' && (
+                    <>
+                        <h2 className="text-2xl font-semibold tracking-tight text-white mb-6">
+                            Cohort Operational Engine // Cross-Segment Risk Quadrant
+                        </h2>
+                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5 mb-6">
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-amber-500 mb-4">
+                                Risk Isolation Analysis (High Watchtime // Low Output Yield)
+                            </p>
+                            <table className="w-full border-collapse text-left text-xs">
+                                <thead>
+                                    <tr className="border-b border-neutral-800">
+                                        <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Rank</th>
+                                        <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Identifier</th>
+                                        <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500">System ID</th>
+                                        <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Engagement Overhead</th>
+                                        <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Metric Deficiency</th>
+                                        <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Intervention Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {riskProfiles.map(r => (
+                                        <tr key={r.rank} className="border-b border-neutral-800 last:border-b-0">
+                                            <td className="px-4 py-3 text-neutral-400 font-mono">{r.rank}</td>
+                                            <td className="px-4 py-3 text-white font-medium">{r.name}</td>
+                                            <td className="px-4 py-3 text-neutral-500 font-mono">{r.id}</td>
+                                            <td className="px-4 py-3 text-neutral-400">{r.hours}</td>
+                                            <td className="px-4 py-3 text-amber-400">{r.deficiency}</td>
+                                            <td className={`px-4 py-3 font-mono text-[10px] font-semibold ${r.status.includes('FLAGGED') ? 'text-amber-400' : 'text-orange-400'}`}>{r.status}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5">
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-4">Skill Domain Heatmap</p>
+                            <div className="grid grid-cols-1 gap-4">
+                                {skillDomains.map(d => (
+                                    <div key={d.label} className="space-y-1.5">
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="text-neutral-400">{d.label}</span>
+                                            <span className="text-white font-mono">{d.pct}%</span>
+                                        </div>
+                                        <div className="w-full h-1.5 bg-neutral-900 rounded-full overflow-hidden">
+                                            <div className="h-full rounded-full bg-white" style={{ width: `${d.pct}%` }} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {currentSubView === 'course_deployment' && (
+                    <>
+                        <h2 className="text-2xl font-semibold tracking-tight text-white mb-6">
+                            Curriculum Asset Pipeline // Active Node Compilations
+                        </h2>
+                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl overflow-hidden">
+                            <table className="w-full border-collapse text-left text-xs">
+                                <thead>
+                                    <tr className="border-b border-neutral-800">
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Module</th>
+                                        <th className="px-5 py-3.5 text-[10pxpx] font-medium uppercase tracking-wider text-neutral-500">Sync State</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Cohort Seats</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Node Route</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {courseModules.map(m => (
+                                        <tr key={m.name} className="border-b border-neutral-800 last:border-b-0">
+                                            <td className="px-5 py-4 text-white font-medium">{m.name}</td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-24 h-1 bg-neutral-900 rounded-full overflow-hidden">
+                                                        <div className={`h-full rounded-full ${m.live ? 'bg-emerald-400' : 'bg-neutral-600'}`} style={{ width: `${m.sync}%` }} />
+                                                    </div>
+                                                    <span className={`text-[10px] font-mono font-semibold ${m.live ? 'text-emerald-400' : 'text-neutral-400'}`}>
+                                                        {m.live ? 'LIVE // VERIFIED' : `${m.sync}% Syncing`}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-5 py-4 text-neutral-400 font-mono">{m.seats} Active</td>
+                                            <td className="px-5 py-4 text-neutral-500 font-mono">{m.route}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                )}
+
+                {currentSubView === 'vector_repos' && (
+                    <>
+                        <h2 className="text-2xl font-semibold tracking-tight text-white mb-6">
+                            Knowledge Base Infrastructure // Semantic Vector Embedding Stores
+                        </h2>
+                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl overflow-hidden">
+                            <table className="w-full border-collapse text-left text-xs">
+                                <thead>
+                                    <tr className="border-b border-neutral-800">
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">File Name</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Chunk Size</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Model</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Status</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {vectorDocs.map(d => (
+                                        <tr key={d.file} className="border-b border-neutral-800 last:border-b-0">
+                                            <td className="px-5 py-4 text-white font-medium font-mono text-[11px]">{d.file}</td>
+                                            <td className="px-5 py-4 text-neutral-400 font-mono">{d.chunks}</td>
+                                            <td className="px-5 py-4 text-neutral-500 font-mono text-[10px]">{d.model}</td>
+                                            <td className="px-5 py-4">
+                                                <span className="text-[10px] font-medium text-emerald-400 bg-emerald-500/5 px-2 py-0.5 rounded border border-emerald-500/20">
+                                                    {d.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <button className="text-[10px] font-medium text-neutral-500 hover:text-white transition-colors">[Inspect Embeddings]</button>
+                                                    <button className="text-[10px] font-medium text-neutral-500 hover:text-red-400 transition-colors">[Purge Context]</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                )}
+
+                {currentSubView === 'sso_gateways' && (
+                    <>
+                        <h2 className="text-2xl font-semibold tracking-tight text-white mb-6">
+                            Identity Control Node // Corporate Security Gates
+                        </h2>
+                        <div className="grid grid-cols-2 gap-4">
+                            {identityProviders.map(p => (
+                                <div key={p.name} className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <GlobeIcon className="w-5 h-5 text-neutral-400" />
+                                        <h3 className="text-sm font-semibold text-white">{p.name}</h3>
+                                    </div>
+                                    <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-1">Mapped Identities</p>
+                                    <p className="text-lg font-semibold text-white mb-3">{p.accounts} Accounts</p>
+                                    <span className="inline-flex text-[10px] font-medium text-emerald-400 bg-emerald-500/5 px-2 py-0.5 rounded border border-emerald-500/20 mb-3">
+                                        {p.status}
+                                    </span>
+                                    <p className="text-[10px] text-neutral-500 mt-2 font-mono">
+                                        {p.token ? `SAML Token Exp: ${p.token}` : `Auto-Provisioning: ${p.provisioning}`}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
+
+                {currentSubView === 'node_settings' && (
+                    <>
+                        <h2 className="text-2xl font-semibold tracking-tight text-white mb-6">
+                            System Parameter Overrides // Node Execution Constants
+                        </h2>
+                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5 space-y-6">
+                            <div>
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-2">Default Base Model Routing Matrix</p>
+                                <div className="bg-transparent border border-neutral-800 rounded-lg px-4 py-2.5 text-sm text-neutral-300 w-full">
+                                    Claude 3.5 Sonnet // Multi-Agent Pipeline Optimized
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-2">Context Window Sliding Pruning Window Threshold</p>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex-1 h-1.5 bg-neutral-900 rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full bg-neutral-600" style={{ width: '64%' }} />
+                                    </div>
+                                    <span className="text-xs text-neutral-400 font-mono whitespace-nowrap">128k context allocation target tokens</span>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-2">Strict System Multi-Tenant Security Flag</p>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-5 rounded-full bg-emerald-500 flex items-center p-0.5 justify-end">
+                                        <div className="w-3.5 h-3.5 rounded-full bg-white shadow" />
+                                    </div>
+                                    <span className="text-xs text-emerald-400 font-medium">TRUE — Restrict domain sharing across nodes</span>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {currentSubView !== 'daily_engagements' && currentSubView !== 'license_seats'
+                    && currentSubView !== 'overview_main' && currentSubView !== 'performance_analytics'
+                    && currentSubView !== 'course_deployment' && currentSubView !== 'vector_repos'
+                    && currentSubView !== 'sso_gateways' && currentSubView !== 'node_settings' && (
                     <div className="flex items-center justify-center h-full">
                         <p className="text-sm text-neutral-600">
                             {currentSubView.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
