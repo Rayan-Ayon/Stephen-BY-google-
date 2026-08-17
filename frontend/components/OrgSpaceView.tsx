@@ -524,6 +524,51 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                                 </tbody>
                             </table>
                         </div>
+                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5 mt-6">
+                            <h3 className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-5">
+                                Core Ingestion Agent Parameter Lab // Cohort System Instructions
+                            </h3>
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-5">
+                                    <div>
+                                        <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-2">
+                                            System Pedagogical Framework Strategy
+                                        </p>
+                                        <div className="bg-transparent border border-neutral-800 rounded-lg px-4 py-2.5 text-sm text-neutral-300 w-full">
+                                            Socratic Questioning Mode
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-3">
+                                            Agent Processing Temperature
+                                        </p>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-[10px] text-neutral-500 font-mono">0.0</span>
+                                            <div className="flex-1 h-1 bg-neutral-900 rounded-full overflow-hidden">
+                                                <div className="h-full rounded-full bg-emerald-500/60" style={{ width: '20%' }} />
+                                            </div>
+                                            <span className="text-[10px] text-neutral-500 font-mono">1.0</span>
+                                            <span className="text-[11px] text-emerald-400 font-mono font-semibold ml-2">0.2</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-2">
+                                        System Instruction Workspace
+                                    </p>
+                                    <textarea
+                                        readOnly
+                                        className="w-full h-32 bg-neutral-950 border border-neutral-800 rounded font-mono text-[11px] p-3 text-neutral-400 focus:outline-none focus:border-neutral-700 resize-none"
+                                        value={`SYSTEM_INSTRUCTION: You are an autonomous synthesis proxy for Stephen UAIU. Process the incoming multi-page academic PDF context array. Force structural JSON generation maps. Do not hallucinate tensor boundaries...`}
+                                    />
+                                </div>
+                            </div>
+                            <div className="mt-5 pt-5 border-t border-neutral-800">
+                                <button className="bg-neutral-900 border border-neutral-800 hover:border-emerald-500/30 text-emerald-400 text-xs py-2 px-4 rounded font-mono transition-all duration-150">
+                                    [+ Update Live Cohort System Directives]
+                                </button>
+                            </div>
+                        </div>
                     </>
                 )}
 

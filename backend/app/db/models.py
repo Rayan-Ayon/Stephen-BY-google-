@@ -3,6 +3,33 @@ from datetime import datetime
 from app.db.session import Base
 
 
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    email = Column(String(255), nullable=False, unique=True, index=True)
+    password_hash = Column(String(512), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        {"mysql_charset": "utf8mb4", "sqlite_autoincrement": True},
+    )
+
+
+class AuthSession(Base):
+    __tablename__ = "auth_sessions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    token = Column(String(128), nullable=False, unique=True, index=True)
+    user_email = Column(String(255), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+
+    __table_args__ = (
+        {"mysql_charset": "utf8mb4", "sqlite_autoincrement": True},
+    )
+
+
 class AIResult(Base):
     __tablename__ = "ai_results"
 

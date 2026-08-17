@@ -186,6 +186,12 @@ const aiMetrics = [
     { label: 'Model Routing Latency Index', value: '12.4ms Base Edge Target' },
 ];
 
+const tenantCostLedger = [
+    { space: 'BUET University Space Node', allocatedGpu: 'A100-SXM4-80GB (x4)', tokenSpike: '12.4M tkn', costAccumulated: '$1,242.10', efficiency: '98.2%' },
+    { space: 'MIT Robotics Lab Node', allocatedGpu: 'H100-PCIe-80GB (x2)', tokenSpike: '8.1M tkn', costAccumulated: '$1,940.50', efficiency: '99.1%' },
+    { space: 'Google Workspace Connection Hub', allocatedGpu: 'Serverless Tensor Cluster v4', tokenSpike: '21.6M tkn', costAccumulated: '$3,110.00', efficiency: '99.8%' },
+];
+
 const anomalyAlerts = [
     { exam: 'Term Exam 02 - Signals', institution: 'BUET University Space', indicator: 'Tab-Focus Focus Loss Timeout', score: 'Risk Level: Low', action: 'Dismiss Alert', critical: false },
     { exam: 'Machine Learning Baseline', institution: 'MIT Robotics Lab Node', indicator: 'Simultaneous Token Input Signature Spikes', score: 'Risk Level: CRITICAL', action: 'Lock Node Session', critical: true },
@@ -643,6 +649,38 @@ const SuperAdminView: React.FC = () => {
                                     <span className="text-xs text-amber-400 font-medium">TRUE // Restrict Speculative Decoding</span>
                                 </div>
                             </div>
+                        </div>
+                        <hr className="border-neutral-800 my-6" />
+                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl overflow-hidden">
+                            <h3 className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 px-5 pt-5 pb-3 border-b border-neutral-800">
+                                GPU Cluster Attribution & Multi-Tenant Compute Costs
+                            </h3>
+                            <table className="w-full border-collapse text-left text-xs">
+                                <thead>
+                                    <tr className="border-b border-neutral-800">
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">TENANT SPACE NODE</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">ALLOCATED HARDWARE</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">PAYLOAD WEIGHT</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">COMPUTE SPEND</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">EFFICIENCY NODE</th>
+                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {tenantCostLedger.map(row => (
+                                        <tr key={row.space} className="border-b border-neutral-800 last:border-b-0">
+                                            <td className="px-5 py-3.5 text-neutral-300 font-mono text-xs">{row.space}</td>
+                                            <td className="px-5 py-3.5 text-neutral-400 font-mono text-xs">{row.allocatedGpu}</td>
+                                            <td className="px-5 py-3.5 text-neutral-400 font-mono text-xs">{row.tokenSpike}</td>
+                                            <td className="px-5 py-3.5 text-amber-400 font-semibold font-mono text-xs">{row.costAccumulated}</td>
+                                            <td className="px-5 py-3.5 text-neutral-400 font-mono text-xs">{row.efficiency}</td>
+                                            <td className="px-5 py-3.5">
+                                                <button className="text-[10px] font-medium text-neutral-500 hover:text-amber-400 transition-colors">[Recalibrate Quota]</button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </>
                 )}

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 
-from app.api.routes import videos, ai_features, recent_videos
+from app.api.routes import videos, ai_features, recent_videos, auth
 from app.db.session import init_db, backfill_user_email
 
 load_dotenv()
@@ -47,6 +47,7 @@ app.add_middleware(
 app.include_router(videos.router, prefix="/api")
 app.include_router(ai_features.router, prefix="/api")
 app.include_router(recent_videos.router, prefix="/api")
+app.include_router(auth.router, prefix="/api")
 
 
 @app.get("/api/health")

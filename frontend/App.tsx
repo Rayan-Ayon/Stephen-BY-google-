@@ -85,10 +85,14 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.email) {
-        setUserEmail(session.user.email);
-        setShowDashboard(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.email) {
+          setUserEmail(session.user.email);
+          setShowDashboard(true);
+        }
+      } catch {
+        // Session lookup failed — stay on landing page.
       }
       setSessionChecked(true);
     };

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleIcon, EyeIcon, EyeSlashIcon, XIcon } from './icons';
 import { AuthType } from '../App';
-import { supabase } from '../supabaseClient';
+import { supabase, getAuthErrorMessage } from '../supabaseClient';
 
 interface AuthOverlayProps {
   type: 'login' | 'signup';
@@ -30,12 +30,16 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ type, setType, onClose, onSuc
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
       } else {
-        const { error: signUpError } = await supabase.auth.signUp({ email, password });
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
         if (signUpError) throw signUpError;
+        if (!signUpData.session) {
+          setError('Check your email to confirm your account before signing in.');
+          return;
+        }
       }
       onSuccess(email);
     } catch (err: any) {
-      setError(err.message || 'An authentication error occurred.');
+      setError(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }

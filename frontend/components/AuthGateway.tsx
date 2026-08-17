@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase, getAuthErrorMessage } from '../supabaseClient';
 
 interface AuthGatewayProps {
   onAuthSuccess: (userEmail: string, spaceCode: string) => void;
@@ -28,7 +28,7 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onAuthSuccess }) => {
       }
       if (email) onAuthSuccess(email, spaceCode);
     } catch (err: any) {
-      setError(err.message || 'An authentication error occurred.');
+      setError(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
