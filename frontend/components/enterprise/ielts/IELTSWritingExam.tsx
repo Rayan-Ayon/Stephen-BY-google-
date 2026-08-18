@@ -8,13 +8,19 @@ import {
     buildBilingual,
     evaluateWritingText,
     addAttempt,
+    formatClock,
+    type SimulationProps,
     type WritingCriteria,
 } from './ieltsShared';
+import IELTSLobbyCard from './IELTSLobbyCard';
+import IELTSExitModal from './IELTSExitModal';
 
 const TASK_DURATION: Record<'task1' | 'task2', number> = {
     task1: 20 * 60,
     task2: 60 * 60,
 };
+
+type TestState = 'lobby' | 'active' | 'evaluating' | 'completed';
 
 interface WritingResult {
     taskType: 'task1' | 'task2';
@@ -26,25 +32,26 @@ interface WritingResult {
     date: string;
 }
 
-const formatTime = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-};
+interface IELTSWritingExamProps {
+    candidateEmail?: string;
+    simulation?: SimulationProps;
+}
 
-const IELTSWritingExam: React.FC = () => {
+const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, simulation }) => {
     const [taskType, setTaskType] = useState<'task1' | 'task2'>('task2');
     const [prompt, setPrompt] = useState(TASK2_PROMPTS[0]);
     const [text, setText] = useState(SAMPLE_TASK2);
-    const [seconds, setSeconds] = useState(TASK_DURATION.task2);
-    const [running, setRunning] = useState(true);
-    const [isEvaluating, setIsEvaluating] = useState(false);
+    const [seconds, setSeconds] = useState(simulation ? simulation.timeLimitSeconds : TASK_DURATION.task2);
+    const [running, setRunning] = useState(!!simulation);
+    const [testState, setTestState] = useState<TestState>(simulation ? 'active' : 'lobby');
     const [result, setResult] = useState<WritingResult | null>(null);
     const [lang, setLang] = useState<'en' | 'bn'>('en');
+    const [showExitModal, setShowExitModal] = useState(false);
     const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+    const timeLimit = simulation ? simulation.timeLimitSeconds : TASK_DURATION[taskType];
 
     const switchTask = (t: 'task1' | 'task2') => {
-        if (t === taskType) return;
+        if (t === taskType || simulation) return;
         setTaskType(t);
         setPrompt(t === 'task1' ? TASK1_PROMPTS[0] : TASK2_PROMPTS[0]);
         setText(t === 'task1' ? SAMPLE_TASK1 : SAMPLE_TASK2);
@@ -54,40 +61,97 @@ const IELTSWritingExam: React.FC = () => {
     };
 
     useEffect(() => {
-        if (!running || result) return;
+        if (testState !== 'active' || !running || result) return;
         const id = window.setInterval(() => {
             setSeconds((prev) => (prev <= 1 ? 0 : prev - 1));
         }, 1000);
         return () => window.clearInterval(id);
-    }, [running, result]);
+    }, [testState, running, result]);
 
-    const submit = () => {
+    const submit = (force = false) => {
+        if (testState !== 'active') return;
         const trimmed = text.trim();
-        if (!trimmed || isEvaluating || result) return;
+        if (!trimmed && !force) return;
+        setTestState('evaluating');
         setRunning(false);
-        setIsEvaluating(true);
         window.setTimeout(() => {
-            const { criteria, band } = evaluateWritingText(trimmed);
-            const evalResult: WritingResult = {
-                taskType,
-                prompt,
-                text: trimmed,
-                band,
-                criteria,
-                feedback: buildBilingual(band, wordCount),
-                date: new Date().toLocaleString(),
-            };
-            setResult(evalResult);
-            addAttempt({
-                id: Date.now(),
-                skill: 'writing',
-                band,
-                taskType,
-                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-            });
-            setIsEvaluating(false);
-        }, 1400);
+            const { criteria, band } = evaluateWritingText(trimmed || ' ');
+            const timeSpent = Math.max(1, Math.round((timeLimit - seconds) / 60));
+            const criteriaList = [
+                { label: taskType === 'task1' ? 'Task Achievement' : 'Task Response', band: criteria.taskAchievement },
+                { label: 'Coherence & Cohesion', band: criteria.coherence },
+                { label: 'Lexical Resource', band: criteria.lexical },
+                { label: 'Grammar Accuracy', band: criteria.grammar },
+            ];
+            if (simulation) {
+                simulation.onComplete({ skill: 'writing', band, criteria: criteriaList, timeSpent });
+            } else {
+                const evalResult: WritingResult = {
+                    taskType,
+                    prompt,
+                    text: trimmed,
+                    band,
+                    criteria,
+                    feedback: buildBilingual(band, wordCount),
+                    date: new Date().toLocaleString(),
+                };
+                setResult(evalResult);
+                addAttempt({
+                    id: Date.now(),
+                    skill: 'writing',
+                    band,
+                    taskType,
+                    timeSpent,
+                    criteria: criteriaList,
+                    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                });
+            }
+            setTestState('completed');
+        }, simulation ? 900 : 1400);
     };
+
+    useEffect(() => {
+        if (simulation && testState === 'active' && seconds === 0) submit(true);
+    }, [seconds, testState, simulation]);
+
+    const startExam = () => {
+        if (simulation) return;
+        setTestState('active');
+        setRunning(true);
+    };
+
+    const resetExam = () => {
+        setTaskType('task2');
+        setPrompt(TASK2_PROMPTS[0]);
+        setText(SAMPLE_TASK2);
+        setSeconds(simulation ? simulation.timeLimitSeconds : TASK_DURATION.task2);
+        setRunning(false);
+        setResult(null);
+        setLang('en');
+        setTestState('lobby');
+        setShowExitModal(false);
+    };
+
+    const handleExit = () => {
+        if (simulation) {
+            setShowExitModal(false);
+            simulation.onExit?.();
+        } else {
+            resetExam();
+        }
+    };
+
+    if (testState === 'lobby') {
+        return (
+            <IELTSLobbyCard
+                skill="writing"
+                candidateEmail={candidateEmail || ''}
+                title="Writing Lab"
+                subtitle="Computer-delivered academic writing with bilingual band evaluation."
+                onStart={startExam}
+            />
+        );
+    }
 
     const metricLabels: { key: keyof WritingCriteria; label: string }[] = [
         { key: 'taskAchievement', label: taskType === 'task1' ? 'Task Achievement' : 'Task Response' },
@@ -97,51 +161,63 @@ const IELTSWritingExam: React.FC = () => {
     ];
 
     const segments = result ? buildSegments(result.text) : [];
-
     const timerLow = seconds <= 300;
+    const isEvaluating = testState === 'evaluating';
 
     return (
         <div className="space-y-4">
             <div className="rounded-xl border border-neutral-800 bg-[#141414] px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
+                    {testState === 'active' && (
+                        <button
+                            onClick={() => setShowExitModal(true)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-[11px] text-neutral-400 hover:text-red-400 hover:border-red-500/30 transition-colors"
+                        >
+                            <span>⬅️</span> Exit Exam
+                        </button>
+                    )}
                     <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">
-                        Computer-Delivered Writing
+                        {simulation ? simulation.sectionLabel : 'Computer-Delivered Writing'}
                     </span>
-                    <div className="flex gap-1 rounded-lg bg-[#0b0b0b] border border-neutral-800 p-1">
-                        {([
-                            { key: 'task1' as const, label: 'Task 1' },
-                            { key: 'task2' as const, label: 'Task 2' },
-                        ]).map((t) => (
-                            <button
-                                key={t.key}
-                                onClick={() => switchTask(t.key)}
-                                disabled={!!result}
-                                className={`px-3 py-1 rounded-md text-[11px] font-medium transition-colors disabled:opacity-50 ${
-                                    taskType === t.key
-                                        ? 'bg-[#0a0a0a] text-amber-300 border border-amber-500/20'
-                                        : 'text-neutral-500 hover:text-neutral-300'
-                                }`}
-                            >
-                                {t.label}
-                            </button>
-                        ))}
-                    </div>
+                    {!simulation && (
+                        <div className="flex gap-1 rounded-lg bg-[#0b0b0b] border border-neutral-800 p-1">
+                            {([
+                                { key: 'task1' as const, label: 'Task 1' },
+                                { key: 'task2' as const, label: 'Task 2' },
+                            ]).map((t) => (
+                                <button
+                                    key={t.key}
+                                    onClick={() => switchTask(t.key)}
+                                    disabled={testState !== 'active'}
+                                    className={`px-3 py-1 rounded-md text-[11px] font-medium transition-colors disabled:opacity-50 ${
+                                        taskType === t.key
+                                            ? 'bg-[#0a0a0a] text-amber-300 border border-amber-500/20'
+                                            : 'text-neutral-500 hover:text-neutral-300'
+                                    }`}
+                                >
+                                    {t.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className={`font-mono text-sm ${timerLow ? 'text-red-400' : 'text-neutral-300'}`}>{formatTime(seconds)}</span>
+                    <span className={`font-mono text-sm ${timerLow ? 'text-red-400' : 'text-neutral-300'}`}>{formatClock(seconds)}</span>
+                    {!simulation && (
+                        <button
+                            onClick={() => setRunning((r) => !r)}
+                            disabled={testState !== 'active'}
+                            className="text-[11px] text-neutral-500 hover:text-neutral-300 transition-colors disabled:opacity-50"
+                        >
+                            {running ? 'Pause' : 'Resume'}
+                        </button>
+                    )}
                     <button
-                        onClick={() => setRunning((r) => !r)}
-                        disabled={!!result}
-                        className="text-[11px] text-neutral-500 hover:text-neutral-300 transition-colors disabled:opacity-50"
-                    >
-                        {running ? 'Pause' : 'Resume'}
-                    </button>
-                    <button
-                        onClick={submit}
-                        disabled={isEvaluating || wordCount === 0 || !!result}
+                        onClick={() => submit(false)}
+                        disabled={isEvaluating || wordCount === 0 || testState !== 'active'}
                         className="px-4 py-1.5 rounded-lg bg-white text-black text-[11px] font-semibold uppercase tracking-widest transition-colors hover:bg-neutral-200 disabled:opacity-50"
                     >
-                        {isEvaluating ? 'Analyzing…' : 'Submit'}
+                        {isEvaluating ? 'Analyzing…' : simulation ? 'Submit Section' : 'Submit'}
                     </button>
                 </div>
             </div>
@@ -151,23 +227,27 @@ const IELTSWritingExam: React.FC = () => {
                     <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold mb-2">
                         {taskType === 'task1' ? 'Task 1 · Academic Report' : 'Task 2 · Essay'} — Question
                     </p>
-                    <select
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        disabled={!!result}
-                        className="w-full px-3 py-2.5 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-xs text-neutral-200 outline-none focus:border-neutral-600"
-                    >
-                        {(taskType === 'task1' ? TASK1_PROMPTS : TASK2_PROMPTS).map((p) => (
-                            <option key={p} value={p}>{p}</option>
-                        ))}
-                    </select>
+                    {simulation ? (
+                        <p className="text-sm text-neutral-300 leading-relaxed whitespace-pre-wrap">{prompt}</p>
+                    ) : (
+                        <select
+                            value={prompt}
+                            onChange={(e) => setPrompt(e.target.value)}
+                            disabled={testState !== 'active'}
+                            className="w-full px-3 py-2.5 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-xs text-neutral-200 outline-none focus:border-neutral-600"
+                        >
+                            {(taskType === 'task1' ? TASK1_PROMPTS : TASK2_PROMPTS).map((p) => (
+                                <option key={p} value={p}>{p}</option>
+                            ))}
+                        </select>
+                    )}
                     <p className="text-sm text-neutral-300 leading-relaxed mt-4 whitespace-pre-wrap">
                         {prompt}
                     </p>
                     <p className="text-xs text-neutral-600 mt-4">
                         {taskType === 'task1'
-                            ? `Minimum 150 words. ${formatTime(TASK_DURATION.task1)} allowed.`
-                            : `Minimum 250 words. ${formatTime(TASK_DURATION.task2)} allowed.`}
+                            ? `Minimum 150 words. ${formatClock(TASK_DURATION.task1)} allowed.`
+                            : `Minimum 250 words. ${formatClock(TASK_DURATION.task2)} allowed.`}
                     </p>
                 </div>
 
@@ -181,7 +261,7 @@ const IELTSWritingExam: React.FC = () => {
                     <textarea
                         value={text}
                         onChange={(e) => setText(e.target.value)}
-                        disabled={!!result}
+                        disabled={testState !== 'active'}
                         placeholder="Write your answer here…"
                         rows={18}
                         className="w-full rounded-xl bg-[#0b0b0b] border border-neutral-800 p-4 text-sm text-neutral-200 placeholder:text-neutral-600 outline-none focus:border-neutral-600 resize-none"
@@ -190,7 +270,7 @@ const IELTSWritingExam: React.FC = () => {
                 </div>
             </div>
 
-            {result && (
+            {!simulation && result && (
                 <div className="space-y-4">
                     <div className="rounded-2xl bg-[#141414] border border-amber-500/20 p-5">
                         <div className="flex items-center gap-4 mb-5">
@@ -276,6 +356,12 @@ const IELTSWritingExam: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <IELTSExitModal
+                open={showExitModal}
+                onConfirm={handleExit}
+                onCancel={() => setShowExitModal(false)}
+            />
         </div>
     );
 };

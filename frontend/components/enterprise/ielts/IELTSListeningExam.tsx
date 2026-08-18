@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { addAttempt, rawToBand } from './ieltsShared';
+import { addAttempt, rawToBand, formatClock, type SimulationProps } from './ieltsShared';
+import IELTSLobbyCard from './IELTSLobbyCard';
+import IELTSExitModal from './IELTSExitModal';
 
 interface ListeningQuestion {
     id: number;
@@ -22,67 +24,149 @@ const normalize = (s: string) => s.trim().toLowerCase();
 
 const WAVEBARS = [10, 18, 26, 14, 30, 22, 12, 28, 16, 24, 20, 10, 26, 18, 30, 14, 22, 12, 28, 16];
 
-const IELTSListeningExam: React.FC = () => {
+type TestState = 'lobby' | 'active' | 'evaluating' | 'completed';
+
+interface IELTSListeningExamProps {
+    candidateEmail?: string;
+    simulation?: SimulationProps;
+}
+
+const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail, simulation }) => {
     const [playing, setPlaying] = useState(false);
     const [progress, setProgress] = useState(0);
     const [answers, setAnswers] = useState<string[]>(() => QUESTIONS.map(() => ''));
     const [submitted, setSubmitted] = useState(false);
     const [score, setScore] = useState<number | null>(null);
+    const [elapsed, setElapsed] = useState(0);
+    const [testState, setTestState] = useState<TestState>(simulation ? 'active' : 'lobby');
+    const [showExitModal, setShowExitModal] = useState(false);
 
     const TOTAL = 180;
+    const timeLimit = simulation ? simulation.timeLimitSeconds : 30 * 60;
+    const locked = submitted || testState !== 'active';
 
     useEffect(() => {
-        if (!playing) return;
+        if (testState !== 'active') return;
+        const id = window.setInterval(() => setElapsed((e) => e + 1), 1000);
+        return () => window.clearInterval(id);
+    }, [testState]);
+
+    useEffect(() => {
+        if (!playing || locked) return;
         const id = window.setInterval(() => {
             setProgress((p) => (p >= TOTAL ? 0 : p + 1));
         }, 1000);
         return () => window.clearInterval(id);
-    }, [playing]);
+    }, [playing, locked]);
 
     const currentSection = Math.min(4, Math.floor((progress / TOTAL) * 4) + 1);
     const pct = Math.min(100, (progress / TOTAL) * 100);
 
-    const submit = () => {
-        if (submitted) return;
+    const submit = (force = false) => {
+        if (locked) return;
         setPlaying(false);
-        const correct = QUESTIONS.reduce((acc, q, i) => {
-            return acc + (normalize(answers[i]) === q.answer ? 1 : 0);
-        }, 0);
-        setScore(correct);
-        setSubmitted(true);
-        addAttempt({
-            id: Date.now(),
-            skill: 'listening',
-            band: rawToBand(correct),
-            score: correct,
-            date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        });
+        setTestState('evaluating');
+        window.setTimeout(() => {
+            const correct = QUESTIONS.reduce((acc, q, i) => {
+                return acc + (normalize(answers[i]) === q.answer ? 1 : 0);
+            }, 0);
+            const timeSpent = Math.max(1, Math.round(elapsed / 60));
+            if (simulation) {
+                simulation.onComplete({ skill: 'listening', band: rawToBand(correct), score: correct, timeSpent });
+            } else {
+                setScore(correct);
+                addAttempt({
+                    id: Date.now(),
+                    skill: 'listening',
+                    band: rawToBand(correct),
+                    score: correct,
+                    timeSpent,
+                    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                });
+            }
+            setSubmitted(true);
+            setTestState('completed');
+        }, 900);
     };
 
+    useEffect(() => {
+        if (simulation && testState === 'active' && elapsed >= timeLimit) submit(true);
+    }, [elapsed, testState, simulation, timeLimit]);
+
+    const startExam = () => {
+        if (simulation) return;
+        setTestState('active');
+    };
+
+    const resetExam = () => {
+        setPlaying(false);
+        setProgress(0);
+        setAnswers(QUESTIONS.map(() => ''));
+        setSubmitted(false);
+        setScore(null);
+        setElapsed(0);
+        setTestState('lobby');
+        setShowExitModal(false);
+    };
+
+    const handleExit = () => {
+        if (simulation) {
+            setShowExitModal(false);
+            simulation.onExit?.();
+        } else {
+            resetExam();
+        }
+    };
+
+    if (testState === 'lobby') {
+        return (
+            <IELTSLobbyCard
+                skill="listening"
+                candidateEmail={candidateEmail || ''}
+                title="Listening Engine"
+                subtitle="Integrated audio simulation with 4-section note-taking practice."
+                onStart={startExam}
+            />
+        );
+    }
+
     const band = score != null ? rawToBand(score) : null;
+    const isEvaluating = testState === 'evaluating';
 
     return (
         <div className="space-y-4">
             <div className="rounded-2xl bg-[#141414] border border-neutral-800 p-5">
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">Listening · Section {currentSection} of 4</p>
-                        <p className="text-xs text-neutral-600 mt-1">{Math.floor(progress / 60)}:{String(progress % 60).padStart(2, '0')} / 3:00 simulated track</p>
+                        <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">
+                            {simulation ? simulation.sectionLabel : 'Listening'} · Section {currentSection} of 4
+                        </p>
+                        <p className="text-xs text-neutral-600 mt-1 font-mono">
+                            {formatClock(elapsed)}<span className="text-neutral-600"> / {formatClock(timeLimit)}</span> · track {Math.floor(progress / 60)}:{String(progress % 60).padStart(2, '0')}/3:00
+                        </p>
                     </div>
                     <div className="flex items-center gap-3">
+                        {testState === 'active' && (
+                            <button
+                                onClick={() => setShowExitModal(true)}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-[11px] text-neutral-400 hover:text-red-400 hover:border-red-500/30 transition-colors"
+                            >
+                                <span>⬅️</span> Exit Exam
+                            </button>
+                        )}
                         <button
                             onClick={() => setPlaying((p) => !p)}
-                            disabled={submitted}
+                            disabled={locked}
                             className="w-10 h-10 rounded-full bg-amber-400 text-black flex items-center justify-center text-sm transition-colors hover:bg-amber-300 disabled:opacity-50"
                         >
                             {playing ? '❚❚' : '▶'}
                         </button>
                         <button
-                            onClick={submit}
-                            disabled={submitted}
+                            onClick={() => submit(false)}
+                            disabled={locked}
                             className="px-4 py-2 rounded-lg bg-white text-black text-[11px] font-semibold uppercase tracking-widest transition-colors hover:bg-neutral-200 disabled:opacity-50"
                         >
-                            {submitted ? 'Submitted' : 'Submit'}
+                            {isEvaluating ? 'Grading…' : simulation ? 'Submit Section' : 'Submit'}
                         </button>
                     </div>
                 </div>
@@ -108,7 +192,7 @@ const IELTSListeningExam: React.FC = () => {
                     <div key={section} className="rounded-2xl bg-[#141414] border border-neutral-800 p-5">
                         <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold mb-3">Section {section}</p>
                         <div className="space-y-3">
-                            {QUESTIONS.filter((q) => q.section === section).map((q, i) => {
+                            {QUESTIONS.filter((q) => q.section === section).map((q) => {
                                 const qIndex = QUESTIONS.findIndex((x) => x.id === q.id);
                                 return (
                                     <div key={q.id}>
@@ -123,7 +207,7 @@ const IELTSListeningExam: React.FC = () => {
                                                 next[qIndex] = e.target.value;
                                                 setAnswers(next);
                                             }}
-                                            disabled={submitted}
+                                            disabled={locked}
                                             placeholder="Answer…"
                                             className="w-full px-3 py-2 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-sm text-neutral-200 placeholder:text-neutral-600 outline-none focus:border-neutral-600"
                                         />
@@ -135,7 +219,7 @@ const IELTSListeningExam: React.FC = () => {
                 ))}
             </div>
 
-            {submitted && score != null && band != null && (
+            {!simulation && submitted && score != null && band != null && (
                 <div className="rounded-2xl bg-[#141414] border border-amber-500/20 p-5 flex items-center gap-4">
                     <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-6 py-4 text-center">
                         <p className="text-[10px] uppercase tracking-wider text-amber-400/70 font-semibold">Listening Band</p>
@@ -147,6 +231,12 @@ const IELTSListeningExam: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <IELTSExitModal
+                open={showExitModal}
+                onConfirm={handleExit}
+                onCancel={() => setShowExitModal(false)}
+            />
         </div>
     );
 };

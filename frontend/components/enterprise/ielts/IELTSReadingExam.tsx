@@ -1,5 +1,7 @@
-import React, { useRef, useState } from 'react';
-import { addAttempt, rawToBand } from './ieltsShared';
+import React, { useEffect, useRef, useState } from 'react';
+import { addAttempt, rawToBand, formatClock, type SimulationProps } from './ieltsShared';
+import IELTSLobbyCard from './IELTSLobbyCard';
+import IELTSExitModal from './IELTSExitModal';
 
 const PASSAGE = `Cities around the world are turning to vertical forests as a response to rising temperatures and shrinking green space. These high-rise buildings, wrapped in hundreds of trees and thousands of shrubs, act as living filters. They absorb carbon dioxide, release oxygen, and reduce the surface temperature of the surrounding streets by several degrees.
 
@@ -49,15 +51,34 @@ const buildHighlightSegments = (text: string, ranges: [number, number][]): Highl
     return segments;
 };
 
-const IELTSReadingExam: React.FC = () => {
+type TestState = 'lobby' | 'active' | 'evaluating' | 'completed';
+
+interface IELTSReadingExamProps {
+    candidateEmail?: string;
+    simulation?: SimulationProps;
+}
+
+const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, simulation }) => {
     const passageRef = useRef<HTMLDivElement>(null);
     const [answers, setAnswers] = useState<string[]>(() => QUESTIONS.map(() => ''));
     const [highlights, setHighlights] = useState<[number, number][]>([]);
     const [submitted, setSubmitted] = useState(false);
     const [score, setScore] = useState<number | null>(null);
+    const [elapsed, setElapsed] = useState(0);
+    const [testState, setTestState] = useState<TestState>(simulation ? 'active' : 'lobby');
+    const [showExitModal, setShowExitModal] = useState(false);
+
+    const timeLimit = simulation ? simulation.timeLimitSeconds : 20 * 60;
+    const locked = submitted || testState !== 'active';
+
+    useEffect(() => {
+        if (testState !== 'active' || submitted) return;
+        const id = window.setInterval(() => setElapsed((e) => e + 1), 1000);
+        return () => window.clearInterval(id);
+    }, [testState, submitted]);
 
     const handleHighlight = () => {
-        if (submitted) return;
+        if (locked) return;
         const container = passageRef.current;
         const sel = window.getSelection();
         if (!container || !sel || sel.rangeCount === 0 || sel.isCollapsed) return;
@@ -74,54 +95,131 @@ const IELTSReadingExam: React.FC = () => {
     };
 
     const clearHighlights = () => {
-        if (submitted) return;
+        if (locked) return;
         setHighlights([]);
     };
 
-    const submit = () => {
-        if (submitted) return;
-        const correct = QUESTIONS.reduce((acc, q, i) => {
-            return acc + (normalize(answers[i]) === q.answer ? 1 : 0);
-        }, 0);
-        setScore(correct);
-        setSubmitted(true);
-        addAttempt({
-            id: Date.now(),
-            skill: 'reading',
-            band: rawToBand(correct),
-            score: correct,
-            date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        });
+    const submit = (force = false) => {
+        if (locked) return;
+        setTestState('evaluating');
+        window.setTimeout(() => {
+            const tfngIds = QUESTIONS.filter((q) => q.type === 'tfng');
+            const gapIds = QUESTIONS.filter((q) => q.type === 'gap');
+            const tfngCorrect = tfngIds.reduce((acc, q) => {
+                const idx = QUESTIONS.findIndex((x) => x.id === q.id);
+                return acc + (normalize(answers[idx]) === q.answer ? 1 : 0);
+            }, 0);
+            const gapCorrect = gapIds.reduce((acc, q) => {
+                const idx = QUESTIONS.findIndex((x) => x.id === q.id);
+                return acc + (normalize(answers[idx]) === q.answer ? 1 : 0);
+            }, 0);
+            const correct = tfngCorrect + gapCorrect;
+            const timeSpent = Math.max(1, Math.round(elapsed / 60));
+            const criteria = [
+                { label: 'TFNG Traps', band: tfngIds.length ? rawToBand(Math.round((tfngCorrect / tfngIds.length) * 40)) : 4 },
+                { label: 'Gap-Fill Word Forms', band: gapIds.length ? rawToBand(Math.round((gapCorrect / gapIds.length) * 40)) : 4 },
+            ];
+            if (simulation) {
+                simulation.onComplete({ skill: 'reading', band: rawToBand(correct), score: correct, criteria, timeSpent });
+            } else {
+                setScore(correct);
+                addAttempt({
+                    id: Date.now(),
+                    skill: 'reading',
+                    band: rawToBand(correct),
+                    score: correct,
+                    timeSpent,
+                    criteria,
+                    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                });
+            }
+            setSubmitted(true);
+            setTestState('completed');
+        }, 900);
     };
+
+    useEffect(() => {
+        if (simulation && testState === 'active' && elapsed >= timeLimit) submit(true);
+    }, [elapsed, testState, simulation, timeLimit]);
+
+    const startExam = () => {
+        if (simulation) return;
+        setTestState('active');
+    };
+
+    const resetExam = () => {
+        setAnswers(QUESTIONS.map(() => ''));
+        setHighlights([]);
+        setSubmitted(false);
+        setScore(null);
+        setElapsed(0);
+        setTestState('lobby');
+        setShowExitModal(false);
+    };
+
+    const handleExit = () => {
+        if (simulation) {
+            setShowExitModal(false);
+            simulation.onExit?.();
+        } else {
+            resetExam();
+        }
+    };
+
+    if (testState === 'lobby') {
+        return (
+            <IELTSLobbyCard
+                skill="reading"
+                candidateEmail={candidateEmail || ''}
+                title="Reading Hub"
+                subtitle="Passage scanning with highlight tooling and targeted TFNG practice."
+                onStart={startExam}
+            />
+        );
+    }
 
     const segments = buildHighlightSegments(PASSAGE, highlights);
     const band = score != null ? rawToBand(score) : null;
+    const isEvaluating = testState === 'evaluating';
 
     return (
         <div className="space-y-4">
             <div className="rounded-xl border border-neutral-800 bg-[#141414] px-4 py-3 flex items-center justify-between">
-                <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">Reading · Passage &amp; Questions</span>
+                <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">
+                    {simulation ? simulation.sectionLabel : 'Reading · Passage & Questions'}
+                </span>
                 <div className="flex items-center gap-3">
+                    {testState === 'active' && (
+                        <button
+                            onClick={() => setShowExitModal(true)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-[11px] text-neutral-400 hover:text-red-400 hover:border-red-500/30 transition-colors"
+                        >
+                            <span>⬅️</span> Exit Exam
+                        </button>
+                    )}
+                    <span className={`font-mono text-sm ${timeLimit - elapsed <= 300 ? 'text-red-400' : 'text-neutral-300'}`}>
+                        {formatClock(elapsed)}<span className="text-neutral-600"> / {formatClock(timeLimit)}</span>
+                    </span>
                     <button
                         onClick={handleHighlight}
-                        disabled={submitted}
+                        disabled={locked}
                         className="px-3 py-1.5 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-[11px] text-neutral-300 hover:border-neutral-600 transition-colors disabled:opacity-50"
                     >
                         Highlight Selection
                     </button>
                     <button
                         onClick={clearHighlights}
-                        disabled={submitted}
+                        disabled={locked}
                         className="px-3 py-1.5 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-[11px] text-neutral-300 hover:border-neutral-600 transition-colors disabled:opacity-50"
                     >
                         Clear Highlights
                     </button>
                     <button
-                        onClick={submit}
-                        disabled={submitted}
+                        onClick={() => submit(false)}
+                        disabled={locked}
                         className="px-4 py-1.5 rounded-lg bg-white text-black text-[11px] font-semibold uppercase tracking-widest transition-colors hover:bg-neutral-200 disabled:opacity-50"
                     >
-                        {submitted ? 'Submitted' : 'Submit'}
+                        {isEvaluating ? 'Grading…' : simulation ? 'Submit Section' : 'Submit'}
                     </button>
                 </div>
             </div>
@@ -168,7 +266,7 @@ const IELTSReadingExam: React.FC = () => {
                                                     next[i] = opt;
                                                     setAnswers(next);
                                                 }}
-                                                disabled={submitted}
+                                                disabled={locked}
                                                 className={`px-3 py-1 rounded-md text-[11px] font-medium transition-colors disabled:opacity-50 ${
                                                     normalize(answers[i]) === opt
                                                         ? 'bg-[#0a0a0a] text-amber-300 border border-amber-500/20'
@@ -187,7 +285,7 @@ const IELTSReadingExam: React.FC = () => {
                                             next[i] = e.target.value;
                                             setAnswers(next);
                                         }}
-                                        disabled={submitted}
+                                        disabled={locked}
                                         placeholder="Answer…"
                                         className="w-full px-3 py-2 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-sm text-neutral-200 placeholder:text-neutral-600 outline-none focus:border-neutral-600"
                                     />
@@ -198,7 +296,7 @@ const IELTSReadingExam: React.FC = () => {
                 </div>
             </div>
 
-            {submitted && score != null && band != null && (
+            {!simulation && submitted && score != null && band != null && (
                 <div className="rounded-2xl bg-[#141414] border border-amber-500/20 p-5 flex items-center gap-4">
                     <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-6 py-4 text-center">
                         <p className="text-[10px] uppercase tracking-wider text-amber-400/70 font-semibold">Reading Band</p>
@@ -210,6 +308,12 @@ const IELTSReadingExam: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <IELTSExitModal
+                open={showExitModal}
+                onConfirm={handleExit}
+                onCancel={() => setShowExitModal(false)}
+            />
         </div>
     );
 };

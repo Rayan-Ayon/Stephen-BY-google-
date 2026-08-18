@@ -350,7 +350,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
 
         switch (currentView) {
             case 'sandbox': return <IndividualSandboxView email={userEmail} />;
-            case 'ielts_evaluation': return <IELTSEvaluationHub />;
+            case 'ielts_evaluation': return <IELTSEvaluationHub userEmail={userEmail} />;
             case 'add_content':
                 if (isInstitutionalSpace(spaceCode)) {
                     return (

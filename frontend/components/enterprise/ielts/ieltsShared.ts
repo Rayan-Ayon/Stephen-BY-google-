@@ -7,6 +7,9 @@ export interface IeltsAttempt {
     score?: number;
     taskType?: 'task1' | 'task2';
     date: string;
+    timeSpent?: number;
+    criteria?: { label: string; band: number }[];
+    bundle?: string;
 }
 
 export interface WritingCriteria {
@@ -49,13 +52,139 @@ export const addAttempt = (attempt: IeltsAttempt) => {
 export const clearAttempts = () => persistAttempts([]);
 
 export const SEED_ATTEMPTS: IeltsAttempt[] = [
-    { id: 1, skill: 'listening', band: 7.0, score: 32, date: 'Jul 28, 2026' },
-    { id: 2, skill: 'reading', band: 6.5, score: 27, date: 'Aug 2, 2026' },
-    { id: 3, skill: 'writing', band: 6.5, taskType: 'task2', date: 'Aug 9, 2026' },
-    { id: 4, skill: 'speaking', band: 7.5, date: 'Aug 14, 2026' },
-    { id: 5, skill: 'listening', band: 7.5, score: 34, date: 'Aug 17, 2026' },
-    { id: 6, skill: 'reading', band: 7.0, score: 30, date: 'Aug 19, 2026' },
+    { id: 1, skill: 'listening', band: 7.0, score: 32, date: 'Jul 28, 2026', timeSpent: 32, criteria: [{ label: 'Detail Recognition', band: 7.5 }, { label: 'Map Labelling', band: 6.5 }, { label: 'Number Capture', band: 7.0 }] },
+    { id: 2, skill: 'reading', band: 6.5, score: 27, date: 'Aug 2, 2026', timeSpent: 38, criteria: [{ label: 'Skimming', band: 7.0 }, { label: 'TFNG Traps', band: 5.5 }, { label: 'Gap-Fill', band: 6.5 }] },
+    { id: 3, skill: 'writing', band: 6.5, taskType: 'task2', date: 'Aug 9, 2026', timeSpent: 46, criteria: [{ label: 'Task Response', band: 6.5 }, { label: 'Coherence', band: 7.0 }, { label: 'Lexical Range', band: 6.0 }, { label: 'Grammar', band: 6.5 }] },
+    { id: 4, skill: 'speaking', band: 7.5, date: 'Aug 14, 2026', timeSpent: 14, criteria: [{ label: 'Fluency', band: 7.5 }, { label: 'Lexical Resource', band: 7.0 }, { label: 'Pronunciation', band: 8.0 }, { label: 'Grammar', band: 7.0 }] },
+    { id: 5, skill: 'listening', band: 7.5, score: 34, date: 'Aug 17, 2026', timeSpent: 29, criteria: [{ label: 'Detail Recognition', band: 8.0 }, { label: 'Map Labelling', band: 7.0 }, { label: 'Number Capture', band: 7.5 }] },
+    { id: 6, skill: 'reading', band: 7.0, score: 30, date: 'Aug 19, 2026', timeSpent: 35, criteria: [{ label: 'Skimming', band: 7.5 }, { label: 'TFNG Traps', band: 6.5 }, { label: 'Gap-Fill', band: 7.0 }] },
 ];
+
+export interface DiagnosticSubSkill {
+    skill: IeltsSkill;
+    subSkill: string;
+    weight: number;
+    note: string;
+}
+
+export const DIAGNOSTIC_SUBSKILLS: DiagnosticSubSkill[] = [
+    { skill: 'listening', subSkill: 'Detail Recognition', weight: 64, note: 'Misses 2–3 specific facts per Section 3/4' },
+    { skill: 'listening', subSkill: 'Number & Price Capture', weight: 71, note: 'Occasional digit transposition under speed' },
+    { skill: 'reading', subSkill: 'TFNG Traps', weight: 58, note: 'Confuses FALSE vs NOT GIVEN in 2 of 5 attempts' },
+    { skill: 'reading', subSkill: 'Gap-Fill Word Forms', weight: 66, note: 'Plural/tense mismatch in summary completions' },
+    { skill: 'writing', subSkill: 'Task Response Logic', weight: 71, note: 'Paragraph focus drifts on Task 2 opinion essays' },
+    { skill: 'writing', subSkill: 'Lexical Range', weight: 62, note: 'Repetitive generic lexis ("very", "good", "a lot")' },
+    { skill: 'writing', subSkill: 'Grammar Accuracy', weight: 67, note: 'Subject-verb agreement + article slips' },
+    { skill: 'speaking', subSkill: 'Fluency Pauses', weight: 69, note: '2+ second hesitation before Part 3 abstractions' },
+    { skill: 'speaking', subSkill: 'Pronunciation Stress', weight: 74, note: 'Word-stress errors on multi-syllable items' },
+];
+
+export interface MistakeToken {
+    token: string;
+    type: 'grammar' | 'vocab' | 'logic';
+    occurrences: number;
+}
+
+export const MISTAKE_TOKENS: MistakeToken[] = [
+    { token: '"the the"', type: 'grammar', occurrences: 4 },
+    { token: '"peoples"', type: 'grammar', occurrences: 7 },
+    { token: '"a increase"', type: 'grammar', occurrences: 3 },
+    { token: '"advices"', type: 'grammar', occurrences: 2 },
+    { token: '"very good"', type: 'vocab', occurrences: 11 },
+    { token: '"a lot"', type: 'vocab', occurrences: 9 },
+    { token: 'FALSE vs NOT GIVEN', type: 'logic', occurrences: 5 },
+    { token: 'Comma splice in task response', type: 'grammar', occurrences: 6 },
+];
+
+export const attemptStatus = (band: number): { label: string; color: string } => {
+    if (band >= 7) return { label: 'Approved', color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20' };
+    if (band >= 6) return { label: 'Developing', color: 'text-amber-400 bg-amber-400/10 border-amber-400/20' };
+    return { label: 'At Risk', color: 'text-red-400 bg-red-400/10 border-red-400/20' };
+};
+
+export type IeltsBundleId = 'sprint' | 'express' | 'mock';
+
+export interface BundleSection {
+    skill: IeltsSkill;
+    minutes: number;
+    label: string;
+}
+
+export interface IeltsBundle {
+    id: IeltsBundleId;
+    label: string;
+    durationLabel: string;
+    sections: BundleSection[];
+}
+
+export const BUNDLES: IeltsBundle[] = [
+    {
+        id: 'sprint',
+        label: 'Diagnostic Sprint',
+        durationLabel: '50 min',
+        sections: [
+            { skill: 'listening', minutes: 30, label: 'Listening Section' },
+            { skill: 'reading', minutes: 20, label: 'Reading Section' },
+        ],
+    },
+    {
+        id: 'express',
+        label: 'Express Output',
+        durationLabel: '45 min',
+        sections: [
+            { skill: 'writing', minutes: 30, label: 'Writing Task' },
+            { skill: 'speaking', minutes: 15, label: 'Speaking Task' },
+        ],
+    },
+    {
+        id: 'mock',
+        label: 'Full Cambridge Mock',
+        durationLabel: '2h 45m',
+        sections: [
+            { skill: 'listening', minutes: 30, label: 'Listening Section' },
+            { skill: 'reading', minutes: 60, label: 'Reading Section' },
+            { skill: 'writing', minutes: 60, label: 'Writing Task' },
+            { skill: 'speaking', minutes: 15, label: 'Speaking Task' },
+        ],
+    },
+];
+
+export interface SimSectionResult {
+    skill: IeltsSkill;
+    band: number;
+    score?: number;
+    criteria?: { label: string; band: number }[];
+    timeSpent: number;
+}
+
+export interface SimulationProps {
+    sectionLabel: string;
+    timeLimitSeconds: number;
+    onComplete: (result: SimSectionResult) => void;
+    onExit?: () => void;
+}
+
+export interface ExamMeta {
+    durationLabel: string;
+    questions: number;
+    sections: string;
+}
+
+export const EXAM_META: Record<IeltsSkill, ExamMeta> = {
+    listening: { durationLabel: '30 minutes', questions: 5, sections: '4 sections' },
+    reading: { durationLabel: '20 minutes', questions: 5, sections: '1 passage · 5 questions' },
+    writing: { durationLabel: '60 min (Task 2) · 20 min (Task 1)', questions: 1, sections: '1 essay / report' },
+    speaking: { durationLabel: '~15 minutes', questions: 7, sections: '3 parts' },
+};
+
+export const formatClock = (s: number) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    const mm = String(m).padStart(2, '0');
+    const ss = String(sec).padStart(2, '0');
+    return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+};
 
 export const rawToBand = (score: number): number => {
     if (score >= 39) return 9;

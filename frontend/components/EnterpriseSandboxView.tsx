@@ -95,7 +95,8 @@ const EnterpriseSandboxView: React.FC<EnterpriseSandboxViewProps> = ({ workspace
     ];
 
     return (
-        <div className="max-w-4xl">
+        <div className="w-full flex justify-center py-8 px-6 overflow-y-auto">
+            <div className="w-full max-w-5xl mx-auto space-y-6">
             <header className="flex items-start justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold tracking-tight text-white">{workspace.name}</h1>
@@ -104,7 +105,7 @@ const EnterpriseSandboxView: React.FC<EnterpriseSandboxViewProps> = ({ workspace
                 <span className="text-[10px] uppercase tracking-wider text-amber-400/90 bg-amber-400/10 border border-amber-400/20 rounded-full px-3 py-1 whitespace-nowrap">Enterprise</span>
             </header>
 
-            <section className="mt-6">
+            <section>
                 <h2 className="text-lg font-semibold tracking-tight text-white mb-3">Grid Portal Metrics</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {metrics.map((m) => (
@@ -117,7 +118,7 @@ const EnterpriseSandboxView: React.FC<EnterpriseSandboxViewProps> = ({ workspace
                 </div>
             </section>
 
-            <section className="mt-6">
+            <section>
                 <h2 className="text-lg font-semibold tracking-tight text-white mb-3">Assigned Tasks</h2>
                 <div className="rounded-xl border border-neutral-800 bg-[#141414] divide-y divide-neutral-800/70">
                     {tasks.map((t) => (
@@ -137,7 +138,7 @@ const EnterpriseSandboxView: React.FC<EnterpriseSandboxViewProps> = ({ workspace
                 </div>
             </section>
 
-            <section className="mt-6">
+            <section>
                 <h2 className="text-lg font-semibold tracking-tight text-white mb-3">Institute Sandbox Stats</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {gridStats.map((s) => (
@@ -149,9 +150,10 @@ const EnterpriseSandboxView: React.FC<EnterpriseSandboxViewProps> = ({ workspace
                 </div>
             </section>
 
-            <p className="text-[10px] uppercase tracking-wider text-neutral-600 mt-6">
+            <p className="text-[10px] uppercase tracking-wider text-neutral-600">
                 Task completion rate — {completionRate}%
             </p>
+            </div>
         </div>
     );
 };
