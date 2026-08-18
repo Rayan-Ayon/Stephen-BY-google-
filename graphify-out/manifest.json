@@ -2235,8 +2235,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Dashboard.tsx": {
-    "mtime": 1787048417.118962,
-    "ast_hash": "494bf66eb12a65764e03aa573212c0b0",
+    "mtime": 1787053773.9932513,
+    "ast_hash": "3a4d3970efa78db075f87e5e0c57944e",
     "semantic_hash": ""
   },
   "frontend/components/DebateView.tsx": {
@@ -2315,8 +2315,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Sidebar.tsx": {
-    "mtime": 1787048431.2951636,
-    "ast_hash": "bac083e2a6d16597f310471ca5f57423",
+    "mtime": 1787053759.2204967,
+    "ast_hash": "65a6a49ee47aa713627e439f1ce08b63",
     "semantic_hash": ""
   },
   "frontend/components/SpaceView.tsx": {
@@ -2675,8 +2675,8 @@
     "semantic_hash": ""
   },
   "frontend/components/EnterpriseSandboxView.tsx": {
-    "mtime": 1787047180.6033342,
-    "ast_hash": "c27046b2190720b6345e4f53c18b8fe4",
+    "mtime": 1787053552.743929,
+    "ast_hash": "0ac4af94eb17219463daf526cba5dff1",
     "semantic_hash": ""
   },
   "frontend/components/IndividualSandboxView.tsx": {
@@ -2810,8 +2810,43 @@
     "semantic_hash": ""
   },
   "frontend/workspaceContext.tsx": {
-    "mtime": 1787047118.1274817,
-    "ast_hash": "30cf2ede1a6c2b14d0e0f89eddf369cb",
+    "mtime": 1787049901.0734088,
+    "ast_hash": "f5cf3038de0fc3d5e68387c118532dbf",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/IELTSEvaluationHub.tsx": {
+    "mtime": 1787053737.5336974,
+    "ast_hash": "dc36b4b8c280fcd707c78d34ea419cf1",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/ielts/IELTSDashboard.tsx": {
+    "mtime": 1787053602.398726,
+    "ast_hash": "39bcc3174898008af36b1647378fbe5d",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/ielts/IELTSListeningExam.tsx": {
+    "mtime": 1787053693.37534,
+    "ast_hash": "a85c559700894a00fa59f3fd46ba6076",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/ielts/IELTSReadingExam.tsx": {
+    "mtime": 1787053674.7258525,
+    "ast_hash": "33ef8ff69eb71641f14c2de98d4a4b23",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/ielts/IELTSSpeakingExam.tsx": {
+    "mtime": 1787053717.793088,
+    "ast_hash": "b71a60cf01ffe39e9370edd47e04f0ce",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/ielts/IELTSWritingExam.tsx": {
+    "mtime": 1787053649.402482,
+    "ast_hash": "739f8bdc465dd315998f5f9c0593bcd2",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/ielts/ieltsShared.ts": {
+    "mtime": 1787053584.2833078,
+    "ast_hash": "eea1ce24c3877ab6efbe45d2cd707f85",
     "semantic_hash": ""
   }
 }

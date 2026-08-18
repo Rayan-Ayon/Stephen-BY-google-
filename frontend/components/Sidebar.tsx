@@ -37,6 +37,7 @@ const navConfig = [
     {
         items: [
             { name: 'Sandbox', icon: <CubeIcon className="w-5 h-5" />, key: 'sandbox' },
+            { name: 'IELTS Evaluation', icon: <ExamPaperPenIcon className="w-5 h-5" />, key: 'ielts_evaluation' },
             { name: 'Add Content', icon: <PlusIcon className="w-5 h-5" />, key: 'add_content' },
             { name: 'Add Courses', icon: <AddCoursesIcon className="w-5 h-5" />, key: 'add_courses' },
             { name: 'Competitions', icon: <TrophyIcon className="w-5 h-5" />, key: 'competitions' },

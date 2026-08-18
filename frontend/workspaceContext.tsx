@@ -21,11 +21,7 @@ interface KnownWorkspaceEntry {
 const KNOWN_WORKSPACE_CODES: KnownWorkspaceEntry[] = [
     {
         code: 'FARMGATE-2026',
-        workspace: { id: 'farmgate_exec', type: 'enterprise', name: 'Farmgate Executive Batch', code: 'FARMGATE-2026' },
-    },
-    {
-        code: 'BUET-GRID',
-        workspace: { id: 'buet_grid', type: 'enterprise', name: 'BUET Engineering Grid Portal', code: 'BUET-GRID' },
+        workspace: { id: 'farmgate', type: 'enterprise', name: 'Farmgate Executive Batch', code: 'FARMGATE-2026' },
     },
 ];
 
@@ -46,13 +42,30 @@ interface WorkspaceContextValue {
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
+// Normalizes persisted workspaces: drops removed nodes (buet_grid), remaps renamed
+// ids (farmgate_exec → farmgate), and guarantees the individual workspace exists.
+const migrateStored = (list: Workspace[]): Workspace[] => {
+    const seen = new Map<string, Workspace>();
+    const farmgateEntry = KNOWN_WORKSPACE_CODES.find(k => k.workspace.id === 'farmgate');
+    for (const ws of list) {
+        if (ws.id === 'buet_grid') continue;
+        if (ws.id === 'farmgate_exec') {
+            if (farmgateEntry) seen.set(farmgateEntry.workspace.id, farmgateEntry.workspace);
+            continue;
+        }
+        seen.set(ws.id, ws);
+    }
+    if (!seen.has('personal')) seen.set('personal', INDIVIDUAL_WORKSPACE);
+    return [...seen.values()];
+};
+
 const readStoredWorkspaces = (): Workspace[] => {
     const stored = localStorage.getItem(WORKSPACES_KEY);
     if (stored) {
         try {
             const parsed = JSON.parse(stored);
             if (Array.isArray(parsed) && parsed.length > 0) {
-                return parsed;
+                return migrateStored(parsed);
             }
         } catch {
             // Corrupt cache — fall through to seeds.
@@ -61,26 +74,27 @@ const readStoredWorkspaces = (): Workspace[] => {
     return SEEDED_WORKSPACES;
 };
 
-const readStoredActive = (fallback: Workspace[]): Workspace => {
+const readStoredActive = (): Workspace => {
     const stored = localStorage.getItem(ACTIVE_WORKSPACE_KEY);
     if (stored) {
         try {
             const parsed = JSON.parse(stored);
-            if (parsed && parsed.id && (parsed.type === 'individual' || parsed.type === 'enterprise')) {
-                return parsed as Workspace;
+            if (parsed && parsed.id) {
+                const migrated = migrateStored([parsed]);
+                if (migrated.length > 0) {
+                    return migrated[0];
+                }
             }
         } catch {
             // Corrupt cache — fall through to default.
         }
     }
-    return fallback[0] || INDIVIDUAL_WORKSPACE;
+    return INDIVIDUAL_WORKSPACE;
 };
 
 export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [workspaces, setWorkspaces] = useState<Workspace[]>(readStoredWorkspaces);
-    const [activeWorkspace, setActiveWorkspace] = useState<Workspace>(() =>
-        readStoredActive(readStoredWorkspaces())
-    );
+    const [activeWorkspace, setActiveWorkspace] = useState<Workspace>(readStoredActive);
 
     useEffect(() => {
         localStorage.setItem(WORKSPACES_KEY, JSON.stringify(workspaces));
