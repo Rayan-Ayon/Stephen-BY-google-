@@ -2330,8 +2330,8 @@
     "semantic_hash": ""
   },
   "frontend/components/TutorPanel.tsx": {
-    "mtime": 1781906205.3680904,
-    "ast_hash": "094775c472c05417cfd0f09df8393ad7",
+    "mtime": 1787078758.1108913,
+    "ast_hash": "73f4193970a0d2816b53f320d33b4af2",
     "semantic_hash": ""
   },
   "frontend/components/TutorPanelErrorBoundary.tsx": {
@@ -2375,8 +2375,8 @@
     "semantic_hash": ""
   },
   "frontend/components/modals.tsx": {
-    "mtime": 1781293605.787356,
-    "ast_hash": "5c62e1ec953ace880e0160019755071f",
+    "mtime": 1787078661.1374674,
+    "ast_hash": "4a1449643d1d10d0627d21c75be76b3a",
     "semantic_hash": ""
   },
   "frontend/index.tsx": {
@@ -2675,8 +2675,8 @@
     "semantic_hash": ""
   },
   "frontend/components/EnterpriseSandboxView.tsx": {
-    "mtime": 1787074394.3572145,
-    "ast_hash": "6edfab742cbfec062c64f8f6ed56f071",
+    "mtime": 1787078578.3867207,
+    "ast_hash": "0fe0f09195eb0ab261983b2f4c463c82",
     "semantic_hash": ""
   },
   "frontend/components/IndividualSandboxView.tsx": {
@@ -2830,8 +2830,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSReadingExam.tsx": {
-    "mtime": 1787077720.0705414,
-    "ast_hash": "9cc3c1c24fff9ff337fa31b195306ca4",
+    "mtime": 1787080727.9507139,
+    "ast_hash": "7630c4a65f1bc1028024a6a6f8d87424",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSSpeakingExam.tsx": {

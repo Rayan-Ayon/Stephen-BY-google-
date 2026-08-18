@@ -197,7 +197,7 @@ export const QuizModal: React.FC<{ onClose: () => void, onGenerate?: (config: { 
                                 const label = opt === 'Standard' ? 'Standard (default)' : opt;
                                 return (
                                     <button key={opt} onClick={() => setNumQuestions(opt)} className={pillClasses(numQuestions === opt)}>
-                                        {numQuestions === opt && <CheckIcon className="w-3.5 h-3.5" />}
+                                        {numQuestions === opt && <CheckCircleIcon className="w-3.5 h-3.5" />}
                                         <span>{label}</span>
                                     </button>
                                 );
@@ -211,7 +211,7 @@ export const QuizModal: React.FC<{ onClose: () => void, onGenerate?: (config: { 
                                 const label = opt === 'Medium' ? 'Medium (default)' : opt;
                                 return (
                                     <button key={opt} onClick={() => setDifficulty(opt)} className={pillClasses(difficulty === opt)}>
-                                        {difficulty === opt && <CheckIcon className="w-3.5 h-3.5" />}
+                                        {difficulty === opt && <CheckCircleIcon className="w-3.5 h-3.5" />}
                                         <span>{label}</span>
                                     </button>
                                 );

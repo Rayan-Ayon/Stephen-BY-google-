@@ -760,7 +760,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({ isPanelExpanded, setIsPanelExpa
         // If not indexed, trigger indexing first
         if (indexStatus !== 'ready') {
             await handleAnalyzeVideo();
-            if (indexStatus !== 'ready') return;
+            if ((indexStatus as string) !== 'ready') return;
         }
         
         setIsGenerating(true);
@@ -896,7 +896,7 @@ safeToast.error(msg);
         // Check if indexed first
         if (indexStatus !== 'ready') {
             await handleAnalyzeVideo();
-            if (indexStatus !== 'ready') return;
+            if ((indexStatus as string) !== 'ready') return;
         }
 
         setIsSummaryGenerating(true);
@@ -1136,7 +1136,7 @@ safeToast.error(msg);
                 {currentStatus === 'idle' || currentStatus === 'error' ? (
                     <button 
                         onClick={handleAnalyzeVideo}
-                        disabled={currentStatus === 'checking'}
+                        disabled={(currentStatus as string) === 'checking'}
                         className="px-6 py-2 bg-green-600 text-white font-bold rounded-full text-xs hover:bg-green-700 transition-colors"
                     >
                         {currentStatus === 'error' ? 'Retry Analysis' : 'Analyze Video'}
