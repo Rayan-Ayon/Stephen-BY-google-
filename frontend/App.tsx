@@ -7,6 +7,7 @@ import AuthOverlay from './components/AuthOverlay';
 import SuperAdminView from './components/SuperAdminView';
 import OrgSpaceView from './components/OrgSpaceView';
 import ActivationView from './components/ActivationView';
+import { WorkspaceProvider } from './workspaceContext';
 import { initMockDb } from './utils/mockDb';
 
 export type Theme = 'light' | 'dark';
@@ -170,15 +171,17 @@ const App: React.FC = () => {
     <div className={`transition-colors duration-300 ${theme === 'dark' ? 'dark text-neutral-200' : 'text-neutral-800'}`} style={{ fontFamily: "'Inter', sans-serif" }}>
       {showDashboard ? (
         <ErrorBoundary>
-          <Dashboard
-            toggleTheme={toggleTheme}
-            theme={theme}
-            initialView={initialView}
-            onExit={() => setShowDashboard(false)}
-            userEmail={userEmail}
-            spaceCode={spaceCode}
-            onLogout={handleLogout}
-          />
+          <WorkspaceProvider>
+            <Dashboard
+              toggleTheme={toggleTheme}
+              theme={theme}
+              initialView={initialView}
+              onExit={() => setShowDashboard(false)}
+              userEmail={userEmail}
+              spaceCode={spaceCode}
+              onLogout={handleLogout}
+            />
+          </WorkspaceProvider>
         </ErrorBoundary>
       ) : (
         <LandingPage

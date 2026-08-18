@@ -27,6 +27,7 @@ const processingLogs: string[] = [
 
 interface DiscoverViewProps {
     email?: string;
+    workspaceScopeId?: string;
 }
 
 const defaultConfig: SourceConfig = {
@@ -37,10 +38,10 @@ const defaultConfig: SourceConfig = {
     journal: ['NeurIPS Proceedings', 'Nature Machine Intelligence', 'JMLR', 'ICLR Papers', 'IEEE TPAMI'],
 };
 
-const DiscoverView: React.FC<DiscoverViewProps> = ({ email = 'ayonburg@gmail.com' }) => {
+const DiscoverView: React.FC<DiscoverViewProps> = ({ email = 'ayonburg@gmail.com', workspaceScopeId }) => {
     const userEmail = email;
-    const stateKey = `discover_phase_${userEmail}`;
-    const configKey = `discover_config_${userEmail}`;
+    const stateKey = workspaceScopeId ? `stephen_enterprise_${workspaceScopeId}_discover_phase` : `discover_phase_${userEmail}`;
+    const configKey = workspaceScopeId ? `stephen_enterprise_${workspaceScopeId}_discover_config` : `discover_config_${userEmail}`;
     const lastPhaseRef = useRef<DiscoverPhase>('welcome');
 
     const [phase, setPhase] = useState<DiscoverPhase>(() => {

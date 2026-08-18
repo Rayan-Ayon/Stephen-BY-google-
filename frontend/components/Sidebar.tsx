@@ -12,6 +12,7 @@ import {
     HomeIcon, ShieldCheckIcon, UserIcon
 } from './icons';
 import type { Space } from '../utils/mockDb';
+import WorkspaceDropdown from './WorkspaceDropdown';
 
 interface SidebarProps {
   toggleTheme: () => void;
@@ -29,11 +30,13 @@ interface SidebarProps {
   onShareSpace: (id: string) => void;
   userEmail: string;
   onLogout: () => void;
+  isEnterprise: boolean;
 }
 
 const navConfig = [
     {
         items: [
+            { name: 'Sandbox', icon: <CubeIcon className="w-5 h-5" />, key: 'sandbox' },
             { name: 'Add Content', icon: <PlusIcon className="w-5 h-5" />, key: 'add_content' },
             { name: 'Add Courses', icon: <AddCoursesIcon className="w-5 h-5" />, key: 'add_courses' },
             { name: 'Competitions', icon: <TrophyIcon className="w-5 h-5" />, key: 'competitions' },
@@ -69,7 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     toggleTheme, theme, onNavigate, activeItem, 
     sidebarMode, setSidebarMode, isExpanded, setIsExpanded,
     spaces, onCreateSpace, onRenameSpace, onDeleteSpace, onShareSpace,
-    userEmail, onLogout
+    userEmail, onLogout, isEnterprise
 }) => {
     const [profileOpen, setProfileOpen] = useState(false);
     const [sidebarSettingsOpen, setSidebarSettingsOpen] = useState(false);
@@ -150,70 +153,25 @@ const Sidebar: React.FC<SidebarProps> = ({
             onMouseLeave={() => { setIsSidebarHovered(false); setShowTooltip(false); }}
             className={`group h-screen flex flex-col shrink-0 border-r z-30 relative ${theme === 'dark' ? 'bg-[#131313] border-gray-800/50' : 'bg-neutral-100 border-neutral-200'}`}
         >
-            <div className="flex items-center px-6 h-16 shrink-0 relative">
-                <AnimatePresence mode="wait">
-                    {isExpanded ? (
-                        <motion.div
-                            key="expanded-header"
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -10 }}
-                            transition={{ duration: 0.2 }}
-                            className={`font-semibold flex items-center justify-between w-full ${theme === 'dark' ? 'text-gray-200' : 'text-neutral-700'}`}
+            <div className="flex items-center px-4 h-16 shrink-0 relative">
+                <WorkspaceDropdown theme={theme} isExpanded={isExpanded} />
+                {sidebarMode === 'manual' && (
+                    <div className="relative">
+                        <button
+                            onClick={handleToggle}
+                            onMouseEnter={() => setShowTooltip(true)}
+                            onMouseLeave={() => setShowTooltip(false)}
+                            className="p-1.5 rounded-lg text-gray-500 hover:text-black dark:hover:text-white hover:bg-neutral-200 dark:hover:bg-gray-800 transition-all"
                         >
-                           <span className="text-xl font-light tracking-tight">Stephen</span>
-                           {sidebarMode === 'manual' && (
-                               <div className="relative">
-                                   <button 
-                                        onClick={handleToggle}
-                                        onMouseEnter={() => setShowTooltip(true)}
-                                        onMouseLeave={() => setShowTooltip(false)}
-                                        className="p-1.5 rounded-lg text-gray-500 hover:text-black dark:hover:text-white hover:bg-neutral-200 dark:hover:bg-gray-800 transition-all"
-                                   >
-                                       <SidebarToggleIcon className="w-6 h-6" />
-                                   </button>
-                                   {showTooltip && (
-                                       <div className="absolute top-1/2 left-full ml-4 -translate-y-1/2 px-3 py-1.5 bg-black text-white text-[11px] font-bold rounded-lg whitespace-nowrap shadow-xl z-50 pointer-events-none">
-                                           close sidebar
-                                       </div>
-                                   )}
-                               </div>
-                           )}
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                            key="collapsed-header"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            className="flex items-center justify-center w-full"
-                        >
-                            <div className="relative">
-                                {sidebarMode === 'manual' ? (
-                                    <button
-                                        onClick={handleToggle}
-                                        onMouseEnter={() => setShowTooltip(true)}
-                                        onMouseLeave={() => setShowTooltip(false)}
-                                        className="flex items-center justify-center p-2 rounded-lg transition-all"
-                                    >
-                                        {isSidebarHovered ? (
-                                            <SidebarToggleIcon className="w-6 h-6 text-gray-500 dark:hover:text-white hover:text-black" />
-                                        ) : (
-                                            <span className="text-2xl font-light dark:text-gray-200 text-neutral-700">S</span>
-                                        )}
-                                    </button>
-                                ) : (
-                                    <span className="text-2xl font-light dark:text-gray-200 text-neutral-700">S</span>
-                                )}
-                                {sidebarMode === 'manual' && isSidebarHovered && showTooltip && (
-                                    <div className="absolute top-1/2 left-full ml-4 -translate-y-1/2 px-3 py-1.5 bg-black text-white text-[11px] font-bold rounded-lg whitespace-nowrap shadow-xl z-50 pointer-events-none">
-                                        open sidebar
-                                    </div>
-                                )}
+                            <SidebarToggleIcon className="w-6 h-6" />
+                        </button>
+                        {showTooltip && (
+                            <div className="absolute top-1/2 left-full ml-4 -translate-y-1/2 px-3 py-1.5 bg-black text-white text-[11px] font-bold rounded-lg whitespace-nowrap shadow-xl z-50 pointer-events-none">
+                                {isExpanded ? 'close sidebar' : 'open sidebar'}
                             </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                        )}
+                    </div>
+                )}
             </div>
             
             <nav className="flex-grow px-3 mt-4 space-y-1.5 overflow-y-auto overflow-x-hidden">
@@ -250,7 +208,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         ))}
                         
                         {/* Inject Spaces Section after the first group (index 0) */}
-                        {sectionIndex === 0 && (
+                        {!isEnterprise && sectionIndex === 0 && (
                             <div className="mt-2 mb-2">
                                 <div className="px-3 pt-2 pb-1 flex items-center justify-between group/header">
                                     {isExpanded ? (

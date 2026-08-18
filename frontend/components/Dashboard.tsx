@@ -23,8 +23,11 @@ import HawkingFab from './HawkingFab';
 import ResearchLabView from './ResearchLabView';
 import LearningMethodsView from './LearningMethodsView';
 import SpaceView from './SpaceView';
+import IndividualSandboxView from './IndividualSandboxView';
+import EnterpriseSandboxView from './EnterpriseSandboxView';
 import { DeleteSpaceModal, ShareSpaceModal } from './modals';
 import { Theme } from '../App';
+import { useWorkspace } from '../workspaceContext';
 import {
   initMockDb,
   getSpaces,
@@ -88,7 +91,9 @@ const isInstitutionalSpace = (code: string): boolean => {
 };
 
 const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, onExit, userEmail, spaceCode, onLogout }) => {
-    const [currentView, setCurrentView] = useState(initialView);
+    const { activeWorkspace } = useWorkspace();
+    const isEnterprise = activeWorkspace.type === 'enterprise';
+    const [currentView, setCurrentView] = useState(() => initialView === 'add_content' ? 'sandbox' : initialView);
     const [selectedCourse, setSelectedCourse] = useState<HistoryItem | null>(null);
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
     const [sidebarMode, setSidebarMode] = useState<'hover' | 'manual'>('hover');
@@ -116,13 +121,13 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
 
     // Persist recentVideos to a per-user localStorage key (write-through cache)
     useEffect(() => {
-        if (!userEmail) return;
+        if (!userEmail || isEnterprise) return;
         localStorage.setItem(`recents_${userEmail}`, JSON.stringify(recentVideos));
-    }, [recentVideos, userEmail]);
+    }, [recentVideos, userEmail, isEnterprise]);
 
     // Reset state on email change, then hydrate from scoped localStorage + server
     useEffect(() => {
-        if (!userEmail) return;
+        if (!userEmail || isEnterprise) return;
 
         // 1. Immediately clear stale data so old account's videos never linger
         setRecentVideos([]);
@@ -169,7 +174,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                 }
             });
         return () => controller.abort();
-    }, [userEmail]);
+    }, [userEmail, isEnterprise]);
 
     // Mock History Items
     const [historyItems, setHistoryItems] = useState<HistoryItem[]>([
@@ -203,7 +208,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
     }, []);
 
     useEffect(() => {
-        if (initialView) {
+        if (initialView && initialView !== 'add_content') {
             setCurrentView(initialView);
         }
     }, [initialView]);
@@ -323,6 +328,16 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
         }
 
         if (currentView.startsWith('space_')) {
+            if (isEnterprise) {
+                return (
+                    <div className="flex-1 h-full bg-[#0b0b0b] p-8 lg:p-12 flex items-center justify-center">
+                        <div className="text-center">
+                            <p className="text-sm text-neutral-400">Spaces are private to your Personal Sandbox.</p>
+                            <p className="text-xs text-neutral-600 mt-1">Switch back to your individual workspace to access them.</p>
+                        </div>
+                    </div>
+                );
+            }
             const spaceId = currentView.slice('space_'.length);
             const space = spaces.find(s => s.id === spaceId) || spaces[0];
             if (space) {
@@ -333,6 +348,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
         }
 
         switch (currentView) {
+            case 'sandbox': return <IndividualSandboxView email={userEmail} />;
             case 'add_content':
                 if (isInstitutionalSpace(spaceCode)) {
                     return (
@@ -358,7 +374,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                                 <div>
                                     <h2 className="text-lg font-semibold text-white mb-4">Assigned Content</h2>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {recentVideos.length > 0 ? (
+                                        {isEnterprise ? [] : recentVideos.length > 0 ? (
                                             recentVideos.map((item) => (
                                                 <div
                                                     key={item.id}
@@ -385,7 +401,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                         </div>
                     );
                 }
-                return <AddContentView onCourseCreated={handleCourseCreated} recentVideos={recentVideos} onSelectRecent={handleSelectCourse} />;
+                return <AddContentView onCourseCreated={handleCourseCreated} recentVideos={isEnterprise ? [] : recentVideos} onSelectRecent={handleSelectCourse} />;
             case 'add_courses':
                  return (
                     <AddCoursesView 
@@ -396,13 +412,13 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                  );
             case 'competitions': return <CompetitionView />;
             case 'projects': return <ProjectsView onNavigate={handleNavigate} />;
-            case 'discover': return <DiscoverView email={userEmail} />;
+            case 'discover': return <DiscoverView email={userEmail} workspaceScopeId={isEnterprise ? activeWorkspace.id : undefined} />;
             case 'edgram': return <EdgramView />;
             case 'debate': return <DebateView initialMessage={debateInitialMessage} />;
             case 'tracker': return <TrackerView />;
             case 'consult_professors': return <ConsultProfessorsView />;
             case 'pricing': return <PricingView />;
-            case 'history': return <HistoryView historyItems={historyItems} onSelectCourse={handleSelectCourse} />;
+            case 'history': return <HistoryView historyItems={isEnterprise ? [] : historyItems} onSelectCourse={handleSelectCourse} />;
             case 'invite_earn': return <InviteEarnView onContactUs={() => setIsContactUsOpen(true)} />;
             case 'research_lab': return <ResearchLabView />;
             case 'profile': return <ProfileView />;
@@ -410,7 +426,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             case 'learning_methods': return <LearningMethodsView />;
             case 'chrome_extension': return <div className="flex items-center justify-center h-full text-gray-500">Chrome Extension Coming Soon</div>;
             default:
-                return <AddContentView onCourseCreated={handleCourseCreated} recentVideos={recentVideos} onSelectRecent={handleSelectCourse} />;
+                return <AddContentView onCourseCreated={handleCourseCreated} recentVideos={isEnterprise ? [] : recentVideos} onSelectRecent={handleSelectCourse} />;
         }
     };
 
@@ -432,10 +448,15 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                 onShareSpace={(id) => setShareSpaceId(id)}
                 userEmail={userEmail}
                 onLogout={onLogout}
+                isEnterprise={isEnterprise}
             />
             
             <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-                {renderContent()}
+                {isEnterprise && currentView === 'sandbox' ? (
+                    <EnterpriseSandboxView workspace={activeWorkspace} />
+                ) : (
+                    renderContent()
+                )}
                 <HawkingFab onNavigate={handleNavigate} />
             </main>
 
