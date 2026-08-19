@@ -2830,8 +2830,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSReadingExam.tsx": {
-    "mtime": 1787165365.2700305,
-    "ast_hash": "7d828dc5f4bbbc778b816747adf2b381",
+    "mtime": 1787167018.8412795,
+    "ast_hash": "6e27b2c49dd845356717be93ddae677b",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSSpeakingExam.tsx": {
@@ -2867,6 +2867,11 @@
   "frontend/components/enterprise/ielts/ReadingPart2.tsx": {
     "mtime": 1787165254.7719648,
     "ast_hash": "25496869586e946bd49b6a3e462b87a0",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/ielts/ReadingPart3.tsx": {
+    "mtime": 1787166991.4152353,
+    "ast_hash": "f1fc50b413ec9f0e46943542b4744846",
     "semantic_hash": ""
   }
 }

@@ -3,6 +3,7 @@ import { addAttempt, rawToBand, formatClock, type SimulationProps } from './ielt
 import IELTSLobbyCard from './IELTSLobbyCard';
 import IELTSExitModal from './IELTSExitModal';
 import { Part2Content, ANSWER_HEADINGS, MULTI_SELECT_GROUPS, GROUP_ANSWERS, GAP_FILL, GAP_ANSWERS } from './ReadingPart2';
+import { Part3Content, PART3_TITLE, PART3_PASSAGE, PART3_ANSWERS, PART3_TFNG } from './ReadingPart3';
 const Wifi = ({ size, strokeWidth, className }: any) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
 );
@@ -57,7 +58,7 @@ One of Marie Curie’s outstanding achievements was to have understood the need 
 const PARTS: ReadingPart[] = [
     { id: 1, title: 'The life and work of Marie Curie', instructions: 'Read the text and answer questions 1–13.', text: PASSAGE_P1 },
     { id: 2, title: 'The Physics of Traffic Behavior', instructions: 'Read the text and answer questions 14–26.', text: '' },
-    { id: 3, title: 'Part 3 Mock', instructions: 'Read the text and answer questions 27-40.', text: 'Mock text for part 3...' },
+    { id: 3, title: PART3_TITLE, instructions: 'Read the text and answer questions 27–40.', text: PART3_PASSAGE },
 ];
 
 const QUESTIONS: ReadingQuestion[] = [
@@ -89,9 +90,12 @@ for (const q of GAP_FILL) {
     QUESTIONS.push({ id: q.questionId, part: 2, type: 'gap', answer: GAP_ANSWERS[String(q.questionId)] });
 }
 
-// Add mock questions for part 3 to reach 40 total questions
-for (let i = 27; i <= 40; i++) {
-    QUESTIONS.push({ id: i, part: 3, type: 'mcq', prompt: `Mock question ${i}`, answer: 'a', options: ['A', 'B', 'C', 'D'] });
+// Real Plain English questions for part 3 (TFNG 27-33, summary gap-fill 34-40)
+for (const q of PART3_TFNG) {
+    QUESTIONS.push({ id: q.id, part: 3, type: 'tfng', prompt: q.statement, answer: q.answer });
+}
+for (const qid of [34, 35, 36, 37, 38, 39, 40]) {
+    QUESTIONS.push({ id: qid, part: 3, type: 'gap', answer: PART3_ANSWERS[qid] });
 }
 
 type TestState = 'lobby' | 'active' | 'evaluating' | 'completed';
@@ -289,6 +293,13 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, sim
                         onAnswer={setAnswer}
                         locked={locked}
                     />
+                ) : activePart === 3 ? (
+                    <Part3Content
+                        candidateEmail={candidateEmail}
+                        answers={answers}
+                        onAnswer={setAnswer}
+                        locked={locked}
+                    />
                 ) : (
                 <>
                 {/* Left Passage Pane */}
@@ -464,7 +475,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, sim
                                 </button>
                                 
                                 {isPartActive ? (
-                                    p.id === 2 ? (
+                                    p.id === 2 || p.id === 3 ? (
                                         <span className="text-sm text-neutral-500">
                                             {getAnsweredCount(p.id)} of {getTotalCount(p.id)} answered
                                         </span>
