@@ -2815,7 +2815,7 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/IELTSEvaluationHub.tsx": {
-    "mtime": 1787077640.6497822,
+    "mtime": 1787165194.2843711,
     "ast_hash": "374575e97880a9e8340bf353e41e40ac",
     "semantic_hash": ""
   },
@@ -2825,13 +2825,13 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSListeningExam.tsx": {
-    "mtime": 1787077745.2113817,
-    "ast_hash": "2f7213b57ddb9f8d2eea0bd5f6efc25b",
+    "mtime": 1787162037.6317706,
+    "ast_hash": "525ad548b4f4c9ae32ebdbfa08e7b8b2",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSReadingExam.tsx": {
-    "mtime": 1787080727.9507139,
-    "ast_hash": "7630c4a65f1bc1028024a6a6f8d87424",
+    "mtime": 1787165365.2700305,
+    "ast_hash": "7d828dc5f4bbbc778b816747adf2b381",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSSpeakingExam.tsx": {
@@ -2862,6 +2862,11 @@
   "frontend/components/enterprise/ielts/IELTSExitModal.tsx": {
     "mtime": 1787077585.6806374,
     "ast_hash": "5bb724e11a037dff559466297b533589",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/ielts/ReadingPart2.tsx": {
+    "mtime": 1787165254.7719648,
+    "ast_hash": "25496869586e946bd49b6a3e462b87a0",
     "semantic_hash": ""
   }
 }
