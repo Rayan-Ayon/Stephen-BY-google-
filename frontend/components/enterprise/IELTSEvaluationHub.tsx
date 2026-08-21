@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useWorkspace, type Workspace } from '../../workspaceContext';
 import IELTSDashboard from './ielts/IELTSDashboard';
-import IELTSWritingExam from './ielts/IELTSWritingExam';
-import IELTSReadingExam from './ielts/IELTSReadingExam';
-import IELTSListeningExam from './ielts/IELTSListeningExam';
-import IELTSSpeakingExam from './ielts/IELTSSpeakingExam';
 import IELTSSimulationRunner from './ielts/IELTSSimulationRunner';
+import IELTSWritingExam from './ielts/IELTSWritingExam';
+import IELTSSpeakingExam from './ielts/IELTSSpeakingExam';
+import IELTSListeningExam from './ielts/IELTSListeningExam';
+import IELTSReadingExam from './ielts/IELTSReadingExam';
+import ModuleHistorySection from './history/ModuleHistorySection';
 import type { IeltsBundleId } from './ielts/ieltsShared';
 
 type IeltsView = 'dashboard' | 'writing' | 'speaking' | 'listening' | 'reading' | IeltsBundleId;
@@ -177,9 +178,13 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail }) =>
                 ) : (
                     <>
                         {view === 'writing' && <IELTSWritingExam candidateEmail={userEmail} />}
+                        {view === 'writing' && <div className="mt-6"><ModuleHistorySection moduleType="writing" /></div>}
                         {view === 'speaking' && <IELTSSpeakingExam candidateEmail={userEmail} />}
+                        {view === 'speaking' && <div className="mt-6"><ModuleHistorySection moduleType="speaking" /></div>}
                         {view === 'listening' && <IELTSListeningExam candidateEmail={userEmail} />}
+                        {view === 'listening' && <div className="mt-6"><ModuleHistorySection moduleType="listening" /></div>}
                         {view === 'reading' && <IELTSReadingExam candidateEmail={userEmail} />}
+                        {view === 'reading' && <div className="mt-6"><ModuleHistorySection moduleType="reading" /></div>}
                     </>
                 )}
             </main>

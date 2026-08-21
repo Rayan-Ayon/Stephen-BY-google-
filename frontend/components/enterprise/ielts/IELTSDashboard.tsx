@@ -7,6 +7,7 @@ import {
     DIAGNOSTIC_SUBSKILLS,
     MISTAKE_TOKENS,
     attemptStatus,
+    ATTEMPTS_UPDATED_EVENT,
     type IeltsAttempt,
     type IeltsSkill,
 } from './ieltsShared';
@@ -31,6 +32,13 @@ const formatMins = (m?: number) => (m != null ? `${m}m` : '—');
 
 const IELTSDashboard: React.FC = () => {
     const [attempts, setAttempts] = React.useState<IeltsAttempt[]>(readAttempts);
+
+    React.useEffect(() => {
+        const refresh = () => setAttempts(readAttempts());
+        window.addEventListener(ATTEMPTS_UPDATED_EVENT, refresh);
+        return () => window.removeEventListener(ATTEMPTS_UPDATED_EVENT, refresh);
+    }, []);
+
     const [expandedSkill, setExpandedSkill] = React.useState<IeltsSkill | null>(null);
     const [moduleFilter, setModuleFilter] = React.useState<'all' | IeltsSkill>('all');
     const [statusFilter, setStatusFilter] = React.useState<'all' | 'approved' | 'developing' | 'at-risk'>('all');

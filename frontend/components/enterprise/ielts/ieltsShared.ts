@@ -4,6 +4,7 @@ export interface IeltsAttempt {
     id: number;
     skill: IeltsSkill;
     band: number;
+    title?: string;
     score?: number;
     taskType?: 'task1' | 'task2';
     date: string;
@@ -11,6 +12,14 @@ export interface IeltsAttempt {
     criteria?: { label: string; band: number }[];
     bundle?: string;
 }
+
+export const ATTEMPTS_UPDATED_EVENT = 'ielts-attempts-updated';
+
+export const notifyAttemptsUpdated = () => {
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event(ATTEMPTS_UPDATED_EVENT));
+    }
+};
 
 export interface WritingCriteria {
     taskAchievement: number;
@@ -46,10 +55,48 @@ export const persistAttempts = (next: IeltsAttempt[]) => {
 export const addAttempt = (attempt: IeltsAttempt) => {
     const next = [attempt, ...readAttempts()].slice(0, 60);
     persistAttempts(next);
+    notifyAttemptsUpdated();
     return next;
 };
 
-export const clearAttempts = () => persistAttempts([]);
+export const clearAttempts = () => {
+    persistAttempts([]);
+    notifyAttemptsUpdated();
+};
+
+export const clearAttemptsBySkill = (skill: IeltsSkill) => {
+    const next = readAttempts().filter((a) => a.skill !== skill);
+    persistAttempts(next);
+    notifyAttemptsUpdated();
+};
+
+const DEMO_TITLES: Record<IeltsSkill, string[]> = {
+    writing: ['Task 2 - Live Opinion Essay', 'Task 1 - Live Report'],
+    speaking: ['Part 2 - Live Cue Card', 'Part 3 - Live Discussion'],
+    listening: ['Live Section 3 Conversation', 'Live Section 4 Lecture'],
+    reading: ['Live Passage Practice', 'Live TFNG Drill'],
+};
+
+export const createDemoAttempt = (skill: IeltsSkill): IeltsAttempt => {
+    const rounded = (v: number) => Math.round(v * 2) / 2;
+    const band = rounded(5.5 + Math.random() * 3);
+    const titles = DEMO_TITLES[skill];
+    const title = titles[Math.floor(Math.random() * titles.length)];
+    const now = new Date();
+    const date = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return {
+        id: Date.now(),
+        skill,
+        band,
+        title,
+        date,
+        timeSpent: 12 + Math.floor(Math.random() * 35),
+        criteria: [
+            { label: 'Fluency', band: rounded(band - 0.5 + Math.random()) },
+            { label: 'Accuracy', band: rounded(band - 0.5 + Math.random()) },
+        ],
+    };
+};
 
 export const SEED_ATTEMPTS: IeltsAttempt[] = [
     { id: 1, skill: 'listening', band: 7.0, score: 32, date: 'Jul 28, 2026', timeSpent: 32, criteria: [{ label: 'Detail Recognition', band: 7.5 }, { label: 'Map Labelling', band: 6.5 }, { label: 'Number Capture', band: 7.0 }] },
@@ -58,6 +105,14 @@ export const SEED_ATTEMPTS: IeltsAttempt[] = [
     { id: 4, skill: 'speaking', band: 7.5, date: 'Aug 14, 2026', timeSpent: 14, criteria: [{ label: 'Fluency', band: 7.5 }, { label: 'Lexical Resource', band: 7.0 }, { label: 'Pronunciation', band: 8.0 }, { label: 'Grammar', band: 7.0 }] },
     { id: 5, skill: 'listening', band: 7.5, score: 34, date: 'Aug 17, 2026', timeSpent: 29, criteria: [{ label: 'Detail Recognition', band: 8.0 }, { label: 'Map Labelling', band: 7.0 }, { label: 'Number Capture', band: 7.5 }] },
     { id: 6, skill: 'reading', band: 7.0, score: 30, date: 'Aug 19, 2026', timeSpent: 35, criteria: [{ label: 'Skimming', band: 7.5 }, { label: 'TFNG Traps', band: 6.5 }, { label: 'Gap-Fill', band: 7.0 }] },
+    { id: 7, skill: 'writing', band: 6.5, title: 'Task 2 - Education Policy', taskType: 'task2', date: 'Aug 20, 2026', timeSpent: 44, criteria: [{ label: 'Task Response', band: 6.5 }, { label: 'Coherence', band: 6.5 }, { label: 'Lexical Range', band: 6.0 }, { label: 'Grammar', band: 7.0 }] },
+    { id: 8, skill: 'writing', band: 7.0, title: 'Task 1 - Line Graph', taskType: 'task1', date: 'Aug 21, 2026', timeSpent: 20, criteria: [{ label: 'Task Achievement', band: 7.0 }, { label: 'Coherence', band: 7.0 }, { label: 'Lexical Range', band: 7.0 }, { label: 'Grammar', band: 7.0 }] },
+    { id: 9, skill: 'speaking', band: 7.0, title: 'Part 2 - Describe a Memorable Journey', date: 'Aug 18, 2026', timeSpent: 12, criteria: [{ label: 'Fluency', band: 7.0 }, { label: 'Lexical Resource', band: 7.0 }, { label: 'Pronunciation', band: 7.5 }, { label: 'Grammar', band: 6.5 }] },
+    { id: 10, skill: 'speaking', band: 5.5, title: 'Part 3 - Environmental Conservation', date: 'Aug 21, 2026', timeSpent: 15, criteria: [{ label: 'Fluency', band: 5.5 }, { label: 'Lexical Resource', band: 5.5 }, { label: 'Pronunciation', band: 6.0 }, { label: 'Grammar', band: 5.5 }] },
+    { id: 11, skill: 'listening', band: 7.5, title: 'Cambridge 18 Test 1 Listening', score: 34, date: 'Aug 19, 2026', timeSpent: 30, criteria: [{ label: 'Detail Recognition', band: 8.0 }, { label: 'Map Labelling', band: 7.0 }, { label: 'Number Capture', band: 7.5 }] },
+    { id: 12, skill: 'listening', band: 7.0, title: 'Section 4 Lecture Notes', score: 31, date: 'Aug 22, 2026', timeSpent: 28, criteria: [{ label: 'Detail Recognition', band: 7.0 }, { label: 'Map Labelling', band: 7.0 }, { label: 'Number Capture', band: 7.0 }] },
+    { id: 13, skill: 'reading', band: 7.0, title: 'The Physics of Traffic Behavior', score: 30, date: 'Aug 20, 2026', timeSpent: 36, criteria: [{ label: 'Skimming', band: 7.5 }, { label: 'TFNG Traps', band: 6.5 }, { label: 'Gap-Fill', band: 7.0 }] },
+    { id: 14, skill: 'reading', band: 5.5, title: 'Plain English Movement', score: 22, date: 'Aug 22, 2026', timeSpent: 34, criteria: [{ label: 'Skimming', band: 6.0 }, { label: 'TFNG Traps', band: 5.0 }, { label: 'Gap-Fill', band: 5.5 }] },
 ];
 
 export interface DiagnosticSubSkill {

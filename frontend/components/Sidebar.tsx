@@ -13,6 +13,16 @@ import {
 } from './icons';
 import type { Space } from '../utils/mockDb';
 import WorkspaceDropdown from './WorkspaceDropdown';
+import { InlineCampusIcon } from './enterprise/portal/StudentPortal';
+
+const RepeatIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 2l4 4-4 4" />
+        <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
+        <path d="M7 22l-4-4 4-4" />
+        <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+    </svg>
+);
 
 interface SidebarProps {
   toggleTheme: () => void;
@@ -38,6 +48,8 @@ const navConfig = [
         items: [
             { name: 'Sandbox', icon: <CubeIcon className="w-5 h-5" />, key: 'sandbox' },
             { name: 'IELTS Evaluation', icon: <ExamPaperPenIcon className="w-5 h-5" />, key: 'ielts_evaluation' },
+            { name: 'Spaced Repetition', icon: <RepeatIcon className="w-5 h-5" />, key: 'spaced_repetition' },
+            { name: 'Student Portal', icon: <InlineCampusIcon className="w-5 h-5" />, key: 'student_portal' },
             { name: 'Add Content', icon: <PlusIcon className="w-5 h-5" />, key: 'add_content' },
             { name: 'Add Courses', icon: <AddCoursesIcon className="w-5 h-5" />, key: 'add_courses' },
             { name: 'Competitions', icon: <TrophyIcon className="w-5 h-5" />, key: 'competitions' },

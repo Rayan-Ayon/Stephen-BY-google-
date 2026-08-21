@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useImperativeHandle, useRef, useState } from 'react';
 
 export interface HeadingOption {
     id: string;
@@ -150,12 +150,15 @@ export const GAP_ANSWERS: Record<string, string> = {
 const HEADING_SLOTS = ['14', '15', '16', '17'];
 const ALL_QUESTION_KEYS = ['14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26'];
 const TOTAL_QUESTIONS = 13;
-const NAV_ITEMS: string[] = ['14', '15', '16', '17', '18–19', '20–21', '22–23', '24', '25', '26'];
 const GROUP_MAP: Record<string, string[]> = {
     '18–19': ['18', '19'],
     '20–21': ['20', '21'],
     '22–23': ['22', '23'],
 };
+
+export interface PartContentHandle {
+    scrollTo: (id: number) => void;
+}
 
 export interface Part2ContentProps {
     candidateEmail?: string;
@@ -164,13 +167,12 @@ export interface Part2ContentProps {
     locked: boolean;
 }
 
-export const Part2Content: React.FC<Part2ContentProps> = ({ candidateEmail, answers, onAnswer, locked }) => {
+export const Part2Content = React.forwardRef<PartContentHandle, Part2ContentProps>(({ candidateEmail, answers, onAnswer, locked }, ref) => {
     const splitAreaRef = useRef<HTMLDivElement>(null);
     const sectionRefs = useRef<Record<number, HTMLDivElement | null>>({});
     const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const [split, setSplit] = useState(50);
     const [selectedHeading, setSelectedHeading] = useState<string | null>(null);
-    const [activeNav, setActiveNav] = useState<string>('14');
 
     const get = (key: number) => answers[key] || '';
     const usedHeadings = HEADING_SLOTS.map((k) => get(Number(k))).filter(Boolean);
@@ -228,13 +230,15 @@ export const Part2Content: React.FC<Part2ContentProps> = ({ candidateEmail, answ
         onAnswer(key, value.replace(/\s+/g, ''));
     };
 
-    const isCompleted = (item: string) => {
-        if (GROUP_MAP[item]) return GROUP_MAP[item].every((qid) => answers[Number(qid)]);
-        return !!answers[Number(item)];
+    const navItemFor = (id: number): string => {
+        for (const g of MULTI_SELECT_GROUPS) {
+            if (g.questionIds.includes(id)) return `${g.questionIds[0]}–${g.questionIds[1]}`;
+        }
+        return String(id);
     };
 
-    const goToNav = (item: string) => {
-        setActiveNav(item);
+    const scrollTo = (id: number) => {
+        const item = navItemFor(id);
         if (HEADING_SLOTS.includes(item)) {
             sectionRefs.current[Number(item)]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else if (GROUP_MAP[item]) {
@@ -243,6 +247,8 @@ export const Part2Content: React.FC<Part2ContentProps> = ({ candidateEmail, answ
             itemRefs.current['24–26']?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     };
+
+    useImperativeHandle(ref, () => ({ scrollTo }));
 
     return (
         <div className="h-full w-full min-w-0 flex flex-col bg-white text-neutral-900">
@@ -406,38 +412,8 @@ export const Part2Content: React.FC<Part2ContentProps> = ({ candidateEmail, answ
                     </div>
                 </div>
             </div>
-
-            <footer className="shrink-0 bg-[#F2F2F2] border-t border-neutral-300 px-5 py-3">
-                <div className="flex items-center justify-between gap-3 mb-2">
-                    <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">Question Navigator</span>
-                    <span className="text-[11px] font-mono text-neutral-500">{answeredCount}/{TOTAL_QUESTIONS} answered</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    {NAV_ITEMS.map((item) => {
-                        const active = activeNav === item;
-                        const done = isCompleted(item);
-                        const isGroup = !!GROUP_MAP[item];
-                        return (
-                            <button
-                                key={item}
-                                onClick={() => goToNav(item)}
-                                className={`relative flex items-center justify-center rounded-md border text-[11px] font-mono transition-colors ${
-                                    isGroup ? 'px-2.5 h-8' : 'w-8 h-8'
-                                } ${
-                                    active
-                                        ? 'border-[#0072CE] text-[#0072CE] bg-[#EAF3FB] ring-1 ring-[#0072CE]'
-                                        : 'border-neutral-400 text-neutral-600 bg-white hover:border-[#0072CE]'
-                                }`}
-                            >
-                                {item}
-                                {done && <span className="absolute -top-[3px] left-1/2 -translate-x-1/2 h-[3px] w-6 bg-green-500 rounded-t" />}
-                            </button>
-                        );
-                    })}
-                </div>
-            </footer>
         </div>
     );
-};
+});
 
 export default Part2Content;

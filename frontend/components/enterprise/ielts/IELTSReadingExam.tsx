@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { addAttempt, rawToBand, formatClock, type SimulationProps } from './ieltsShared';
 import IELTSLobbyCard from './IELTSLobbyCard';
 import IELTSExitModal from './IELTSExitModal';
-import { Part2Content, ANSWER_HEADINGS, MULTI_SELECT_GROUPS, GROUP_ANSWERS, GAP_FILL, GAP_ANSWERS } from './ReadingPart2';
+import { Part2Content, ANSWER_HEADINGS, MULTI_SELECT_GROUPS, GROUP_ANSWERS, GAP_FILL, GAP_ANSWERS, type PartContentHandle } from './ReadingPart2';
 import { Part3Content, PART3_TITLE, PART3_PASSAGE, PART3_ANSWERS, PART3_TFNG } from './ReadingPart3';
 const Wifi = ({ size, strokeWidth, className }: any) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
@@ -118,6 +118,8 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, sim
     const [showExitModal, setShowExitModal] = useState(false);
     const [elapsed, setElapsed] = useState(0);
     const [score, setScore] = useState<number | null>(null);
+    const part1Refs = useRef<Record<number, HTMLDivElement | null>>({});
+    const contentRef = useRef<PartContentHandle | null>(null);
 
     const timeLimit = simulation ? simulation.timeLimitSeconds : 60 * 60;
     const locked = testState !== 'active';
@@ -223,15 +225,34 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, sim
     const currentQuestions = QUESTIONS.filter((q) => q.part === activePart);
     const part = PARTS.find((p) => p.id === activePart)!;
 
+    const scrollToQuestion = (id: number, part: 1 | 2 | 3) => {
+        window.setTimeout(() => {
+            if (part === 1) {
+                part1Refs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                contentRef.current?.scrollTo(id);
+            }
+        }, 80);
+    };
+
+    const goTo = (id: number) => {
+        const p = (QUESTIONS.find((q) => q.id === id)?.part ?? 1) as 1 | 2 | 3;
+        setActiveId(id);
+        setActivePart(p);
+        scrollToQuestion(id, p);
+    };
+
     const navigateQuestion = (dir: 1 | -1) => {
         const curIdx = QUESTIONS.findIndex(q => q.id === activeId);
         if (curIdx === -1) return;
         const nextIdx = curIdx + dir;
         if (nextIdx >= 0 && nextIdx < QUESTIONS.length) {
-            setActiveId(QUESTIONS[nextIdx].id);
-            if (QUESTIONS[nextIdx].part !== activePart) {
-                setActivePart(QUESTIONS[nextIdx].part);
+            const next = QUESTIONS[nextIdx];
+            setActiveId(next.id);
+            if (next.part !== activePart) {
+                setActivePart(next.part);
             }
+            scrollToQuestion(next.id, next.part);
         }
     };
 
@@ -288,6 +309,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, sim
             <div className="flex-1 min-h-0 flex mx-4 mb-4 mt-2 border-t border-[#CCCCCC] relative overflow-hidden bg-[#FFFFFF]" ref={splitAreaRef}>
                 {activePart === 2 ? (
                     <Part2Content
+                        ref={contentRef}
                         candidateEmail={candidateEmail}
                         answers={answers}
                         onAnswer={setAnswer}
@@ -295,6 +317,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, sim
                     />
                 ) : activePart === 3 ? (
                     <Part3Content
+                        ref={contentRef}
                         candidateEmail={candidateEmail}
                         answers={answers}
                         onAnswer={setAnswer}
@@ -340,7 +363,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, sim
                                 const isAnswered = answers[q.id] && answers[q.id].trim() !== '';
 
                                 return (
-                                    <div key={q.id} className="relative group cursor-pointer" onClick={() => setActiveId(q.id)}>
+                                    <div key={q.id} ref={(el) => { part1Refs.current[q.id] = el; }} className="relative group cursor-pointer" onClick={() => setActiveId(q.id)}>
                                         <div className="flex gap-3 items-start">
                                             {/* Monospaced blue square border for question number (only for TFNG/MCQ) */}
                                             {q.type !== 'gap' && (
@@ -436,24 +459,8 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, sim
                             })}
                         </div>
                     </div>
-
-                    {/* Floating Navigation Buttons */}
-                    <div className="absolute bottom-6 right-6 flex shadow-md rounded overflow-hidden">
-                        <button 
-                            onClick={() => navigateQuestion(-1)}
-                            className="bg-[#E0E0E0] hover:bg-[#D0D0D0] text-black w-12 h-10 flex items-center justify-center transition-colors"
-                        >
-                            ◄
-                        </button>
-                        <button 
-                            onClick={() => navigateQuestion(1)}
-                            className="bg-black hover:bg-neutral-800 text-white w-12 h-10 flex items-center justify-center transition-colors"
-                        >
-                            ►
-                        </button>
-                    </div>
                 </div>
-                </>
+                    </>
                 )}
             </div>
 
@@ -464,22 +471,21 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, sim
                     {PARTS.map((p) => {
                         const isPartActive = activePart === p.id;
                         const questionsInPart = QUESTIONS.filter(q => q.part === p.id);
-                        
+
                         return (
                             <div key={p.id} className="flex items-center gap-3 shrink-0">
-                                <button 
+                                <button
                                     onClick={() => setActivePart(p.id)}
                                     className={`text-sm font-bold ${isPartActive ? 'text-black' : 'text-neutral-500 hover:text-black'}`}
                                 >
                                     Part {p.id}
                                 </button>
-                                
-                                {isPartActive ? (
-                                    p.id === 2 || p.id === 3 ? (
-                                        <span className="text-sm text-neutral-500">
-                                            {getAnsweredCount(p.id)} of {getTotalCount(p.id)} answered
-                                        </span>
-                                    ) : (
+
+                                <span className="text-xs font-normal text-neutral-400">
+                                    {getAnsweredCount(p.id)} of {getTotalCount(p.id)}
+                                </span>
+
+                                {isPartActive && (
                                     <div className="flex items-center gap-1.5 h-full">
                                         {questionsInPart.map(q => {
                                             const isActive = activeId === q.id;
@@ -487,7 +493,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, sim
                                             return (
                                                 <button
                                                     key={q.id}
-                                                    onClick={() => setActiveId(q.id)}
+                                                    onClick={() => goTo(q.id)}
                                                     className={`relative w-7 h-9 flex flex-col items-center justify-center text-xs font-mono font-semibold transition-all ${isActive ? 'border-2 border-[#0072CE] bg-white text-black' : 'text-neutral-600 hover:bg-neutral-100'}`}
                                                 >
                                                     {isAnswered && !isActive && (
@@ -504,20 +510,29 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, sim
                                             );
                                         })}
                                     </div>
-                                    )
-                                ) : (
-                                    <span className="text-sm text-neutral-500">
-                                        {getAnsweredCount(p.id)} of {getTotalCount(p.id)}
-                                    </span>
                                 )}
                             </div>
                         );
                     })}
                 </div>
-                
-                {/* Review/Finish Button */}
+
+                {/* Review/Finish Buttons */}
                 <div className="shrink-0 flex items-center h-full border-l border-[#CCCCCC] pl-2">
-                    <button 
+                    <button
+                        onClick={() => navigateQuestion(-1)}
+                        disabled={activeId <= 1}
+                        className="bg-[#E0E0E0] hover:bg-[#D0D0D0] text-black w-12 h-10 flex items-center justify-center transition-colors disabled:opacity-40"
+                    >
+                        ◄
+                    </button>
+                    <button
+                        onClick={() => navigateQuestion(1)}
+                        disabled={activeId >= 40}
+                        className="bg-black hover:bg-neutral-800 text-white w-12 h-10 flex items-center justify-center transition-colors disabled:opacity-40"
+                    >
+                        ►
+                    </button>
+                    <button
                         onClick={submit}
                         className="w-[60px] h-full bg-[#E0E0E0] hover:bg-[#D0D0D0] flex items-center justify-center transition-colors text-black"
                     >

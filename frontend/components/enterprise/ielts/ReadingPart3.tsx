@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useImperativeHandle, useRef, useState } from 'react';
+import { type PartContentHandle } from './ReadingPart2';
 
 export const PART3_TITLE = 'Plain English';
 
@@ -84,8 +85,6 @@ export const PART3_SUMMARY: SummarySegment[][] = [
     ],
 ];
 
-const ALL_KEYS = [27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40];
-
 const tfngOptions = [
     { label: 'TRUE', value: 'true' },
     { label: 'FALSE', value: 'false' },
@@ -99,13 +98,11 @@ export interface Part3ContentProps {
     locked: boolean;
 }
 
-export const Part3Content: React.FC<Part3ContentProps> = ({ candidateEmail, answers, onAnswer, locked }) => {
+export const Part3Content = React.forwardRef<PartContentHandle, Part3ContentProps>(({ candidateEmail, answers, onAnswer, locked }, ref) => {
     const splitAreaRef = useRef<HTMLDivElement>(null);
     const itemRefs = useRef<Record<number, HTMLDivElement | null>>({});
     const [split, setSplit] = useState(50);
     const [activeNav, setActiveNav] = useState<number>(27);
-
-    const answeredCount = ALL_KEYS.filter((k) => answers[k] && answers[k].trim() !== '').length;
 
     const startResize = (e: React.PointerEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -128,6 +125,8 @@ export const Part3Content: React.FC<Part3ContentProps> = ({ candidateEmail, answ
         const target = itemRefs.current[qid] ?? itemRefs.current[34];
         target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
+
+    useImperativeHandle(ref, () => ({ scrollTo: goTo }));
 
     const gapChange = (qid: number, value: string) => {
         onAnswer(qid, value.replace(/^\s+|\s+$/g, ''));
@@ -245,36 +244,8 @@ export const Part3Content: React.FC<Part3ContentProps> = ({ candidateEmail, answ
                     </div>
                 </div>
             </div>
-
-            {/* Bottom Question Navigator Bar */}
-            <footer className="shrink-0 bg-[#F2F2F2] border-t border-neutral-300 px-5 py-3">
-                <div className="flex items-center justify-between gap-3 mb-2">
-                    <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">Question Navigator</span>
-                    <span className="text-[11px] font-mono text-neutral-500">{answeredCount}/{ALL_KEYS.length} answered · {candidateEmail || 'farmgate@stephen.ai'}</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    {ALL_KEYS.map((qid) => {
-                        const active = activeNav === qid;
-                        const done = !!(answers[qid] && answers[qid].trim() !== '');
-                        return (
-                            <button
-                                key={qid}
-                                onClick={() => goTo(qid)}
-                                className={`relative flex items-center justify-center w-8 h-8 rounded-md border text-[11px] font-mono transition-colors ${
-                                    active
-                                        ? 'border-[#0072CE] text-[#0072CE] bg-[#EAF3FB] ring-1 ring-[#0072CE]'
-                                        : 'border-neutral-400 text-neutral-600 bg-white hover:border-[#0072CE]'
-                                }`}
-                            >
-                                {qid}
-                                {done && <span className="absolute -top-[3px] left-1/2 -translate-x-1/2 h-[3px] w-6 bg-green-500 rounded-t" />}
-                            </button>
-                        );
-                    })}
-                </div>
-            </footer>
         </div>
     );
-};
+});
 
 export default Part3Content;

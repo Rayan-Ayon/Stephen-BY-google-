@@ -26,6 +26,8 @@ import SpaceView from './SpaceView';
 import IndividualSandboxView from './IndividualSandboxView';
 import EnterpriseSandboxView from './EnterpriseSandboxView';
 import IELTSEvaluationHub from './enterprise/IELTSEvaluationHub';
+import SpacedRepetitionEngine from './enterprise/srs/SpacedRepetitionEngine';
+import StudentPortal from './enterprise/portal/StudentPortal';
 import { DeleteSpaceModal, ShareSpaceModal } from './modals';
 import { Theme } from '../App';
 import { useWorkspace } from '../workspaceContext';
@@ -351,6 +353,8 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
         switch (currentView) {
             case 'sandbox': return <IndividualSandboxView email={userEmail} />;
             case 'ielts_evaluation': return <IELTSEvaluationHub userEmail={userEmail} />;
+            case 'spaced_repetition': return <SpacedRepetitionEngine />;
+            case 'student_portal': return <StudentPortal />;
             case 'add_content':
                 if (isInstitutionalSpace(spaceCode)) {
                     return (
