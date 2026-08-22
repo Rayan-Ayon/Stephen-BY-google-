@@ -70,6 +70,13 @@ export const clearAttemptsBySkill = (skill: IeltsSkill) => {
     notifyAttemptsUpdated();
 };
 
+export const clearAttemptsByBundle = (bundle: IeltsBundleId) => {
+    const label = BUNDLES.find((b) => b.id === bundle)?.label;
+    const next = readAttempts().filter((a) => a.bundle !== label);
+    persistAttempts(next);
+    notifyAttemptsUpdated();
+};
+
 const DEMO_TITLES: Record<IeltsSkill, string[]> = {
     writing: ['Task 2 - Live Opinion Essay', 'Task 1 - Live Report'],
     speaking: ['Part 2 - Live Cue Card', 'Part 3 - Live Discussion'],

@@ -4,13 +4,16 @@ import {
     clearAttempts,
     skillLabels,
     skillDotColors,
+    BUNDLES,
     DIAGNOSTIC_SUBSKILLS,
     MISTAKE_TOKENS,
     attemptStatus,
     ATTEMPTS_UPDATED_EVENT,
     type IeltsAttempt,
     type IeltsSkill,
+    type IeltsBundleId,
 } from './ieltsShared';
+import IELTSAnalysisView from './IELTSAnalysisView';
 
 const SKILLS: IeltsSkill[] = ['listening', 'reading', 'writing', 'speaking'];
 const TARGET_BAND = 7.5;
@@ -20,6 +23,12 @@ const SKILL_HEX: Record<IeltsSkill, string> = {
     reading: '#34d399',
     writing: '#fbbf24',
     speaking: '#a78bfa',
+};
+
+const BUNDLE_HEX: Record<IeltsBundleId, string> = {
+    sprint: '#8B5CF6',
+    express: '#F43F5E',
+    mock: '#10B981',
 };
 
 const TOKEN_TYPE_COLOR: Record<string, string> = {
@@ -42,6 +51,7 @@ const IELTSDashboard: React.FC = () => {
     const [expandedSkill, setExpandedSkill] = React.useState<IeltsSkill | null>(null);
     const [moduleFilter, setModuleFilter] = React.useState<'all' | IeltsSkill>('all');
     const [statusFilter, setStatusFilter] = React.useState<'all' | 'approved' | 'developing' | 'at-risk'>('all');
+    const [analysis, setAnalysis] = React.useState<{ attemptId?: number; bundleId?: IeltsBundleId } | null>(null);
 
     const newestFirst = [...attempts].sort((a, b) => b.id - a.id);
 
@@ -58,6 +68,14 @@ const IELTSDashboard: React.FC = () => {
         const best = skillAttempts.length > 0 ? Math.max(...skillAttempts.map((a) => a.band)) : 0;
         const recent = skillAttempts[0] ?? null;
         return { skill, best, recent, count: skillAttempts.length };
+    });
+
+    const bundleStats = BUNDLES.map((b) => {
+        const bundleAttempts = attempts.filter((a) => a.bundle === b.label);
+        const avg = bundleAttempts.length > 0
+            ? bundleAttempts.reduce((sum, a) => sum + a.band, 0) / bundleAttempts.length
+            : 0;
+        return { id: b.id, label: b.label, avg, count: bundleAttempts.length };
     });
 
     const filtered = newestFirst.filter((a) => {
@@ -97,7 +115,16 @@ const IELTSDashboard: React.FC = () => {
                         <h2 className="text-lg font-semibold tracking-tight text-white">IELTS Dashboard &amp; Tracker</h2>
                         <p className="text-sm text-neutral-400 mt-1">Band performance summary for the Farmgate executive batch.</p>
                     </div>
-                    <span className="text-[10px] uppercase tracking-wider text-amber-400/90 bg-amber-400/10 border border-amber-400/20 rounded-full px-3 py-1 whitespace-nowrap">Command Deck</span>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setAnalysis({ attemptId: newestFirst[0]?.id })}
+                            disabled={newestFirst.length === 0}
+                            className="px-3 py-1.5 rounded-lg bg-amber-400 text-black text-[10px] font-semibold uppercase tracking-wider hover:bg-amber-300 disabled:opacity-40 transition-colors whitespace-nowrap"
+                        >
+                            View Last Test Analysis ➔
+                        </button>
+                        <span className="text-[10px] uppercase tracking-wider text-amber-400/90 bg-amber-400/10 border border-amber-400/20 rounded-full px-3 py-1 whitespace-nowrap">Command Deck</span>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -175,20 +202,29 @@ const IELTSDashboard: React.FC = () => {
                             : DIAGNOSTIC_SUBSKILLS.filter((d) => d.skill === skill).map((d) => ({ label: d.subSkill, band: Math.max(4, 9 - (d.weight / 100) * 3) }));
                         return (
                             <div key={skill} className={`rounded-2xl border bg-[#141414] transition-colors ${isOpen ? 'border-neutral-600' : 'border-neutral-800'}`}>
-                                <button onClick={() => setExpandedSkill(isOpen ? null : skill)} className="w-full p-5 text-left">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">{skillLabels[skill]}</p>
-                                        <span className="text-[10px] font-mono text-neutral-600">{count} attempt{count === 1 ? '' : 's'}</span>
-                                    </div>
-                                    <p className="text-3xl font-semibold tracking-tight mb-3" style={{ color: SKILL_HEX[skill] }}>{best.toFixed(1)}</p>
-                                    <div className="h-1.5 rounded bg-neutral-800 overflow-hidden">
-                                        <div className="h-full" style={{ width: `${(best / 9) * 100}%`, backgroundColor: SKILL_HEX[skill] }} />
-                                    </div>
-                                    <p className="text-[11px] text-neutral-500 mt-2 flex items-center justify-between">
-                                        <span>Recent: {recent ? recent.band.toFixed(1) : '—'}</span>
-                                        <span className="text-neutral-600">{isOpen ? '▲' : '▼'}</span>
-                                    </p>
-                                </button>
+                                <div className="flex items-start justify-between p-5">
+                                    <button onClick={() => setExpandedSkill(isOpen ? null : skill)} className="flex-1 text-left min-w-0">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">{skillLabels[skill]}</p>
+                                            <span className="text-[10px] font-mono text-neutral-600">{count} attempt{count === 1 ? '' : 's'}</span>
+                                        </div>
+                                        <p className="text-3xl font-semibold tracking-tight mb-3" style={{ color: SKILL_HEX[skill] }}>{best.toFixed(1)}</p>
+                                        <div className="h-1.5 rounded bg-neutral-800 overflow-hidden">
+                                            <div className="h-full" style={{ width: `${(best / 9) * 100}%`, backgroundColor: SKILL_HEX[skill] }} />
+                                        </div>
+                                        <p className="text-[11px] text-neutral-500 mt-2 flex items-center justify-between">
+                                            <span>Recent: {recent ? recent.band.toFixed(1) : '—'}</span>
+                                            <span className="text-neutral-600">{isOpen ? '▲' : '▼'}</span>
+                                        </p>
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setAnalysis({ attemptId: recent?.id }); }}
+                                        disabled={!recent}
+                                        className="ml-3 shrink-0 px-3 py-1.5 rounded-lg bg-amber-400 text-black text-[10px] font-semibold uppercase tracking-wider hover:bg-amber-300 disabled:opacity-40 transition-colors"
+                                    >
+                                        Analysis ➔
+                                    </button>
+                                </div>
                                 {isOpen && (
                                     <div className="px-5 pb-5 space-y-3 border-t border-neutral-800 pt-4">
                                         {subSkills.map((c) => (
@@ -207,6 +243,29 @@ const IELTSDashboard: React.FC = () => {
                             </div>
                         );
                     })}
+                </div>
+
+                <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold mt-6 mb-3">Timed Bundle Performance</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {bundleStats.map(({ id, label, avg, count }) => (
+                        <div key={id} className="rounded-2xl border bg-[#141414] p-5" style={{ borderColor: `${BUNDLE_HEX[id]}40` }}>
+                            <div className="flex items-center justify-between mb-2">
+                                <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">{label}</p>
+                                <span className="text-[10px] font-mono text-neutral-600">{count} attempt{count === 1 ? '' : 's'}</span>
+                            </div>
+                            <p className="text-3xl font-semibold tracking-tight mb-3" style={{ color: BUNDLE_HEX[id] }}>{avg > 0 ? avg.toFixed(1) : '—'}</p>
+                            <div className="h-1.5 rounded bg-neutral-800 overflow-hidden">
+                                <div className="h-full" style={{ width: `${(avg / 9) * 100}%`, backgroundColor: BUNDLE_HEX[id] }} />
+                            </div>
+                            <p className="text-[11px] text-neutral-500 mt-2">Avg band · {count > 0 ? 'synced' : 'no data'}</p>
+                            <button
+                                onClick={() => setAnalysis({ bundleId: id })}
+                                className="mt-2 w-full px-3 py-1.5 rounded-lg bg-amber-400 text-black text-[10px] font-semibold uppercase tracking-wider hover:bg-amber-300 transition-colors"
+                            >
+                                View Analysis ➔
+                            </button>
+                        </div>
+                    ))}
                 </div>
             </section>
 
@@ -358,6 +417,10 @@ const IELTSDashboard: React.FC = () => {
                     </div>
                 )}
             </section>
+
+            {analysis && (
+                <IELTSAnalysisView attemptId={analysis.attemptId} bundleId={analysis.bundleId} onClose={() => setAnalysis(null)} />
+            )}
         </div>
     );
 };

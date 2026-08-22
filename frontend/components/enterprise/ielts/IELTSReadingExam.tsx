@@ -103,11 +103,12 @@ type TestState = 'lobby' | 'active' | 'evaluating' | 'completed';
 interface IELTSReadingExamProps {
     candidateEmail?: string;
     simulation?: SimulationProps;
+    onActiveChange?: (active: boolean) => void;
 }
 
 const normalize = (s: string) => s.trim().toLowerCase();
 
-const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, simulation }) => {
+const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, simulation, onActiveChange }) => {
     const [testState, setTestState] = useState<TestState>(simulation ? 'active' : 'lobby');
     const [activePart, setActivePart] = useState<1 | 2 | 3>(1);
     const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -163,6 +164,10 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, sim
             setShowExitModal(false);
         }
     };
+
+    useEffect(() => {
+        onActiveChange?.(testState === 'active' || testState === 'evaluating');
+    }, [testState, onActiveChange]);
 
     const submit = () => {
         if (locked) return;

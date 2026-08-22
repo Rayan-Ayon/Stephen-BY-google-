@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWorkspace, type Workspace } from '../../workspaceContext';
 import IELTSDashboard from './ielts/IELTSDashboard';
 import IELTSSimulationRunner from './ielts/IELTSSimulationRunner';
@@ -54,6 +54,11 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail }) =>
     const { activeWorkspace, workspaces, setActiveWorkspace } = useWorkspace();
     const [view, setView] = useState<IeltsView>('dashboard');
     const [isCollapsed, setIsCollapsed] = useState<boolean>(readRail);
+    const [examRunning, setExamRunning] = useState(false);
+
+    useEffect(() => {
+        setExamRunning(false);
+    }, [view]);
 
     const toggleRail = () => {
         setIsCollapsed((c) => {
@@ -166,25 +171,34 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail }) =>
                 )}
             </aside>
 
-            <main className="flex-1 min-w-0 overflow-y-auto">
+            <main className={`flex-1 min-w-0 ${examRunning ? 'overflow-hidden' : 'overflow-y-auto'}`}>
                 {isSimulation ? (
-                    <IELTSSimulationRunner
-                        bundleId={view as IeltsBundleId}
-                        candidateEmail={userEmail}
-                        onFinish={() => setView('dashboard')}
-                    />
+                    <>
+                        <IELTSSimulationRunner
+                            key={view}
+                            bundleId={view as IeltsBundleId}
+                            candidateEmail={userEmail}
+                            onFinish={() => setView('dashboard')}
+                            onActiveChange={setExamRunning}
+                        />
+                        {!examRunning && (
+                            <div className="mt-6">
+                                <ModuleHistorySection bundle={view as IeltsBundleId} />
+                            </div>
+                        )}
+                    </>
                 ) : view === 'dashboard' ? (
                     <IELTSDashboard />
                 ) : (
                     <>
-                        {view === 'writing' && <IELTSWritingExam candidateEmail={userEmail} />}
-                        {view === 'writing' && <div className="mt-6"><ModuleHistorySection moduleType="writing" /></div>}
-                        {view === 'speaking' && <IELTSSpeakingExam candidateEmail={userEmail} />}
-                        {view === 'speaking' && <div className="mt-6"><ModuleHistorySection moduleType="speaking" /></div>}
-                        {view === 'listening' && <IELTSListeningExam candidateEmail={userEmail} />}
-                        {view === 'listening' && <div className="mt-6"><ModuleHistorySection moduleType="listening" /></div>}
-                        {view === 'reading' && <IELTSReadingExam candidateEmail={userEmail} />}
-                        {view === 'reading' && <div className="mt-6"><ModuleHistorySection moduleType="reading" /></div>}
+                        {view === 'writing' && <IELTSWritingExam key="writing" candidateEmail={userEmail} onActiveChange={setExamRunning} />}
+                        {view === 'writing' && !examRunning && <div className="mt-6"><ModuleHistorySection moduleType="writing" /></div>}
+                        {view === 'speaking' && <IELTSSpeakingExam key="speaking" candidateEmail={userEmail} onActiveChange={setExamRunning} />}
+                        {view === 'speaking' && !examRunning && <div className="mt-6"><ModuleHistorySection moduleType="speaking" /></div>}
+                        {view === 'listening' && <IELTSListeningExam key="listening" candidateEmail={userEmail} onActiveChange={setExamRunning} />}
+                        {view === 'listening' && !examRunning && <div className="mt-6"><ModuleHistorySection moduleType="listening" /></div>}
+                        {view === 'reading' && <IELTSReadingExam key="reading" candidateEmail={userEmail} onActiveChange={setExamRunning} />}
+                        {view === 'reading' && !examRunning && <div className="mt-6"><ModuleHistorySection moduleType="reading" /></div>}
                     </>
                 )}
             </main>

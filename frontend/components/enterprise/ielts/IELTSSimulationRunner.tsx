@@ -29,9 +29,10 @@ interface IELTSSimulationRunnerProps {
     bundleId: IeltsBundleId;
     candidateEmail?: string;
     onFinish: () => void;
+    onActiveChange?: (active: boolean) => void;
 }
 
-const IELTSSimulationRunner: React.FC<IELTSSimulationRunnerProps> = ({ bundleId, candidateEmail, onFinish }) => {
+const IELTSSimulationRunner: React.FC<IELTSSimulationRunnerProps> = ({ bundleId, candidateEmail, onFinish, onActiveChange }) => {
     const bundle = BUNDLES.find((b) => b.id === bundleId) ?? BUNDLES[0];
     const [state, setState] = useState<RunnerState>('lobby');
     const [sectionIndex, setSectionIndex] = useState(0);
@@ -53,6 +54,10 @@ const IELTSSimulationRunner: React.FC<IELTSSimulationRunnerProps> = ({ bundleId,
         const id = window.setTimeout(() => setBreakCountdown((c) => c - 1), 1000);
         return () => window.clearTimeout(id);
     }, [state, breakCountdown]);
+
+    useEffect(() => {
+        onActiveChange?.(state !== 'lobby');
+    }, [state, onActiveChange]);
 
     const handleSectionComplete = (result: SimSectionResult) => {
         setResults((prev) => {
@@ -130,10 +135,10 @@ const IELTSSimulationRunner: React.FC<IELTSSimulationRunnerProps> = ({ bundleId,
     };
 
     return (
-        <div className="space-y-4">
+        <div className={state === 'section' ? 'h-full w-full min-h-0 flex flex-col overflow-hidden bg-white' : 'space-y-4'}>
             {state === 'section' && (
                 <>
-                    <div className="rounded-xl border border-neutral-800 bg-[#141414] px-4 py-3 flex items-center justify-between">
+                    <div className="shrink-0 rounded-xl border border-neutral-800 bg-[#141414] px-4 py-3 flex items-center justify-between m-4">
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => setShowExitModal(true)}
@@ -147,7 +152,7 @@ const IELTSSimulationRunner: React.FC<IELTSSimulationRunnerProps> = ({ bundleId,
                         </div>
                         <span className="text-[11px] font-mono text-neutral-500">{current.label} · {current.minutes}m</span>
                     </div>
-                    {renderSection()}
+                    <div className="flex-1 min-h-0 overflow-hidden">{renderSection()}</div>
                 </>
             )}
 

@@ -2,13 +2,17 @@ import React from 'react';
 import {
     readAttempts,
     clearAttemptsBySkill,
+    clearAttemptsByBundle,
     attemptStatus,
     skillLabels,
     skillDotColors,
+    BUNDLES,
     ATTEMPTS_UPDATED_EVENT,
     type IeltsAttempt,
     type IeltsSkill,
+    type IeltsBundleId,
 } from '../ielts/ieltsShared';
+import IELTSAnalysisView from '../ielts/IELTSAnalysisView';
 
 export interface ModuleHistoryItem {
     id: number;
@@ -22,7 +26,8 @@ export interface ModuleHistoryItem {
 }
 
 export interface ModuleHistoryProps {
-    moduleType: IeltsSkill;
+    moduleType?: IeltsSkill;
+    bundle?: IeltsBundleId;
 }
 
 type StatusFilter = 'all' | 'approved' | 'developing' | 'at-risk';
@@ -39,16 +44,19 @@ const formatMins = (m?: number) => (m != null ? `${m}m` : '—');
 const buildTopic = (a: IeltsAttempt): string => {
     if (a.title) return a.title;
     const base = skillLabels[a.skill];
+    if (a.bundle) return `${a.bundle} · ${base}`;
     if (a.taskType) return `${base} · ${a.taskType === 'task1' ? 'T1' : 'T2'}`;
-    if (a.bundle) return `${base} · ${a.bundle}`;
     return `${base} Attempt`;
 };
 
-const ModuleHistorySection: React.FC<ModuleHistoryProps> = ({ moduleType }) => {
+const ModuleHistorySection: React.FC<ModuleHistoryProps> = ({ moduleType, bundle }) => {
     const [attempts, setAttempts] = React.useState<IeltsAttempt[]>(readAttempts);
     const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('all');
-    const [selected, setSelected] = React.useState<IeltsAttempt | null>(null);
+    const [analysisId, setAnalysisId] = React.useState<number | null>(null);
     const [confirmClear, setConfirmClear] = React.useState(false);
+
+    const bundleLabel = bundle ? BUNDLES.find((b) => b.id === bundle)?.label : undefined;
+    const sectionLabel = bundleLabel ?? (moduleType ? `${skillLabels[moduleType]} History Matrix` : 'History Matrix');
 
     React.useEffect(() => {
         const refresh = () => setAttempts(readAttempts());
@@ -56,7 +64,9 @@ const ModuleHistorySection: React.FC<ModuleHistoryProps> = ({ moduleType }) => {
         return () => window.removeEventListener(ATTEMPTS_UPDATED_EVENT, refresh);
     }, []);
 
-    const moduleAttempts = attempts.filter((a) => a.skill === moduleType);
+    const moduleAttempts = attempts.filter((a) =>
+        bundle ? a.bundle === bundleLabel : a.skill === moduleType
+    );
 
     const filtered = moduleAttempts.filter((a) => {
         if (statusFilter === 'all') return true;
@@ -65,7 +75,8 @@ const ModuleHistorySection: React.FC<ModuleHistoryProps> = ({ moduleType }) => {
     });
 
     const handleClear = () => {
-        clearAttemptsBySkill(moduleType);
+        if (bundle) clearAttemptsByBundle(bundle);
+        else if (moduleType) clearAttemptsBySkill(moduleType);
         setConfirmClear(false);
     };
 
@@ -73,7 +84,7 @@ const ModuleHistorySection: React.FC<ModuleHistoryProps> = ({ moduleType }) => {
         <section className="rounded-2xl bg-[#141414] border border-neutral-800 p-6">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold tracking-tight text-white">
-                    {skillLabels[moduleType]} History Matrix
+                    {sectionLabel}
                 </h3>
                 <button
                     onClick={() => setConfirmClear(true)}
@@ -153,10 +164,10 @@ const ModuleHistorySection: React.FC<ModuleHistoryProps> = ({ moduleType }) => {
                                         </td>
                                         <td className="py-2.5 pl-2">
                                             <button
-                                                onClick={() => setSelected(a)}
-                                                className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[11px] text-indigo-300 hover:border-indigo-400/40 hover:text-indigo-200 transition-colors"
+                                                onClick={() => setAnalysisId(a.id)}
+                                                className="px-3 py-1.5 rounded-lg bg-amber-400 text-black text-[11px] font-semibold uppercase tracking-wider hover:bg-amber-300 transition-colors"
                                             >
-                                                View Analysis
+                                                View Analysis ➔
                                             </button>
                                         </td>
                                     </tr>
@@ -170,9 +181,9 @@ const ModuleHistorySection: React.FC<ModuleHistoryProps> = ({ moduleType }) => {
             {confirmClear && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setConfirmClear(false)}>
                     <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-slate-900/90 backdrop-blur-xl p-6" onClick={(e) => e.stopPropagation()}>
-                        <h4 className="text-sm font-semibold text-white">Clear {skillLabels[moduleType]} history?</h4>
+                        <h4 className="text-sm font-semibold text-white">Clear {sectionLabel}?</h4>
                         <p className="text-xs text-neutral-400 mt-2">
-                            This permanently removes only the {skillLabels[moduleType].toLowerCase()} attempts. Other modules and the IELTS Evaluation Dashboard are unaffected.
+                            This permanently removes only the {sectionLabel.toLowerCase()} attempts. Other modules and the IELTS Evaluation Dashboard are unaffected.
                         </p>
                         <div className="flex justify-end gap-2 mt-5">
                             <button
@@ -185,62 +196,15 @@ const ModuleHistorySection: React.FC<ModuleHistoryProps> = ({ moduleType }) => {
                                 onClick={handleClear}
                                 className="px-3 py-2 rounded-lg bg-red-500/15 border border-red-400/30 text-[11px] text-red-300 hover:bg-red-500/25 transition-colors"
                             >
-                                Clear {skillLabels[moduleType]} History
+                                Clear {sectionLabel}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {selected && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setSelected(null)}>
-                    <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900/90 backdrop-blur-xl p-6" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <h4 className="text-sm font-semibold text-white">{buildTopic(selected)}</h4>
-                                <p className="text-[11px] font-mono text-neutral-500 mt-1">{selected.date}{selected.timeSpent != null ? ` · ${selected.timeSpent}m` : ''}</p>
-                            </div>
-                            <span className="rounded-md bg-gradient-to-r from-indigo-500 to-cyan-400 px-2.5 py-1 text-[11px] font-mono font-semibold text-white">
-                                Band {selected.band.toFixed(1)}
-                            </span>
-                        </div>
-
-                        <div className="mt-4 flex items-center gap-2">
-                            <span className={`inline-block rounded-full border px-2.5 py-0.5 text-[10px] uppercase tracking-wider font-semibold ${attemptStatus(selected.band).color}`}>
-                                {attemptStatus(selected.band).label}
-                            </span>
-                        </div>
-
-                        {selected.criteria && selected.criteria.length > 0 && (
-                            <div className="mt-5 space-y-3">
-                                <p className="text-[11px] uppercase tracking-wider text-neutral-500 font-semibold">Criteria Breakdown</p>
-                                {selected.criteria.map((c) => (
-                                    <div key={c.label}>
-                                        <div className="flex items-center justify-between text-[11px] text-neutral-300 mb-1">
-                                            <span>{c.label}</span>
-                                            <span className="font-mono text-neutral-400">{c.band.toFixed(1)}</span>
-                                        </div>
-                                        <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
-                                            <div
-                                                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400"
-                                                style={{ width: `${(c.band / 9) * 100}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        <div className="flex justify-end mt-6">
-                            <button
-                                onClick={() => setSelected(null)}
-                                className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[11px] text-neutral-300 hover:text-white transition-colors"
-                            >
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            {analysisId != null && (
+                <IELTSAnalysisView attemptId={analysisId} onClose={() => setAnalysisId(null)} />
             )}
         </section>
     );

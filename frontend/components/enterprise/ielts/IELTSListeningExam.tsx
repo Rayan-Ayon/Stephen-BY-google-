@@ -234,9 +234,10 @@ type TestState = 'lobby' | 'active' | 'evaluating' | 'completed';
 interface IELTSListeningExamProps {
     candidateEmail?: string;
     simulation?: SimulationProps;
+    onActiveChange?: (active: boolean) => void;
 }
 
-const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail, simulation }) => {
+const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail, simulation, onActiveChange }) => {
     const [playing, setPlaying] = useState(false);
     const [progress, setProgress] = useState(0);
     const [activePart, setActivePart] = useState<1 | 2 | 3 | 4>(1);
@@ -377,6 +378,10 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail,
     useEffect(() => {
         if (simulation && testState === 'active' && elapsed >= timeLimit) submit(true);
     }, [elapsed, testState, simulation, timeLimit]);
+
+    useEffect(() => {
+        onActiveChange?.(testState === 'active' || testState === 'evaluating');
+    }, [testState, onActiveChange]);
 
     const startExam = () => {
         if (simulation) return;

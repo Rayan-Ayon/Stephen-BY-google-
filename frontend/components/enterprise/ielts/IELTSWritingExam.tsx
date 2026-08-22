@@ -73,6 +73,7 @@ interface WritingResult {
 interface IELTSWritingExamProps {
     candidateEmail?: string;
     simulation?: SimulationProps;
+    onActiveChange?: (active: boolean) => void;
 }
 
 const ChartSVG: React.FC = () => {
@@ -131,7 +132,7 @@ const ChartSVG: React.FC = () => {
     );
 };
 
-const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, simulation }) => {
+const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, simulation, onActiveChange }) => {
     const [testState, setTestState] = useState<TestState>(simulation ? 'active' : 'lobby');
     const [activePart, setActivePart] = useState<1 | 2>(1);
     const [essayPart1, setEssayPart1] = useState<string>(() => readDraft(DRAFT_KEY_P1));
@@ -234,6 +235,10 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
     useEffect(() => {
         if (simulation && testState === 'active' && seconds === 0) submit(true);
     }, [seconds, testState, simulation]);
+
+    useEffect(() => {
+        onActiveChange?.(testState === 'active' || testState === 'evaluating');
+    }, [testState, onActiveChange]);
 
     const startExam = () => {
         if (simulation) return;
