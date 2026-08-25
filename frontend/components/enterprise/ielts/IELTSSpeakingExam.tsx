@@ -2,6 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { addAttempt, clampBand, formatClock, type SimulationProps } from './ieltsShared';
 import IELTSLobbyCard from './IELTSLobbyCard';
 import IELTSExitModal from './IELTSExitModal';
+import IeltsExamOptionsModal from '../../exam/IeltsExamOptionsModal';
+
+const Wifi = ({ size, strokeWidth, className }: any) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+);
+const Bell = ({ size, strokeWidth, className }: any) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+);
+const Menu = ({ size, strokeWidth, className }: any) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+);
 
 type Phase = 'intro' | 'cue' | 'discussion' | 'done';
 type TestState = 'lobby' | 'active' | 'evaluating' | 'completed';
@@ -58,6 +69,7 @@ interface IELTSSpeakingExamProps {
 }
 
 const IELTS_SpeakingExam: React.FC<IELTSSpeakingExamProps> = ({ candidateEmail, simulation, onActiveChange }) => {
+    const [isOptionsOpen, setIsOptionsOpen] = useState(false);
     const [testState, setTestState] = useState<TestState>(simulation ? 'active' : 'lobby');
     const [phase, setPhase] = useState<Phase>('intro');
     const [part1Index, setPart1Index] = useState(0);
@@ -298,7 +310,7 @@ const IELTS_SpeakingExam: React.FC<IELTSSpeakingExamProps> = ({ candidateEmail, 
     const examinerSpeaking = !(phase === 'cue' && stage === 'prep');
 
     return (
-        <div className="flex flex-col h-full bg-[#FFFFFF] text-black font-sans min-w-0">
+        <div className="flex flex-col h-full relative bg-[#FFFFFF] text-black font-sans min-w-0">
             {/* White Official Top Bar */}
             <header className="shrink-0 h-14 border-b border-[#E5E7EB] bg-white flex items-center justify-between px-6">
                 <div className="flex items-center gap-4">
@@ -306,6 +318,11 @@ const IELTS_SpeakingExam: React.FC<IELTSSpeakingExamProps> = ({ candidateEmail, 
                     <span className="text-sm font-semibold text-black tracking-wide ml-2">Test taker ID</span>
                 </div>
                 <div className="flex items-center gap-3">
+                    <Wifi size={20} strokeWidth={2.5} className="cursor-pointer" />
+                    <Bell size={20} strokeWidth={2.5} className="cursor-pointer" />
+                    <button onClick={() => setIsOptionsOpen(true)} aria-label="Open options" className="cursor-pointer">
+                        <Menu size={20} strokeWidth={2.5} />
+                    </button>
                     <span className="text-[11px] font-mono bg-slate-100 text-slate-800 px-3 py-1.5 rounded-md">{formatClock(elapsed)} / {formatClock(timeLimit)}</span>
                     <button
                         onClick={() => setPaused((p) => !p)}
@@ -321,6 +338,8 @@ const IELTS_SpeakingExam: React.FC<IELTSSpeakingExamProps> = ({ candidateEmail, 
                     </button>
                 </div>
             </header>
+
+            <IeltsExamOptionsModal open={isOptionsOpen} onClose={() => setIsOptionsOpen(false)} />
 
             {isEvaluating && (
                 <div className="shrink-0 mx-4 mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 flex items-center gap-3">

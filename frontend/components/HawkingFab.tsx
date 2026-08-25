@@ -7,6 +7,7 @@ import {
     MicIcon, CheckIcon, ProjectIcon, BookOpenIcon, DebatePodiumIcon,
     MessageCircleIcon, FlashIcon, PresentationIcon, UploadIcon
 } from './icons';
+import { DORMANT_NAV_ENABLED } from './dormantNav';
 
 interface Message {
     role: 'user' | 'model';
@@ -132,7 +133,7 @@ const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
             setActiveTool(null);
             return;
         }
-        if (activeTool?.name === 'Add Courses') {
+        if (!DORMANT_NAV_ENABLED && activeTool?.name === 'Add Courses') {
             setIsOpen(false);
             onNavigate('add_courses', { topic: inputValue });
             setInputValue('');
@@ -183,7 +184,7 @@ const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
     const toolsList = [
         { name: 'Add Project', icon: <ProjectIcon className="w-4 h-4" /> },
         { name: 'Add Content', icon: <PlusIcon className="w-4 h-4" /> },
-        { name: 'Add Courses', icon: <BookOpenIcon className="w-4 h-4" /> },
+        ...(DORMANT_NAV_ENABLED ? [] : [{ name: 'Add Courses', icon: <BookOpenIcon className="w-4 h-4" /> }]),
         { name: 'Debate', icon: <DebatePodiumIcon className="w-4 h-4" /> },
         { name: 'Q&A', icon: <MessageCircleIcon className="w-4 h-4" /> },
         { name: 'Instant describe', icon: <FlashIcon className="w-4 h-4" /> },

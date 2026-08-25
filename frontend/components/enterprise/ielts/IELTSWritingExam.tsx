@@ -11,6 +11,7 @@ import {
 } from './ieltsShared';
 import IELTSLobbyCard from './IELTSLobbyCard';
 import IELTSExitModal from './IELTSExitModal';
+import IeltsExamOptionsModal from '../../exam/IeltsExamOptionsModal';
 
 const Wifi = ({ size, strokeWidth, className }: any) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
@@ -143,6 +144,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
     const [result, setResult] = useState<WritingResult | null>(null);
     const [lang, setLang] = useState<'en' | 'bn'>('en');
     const [showExitModal, setShowExitModal] = useState(false);
+    const [isOptionsOpen, setIsOptionsOpen] = useState(false);
 
     const timeLimit = simulation ? simulation.timeLimitSeconds : 60 * 60;
     const text = activePart === 1 ? essayPart1 : essayPart2;
@@ -400,7 +402,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
     const completedPart2 = result?.taskType === 'task2';
 
     return (
-        <div className="flex flex-col h-full bg-[#FFFFFF] text-black font-sans min-w-0" style={{ flex: 1 }}>
+        <div className="flex flex-col h-full relative bg-[#FFFFFF] text-black font-sans min-w-0" style={{ flex: 1 }}>
             {/* Top Navigation Bar */}
             <header className="shrink-0 h-14 border-b border-[#E5E7EB] bg-[#FFFFFF] flex items-center justify-between px-6">
                 <div className="flex items-center gap-4">
@@ -410,12 +412,16 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
                 <div className="flex items-center gap-5 text-black">
                     <Wifi size={20} strokeWidth={2.5} className="cursor-pointer" />
                     <Bell size={20} strokeWidth={2.5} className="cursor-pointer" />
-                    <Menu size={20} strokeWidth={2.5} className="cursor-pointer" />
+                    <button onClick={() => setIsOptionsOpen(true)} aria-label="Open options" className="cursor-pointer">
+                        <Menu size={20} strokeWidth={2.5} />
+                    </button>
                     <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#E5E7EB] text-[11px] text-neutral-700 hover:bg-[#D1D5DB] transition-colors">
                         Notes / Help
                     </button>
                 </div>
             </header>
+
+            <IeltsExamOptionsModal open={isOptionsOpen} onClose={() => setIsOptionsOpen(false)} />
 
             {/* Task Context Banner */}
             <div className="shrink-0 bg-[#F5F5F5] border border-[#E5E7EB] px-6 py-4 mx-4 mt-4 rounded-md flex items-start justify-between gap-4">

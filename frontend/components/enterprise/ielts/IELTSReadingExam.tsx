@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { addAttempt, rawToBand, formatClock, type SimulationProps } from './ieltsShared';
 import IELTSLobbyCard from './IELTSLobbyCard';
 import IELTSExitModal from './IELTSExitModal';
+import IeltsExamOptionsModal from '../../exam/IeltsExamOptionsModal';
 import { Part2Content, ANSWER_HEADINGS, MULTI_SELECT_GROUPS, GROUP_ANSWERS, GAP_FILL, GAP_ANSWERS, type PartContentHandle } from './ReadingPart2';
 import { Part3Content, PART3_TITLE, PART3_PASSAGE, PART3_ANSWERS, PART3_TFNG } from './ReadingPart3';
 const Wifi = ({ size, strokeWidth, className }: any) => (
@@ -117,6 +118,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, sim
     const [activeId, setActiveId] = useState<number>(1);
     
     const [showExitModal, setShowExitModal] = useState(false);
+    const [isOptionsOpen, setIsOptionsOpen] = useState(false);
     const [elapsed, setElapsed] = useState(0);
     const [score, setScore] = useState<number | null>(null);
     const part1Refs = useRef<Record<number, HTMLDivElement | null>>({});
@@ -275,7 +277,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, sim
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#FFFFFF] text-black font-sans min-w-0" style={{ flex: 1 }}>
+        <div className="flex flex-col h-full relative bg-[#FFFFFF] text-black font-sans min-w-0" style={{ flex: 1 }}>
             {/* Top Navigation Bar */}
             <header className="shrink-0 h-[60px] border-b border-[#CCCCCC] bg-[#FFFFFF] flex items-center justify-between px-6">
                 <div className="flex items-center gap-4">
@@ -285,10 +287,14 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, sim
                 <div className="flex items-center gap-5 text-black">
                     <Wifi size={20} strokeWidth={2.5} className="cursor-pointer" />
                     <Bell size={20} strokeWidth={2.5} className="cursor-pointer" />
-                    <Menu size={20} strokeWidth={2.5} className="cursor-pointer" />
+                    <button onClick={() => setIsOptionsOpen(true)} aria-label="Open options" className="cursor-pointer">
+                        <Menu size={20} strokeWidth={2.5} />
+                    </button>
                     <Edit size={20} strokeWidth={2.5} className="cursor-pointer" />
                 </div>
             </header>
+
+            <IeltsExamOptionsModal open={isOptionsOpen} onClose={() => setIsOptionsOpen(false)} />
 
             {/* Sub-Header Banner */}
             <div className="shrink-0 bg-[#F5F5F5] border border-[#CCCCCC] px-6 py-4 mx-4 mt-4 rounded-md flex items-start justify-between gap-4">

@@ -14,6 +14,7 @@ import {
 import type { Space } from '../utils/mockDb';
 import WorkspaceDropdown from './WorkspaceDropdown';
 import { InlineCampusIcon } from './enterprise/portal/StudentPortal';
+import { DORMANT_NAV_ENABLED, DORMANT_NAV_KEYS } from './dormantNav';
 
 const RepeatIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -87,6 +88,13 @@ const Sidebar: React.FC<SidebarProps> = ({
     spaces, onCreateSpace, onRenameSpace, onDeleteSpace, onShareSpace,
     userEmail, onLogout, isEnterprise
 }) => {
+    const visibleNavConfig = (DORMANT_NAV_ENABLED
+        ? navConfig.map((group) =>
+              'items' in group && group.items
+                  ? { ...group, items: group.items.filter((i) => !DORMANT_NAV_KEYS.has(i.key)) }
+                  : group,
+          )
+        : navConfig) as typeof navConfig;
     const [profileOpen, setProfileOpen] = useState(false);
     const [sidebarSettingsOpen, setSidebarSettingsOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
@@ -188,7 +196,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
             
             <nav className="flex-grow px-3 mt-4 space-y-1.5 overflow-y-auto overflow-x-hidden">
-                {navConfig.map((section, sectionIndex) => (
+                {visibleNavConfig.map((section, sectionIndex) => (
                     <div key={sectionIndex}>
                         {section.type === 'separator' && <div className="py-2"><div className={`border-t ${theme === 'dark' ? 'border-gray-800/60' : 'border-neutral-200'}`}></div></div>}
                         {section.label && isExpanded && (

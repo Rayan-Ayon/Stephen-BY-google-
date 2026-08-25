@@ -26,6 +26,7 @@ import SpaceView from './SpaceView';
 import IndividualSandboxView from './IndividualSandboxView';
 import EnterpriseSandboxView from './EnterpriseSandboxView';
 import IELTSEvaluationHub from './enterprise/IELTSEvaluationHub';
+import { DORMANT_NAV_ENABLED, DORMANT_NAV_KEYS } from './dormantNav';
 import SpacedRepetitionEngine from './enterprise/srs/SpacedRepetitionEngine';
 import StudentPortal from './enterprise/portal/StudentPortal';
 import { DeleteSpaceModal, ShareSpaceModal } from './modals';
@@ -348,6 +349,10 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             } else {
                 return <div className="flex items-center justify-center h-full text-gray-500">Space not found</div>;
             }
+        }
+
+        if (DORMANT_NAV_ENABLED && DORMANT_NAV_KEYS.has(currentView)) {
+            return <AddContentView onCourseCreated={handleCourseCreated} recentVideos={isEnterprise ? [] : recentVideos} onSelectRecent={handleSelectCourse} />;
         }
 
         switch (currentView) {
