@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import {
     TASK2_PROMPTS,
     buildSegments,
@@ -12,6 +13,7 @@ import {
 import IELTSLobbyCard from './IELTSLobbyCard';
 import IELTSExitModal from './IELTSExitModal';
 import IeltsExamOptionsModal from '../../exam/IeltsExamOptionsModal';
+import PaperEssayScanner from './PaperEssayScanner';
 
 const Wifi = ({ size, strokeWidth, className }: any) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
@@ -75,6 +77,7 @@ interface IELTSWritingExamProps {
     candidateEmail?: string;
     simulation?: SimulationProps;
     onActiveChange?: (active: boolean) => void;
+    exitPulse?: boolean;
 }
 
 const ChartSVG: React.FC = () => {
@@ -133,7 +136,7 @@ const ChartSVG: React.FC = () => {
     );
 };
 
-const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, simulation, onActiveChange }) => {
+const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, simulation, onActiveChange, exitPulse }) => {
     const [testState, setTestState] = useState<TestState>(simulation ? 'active' : 'lobby');
     const [activePart, setActivePart] = useState<1 | 2>(1);
     const [essayPart1, setEssayPart1] = useState<string>(() => readDraft(DRAFT_KEY_P1));
@@ -145,6 +148,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
     const [lang, setLang] = useState<'en' | 'bn'>('en');
     const [showExitModal, setShowExitModal] = useState(false);
     const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+    const [captureMode, setCaptureMode] = useState(false);
 
     const timeLimit = simulation ? simulation.timeLimitSeconds : 60 * 60;
     const text = activePart === 1 ? essayPart1 : essayPart2;
@@ -423,6 +427,26 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
 
             <IeltsExamOptionsModal open={isOptionsOpen} onClose={() => setIsOptionsOpen(false)} />
 
+            {/* Capture Mode Toggle Bar */}
+            <div className="shrink-0 mx-4 mt-3 flex items-center gap-2 bg-[#F5F5F5] border border-[#E5E7EB] rounded-md p-1.5 w-fit">
+                <button
+                    onClick={() => setCaptureMode(false)}
+                    className={`px-3 py-1.5 rounded text-[12px] font-semibold transition-colors ${
+                        !captureMode ? 'bg-black text-white' : 'text-neutral-600 hover:text-black'
+                    }`}
+                >
+                    ⌨️ Digital Keyboard Exam Mode
+                </button>
+                <button
+                    onClick={() => setCaptureMode(true)}
+                    className={`px-3 py-1.5 rounded text-[12px] font-semibold transition-colors ${
+                        captureMode ? 'bg-black text-white' : 'text-neutral-600 hover:text-black'
+                    }`}
+                >
+                    📷 Hand-written Paper Capture &amp; OCR Scan
+                </button>
+            </div>
+
             {/* Task Context Banner */}
             <div className="shrink-0 bg-[#F5F5F5] border border-[#E5E7EB] px-6 py-4 mx-4 mt-4 rounded-md flex items-start justify-between gap-4">
                 <div className="min-w-0">
@@ -432,7 +456,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
                 <div className="flex items-center gap-3 shrink-0">
                     <button
                         onClick={() => setShowExitModal(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-[#CCCCCC] text-[11px] text-neutral-600 hover:text-red-600 hover:border-red-400 transition-colors"
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-[#CCCCCC] text-[11px] text-neutral-600 hover:text-red-600 hover:border-red-400 transition-all${exitPulse ? ' scale-105 ring-2 ring-rose-500/80 shadow-[0_0_15px_rgba(225,29,72,0.5)] animate-pulse' : ''}`}
                     >
                         <span>⬅️</span> Exit Exam
                     </button>
@@ -443,7 +467,10 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
                 </div>
             </div>
 
-            {/* Dual Split-Pane Workspace */}
+            {/* Dual Split-Pane Workspace (or Paper Capture mode) */}
+            {captureMode ? (
+                <PaperEssayScanner />
+            ) : (
             <div className="flex-1 min-h-0 flex mx-4 mb-4 mt-2 border-t border-[#E5E7EB] relative overflow-hidden bg-[#FFFFFF]" ref={splitAreaRef}>
                 {/* Left Task Prompt Pane */}
                 <div style={{ width: `${split}%` }} className="h-full min-w-0 overflow-y-auto pr-6 pt-4 pb-20 custom-scrollbar">
@@ -511,6 +538,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
                     </div>
                 </div>
             </div>
+            )}
 
             {/* Official Bottom Question Deck (Footer) */}
             <footer className="shrink-0 h-12 bg-white border-t border-[#E5E7EB] flex items-center justify-between px-2 w-full z-10">

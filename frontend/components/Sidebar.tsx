@@ -42,6 +42,8 @@ interface SidebarProps {
   userEmail: string;
   onLogout: () => void;
   isEnterprise: boolean;
+  isExamActive?: boolean;
+  onLockedNavigationAttempt?: () => void;
 }
 
 const navConfig = [
@@ -67,7 +69,7 @@ const navConfig = [
             { name: 'Edgram', icon: <EdgramIcon className="w-5 h-5" />, key: 'edgram' },
             { name: 'Discover', icon: <GlobeIcon className="w-5 h-5" />, key: 'discover' },
             { name: 'Tracker', icon: <LocationTrackerIcon className="w-5 h-5" />, key: 'tracker' },
-            { name: 'Learning Methods', icon: <LearningMethodIcon className="w-5 h-5" />, key: 'learning_methods' },
+            { name: 'Learning Methods', icon: <LearningMethodIcon className="w-5 h-5" />, key: 'learning_methods_1' },
         ]
     },
     { type: 'separator' },
@@ -86,8 +88,20 @@ const Sidebar: React.FC<SidebarProps> = ({
     toggleTheme, theme, onNavigate, activeItem, 
     sidebarMode, setSidebarMode, isExpanded, setIsExpanded,
     spaces, onCreateSpace, onRenameSpace, onDeleteSpace, onShareSpace,
-    userEmail, onLogout, isEnterprise
+    userEmail, onLogout, isEnterprise, isExamActive, onLockedNavigationAttempt
 }) => {
+    const [isShaking, setIsShaking] = useState(false);
+    const [shakingKey, setShakingKey] = useState<string | null>(null);
+    const guardedNavigate = (key: string) => {
+        if (isExamActive) {
+            setShakingKey(key);
+            setIsShaking(true);
+            setTimeout(() => setIsShaking(false), 600);
+            onLockedNavigationAttempt?.();
+            return;
+        }
+        onNavigate(key);
+    };
     const visibleNavConfig = (DORMANT_NAV_ENABLED
         ? navConfig.map((group) =>
               'items' in group && group.items
@@ -174,6 +188,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             onMouseLeave={() => { setIsSidebarHovered(false); setShowTooltip(false); }}
             className={`group h-screen flex flex-col shrink-0 border-r z-30 relative ${theme === 'dark' ? 'bg-[#131313] border-gray-800/50' : 'bg-neutral-100 border-neutral-200'}`}
         >
+            <style>{`@keyframes lock-shake {0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}`}</style>
             <div className="flex items-center px-4 h-16 shrink-0 relative">
                 <WorkspaceDropdown theme={theme} isExpanded={isExpanded} />
                 {sidebarMode === 'manual' && (
@@ -195,7 +210,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 )}
             </div>
             
-            <nav className="flex-grow px-3 mt-4 space-y-1.5 overflow-y-auto overflow-x-hidden">
+            <nav className={`flex-grow px-3 mt-4 space-y-1.5 overflow-y-auto overflow-x-hidden${isShaking ? ' animate-[lock-shake_0.6s_ease-in-out]' : ''}`}>
                 {visibleNavConfig.map((section, sectionIndex) => (
                     <div key={sectionIndex}>
                         {section.type === 'separator' && <div className="py-2"><div className={`border-t ${theme === 'dark' ? 'border-gray-800/60' : 'border-neutral-200'}`}></div></div>}
@@ -207,25 +222,28 @@ const Sidebar: React.FC<SidebarProps> = ({
                             </motion.h3>
                         )}
                         {section.items?.map(item => (
-                            <button key={item.key} onClick={() => onNavigate(item.key)} 
-                                className={`w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === item.key ? activeClasses : ''}`}
+                            <button key={item.key} onClick={() => guardedNavigate(item.key)} 
+                                className={`relative w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === item.key ? activeClasses : ''}${shakingKey === item.key && isShaking ? ' ring-2 ring-rose-500/80' : ''}`}
                             >
                                 <div className={`${activeItem === item.key ? 'text-current' : iconColor} shrink-0`}>
                                      {React.cloneElement(item.icon as React.ReactElement<any>, { className: "w-5 h-5" })}
                                 </div>
-                                <AnimatePresence>
-                                    {isExpanded && (
-                                        <motion.span 
-                                            initial={{ opacity: 0, width: 0 }} 
-                                            animate={{ opacity: 1, width: 'auto' }} 
-                                            exit={{ opacity: 0, width: 0 }} 
-                                            transition={{ duration: 0.2, delay: 0.05 }} 
-                                            className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden">
-                                            {item.name}
-                                        </motion.span>
+                                    <AnimatePresence>
+                                        {isExpanded && (
+                                            <motion.span 
+                                                initial={{ opacity: 0, width: 0 }} 
+                                                animate={{ opacity: 1, width: 'auto' }} 
+                                                exit={{ opacity: 0, width: 0 }} 
+                                                transition={{ duration: 0.2, delay: 0.05 }} 
+                                                className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden">
+                                                {item.name}
+                                            </motion.span>
+                                        )}
+                                    </AnimatePresence>
+                                    {shakingKey === item.key && isShaking && (
+                                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
                                     )}
-                                </AnimatePresence>
-                            </button>
+                                </button>
                         ))}
                         
                         {/* Inject Spaces Section after the first group (index 0) */}
@@ -274,7 +292,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                         onMouseLeave={() => setHoveredSpaceId(null)}
                                     >
                                         <button 
-                                            onClick={() => onNavigate(`space_${space.id}`)} 
+                                            onClick={() => guardedNavigate(`space_${space.id}`)} 
                                             className={`w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === `space_${space.id}` ? (space.isInstitutional ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300' : activeClasses) : ''}`}
                                         >
                                             <div className={`${activeItem === `space_${space.id}` ? 'text-current' : iconColor} shrink-0 transition-transform duration-200`}>
@@ -413,19 +431,19 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 className={`absolute bottom-full left-0 right-0 mb-3 w-full border rounded-2xl shadow-xl overflow-visible ${theme === 'dark' ? 'bg-[#1a1a1a] border-gray-800' : 'bg-white border-neutral-200'}`}
                             >
                                 <div className="p-1.5 space-y-0.5 relative">
-                                    <button onClick={() => { onNavigate('profile'); setProfileOpen(false); }} className={`w-full text-left text-sm flex items-center px-3 py-2.5 rounded-xl ${hoverClasses} dark:text-gray-300 text-neutral-700`}>
+                                    <button onClick={() => { guardedNavigate('profile'); setProfileOpen(false); }} className={`w-full text-left text-sm flex items-center px-3 py-2.5 rounded-xl ${hoverClasses} dark:text-gray-300 text-neutral-700`}>
                                         <UserIcon className="w-4 h-4 mr-3 text-emerald-400" />
                                         Profile Workspace
                                     </button>
-                                    <button onClick={() => { onNavigate('settings'); setProfileOpen(false); }} className={`w-full text-left text-sm flex items-center px-3 py-2.5 rounded-xl ${hoverClasses} dark:text-gray-300 text-neutral-700`}>
+                                    <button onClick={() => { guardedNavigate('settings'); setProfileOpen(false); }} className={`w-full text-left text-sm flex items-center px-3 py-2.5 rounded-xl ${hoverClasses} dark:text-gray-300 text-neutral-700`}>
                                         <SettingsIcon className="w-4 h-4 mr-3" /> 
                                         Settings
                                     </button>
-                                    <button onClick={() => { onNavigate('pricing'); setProfileOpen(false); }} className={`w-full text-left text-sm flex items-center px-3 py-2.5 rounded-xl ${hoverClasses} dark:text-gray-300 text-neutral-700`}>
+                                    <button onClick={() => { guardedNavigate('pricing'); setProfileOpen(false); }} className={`w-full text-left text-sm flex items-center px-3 py-2.5 rounded-xl ${hoverClasses} dark:text-gray-300 text-neutral-700`}>
                                         <CrownIcon className="w-4 h-4 mr-3" />
                                         Pricing
                                     </button>
-                                    <button onClick={() => { onNavigate('history'); setProfileOpen(false); }} className={`w-full text-left text-sm flex items-center px-3 py-2.5 rounded-xl ${hoverClasses} dark:text-gray-300 text-neutral-700`}>
+                                    <button onClick={() => { guardedNavigate('history'); setProfileOpen(false); }} className={`w-full text-left text-sm flex items-center px-3 py-2.5 rounded-xl ${hoverClasses} dark:text-gray-300 text-neutral-700`}>
                                         <HistoryIcon className="w-4 h-4 mr-3" /> 
                                         History
                                     </button>
@@ -482,7 +500,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                         </AnimatePresence>
                                     </div>
                                     <button 
-                                        onClick={() => onNavigate('landing')} 
+                                        onClick={() => guardedNavigate('landing')} 
                                         className={`w-full text-left text-sm flex items-center px-3 py-2.5 rounded-xl ${hoverClasses} dark:text-gray-300 text-neutral-700`}
                                     >
                                         <HomeIcon className="w-4 h-4 mr-3" />

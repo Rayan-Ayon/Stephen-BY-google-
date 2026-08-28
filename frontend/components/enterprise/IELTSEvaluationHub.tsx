@@ -48,13 +48,32 @@ const FALLBACK_FARMGATE: Workspace = {
 
 interface IELTSEvaluationHubProps {
     userEmail?: string;
+    onExamStateChange?: (active: boolean) => void;
+    exitPulse?: boolean;
+    onLockedNavigationAttempt?: () => void;
 }
 
-const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail }) => {
+const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onExamStateChange, exitPulse, onLockedNavigationAttempt }) => {
     const { activeWorkspace, workspaces, setActiveWorkspace } = useWorkspace();
     const [view, setView] = useState<IeltsView>('dashboard');
     const [isCollapsed, setIsCollapsed] = useState<boolean>(readRail);
     const [examRunning, setExamRunning] = useState(false);
+    const handleExamActive = (active: boolean) => {
+        setExamRunning(active);
+        onExamStateChange?.(active);
+    };
+    const [isSubShaking, setIsSubShaking] = useState(false);
+    const [shakingSubKey, setShakingSubKey] = useState<string | null>(null);
+    const guardedSubNavigate = (key: string) => {
+        if (examRunning) {
+            setShakingSubKey(key);
+            setIsSubShaking(true);
+            setTimeout(() => setIsSubShaking(false), 600);
+            onLockedNavigationAttempt?.();
+            return;
+        }
+        setView(key as IeltsView);
+    };
 
     useEffect(() => {
         setExamRunning(false);
@@ -105,11 +124,11 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail }) =>
     const renderNavItem = (item: IeltsNavItem) => (
         <button
             key={item.key}
-            onClick={() => setView(item.key)}
+            onClick={() => guardedSubNavigate(item.key)}
             title={isCollapsed ? item.name : undefined}
             className={`relative group w-full flex items-center gap-2 rounded-lg text-left transition-colors ${
                 isCollapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
-            } ${view === item.key ? 'bg-white/[0.06] text-white border border-neutral-800' : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.02]'}`}
+            } ${view === item.key ? 'bg-white/[0.06] text-white border border-neutral-800' : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.02]'}${shakingSubKey === item.key && isSubShaking ? ' animate-[lock-shake_0.6s_ease-in-out] ring-2 ring-rose-500/80' : ''}`}
         >
             <span className="text-[13px] leading-none shrink-0">{item.icon}</span>
             {!isCollapsed && (
@@ -123,11 +142,15 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail }) =>
                     {item.name}{item.detail ? ` (${item.detail})` : ''}
                 </span>
             )}
-        </button>
+            {shakingSubKey === item.key && isSubShaking && (
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-xs">🔒</span>
+            )}
+         </button>
     );
 
     return (
         <div className="flex h-full p-8 gap-8 overflow-hidden">
+            <style>{`@keyframes lock-shake {0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}`}</style>
             <aside className={`shrink-0 overflow-hidden transition-[width] duration-300 ${isCollapsed ? 'w-16' : 'w-60'}`}>
                 <div className={`mb-6 pb-4 border-b border-zinc-800 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} gap-2`}>
                     {!isCollapsed && (
@@ -179,7 +202,8 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail }) =>
                             bundleId={view as IeltsBundleId}
                             candidateEmail={userEmail}
                             onFinish={() => setView('dashboard')}
-                            onActiveChange={setExamRunning}
+                            onActiveChange={handleExamActive}
+                            exitPulse={exitPulse}
                         />
                         {!examRunning && (
                             <div className="mt-6">
@@ -191,13 +215,13 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail }) =>
                     <IELTSDashboard />
                 ) : (
                     <>
-                        {view === 'writing' && <IELTSWritingExam key="writing" candidateEmail={userEmail} onActiveChange={setExamRunning} />}
+                        {view === 'writing' && <IELTSWritingExam key="writing" candidateEmail={userEmail} onActiveChange={handleExamActive} exitPulse={exitPulse} />}
                         {view === 'writing' && !examRunning && <div className="mt-6"><ModuleHistorySection moduleType="writing" /></div>}
-                        {view === 'speaking' && <IELTSSpeakingExam key="speaking" candidateEmail={userEmail} onActiveChange={setExamRunning} />}
+                        {view === 'speaking' && <IELTSSpeakingExam key="speaking" candidateEmail={userEmail} onActiveChange={handleExamActive} exitPulse={exitPulse} />}
                         {view === 'speaking' && !examRunning && <div className="mt-6"><ModuleHistorySection moduleType="speaking" /></div>}
-                        {view === 'listening' && <IELTSListeningExam key="listening" candidateEmail={userEmail} onActiveChange={setExamRunning} />}
+                        {view === 'listening' && <IELTSListeningExam key="listening" candidateEmail={userEmail} onActiveChange={handleExamActive} exitPulse={exitPulse} />}
                         {view === 'listening' && !examRunning && <div className="mt-6"><ModuleHistorySection moduleType="listening" /></div>}
-                        {view === 'reading' && <IELTSReadingExam key="reading" candidateEmail={userEmail} onActiveChange={setExamRunning} />}
+                        {view === 'reading' && <IELTSReadingExam key="reading" candidateEmail={userEmail} onActiveChange={handleExamActive} exitPulse={exitPulse} />}
                         {view === 'reading' && !examRunning && <div className="mt-6"><ModuleHistorySection moduleType="reading" /></div>}
                     </>
                 )}

@@ -3,6 +3,7 @@ import { addAttempt, clampBand, formatClock, type SimulationProps } from './ielt
 import IELTSLobbyCard from './IELTSLobbyCard';
 import IELTSExitModal from './IELTSExitModal';
 import IeltsExamOptionsModal from '../../exam/IeltsExamOptionsModal';
+import LexiSpeakStudio from './LexiSpeakStudio';
 
 const Wifi = ({ size, strokeWidth, className }: any) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
@@ -66,10 +67,12 @@ interface IELTSSpeakingExamProps {
     candidateEmail?: string;
     simulation?: SimulationProps;
     onActiveChange?: (active: boolean) => void;
+    exitPulse?: boolean;
 }
 
-const IELTS_SpeakingExam: React.FC<IELTSSpeakingExamProps> = ({ candidateEmail, simulation, onActiveChange }) => {
+const IELTS_SpeakingExam: React.FC<IELTSSpeakingExamProps> = ({ candidateEmail, simulation, onActiveChange, exitPulse }) => {
     const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+    const lexiMode = true;
     const [testState, setTestState] = useState<TestState>(simulation ? 'active' : 'lobby');
     const [phase, setPhase] = useState<Phase>('intro');
     const [part1Index, setPart1Index] = useState(0);
@@ -332,7 +335,7 @@ const IELTS_SpeakingExam: React.FC<IELTSSpeakingExamProps> = ({ candidateEmail, 
                     </button>
                     <button
                         onClick={() => setShowExitModal(true)}
-                        className="px-3 py-1.5 rounded-md bg-white border border-[#CCCCCC] text-[11px] text-neutral-700 hover:text-red-600 hover:border-red-400 transition-colors"
+                        className={`px-3 py-1.5 rounded-md bg-white border border-[#CCCCCC] text-[11px] text-neutral-700 hover:text-red-600 hover:border-red-400 transition-all${exitPulse ? ' scale-105 ring-2 ring-rose-500/80 shadow-[0_0_15px_rgba(225,29,72,0.5)] animate-pulse' : ''}`}
                     >
                         Exit Exam
                     </button>
@@ -348,8 +351,7 @@ const IELTS_SpeakingExam: React.FC<IELTSSpeakingExamProps> = ({ candidateEmail, 
                 </div>
             )}
 
-            {/* Split-Pane Body */}
-            <div className="flex-1 min-h-0 flex">
+            {!lexiMode && (<div className="flex-1 min-h-0 flex">
                 {/* LEFT: Examiner & Prompt Studio */}
                 <div className="w-full lg:w-[42%] h-full min-w-0 overflow-y-auto pr-6 pt-4 pb-20 bg-white custom-scrollbar">
                     {/* AI Examiner Header */}
@@ -510,8 +512,10 @@ const IELTS_SpeakingExam: React.FC<IELTSSpeakingExamProps> = ({ candidateEmail, 
                     </div>
                 </div>
             </div>
+            )}
 
-            {/* White Official Bottom Bar */}
+            {lexiMode && <LexiSpeakStudio />}
+            {!lexiMode && (
             <footer className="shrink-0 h-12 bg-white border-t border-[#E5E7EB] flex items-center justify-between px-2 w-full z-10">
                 <div className="flex items-center gap-4 h-full px-4">
                     <button
@@ -541,6 +545,7 @@ const IELTS_SpeakingExam: React.FC<IELTSSpeakingExamProps> = ({ candidateEmail, 
                     </button>
                 </div>
             </footer>
+            )}
 
             <IELTSExitModal
                 open={showExitModal}

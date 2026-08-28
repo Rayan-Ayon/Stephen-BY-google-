@@ -105,11 +105,12 @@ interface IELTSReadingExamProps {
     candidateEmail?: string;
     simulation?: SimulationProps;
     onActiveChange?: (active: boolean) => void;
+    exitPulse?: boolean;
 }
 
 const normalize = (s: string) => s.trim().toLowerCase();
 
-const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, simulation, onActiveChange }) => {
+const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, simulation, onActiveChange, exitPulse }) => {
     const [testState, setTestState] = useState<TestState>(simulation ? 'active' : 'lobby');
     const [activePart, setActivePart] = useState<1 | 2 | 3>(1);
     const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -305,7 +306,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({ candidateEmail, sim
                 <div className="flex items-center gap-3 shrink-0">
                     <button
                         onClick={() => setShowExitModal(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-[#CCCCCC] text-[11px] text-neutral-600 hover:text-red-600 hover:border-red-400 transition-colors"
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-[#CCCCCC] text-[11px] text-neutral-600 hover:text-red-600 hover:border-red-400 transition-all${exitPulse ? ' scale-105 ring-2 ring-rose-500/80 shadow-[0_0_15px_rgba(225,29,72,0.5)] animate-pulse' : ''}`}
                     >
                         <span>⬅️</span> Exit Exam
                     </button>

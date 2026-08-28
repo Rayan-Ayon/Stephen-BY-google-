@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
     BuildingLibraryIcon, ShieldCheckIcon, BarChartIcon,
     BookOpenIcon, LockClosedIcon, SettingsIcon,
     UsersIcon, DollarIcon, ClockIcon, TrendingUpIcon,
     ChevronDownIcon, CheckCircleIcon, CubeIcon,
     GlobeIcon, DatabaseIcon,
+    MicIcon, PlayIcon, PauseIcon, RefreshIcon, StarIcon,
 } from './icons';
 
 // ── Types ──
@@ -32,6 +33,21 @@ interface NavGroup {
     isLeaf?: boolean;
     leafKey?: string;
 }
+
+// ── RBAC (Role & Access Manager) ──
+
+type RbacTier = 'super_admin' | 'instructor' | 'operator' | 'content_manager';
+type SegmentKey = 'overview' | 'telemetry' | 'evaluation' | 'curriculum' | 'knowledge' | 'billing' | 'node';
+
+interface SegPerm { read: boolean; write: boolean; ownerApproval: boolean }
+interface TeamMember {
+    id: string;
+    name: string;
+    email: string;
+    role: RbacTier;
+    permissions: Record<SegmentKey, SegPerm>;
+}
+interface OwnerApprovalItem { id: number; label: string; ts: string }
 
 interface EvaluationItem {
     id: string;
@@ -70,10 +86,16 @@ const navGroups: NavGroup[] = [
         subItems: [
             { label: 'License Allocation', key: 'license_seats' },
             { label: 'LMS & Portal Bridges', key: 'sso_gateways' },
+            { label: 'Role & Access Manager', key: 'role_access_manager' },
         ],
     },
     { label: 'Node Settings', icon: <SettingsIcon className="w-4 h-4" />, key: 'settings', isLeaf: true, leafKey: 'node_settings' },
 ];
+
+const allowedNavKeysFor = (role: 'super_admin' | 'instructor' | 'operator'): Set<string> => {
+    if (role === 'super_admin') return new Set(['overview', 'telemetry', 'curriculum', 'identity', 'settings']);
+    return new Set(['overview', 'telemetry', 'curriculum']);
+};
 
 const students: StudentTelemetry[] = [
     { id: 'S-TB29', name: 'Ayon', batch: 'EXEC-BATCH-B', videos: { watched: 572, total: 601 }, exams: { done: 7, total: 10, avg: 6.5, status: 'Good' }, projects: { done: 2, total: 7, avg: 6.0, status: 'Fair' }, questioning: { understanding: 7, divergent: 4, convergent: 6, status: 'Fair' }, flashcards: { done: 1, total: 10, acc: 84, status: 'Fair' }, quizzes: { done: 8, total: 10, acc: 73, status: 'Good' }, ovrScore: 5.5 },
@@ -150,6 +172,72 @@ const vectorDocs = [
 const identityProviders = [
     { name: 'Google Classroom LMS Bridge', accounts: '1,420', status: 'Active Synchronized Tunnel', token: '24h' },
     { name: 'Microsoft Entra ID SSO Gateway', accounts: '12', status: 'Active Synchronized Tunnel', provisioning: 'Active' },
+];
+
+const accessSegments: { key: SegmentKey; label: string }[] = [
+    { key: 'overview', label: 'Workspace Overview' },
+    { key: 'telemetry', label: 'Cohort Telemetry' },
+    { key: 'evaluation', label: 'Evaluation Queue' },
+    { key: 'curriculum', label: 'Curriculum Assets' },
+    { key: 'knowledge', label: 'Knowledge Base' },
+    { key: 'billing', label: 'Seat & License Billing' },
+    { key: 'node', label: 'Node Settings (AI Constants)' },
+];
+
+const roleMeta: Record<RbacTier, { label: string; desc: string; badge: string }> = {
+    super_admin: { label: 'Super Admin', desc: 'Owner/Branch Head: Full node access, billing, model strictness, role delegation.', badge: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30' },
+    instructor: { label: 'Instructor', desc: 'Senior Evaluator: Telemetry, evaluation queue, voice feedback, score release.', badge: 'text-sky-300 bg-sky-500/10 border-sky-500/30' },
+    operator: { label: 'Operator', desc: 'Branch Admin/Front-Desk: Enrollment, batch assignment, mock deployments (No billing/AI tweaks).', badge: 'text-amber-300 bg-amber-500/10 border-amber-500/30' },
+    content_manager: { label: 'Content Manager', desc: 'Curriculum Developer: Knowledge base ingestion & course asset deployment only.', badge: 'text-fuchsia-300 bg-fuchsia-500/10 border-fuchsia-500/30' },
+};
+
+const defaultPermissionsFor = (role: RbacTier): Record<SegmentKey, SegPerm> => {
+    const base: Record<SegmentKey, SegPerm> = {
+        overview: { read: false, write: false, ownerApproval: false },
+        telemetry: { read: false, write: false, ownerApproval: false },
+        evaluation: { read: false, write: false, ownerApproval: false },
+        curriculum: { read: false, write: false, ownerApproval: false },
+        knowledge: { read: false, write: false, ownerApproval: false },
+        billing: { read: false, write: false, ownerApproval: false },
+        node: { read: false, write: false, ownerApproval: false },
+    };
+    switch (role) {
+        case 'super_admin':
+            (Object.keys(base) as SegmentKey[]).forEach(k => { base[k] = { read: true, write: true, ownerApproval: false }; });
+            break;
+        case 'instructor':
+            base.overview = { read: true, write: false, ownerApproval: false };
+            base.telemetry = { read: true, write: true, ownerApproval: false };
+            base.evaluation = { read: true, write: true, ownerApproval: false };
+            base.curriculum = { read: true, write: false, ownerApproval: false };
+            base.knowledge = { read: true, write: false, ownerApproval: false };
+            break;
+        case 'operator':
+            base.overview = { read: true, write: false, ownerApproval: false };
+            base.telemetry = { read: true, write: false, ownerApproval: false };
+            base.evaluation = { read: true, write: false, ownerApproval: false };
+            base.curriculum = { read: true, write: true, ownerApproval: false };
+            base.knowledge = { read: true, write: false, ownerApproval: false };
+            break;
+        case 'content_manager':
+            base.overview = { read: true, write: false, ownerApproval: false };
+            base.curriculum = { read: true, write: true, ownerApproval: false };
+            base.knowledge = { read: true, write: true, ownerApproval: false };
+            break;
+    }
+    return base;
+};
+
+const buildMember = (id: string, name: string, email: string, role: RbacTier): TeamMember => ({
+    id, name, email, role, permissions: defaultPermissionsFor(role),
+});
+
+const seedTeamMembers: TeamMember[] = [
+    buildMember('TM-01', 'Ayon', 'ayon.superadmin@gmail.com', 'super_admin'),
+    buildMember('TM-02', 'Farhan', 'farhan.instructor@gmail.com', 'instructor'),
+    buildMember('TM-03', 'Rahim', 'rahim.operator@gmail.com', 'operator'),
+    buildMember('TM-04', 'Sadia', 'sadia.content@gmail.com', 'content_manager'),
+    buildMember('TM-05', 'Jarin', 'jarin.operator@gmail.com', 'operator'),
 ];
 
 const buildEval = (name: string, batch: string, module: string, type: 'essay' | 'speaking', idx: number): EvaluationItem => {
@@ -424,6 +512,379 @@ const EvaluationQueue: React.FC<{
     );
 };
 
+// ── Teacher Review Studio (sub-tab under Cohort Telemetry) ──
+
+interface ReviewSubmission {
+    id: string;
+    candidateName: string;
+    candidateId: string;
+    submittedAt: string;
+    targetBand: number;
+    type: 'essay' | 'speaking';
+    severity: 'Urgent' | 'Standard' | 'Owner Sign-off Needed';
+    essayText?: string[];
+    wordCount?: number;
+    cueCard?: string;
+    audioFlags?: { time: string; label: string }[];
+    released?: boolean;
+}
+
+const RUBRIC_KEYS = [
+    'Task Achievement / Response',
+    'Coherence & Cohesion',
+    'Lexical Resource',
+    'Grammatical Range & Accuracy',
+];
+
+const seedReviewSubmissions: ReviewSubmission[] = [
+    {
+        id: 'rs-1',
+        candidateName: 'Tanvir Hossain',
+        candidateId: '#IELTS-8841',
+        submittedAt: '2d ago · 14:22',
+        targetBand: 7.5,
+        type: 'essay',
+        severity: 'Urgent',
+        wordCount: 342,
+        essayText: [
+            'The integration of artificial intelligence into education has sparked both optimism and concern among policymakers, who now confront a pedagogical landscape that is shifting faster than any curriculum can codify.',
+            'Proponents argue that adaptive learning platforms can personalise instruction at a scale previously impossible, surfacing each learner’s weak nodes long before a formal examination would expose them.',
+            'However, critics warn that over-reliance on algorithmic assessment may erode the nuanced judgement of experienced educators, reducing formative feedback to a ledger of probabilities.',
+            'In my view, a hybrid model — where AI handles drill-and-practice while teachers lead evaluative feedback — offers the most balanced trajectory for the sector.',
+        ],
+    },
+    {
+        id: 'rs-2',
+        candidateName: 'Nafisa Rahman',
+        candidateId: '#IELTS-9023',
+        submittedAt: '1d ago · 09:41',
+        targetBand: 7.0,
+        type: 'speaking',
+        severity: 'Standard',
+        cueCard: 'Part 3: "How will artificial intelligence change the way young people learn in the future?"',
+        audioFlags: [
+            { time: '00:42', label: 'Hesitation Spike' },
+            { time: '01:15', label: 'Grammar Repair' },
+            { time: '02:03', label: 'Strong Lexical Range' },
+        ],
+    },
+    {
+        id: 'rs-3',
+        candidateName: 'Rahim Khan',
+        candidateId: '#IELTS-7712',
+        submittedAt: '3d ago · 18:05',
+        targetBand: 6.5,
+        type: 'essay',
+        severity: 'Standard',
+        wordCount: 287,
+        essayText: [
+            'Remote work has fundamentally altered productivity patterns across multiple industries, forcing managers to reconsider what supervision even means in a distributed organisation.',
+            'While some fear diminished oversight, data suggests autonomous workers often exceed prior output once the friction of commute and open-plan interruption is removed.',
+            'Nevertheless, the absence of spontaneous collaboration can blunt innovation over longer horizons, a cost that quarterly metrics rarely capture.',
+        ],
+    },
+    {
+        id: 'rs-4',
+        candidateName: 'Sadia Islam',
+        candidateId: '#IELTS-6630',
+        submittedAt: '4h ago · 11:10',
+        targetBand: 8.0,
+        type: 'speaking',
+        severity: 'Owner Sign-off Needed',
+        cueCard: 'Part 2: "Describe a technology that changed your life."',
+        audioFlags: [
+            { time: '00:21', label: 'Vocabulary Repetition' },
+            { time: '01:48', label: 'Fluency Break' },
+        ],
+    },
+    {
+        id: 'rs-5',
+        candidateName: 'Jarin Ahmed',
+        candidateId: '#IELTS-7190',
+        submittedAt: '5h ago · 16:33',
+        targetBand: 7.0,
+        type: 'essay',
+        severity: 'Urgent',
+        wordCount: 305,
+        essayText: [
+            'Climate change education is no longer a peripheral elective but a core literacy of the twenty-first century, demanded by employers and citizens alike.',
+            'Schools that embed sustainability across the curriculum cultivate a generation equipped to navigate ecological uncertainty with evidence rather than anxiety.',
+            'Yet pedagogy alone is insufficient without structural investment in teacher training and community partnerships that extend learning beyond the classroom wall.',
+        ],
+    },
+];
+
+const VoiceFeedbackRecorder: React.FC = () => {
+    const [recording, setRecording] = useState(false);
+    const [recorded, setRecorded] = useState(false);
+    const [playing, setPlaying] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+    const clear = () => { if (timer.current) { clearInterval(timer.current); timer.current = null; } };
+    useEffect(() => () => clear(), []);
+    const startRec = () => {
+        setRecorded(false); setPlaying(false); setProgress(0); setRecording(true); clear();
+        timer.current = setInterval(() => {
+            setProgress(p => { if (p >= 100) { setRecording(false); clear(); return 100; } return p + (100 / 30); });
+        }, 1000);
+    };
+    const startPlay = () => {
+        if (!recorded) return;
+        setPlaying(true); clear();
+        timer.current = setInterval(() => {
+            setProgress(p => { if (p >= 100) { setPlaying(false); clear(); return 100; } return p + (100 / 30); });
+        }, 1000);
+    };
+    const reRecord = () => { clear(); setRecording(false); setRecorded(false); setPlaying(false); setProgress(0); };
+    return (
+        <div className="bg-[#050505] border border-neutral-800 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] uppercase tracking-wider text-neutral-500">Voice Feedback Recorder</p>
+                {recorded && !recording && (
+                    <div className="flex items-center gap-1">
+                        <button onClick={startPlay} className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10"><PlayIcon className="w-3 h-3" />Playback</button>
+                        <button onClick={reRecord} className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded border border-neutral-800 text-neutral-400 hover:text-white"><RefreshIcon className="w-3 h-3" />Re-record</button>
+                    </div>
+                )}
+            </div>
+            <div className="flex items-center gap-2">
+                <button onClick={recording ? () => { setRecording(false); clear(); setRecorded(true); } : startRec}
+                    className={`flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-md border transition-all ${recording ? 'text-red-400 border-red-500/40 bg-red-500/10 animate-pulse' : 'text-neutral-300 border-neutral-800 hover:text-white hover:bg-neutral-900'}`}>
+                    <MicIcon className="w-3.5 h-3.5" />{recording ? '● Recording 30s' : recorded ? '↻ Record Voice Correction' : '🎤 Record Voice Correction'}
+                </button>
+                <div className="flex-1 h-8 flex items-center gap-[2px]">
+                    {Array.from({ length: 32 }).map((_, i) => (
+                        <div key={i} className={`w-1 rounded-sm ${recorded || recording ? 'bg-emerald-500/70' : 'bg-neutral-800'}`} style={{ height: recorded ? `${20 + Math.abs(Math.sin(i + progress / 20)) * 60}%` : (recording && (i / 32) * 100 <= progress ? '100%' : '20%') }} />
+                    ))}
+                </div>
+            </div>
+            {(recording || playing) && (
+                <div className="mt-2 text-[10px] font-mono text-emerald-400">{((progress / 100) * 30).toFixed(0)}s / 30s</div>
+            )}
+        </div>
+    );
+};
+
+const SpeakingWaveform: React.FC<{ flags: { time: string; label: string }[] }> = ({ flags }) => {
+    const [playing, setPlaying] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+    const TOTAL = 180;
+    const bars = useMemo(() => {
+        let seed = 13; const arr: number[] = [];
+        for (let i = 0; i < 90; i++) { seed = (seed * 1103515245 + 12345) % 2147483648; arr.push(0.15 + (seed / 2147483648) * 0.85); }
+        return arr;
+    }, []);
+    const clear = () => { if (timer.current) { clearInterval(timer.current); timer.current = null; } };
+    useEffect(() => () => clear(), []);
+    const toggle = () => {
+        if (playing) { setPlaying(false); clear(); return; }
+        setPlaying(true); clear();
+        timer.current = setInterval(() => {
+            setProgress(p => { if (p >= 100) { setPlaying(false); clear(); return 100; } return p + (100 / TOTAL) * 2; });
+        }, 50);
+    };
+    const toSec = (t: string) => { const [m, s] = t.split(':').map(Number); return m * 60 + s; };
+    return (
+        <div className="bg-[#050505] border border-neutral-800 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+                <p className="text-[10px] uppercase tracking-wider text-neutral-500">Speaking Recording // Waveform Studio</p>
+                <button onClick={toggle} className={`flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded border ${playing ? 'text-emerald-300 border-emerald-500/40 bg-emerald-500/10' : 'text-neutral-300 border-neutral-800 hover:text-white'}`}>{playing ? <><PauseIcon className="w-3 h-3" />Pause</> : <><PlayIcon className="w-3 h-3" />Play</>}</button>
+            </div>
+            <div className="relative">
+                <div className="flex items-end gap-[2px] h-24 overflow-hidden">
+                    {bars.map((b, i) => (
+                        <div key={i} className={`flex-1 rounded-sm ${ (i / bars.length) * 100 <= progress ? 'bg-emerald-500/70' : 'bg-neutral-700' }`} style={{ height: `${b * 100}%` }} />
+                    ))}
+                </div>
+                {flags.map((f, i) => {
+                    const left = (toSec(f.time) / TOTAL) * 100;
+                    return (
+                        <div key={i} className="absolute -top-1" style={{ left: `${left}%` }}>
+                            <div className="w-2 h-2 -translate-x-1/2 rounded-full bg-amber-400 ring-2 ring-amber-400/20" title={`${f.time} - ${f.label}`} />
+                            <div className="absolute top-3 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-mono text-amber-300 bg-[#0a0a0a] border border-amber-500/30 rounded px-1 py-0.5">{f.time} · {f.label}</div>
+                        </div>
+                    );
+                })}
+            </div>
+            <input type="range" min={0} max={100} value={progress} onChange={e => setProgress(Number(e.target.value))} className="w-full mt-4 accent-emerald-500" />
+            <div className="flex justify-between text-[10px] font-mono text-neutral-500 mt-1">
+                <span>{Math.floor((progress / 100) * TOTAL / 60)}:{(Math.floor((progress / 100) * TOTAL) % 60).toString().padStart(2, '0')} / 3:00</span>
+                <span>{progress.toFixed(0)}%</span>
+            </div>
+        </div>
+    );
+};
+
+const TeacherReviewStudio: React.FC<{
+    pushToast: (m: string) => void;
+    setAuditLogs: React.Dispatch<React.SetStateAction<string[]>>;
+    setOwnerApprovalQueue: React.Dispatch<React.SetStateAction<OwnerApprovalItem[]>>;
+    simulatedSessionRole: 'super_admin' | 'instructor' | 'operator';
+}> = ({ pushToast, setAuditLogs, setOwnerApprovalQueue, simulatedSessionRole }) => {
+    const [subs, setSubs] = useState<ReviewSubmission[]>(seedReviewSubmissions);
+    const [activeId, setActiveId] = useState<string>(seedReviewSubmissions[0].id);
+    const [rubric, setRubric] = useState<Record<string, number>>(() => RUBRIC_KEYS.reduce((a, k) => ({ ...a, [k]: 7 }), {} as Record<string, number>));
+    const [written, setWritten] = useState('');
+    const [highlighted, setHighlighted] = useState<Set<number>>(new Set());
+    const forcedApproval = simulatedSessionRole === 'instructor' || defaultPermissionsFor(simulatedSessionRole)['evaluation'].ownerApproval;
+    const [requireOwnerApproval, setRequireOwnerApproval] = useState(forcedApproval);
+
+    useEffect(() => { setRequireOwnerApproval(forcedApproval); }, [forcedApproval]);
+    useEffect(() => {
+        setRubric(RUBRIC_KEYS.reduce((a, k) => ({ ...a, [k]: 7 }), {} as Record<string, number>));
+        setWritten('');
+        setHighlighted(new Set());
+    }, [activeId]);
+
+    const active = subs.find(s => s.id === activeId) ?? subs.find(s => !s.released) ?? subs[0];
+    const pendingCount = subs.filter(s => !s.released).length;
+    const ownerSignoffCount = subs.filter(s => s.severity === 'Owner Sign-off Needed' && !s.released).length;
+    const overall = RUBRIC_KEYS.reduce((s, k) => s + rubric[k], 0) / RUBRIC_KEYS.length;
+    const overallBand = Math.round(overall * 2) / 2;
+
+    const release = () => {
+        if (requireOwnerApproval) { pushToast('Owner approval required before release'); return; }
+        setSubs(prev => prev.map(s => s.id === active.id ? { ...s, released: true } : s));
+        pushToast(`Evaluation published for Candidate ${active.candidateId}`);
+        setAuditLogs(prev => [`Released evaluation for ${active.candidateName} (${active.candidateId}) — Overall Band ${overallBand.toFixed(1)} — ${new Date().toLocaleTimeString()}`, ...prev]);
+        const next = subs.find(s => !s.released && s.id !== active.id);
+        if (next) setActiveId(next.id);
+    };
+    const routeOwner = () => {
+        setOwnerApprovalQueue(prev => [...prev, { id: Date.now(), label: `Instructor graded ${active.candidateName} (${active.candidateId}) — Routed to Owner Sign-off`, ts: new Date().toLocaleTimeString() }]);
+        setSubs(prev => prev.map(s => s.id === active.id ? { ...s, released: true } : s));
+        setAuditLogs(prev => [`Instructor graded ${active.candidateId} — Routed to Owner Sign-off — ${new Date().toLocaleTimeString()}`, ...prev]);
+        pushToast(`Routed to Owner Approval Queue for ${active.candidateName}`);
+        const next = subs.find(s => !s.released && s.id !== active.id);
+        if (next) setActiveId(next.id);
+    };
+
+    const sevBadge = (sev: ReviewSubmission['severity']) => sev === 'Urgent'
+        ? 'text-amber-300 bg-amber-500/10 border-amber-500/30'
+        : sev === 'Owner Sign-off Needed' ? 'text-rose-300 bg-rose-500/10 border-rose-500/30'
+        : 'text-neutral-400 bg-neutral-500/10 border-neutral-700';
+
+    const toggleHighlight = (i: number) => setHighlighted(prev => { const n = new Set(prev); if (n.has(i)) n.delete(i); else n.add(i); return n; });
+
+    return (
+        <div>
+            <div className="mb-5">
+                <h2 className="text-2xl font-semibold tracking-tight text-white">Teacher Review Studio // Writing &amp; Speaking Evaluation Hub</h2>
+                <p className="text-xs text-neutral-500 mt-1 font-mono">Live Examiner Marking Node — Operational Context: IELTS Academic &amp; General Training</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+                <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-4">
+                    <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Pending Submissions</p>
+                    <p className="text-lg font-mono text-white">{pendingCount} <span className="text-xs text-amber-300">Essays &amp; Audio Files</span></p>
+                </div>
+                <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-4">
+                    <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Average Grading Time</p>
+                    <p className="text-lg font-mono text-cyan-300">4.2 <span className="text-xs text-neutral-400">Mins / Candidate</span></p>
+                </div>
+                <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-4">
+                    <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Owner Approval Required</p>
+                    <p className="text-lg font-mono text-rose-300">{ownerSignoffCount} <span className="text-xs text-neutral-400">Marked (Pending Sign-off)</span></p>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+                <div className="lg:col-span-3 space-y-4">
+                    <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <p className="text-base font-semibold text-white">{active.candidateName} <span className="text-neutral-500 font-mono text-xs">// {active.candidateId}</span></p>
+                                <p className="text-[11px] text-neutral-500 font-mono mt-0.5">Submitted {active.submittedAt} · Target Band {active.targetBand.toFixed(1)}</p>
+                            </div>
+                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded border ${active.type === 'essay' ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30' : 'text-cyan-300 bg-cyan-500/10 border-cyan-500/30'}`}>{active.type === 'essay' ? 'Writing Task 2 Essay' : 'Speaking Part 3 Recording'}</span>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-12 gap-4">
+                        <div className="col-span-4 bg-[#0a0a0a] border border-neutral-800 rounded-xl p-3 max-h-[60vh] overflow-y-auto">
+                            <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-2">Queue</p>
+                            <div className="space-y-1">
+                                {subs.filter(s => !s.released).map(s => (
+                                    <button key={s.id} onClick={() => setActiveId(s.id)} className={`w-full text-left text-xs px-2 py-2 rounded-md transition-all ${activeId === s.id ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-900'}`}>
+                                        <span className="block font-medium">{s.candidateName}</span>
+                                        <span className="block text-[10px] font-mono text-neutral-500">{s.candidateId} · {s.type === 'essay' ? 'Essay' : 'Speaking'}</span>
+                                        <span className={`inline-block mt-1 text-[9px] font-medium px-1.5 py-0.5 rounded border ${sevBadge(s.severity)}`}>{s.severity}</span>
+                                    </button>
+                                ))}
+                                {subs.filter(s => !s.released).length === 0 && <p className="text-[11px] text-neutral-600">Queue cleared.</p>}
+                            </div>
+                        </div>
+                        <div className="col-span-8 bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5 max-h-[60vh] overflow-y-auto">
+                            {active.type === 'essay' ? (
+                                <>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <p className="text-[10px] uppercase tracking-wider text-neutral-500">Candidate Essay</p>
+                                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${((active.wordCount ?? 0) >= 250) ? 'text-emerald-300 border-emerald-500/30 bg-emerald-500/5' : 'text-red-400 border-red-500/30 bg-red-500/5'}`}>{active.wordCount} Words — {((active.wordCount ?? 0) >= 250) ? 'Target Met' : 'Below Target'}</span>
+                                    </div>
+                                    <div className="bg-[#050505] border border-neutral-800 rounded-lg p-4 space-y-3">
+                                        {active.essayText?.map((para, i) => (
+                                            <p key={i} onClick={() => toggleHighlight(i)} className={`text-xs leading-relaxed text-neutral-300 rounded px-2 py-1 cursor-pointer transition-all ${highlighted.has(i) ? 'bg-emerald-500/10 border border-emerald-500/30' : 'border border-transparent hover:border-neutral-800'}`}>
+                                                <span className="text-neutral-600 font-mono mr-2">{i + 1}.</span>{para}
+                                            </p>
+                                        ))}
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="space-y-3">
+                                    {active.cueCard && (
+                                        <div className="bg-[#050505] border border-neutral-800 rounded-lg p-3">
+                                            <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Cue Card</p>
+                                            <p className="text-xs text-neutral-300">{active.cueCard}</p>
+                                        </div>
+                                    )}
+                                    <SpeakingWaveform flags={active.audioFlags ?? []} />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="lg:col-span-2 space-y-4">
+                    <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5">
+                        <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-3">Official IELTS Rubric (Bands 1.0–9.0)</p>
+                        <div className="space-y-3">
+                            {RUBRIC_KEYS.map(k => (
+                                <div key={k}>
+                                    <div className="flex items-center justify-between text-[11px] mb-1">
+                                        <span className="text-neutral-400">{k}</span>
+                                        <span className="text-emerald-300 font-mono">{rubric[k].toFixed(1)}</span>
+                                    </div>
+                                    <input type="range" min={1} max={9} step={0.5} value={rubric[k]} onChange={e => setRubric(prev => ({ ...prev, [k]: parseFloat(e.target.value) }))} className="w-full accent-emerald-500" />
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-4 flex items-center justify-between bg-[#050505] border border-emerald-500/30 rounded-lg p-3">
+                            <span className="text-[10px] uppercase tracking-wider text-emerald-400">Overall Band</span>
+                            <span className="text-xl font-mono font-semibold text-emerald-300 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">Band {overallBand.toFixed(1)}</span>
+                        </div>
+                        <label className="mt-4 flex items-center justify-between text-[11px] cursor-pointer">
+                            <span className="text-neutral-400 flex items-center gap-1"><StarIcon className="w-3.5 h-3.5 text-amber-400" />Require Owner Approval ⭐</span>
+                            <input type="checkbox" checked={requireOwnerApproval} disabled={forcedApproval} onChange={e => setRequireOwnerApproval(e.target.checked)} className="accent-amber-500" />
+                        </label>
+                    </div>
+
+                    <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5">
+                        <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-2">Written Diagnostic Remarks</p>
+                        <textarea value={written} onChange={e => setWritten(e.target.value)} rows={4} placeholder="Detailed examiner diagnostic..." className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-xs text-neutral-200 placeholder-neutral-600 focus:outline-none focus:border-emerald-500/40 resize-none" />
+                        <div className="mt-3"><VoiceFeedbackRecorder /></div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <button onClick={release} disabled={requireOwnerApproval} className={`w-full text-xs font-medium py-2.5 rounded-md transition-all ${requireOwnerApproval ? 'bg-neutral-800 text-neutral-600 cursor-not-allowed' : 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25'}`}>🚀 Release Results to Student</button>
+                        <button onClick={routeOwner} className="w-full text-xs font-medium py-2.5 rounded-md bg-amber-500/15 border border-amber-500/40 text-amber-300 hover:bg-amber-500/25 transition-all">⭐ Route to Owner Approval Queue</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const HomeworkDispatchModal: React.FC<{
     open: boolean; student: { name: string; id: string; deficiency: string } | null;
     onClose: () => void; pushToast: (m: string) => void;
@@ -550,6 +1011,203 @@ const BatchForecastWidget: React.FC = () => {
     );
 };
 
+const RoleAccessManager: React.FC<{
+    pushToast: (m: string) => void;
+    setAuditLogs: React.Dispatch<React.SetStateAction<string[]>>;
+    setOwnerApprovalQueue: React.Dispatch<React.SetStateAction<OwnerApprovalItem[]>>;
+}> = ({ pushToast, setAuditLogs, setOwnerApprovalQueue }) => {
+    const [members, setMembers] = useState<TeamMember[]>(seedTeamMembers);
+    const [selectedId, setSelectedId] = useState<string | null>(seedTeamMembers[0]?.id ?? null);
+    const [inviteOpen, setInviteOpen] = useState(false);
+    const [inviteEmail, setInviteEmail] = useState('');
+    const [inviteRole, setInviteRole] = useState<RbacTier>('operator');
+    const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+
+    const selected = members.find(m => m.id === selectedId) ?? null;
+
+    const accessibleSegments = (m: TeamMember) =>
+        accessSegments.filter(s => m.permissions[s.key].read || m.permissions[s.key].write).map(s => s.label);
+
+    const updatePermission = (memberId: string, seg: SegmentKey, field: keyof SegPerm, value: boolean) => {
+        const member = members.find(m => m.id === memberId);
+        if (!member) return;
+        setMembers(prev => prev.map(m => m.id === memberId
+            ? { ...m, permissions: { ...m.permissions, [seg]: { ...m.permissions[seg], [field]: value } } }
+            : m));
+        const fieldLabel = field === 'read' ? 'Read Access' : field === 'write' ? 'Write/Edit Access' : 'Require Owner Sign-off';
+        setAuditLogs(prev => [`Admin Ayon updated permissions for ${member.email} — ${fieldLabel} ${value ? 'Enabled' : 'Disabled'}`, ...prev]);
+        pushToast(`Permissions updated for ${member.name}`);
+        if (field === 'ownerApproval' && value) {
+            setOwnerApprovalQueue(prev => [...prev, {
+                id: Date.now(),
+                label: `${member.name} (${roleMeta[member.role].label}) requires owner sign-off for ${accessSegments.find(s => s.key === seg)?.label}`,
+                ts: new Date().toLocaleTimeString(),
+            }]);
+            pushToast('Owner Approval Queue entry created');
+        }
+    };
+
+    const handleInvite = () => {
+        const email = inviteEmail.trim();
+        if (!email) { pushToast('Enter an email to invite'); return; }
+        const id = `TM-${String(members.length + 1).padStart(2, '0')}`;
+        setMembers(prev => [...prev, buildMember(id, email.split('@')[0], email, inviteRole)]);
+        setAuditLogs(prev => [`Admin Ayon invited ${email} as ${roleMeta[inviteRole].label}`, ...prev]);
+        pushToast(`Invitation sent to ${email}`);
+        setInviteOpen(false);
+        setInviteEmail('');
+        setGeneratedLink(null);
+    };
+
+    const generateLink = () => {
+        const token = 'exp_' + Math.floor(Math.random() * 1e8).toString();
+        setGeneratedLink(`https://portal.farmgateielts.com/invite?token=${token}`);
+    };
+
+    const revoke = (m: TeamMember) => {
+        setMembers(prev => prev.filter(x => x.id !== m.id));
+        if (selectedId === m.id) setSelectedId(null);
+        setAuditLogs(prev => [`Admin Ayon revoked access for ${m.email}`, ...prev]);
+        pushToast(`Access revoked for ${m.name}`);
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-2xl font-semibold tracking-tight text-white mb-1">Role & Access Manager // Meta Business Suite Delegation</h2>
+                    <p className="text-xs text-neutral-400">Delegate operational control to instructors, operators, and content managers without exposing billing or AI model constants.</p>
+                </div>
+                <button onClick={() => { setInviteOpen(true); setGeneratedLink(null); }} className="text-xs font-medium px-3 py-2 rounded-md bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25 transition-all whitespace-nowrap">
+                    [ + Invite Team Member via Email ]
+                </button>
+            </div>
+
+            <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl overflow-hidden">
+                <table className="w-full border-collapse text-left text-xs">
+                    <thead>
+                        <tr className="border-b border-neutral-800">
+                            <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Name</th>
+                            <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Email</th>
+                            <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Role</th>
+                            <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Accessible Segments</th>
+                            <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {members.map(m => (
+                            <tr key={m.id} onClick={() => setSelectedId(m.id)} className={`border-b border-neutral-800 last:border-b-0 cursor-pointer transition-all ${selectedId === m.id ? 'bg-neutral-900' : 'hover:bg-neutral-900/50'}`}>
+                                <td className="px-5 py-3.5 text-white font-medium">{m.name}</td>
+                                <td className="px-5 py-3.5 text-neutral-400 font-mono text-[11px]">{m.email}</td>
+                                <td className="px-5 py-3.5">
+                                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded border ${roleMeta[m.role].badge}`}>{roleMeta[m.role].label}</span>
+                                </td>
+                                <td className="px-5 py-3.5 text-neutral-300 max-w-xs">
+                                    {accessibleSegments(m).length ? accessibleSegments(m).join(', ') : <span className="text-neutral-600">No segments granted</span>}
+                                </td>
+                                <td className="px-5 py-3.5">
+                                    <div className="flex items-center gap-3">
+                                        <button onClick={(e) => { e.stopPropagation(); setSelectedId(m.id); }} className="text-[10px] font-medium text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/10 rounded px-2 py-1 transition-all">[ Edit Permissions ]</button>
+                                        <button onClick={(e) => { e.stopPropagation(); revoke(m); }} className="text-[10px] font-medium text-red-400 border border-red-500/30 hover:bg-red-500/10 rounded px-2 py-1 transition-all">[ Revoke Access ]</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {selected && (
+                <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-1">Granular Permission Matrix</p>
+                            <p className="text-sm font-semibold text-white">{selected.name} <span className="text-neutral-500 font-mono text-xs">// {selected.email}</span></p>
+                        </div>
+                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded border ${roleMeta[selected.role].badge}`}>{roleMeta[selected.role].label}</span>
+                    </div>
+                    <table className="w-full border-collapse text-left text-xs">
+                        <thead>
+                            <tr className="border-b border-neutral-800">
+                                <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Segment Name</th>
+                                <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500 text-center">Read Access</th>
+                                <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500 text-center">Write / Edit Access</th>
+                                <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-neutral-500 text-center">Require Owner Approval ⭐</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {accessSegments.map(s => {
+                                const p = selected.permissions[s.key];
+                                return (
+                                    <tr key={s.key} className="border-b border-neutral-800 last:border-b-0">
+                                        <td className="px-4 py-3 text-neutral-200">{s.label}</td>
+                                        <td className="px-4 py-3 text-center">
+                                            <input type="checkbox" checked={p.read} onChange={(e) => updatePermission(selected.id, s.key, 'read', e.target.checked)} className="accent-emerald-500 w-4 h-4" />
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <input type="checkbox" checked={p.write} onChange={(e) => updatePermission(selected.id, s.key, 'write', e.target.checked)} className="accent-emerald-500 w-4 h-4" />
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <button
+                                                onClick={() => updatePermission(selected.id, s.key, 'ownerApproval', !p.ownerApproval)}
+                                                className={`text-base leading-none transition-transform ${p.ownerApproval ? 'opacity-100 scale-110' : 'opacity-30 hover:opacity-60'}`}
+                                                title="Require Owner Approval"
+                                            >
+                                                ⭐
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {inviteOpen && (
+                <div className="fixed inset-0 z-[150] bg-black/70 flex items-center justify-center p-4" onClick={() => setInviteOpen(false)}>
+                    <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-5">
+                            <h3 className="text-sm font-semibold text-white">Invite Team Member // Gmail Dispatch</h3>
+                            <button onClick={() => setInviteOpen(false)} className="text-neutral-500 hover:text-white text-xs">✕ Close</button>
+                        </div>
+                        <div className="space-y-4">
+                            <div>
+                                <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-2">Invite Email</p>
+                                <input value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="member@farmgateielts.com" className="bg-[#050505] border border-neutral-800 rounded-lg px-3 py-2 text-xs text-neutral-200 w-full outline-none focus:border-emerald-500/40" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-2">Assign Role</p>
+                                <select value={inviteRole} onChange={e => setInviteRole(e.target.value as RbacTier)} className="bg-[#050505] border border-neutral-800 rounded-lg px-3 py-2 text-xs text-neutral-200 w-full outline-none">
+                                    <option value="super_admin">Super Admin</option>
+                                    <option value="instructor">Instructor</option>
+                                    <option value="operator">Operator</option>
+                                    <option value="content_manager">Content Manager</option>
+                                </select>
+                                <p className="text-[10px] text-neutral-500 mt-2">{roleMeta[inviteRole].desc}</p>
+                            </div>
+                            {!generatedLink ? (
+                                <button onClick={generateLink} className="w-full text-xs font-medium py-2.5 rounded-md bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25 transition-all">[ Generate 24h Invite Token ]</button>
+                            ) : (
+                                <div className="space-y-3">
+                                    <div className="bg-[#050505] border border-neutral-800 rounded-lg p-3">
+                                        <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Secure Invite Link (24h)</p>
+                                        <p className="text-[11px] font-mono text-emerald-300 break-all">{generatedLink}</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => { navigator.clipboard?.writeText(generatedLink); pushToast('Invite link copied'); }} className="flex-1 text-xs font-medium py-2 rounded-md border border-neutral-700 text-neutral-300 hover:text-white">[ Copy Link ]</button>
+                                        <button onClick={handleInvite} className="flex-1 text-xs font-medium py-2 rounded-md bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25">[ Send via Gmail ]</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 // ── Component ──
 
 const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
@@ -558,12 +1216,14 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
     const [expandedSection, setExpandedSection] = useState<string | null>('telemetry');
     const [engagementTab, setEngagementTab] = useState('Videos');
     const [hoveredProfileId, setHoveredProfileId] = useState<string | null>(null);
-    const [activeRole, setActiveRole] = useState<'director' | 'teacher'>('director');
+    const [simulatedSessionRole, setSimulatedSessionRole] = useState<'super_admin' | 'instructor' | 'operator'>('super_admin');
+    const [viewAsOpen, setViewAsOpen] = useState(false);
     const [pendingEvaluations, setPendingEvaluations] = useState<EvaluationItem[]>(seedEvaluations);
     const [auditLogs, setAuditLogs] = useState<string[]>(infrastructureTasks);
     const [toasts, setToasts] = useState<Toast[]>([]);
     const [dispatchModal, setDispatchModal] = useState<{ open: boolean; student: { name: string; id: string; deficiency: string } | null }>({ open: false, student: null });
     const [reportModal, setReportModal] = useState<{ open: boolean; studentId: string | null }>({ open: false, studentId: null });
+    const [ownerApprovalQueue, setOwnerApprovalQueue] = useState<OwnerApprovalItem[]>([]);
 
     const sortedStudents = useMemo(() => {
         return [...students].sort((a, b) => getTabMetric(b, engagementTab) - getTabMetric(a, engagementTab));
@@ -595,35 +1255,57 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
         setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3200);
     };
 
-    const handleRoleChange = (r: 'director' | 'teacher') => {
-        setActiveRole(r);
-        if (r === 'teacher' && (currentSubView === 'license_seats' || currentSubView === 'node_settings')) {
+    const switchSessionRole = (r: 'super_admin' | 'instructor' | 'operator') => {
+        setSimulatedSessionRole(r);
+        setViewAsOpen(false);
+        const roleLabel = r === 'super_admin' ? 'Owner / Super Admin' : r === 'instructor' ? 'Instructor' : 'Front-Desk Operator';
+        setAuditLogs(prev => [`Session Context switched to [Simulated Role: ${roleLabel}] by Super Admin Ayon`, ...prev]);
+        if (!allowedNavKeysFor(r).has(currentSection)) {
+            setCurrentSection('overview');
             setCurrentSubView('overview_main');
+            setExpandedSection(null);
         }
     };
 
     const visibleNavGroups = useMemo(() => {
         const withEval = navGroups.map(g => g.key === 'telemetry'
-            ? { ...g, subItems: [...(g.subItems ?? []), { label: 'Evaluation Queue', key: 'evaluation_queue' }] }
+            ? { ...g, subItems: [...(g.subItems ?? []), { label: 'Evaluation Queue', key: 'evaluation_queue' }, { label: 'Teacher Review Studio', key: 'teacher_review_studio' }] }
             : g);
-        if (activeRole === 'director') return withEval;
-        return withEval.filter(g => g.key !== 'identity' && g.key !== 'settings');
-    }, [activeRole]);
+        const allowed = allowedNavKeysFor(simulatedSessionRole);
+        return withEval.filter(g => allowed.has(g.key));
+    }, [simulatedSessionRole]);
+
+    const currentSectionLocked = !allowedNavKeysFor(simulatedSessionRole).has(currentSection);
 
     return (
-        <div className="w-full min-h-screen bg-black text-neutral-100 font-sans flex">
+        <div className="flex h-screen overflow-hidden bg-black text-neutral-100 font-sans">
             {/* ── Left Sidebar ── */}
-            <aside className="w-[260px] shrink-0 border-r border-neutral-800 bg-[#050505] p-4 flex flex-col justify-between">
+            <aside className="w-[260px] shrink-0 border-r border-neutral-800 bg-[#050505] p-4 flex flex-col justify-between sticky top-0 h-screen overflow-y-auto">
                 <div>
                     <div className="mb-6 px-3">
-                        <h1 className="text-sm font-semibold tracking-tight text-white">FARMGATE BRANCH COMMAND CENTER // IELTS AI Node</h1>
-                        <div className="mt-2 flex gap-1">
-                            <button onClick={() => handleRoleChange('director')} className={`text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded border transition-all ${activeRole === 'director' ? 'bg-neutral-800 text-white border-neutral-700' : 'text-neutral-500 border-neutral-800 hover:text-white'}`}>Director</button>
-                            <button onClick={() => handleRoleChange('teacher')} className={`text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded border transition-all ${activeRole === 'teacher' ? 'bg-neutral-800 text-white border-neutral-700' : 'text-neutral-500 border-neutral-800 hover:text-white'}`}>Teacher</button>
+                        <h1 className="text-sm font-semibold tracking-tight text-white">Farmgate Branch Command Center // IELTS AI Node</h1>
+                        <p className="text-[10px] text-neutral-400 mt-2 leading-relaxed">Logged in as: Ayon (Owner / Super Admin) — owner@farmgateielts.com</p>
+                        <div className="mt-2 flex items-center">
+                            <span className={`text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded border ${simulatedSessionRole === 'super_admin' ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30' : simulatedSessionRole === 'instructor' ? 'text-sky-300 bg-sky-500/10 border-sky-500/30' : 'text-amber-300 bg-amber-500/10 border-amber-500/30'}`}>
+                                {simulatedSessionRole === 'super_admin' ? 'TENANT ADMIN (FULL ACCESS)' : simulatedSessionRole === 'instructor' ? 'INSTRUCTOR (RESTRICTED)' : 'OPERATOR (RESTRICTED)'}
+                            </span>
                         </div>
-                        <span className="inline-block mt-2 text-[10px] font-medium uppercase tracking-wider text-neutral-400 bg-neutral-800 px-2 py-0.5 rounded border border-neutral-700">
-                            {activeRole === 'director' ? 'TENANT ADMIN' : 'SENIOR TEACHER · EXAMINER'}
-                        </span>
+                        <div className="mt-3 relative">
+                            <button
+                                onClick={() => setViewAsOpen(o => !o)}
+                                className="w-full flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-wider px-2 py-1.5 rounded border border-neutral-800 hover:border-neutral-700 hover:text-white text-neutral-400 transition-all"
+                            >
+                                <span>👁️ View As...</span>
+                                <ChevronDownIcon className="w-3 h-3" />
+                            </button>
+                            {viewAsOpen && (
+                                <div className="absolute left-0 right-0 mt-1 z-50 bg-[#0a0a0a] border border-neutral-800 rounded-lg p-1 shadow-2xl">
+                                    <button onClick={() => switchSessionRole('super_admin')} className="w-full text-left text-[11px] px-2 py-1.5 rounded text-neutral-300 hover:bg-neutral-800">Current Session (Owner / Super Admin)</button>
+                                    <button onClick={() => switchSessionRole('instructor')} className="w-full text-left text-[11px] px-2 py-1.5 rounded text-neutral-300 hover:bg-neutral-800">Simulate Invited Teacher View (rahim.instructor@gmail.com)</button>
+                                    <button onClick={() => switchSessionRole('operator')} className="w-full text-left text-[11px] px-2 py-1.5 rounded text-neutral-300 hover:bg-neutral-800">Simulate Front-Desk Operator View (karim.operator@gmail.com)</button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <nav className="space-y-0.5">
                         {visibleNavGroups.map(group => {
@@ -677,7 +1359,16 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
             </aside>
 
             {/* ── Right Viewport ── */}
-            <main className="flex-1 p-8 bg-neutral-950 overflow-y-auto">
+            <main className="flex-1 p-8 bg-neutral-950 overflow-y-auto h-screen min-h-0">
+                {currentSectionLocked ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center py-20">
+                        <div className="text-5xl mb-4 opacity-60">🔒</div>
+                        <h3 className="text-xl font-semibold text-white">Access Restricted — Requires Owner Approval</h3>
+                        <p className="text-sm text-neutral-400 mt-2 max-w-md">The segment "{navGroups.find(g => g.key === currentSection)?.label ?? currentSection}" is locked under your current simulated role. Request owner approval to gain access.</p>
+                        <button onClick={() => pushToast('Access request sent to Owner (Ayon)')} className="mt-6 text-xs font-medium py-2.5 px-4 rounded-md border border-amber-500/40 text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 transition-all">[ Request Access from Owner ]</button>
+                    </div>
+                ) : (
+                    <>
                 {currentSubView === 'daily_engagements' && (
                     <>
                         <h2 className="text-2xl font-semibold tracking-tight text-white mb-6">
@@ -748,9 +1439,9 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                                                             <p className="text-neutral-400">
                                                                 Quizzes: {s.quizzes.done}/{s.quizzes.total} | Acc: {s.quizzes.acc}% | {s.quizzes.status}
                                                             </p>
-                                                        </div>
-                                                    </div>
-                                                )}
+                            </div>
+                        </div>
+                        )}
                                             </td>
                                             <td className="px-5 py-3.5 text-neutral-500 font-mono">{s.batch}</td>
                                             <td className="px-5 py-3.5 text-white font-mono">{getTabLabel(s, engagementTab)}</td>
@@ -852,6 +1543,22 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                                 ))}
                             </div>
                         </div>
+                        {ownerApprovalQueue.length > 0 && (
+                            <div className="bg-[#0a0a0a] border border-amber-500/30 rounded-xl p-5 mt-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <p className="text-[10px] font-medium uppercase tracking-wider text-amber-400">Owner Approval Queue // Sign-off Gate</p>
+                                    <span className="text-[10px] font-mono font-semibold text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded">{ownerApprovalQueue.length} Pending</span>
+                                </div>
+                                <div className="space-y-2">
+                                    {ownerApprovalQueue.map(item => (
+                                        <div key={item.id} className="flex items-start gap-3 py-2 border-b border-neutral-800 last:border-b-0">
+                                            <span className="text-amber-400 mt-0.5">⭐</span>
+                                            <p className="text-xs text-neutral-300">{item.label} <span className="text-neutral-500 font-mono text-[10px]">// {item.ts}</span></p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </>
                 )}
 
@@ -1122,16 +1829,36 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                     </>
                 )}
 
+                {currentSubView === 'teacher_review_studio' && (
+                    <TeacherReviewStudio
+                        simulatedSessionRole={simulatedSessionRole}
+                        pushToast={pushToast}
+                        setAuditLogs={setAuditLogs}
+                        setOwnerApprovalQueue={setOwnerApprovalQueue}
+                    />
+                )}
+
+                {currentSubView === 'role_access_manager' && (
+                    <RoleAccessManager
+                        pushToast={pushToast}
+                        setAuditLogs={setAuditLogs}
+                        setOwnerApprovalQueue={setOwnerApprovalQueue}
+                    />
+                )}
+
                 {currentSubView !== 'daily_engagements' && currentSubView !== 'license_seats'
                     && currentSubView !== 'overview_main' && currentSubView !== 'performance_analytics'
                     && currentSubView !== 'course_deployment' && currentSubView !== 'vector_repos'
                     && currentSubView !== 'sso_gateways' && currentSubView !== 'node_settings'
-                    && currentSubView !== 'evaluation_queue' && (
+                    && currentSubView !== 'evaluation_queue' && currentSubView !== 'role_access_manager' && (
                     <div className="flex items-center justify-center h-full">
                         <p className="text-sm text-neutral-600">
                             {currentSubView.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                         </p>
                     </div>
+                )}
+
+                    </>
                 )}
 
                 <HomeworkDispatchModal

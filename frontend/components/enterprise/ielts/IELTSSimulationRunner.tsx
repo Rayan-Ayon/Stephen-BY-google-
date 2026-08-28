@@ -30,9 +30,10 @@ interface IELTSSimulationRunnerProps {
     candidateEmail?: string;
     onFinish: () => void;
     onActiveChange?: (active: boolean) => void;
+    exitPulse?: boolean;
 }
 
-const IELTSSimulationRunner: React.FC<IELTSSimulationRunnerProps> = ({ bundleId, candidateEmail, onFinish, onActiveChange }) => {
+const IELTSSimulationRunner: React.FC<IELTSSimulationRunnerProps> = ({ bundleId, candidateEmail, onFinish, onActiveChange, exitPulse }) => {
     const bundle = BUNDLES.find((b) => b.id === bundleId) ?? BUNDLES[0];
     const [state, setState] = useState<RunnerState>('lobby');
     const [sectionIndex, setSectionIndex] = useState(0);
@@ -129,7 +130,7 @@ const IELTSSimulationRunner: React.FC<IELTSSimulationRunnerProps> = ({ bundleId,
         switch (current.skill) {
             case 'listening': return <IELTSListeningExam candidateEmail={candidateEmail} simulation={simulation} />;
             case 'reading': return <IELTSReadingExam candidateEmail={candidateEmail} simulation={simulation} />;
-            case 'writing': return <IELTSWritingExam candidateEmail={candidateEmail} simulation={simulation} />;
+            case 'writing': return <IELTSWritingExam candidateEmail={candidateEmail} simulation={simulation} exitPulse={exitPulse} />;
             case 'speaking': return <IELTSSpeakingExam candidateEmail={candidateEmail} simulation={simulation} />;
         }
     };
@@ -142,7 +143,7 @@ const IELTSSimulationRunner: React.FC<IELTSSimulationRunnerProps> = ({ bundleId,
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => setShowExitModal(true)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-[11px] text-neutral-400 hover:text-red-400 hover:border-red-500/30 transition-colors"
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-[11px] text-neutral-400 hover:text-red-400 hover:border-red-500/30 transition-all${exitPulse ? ' scale-105 ring-2 ring-rose-500/80 shadow-[0_0_15px_rgba(225,29,72,0.5)] animate-pulse' : ''}`}
                             >
                                 <span>⬅️</span> Exit Exam
                             </button>

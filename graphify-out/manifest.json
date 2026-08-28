@@ -5,8 +5,8 @@
     "semantic_hash": ""
   },
   ".opencode/package.json": {
-    "mtime": 1781011430.1273448,
-    "ast_hash": "3c6601f24266a98b9b1c4cd91ea66544",
+    "mtime": 1787670531.1474442,
+    "ast_hash": "6493da273e0f9e582f414042b5f3e4a4",
     "semantic_hash": ""
   },
   ".opencode/plugins/graphify.js": {
@@ -2235,8 +2235,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Dashboard.tsx": {
-    "mtime": 1787649317.5370574,
-    "ast_hash": "35217668e6e8eb0f670250ed63dede6d",
+    "mtime": 1787677184.5163808,
+    "ast_hash": "b688941ff2f8dc027bfb84f56eb15cb0",
     "semantic_hash": ""
   },
   "frontend/components/DebateView.tsx": {
@@ -2315,8 +2315,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Sidebar.tsx": {
-    "mtime": 1787649399.7575727,
-    "ast_hash": "730ab45e579134025a7d833cdfa7088c",
+    "mtime": 1787670370.6387537,
+    "ast_hash": "2d3db62f6991e58b6dcd888798eb4079",
     "semantic_hash": ""
   },
   "frontend/components/SpaceView.tsx": {
@@ -2700,8 +2700,8 @@
     "semantic_hash": ""
   },
   "frontend/components/OrgSpaceView.tsx": {
-    "mtime": 1787653632.3200235,
-    "ast_hash": "fffbd200a508e1382896cc8663335039",
+    "mtime": 1787819843.8288589,
+    "ast_hash": "6ed8f54081810aefdedbe7cede91b148",
     "semantic_hash": ""
   },
   "frontend/components/ProfileView.tsx": {
@@ -2785,13 +2785,13 @@
     "semantic_hash": ""
   },
   "frontend/components/learning-methods/MethodologyGrid.tsx": {
-    "mtime": 1782499563.47518,
-    "ast_hash": "55f384a9a97fa37ec10db14f1373d7f1",
+    "mtime": 1787677193.560429,
+    "ast_hash": "6f7dcbfa2396ac1d4f48b15d55427e18",
     "semantic_hash": ""
   },
   "frontend/components/learning-methods/types.ts": {
-    "mtime": 1782499541.7341602,
-    "ast_hash": "3f81e5955d432306052d322792ae754a",
+    "mtime": 1787677191.7546062,
+    "ast_hash": "bb84461d067eb0c877be235d7ee74d94",
     "semantic_hash": ""
   },
   "frontend/components/projects/seeds.ts": {
@@ -2815,8 +2815,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/IELTSEvaluationHub.tsx": {
-    "mtime": 1787415814.3586192,
-    "ast_hash": "05501cc7191da9582567d36aa64af877",
+    "mtime": 1787670428.5432892,
+    "ast_hash": "c59051fae3ae3bebebb25561dde93bb1",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSDashboard.tsx": {
@@ -2825,23 +2825,23 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSListeningExam.tsx": {
-    "mtime": 1787422703.914179,
-    "ast_hash": "da0e9b1db5106e2e55e78c36b374bfa8",
+    "mtime": 1787654791.4093032,
+    "ast_hash": "40851b0702328e36129eda06557aada4",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSReadingExam.tsx": {
-    "mtime": 1787422704.5841322,
-    "ast_hash": "92995df125658912a9c435e92b62dd7b",
+    "mtime": 1787654789.86415,
+    "ast_hash": "8d4962a871e88cce44c02ff5cec3ee99",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSSpeakingExam.tsx": {
-    "mtime": 1787422704.9581738,
-    "ast_hash": "a9efe9f008485245eea068b4312702a1",
+    "mtime": 1787822382.2516816,
+    "ast_hash": "e60e7da1a378b6f9e67d25bfa4b75b99",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSWritingExam.tsx": {
-    "mtime": 1787422703.345001,
-    "ast_hash": "933bea0f04dc6da4991ec49ad6d63e0e",
+    "mtime": 1787819803.8591647,
+    "ast_hash": "cce3b1209d2c41ae97d5d3265be7238f",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/ieltsShared.ts": {
@@ -2855,8 +2855,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSSimulationRunner.tsx": {
-    "mtime": 1787415790.0874808,
-    "ast_hash": "84a54ad6155d3f334d2de6ecf543c62e",
+    "mtime": 1787654812.4200516,
+    "ast_hash": "a5c50cdb83455845e484285fb8e18b01",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSExitModal.tsx": {
@@ -2905,8 +2905,23 @@
     "semantic_hash": ""
   },
   "frontend/components/dormantNav.ts": {
-    "mtime": 1787649224.6945634,
-    "ast_hash": "4b1de41d81d5dc38d046836fa6da49a9",
+    "mtime": 1787816432.922238,
+    "ast_hash": "a3682de810e5df483767c13207729bd7",
+    "semantic_hash": ""
+  },
+  "frontend/components/LearningMethods1View.tsx": {
+    "mtime": 1787677208.8165586,
+    "ast_hash": "9e04d7bd8cd89c4cc0a651d0f5716fff",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/ielts/PaperEssayScanner.tsx": {
+    "mtime": 1787819731.4675362,
+    "ast_hash": "5e3a389f636f91a298ce6a2139e790e0",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/ielts/LexiSpeakStudio.tsx": {
+    "mtime": 1787823743.9663892,
+    "ast_hash": "4db02c535714aa07cf9e8942ec30d78f",
     "semantic_hash": ""
   }
 }

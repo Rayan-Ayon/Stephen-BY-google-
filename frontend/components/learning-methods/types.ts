@@ -9,6 +9,7 @@ export interface LearningMethod {
     applicationSpace: string;
     isDefaultSelected: boolean;
     category: MethodCategory;
+    tagline?: string;
 }
 
 export interface LearningEngineState {

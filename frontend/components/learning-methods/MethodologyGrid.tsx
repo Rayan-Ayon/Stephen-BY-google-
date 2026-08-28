@@ -53,12 +53,13 @@ const categoryMeta: Record<MethodCategory, { label: string; color: string; bg: s
 interface MethodologyGridProps {
     selectedIds: string[];
     onToggle: (id: string) => void;
+    methods?: LearningMethod[];
 }
 
-const MethodologyGrid: React.FC<MethodologyGridProps> = ({ selectedIds, onToggle }) => {
+const MethodologyGrid: React.FC<MethodologyGridProps> = ({ selectedIds, onToggle, methods = seedMethods }) => {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {seedMethods.map((method, idx) => {
+            {methods.map((method, idx) => {
                 const isSelected = selectedIds.includes(method.id);
                 const cat = categoryMeta[method.category];
                 return (
@@ -90,6 +91,9 @@ const MethodologyGrid: React.FC<MethodologyGridProps> = ({ selectedIds, onToggle
                             <div className="flex items-start justify-between gap-3">
                                 <div className="flex-1 min-w-0">
                                     <h3 className="font-bold dark:text-white text-black text-sm">{method.name}</h3>
+                                    {method.tagline && (
+                                        <p className="font-medium dark:text-emerald-300/90 text-emerald-700/90 text-[11px] leading-snug mt-0.5">{method.tagline}</p>
+                                    )}
                                     <span className={`inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${cat.bg} ${cat.color}`}>
                                         {cat.label}
                                     </span>

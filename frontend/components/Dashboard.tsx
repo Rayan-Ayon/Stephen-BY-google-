@@ -21,7 +21,7 @@ import QuickGuideModal from './QuickGuideModal';
 import ContactUsSlide from './ContactUsSlide';
 import HawkingFab from './HawkingFab';
 import ResearchLabView from './ResearchLabView';
-import LearningMethodsView from './LearningMethodsView';
+import LearningMethods1View from './LearningMethods1View';
 import SpaceView from './SpaceView';
 import IndividualSandboxView from './IndividualSandboxView';
 import EnterpriseSandboxView from './EnterpriseSandboxView';
@@ -107,6 +107,14 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
     const [isQuickGuideOpen, setIsQuickGuideOpen] = useState(false);
     const [isContactUsOpen, setIsContactUsOpen] = useState(false);
+
+    // Exam navigation lock state
+    const [isExamActive, setIsExamActive] = useState(false);
+    const [exitPulse, setExitPulse] = useState(false);
+    const handleLockedNav = () => {
+        setExitPulse(true);
+        setTimeout(() => setExitPulse(false), 1500);
+    };
 
     // State for AddCourses flow context persistence
     const [addCoursesContext, setAddCoursesContext] = useState({ flow: 'landing', topic: '' });
@@ -357,7 +365,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
 
         switch (currentView) {
             case 'sandbox': return <IndividualSandboxView email={userEmail} />;
-            case 'ielts_evaluation': return <IELTSEvaluationHub userEmail={userEmail} />;
+            case 'ielts_evaluation': return <IELTSEvaluationHub userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} />;
             case 'spaced_repetition': return <SpacedRepetitionEngine />;
             case 'student_portal': return <StudentPortal />;
             case 'add_content':
@@ -434,7 +442,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             case 'research_lab': return <ResearchLabView />;
             case 'profile': return <ProfileView />;
             case 'create_space': return <div className="flex items-center justify-center h-full text-gray-500">Create Space Coming Soon</div>; // Fallback if navigated via other means, though sidebar handles logic
-            case 'learning_methods': return <LearningMethodsView />;
+            case 'learning_methods_1': return <LearningMethods1View />;
             case 'chrome_extension': return <div className="flex items-center justify-center h-full text-gray-500">Chrome Extension Coming Soon</div>;
             default:
                 return <AddContentView onCourseCreated={handleCourseCreated} recentVideos={isEnterprise ? [] : recentVideos} onSelectRecent={handleSelectCourse} />;
@@ -460,6 +468,8 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                 userEmail={userEmail}
                 onLogout={onLogout}
                 isEnterprise={isEnterprise}
+                isExamActive={isExamActive}
+                onLockedNavigationAttempt={handleLockedNav}
             />
             
             <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">

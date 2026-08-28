@@ -236,9 +236,10 @@ interface IELTSListeningExamProps {
     candidateEmail?: string;
     simulation?: SimulationProps;
     onActiveChange?: (active: boolean) => void;
+    exitPulse?: boolean;
 }
 
-const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail, simulation, onActiveChange }) => {
+const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail, simulation, onActiveChange, exitPulse }) => {
     const [playing, setPlaying] = useState(false);
     const [progress, setProgress] = useState(0);
     const [activePart, setActivePart] = useState<1 | 2 | 3 | 4>(1);
@@ -560,12 +561,12 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail,
                         >
                             {playing ? '❚❚' : '▶'}
                         </button>
-                        <button
-                            onClick={() => setShowExitModal(true)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-[#CCCCCC] text-[11px] text-neutral-600 hover:text-red-600 hover:border-red-400 transition-colors"
-                        >
-                            <span>⬅️</span> Exit Exam
-                        </button>
+                            <button
+                                onClick={() => setShowExitModal(true)}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-[#CCCCCC] text-[11px] text-neutral-600 hover:text-red-600 hover:border-red-400 transition-all${exitPulse ? ' scale-105 ring-2 ring-rose-500/80 shadow-[0_0_15px_rgba(225,29,72,0.5)] animate-pulse' : ''}`}
+                            >
+                                <span>⬅️</span> Exit Exam
+                            </button>
                         <div className={`rounded-md border bg-white px-3 py-1.5 text-center ${elapsed >= timeLimit - 300 ? 'border-red-400 animate-pulse' : 'border-[#CCCCCC]'}`}>
                             <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">Time Remaining</p>
                             <p className={`font-mono text-sm ${elapsed >= timeLimit - 300 ? 'text-red-600' : 'text-neutral-800'}`}>{formatClock(Math.max(0, timeLimit - elapsed))}</p>
