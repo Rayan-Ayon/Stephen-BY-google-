@@ -83,6 +83,7 @@ const IELTS_SpeakingExam: React.FC<IELTSSpeakingExamProps> = ({ candidateEmail, 
     const [subBands, setSubBands] = useState<SubBands | null>(null);
     const [overall, setOverall] = useState<number | null>(null);
     const [elapsed, setElapsed] = useState(0);
+    const [lexiElapsed, setLexiElapsed] = useState(0);
     const [showExitModal, setShowExitModal] = useState(false);
     const [paused, setPaused] = useState(false);
     const [scratch, setScratch] = useState('');
@@ -179,7 +180,7 @@ const IELTS_SpeakingExam: React.FC<IELTSSpeakingExamProps> = ({ candidateEmail, 
     }, [elapsed, testState, simulation, timeLimit]);
 
     useEffect(() => {
-        onActiveChange?.(testState === 'active' || testState === 'evaluating');
+        onActiveChange?.(!lexiMode && (testState === 'active' || testState === 'evaluating'));
     }, [testState, onActiveChange]);
 
     const startExam = () => {
@@ -326,7 +327,7 @@ const IELTS_SpeakingExam: React.FC<IELTSSpeakingExamProps> = ({ candidateEmail, 
                     <button onClick={() => setIsOptionsOpen(true)} aria-label="Open options" className="cursor-pointer">
                         <Menu size={20} strokeWidth={2.5} />
                     </button>
-                    <span className="text-[11px] font-mono bg-slate-100 text-slate-800 px-3 py-1.5 rounded-md">{formatClock(elapsed)} / {formatClock(timeLimit)}</span>
+                    <span className="text-[11px] font-mono bg-slate-100 text-slate-800 px-3 py-1.5 rounded-md">{formatClock(lexiMode ? lexiElapsed : elapsed)} / {formatClock(timeLimit)}</span>
                     <button
                         onClick={() => setPaused((p) => !p)}
                         className="px-3 py-1.5 rounded-md bg-[#E5E7EB] text-[11px] text-neutral-700 hover:bg-[#D1D5DB] transition-colors"
@@ -514,7 +515,7 @@ const IELTS_SpeakingExam: React.FC<IELTSSpeakingExamProps> = ({ candidateEmail, 
             </div>
             )}
 
-            {lexiMode && <LexiSpeakStudio />}
+            {lexiMode && <LexiSpeakStudio onTimer={setLexiElapsed} onActiveChange={onActiveChange} />}
             {!lexiMode && (
             <footer className="shrink-0 h-12 bg-white border-t border-[#E5E7EB] flex items-center justify-between px-2 w-full z-10">
                 <div className="flex items-center gap-4 h-full px-4">

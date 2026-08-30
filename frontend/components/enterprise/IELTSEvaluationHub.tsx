@@ -3,13 +3,16 @@ import { useWorkspace, type Workspace } from '../../workspaceContext';
 import IELTSDashboard from './ielts/IELTSDashboard';
 import IELTSSimulationRunner from './ielts/IELTSSimulationRunner';
 import IELTSWritingExam from './ielts/IELTSWritingExam';
+import WritingDashboard from './ielts/WritingDashboard';
 import IELTSSpeakingExam from './ielts/IELTSSpeakingExam';
 import IELTSListeningExam from './ielts/IELTSListeningExam';
 import IELTSReadingExam from './ielts/IELTSReadingExam';
 import ModuleHistorySection from './history/ModuleHistorySection';
+import IELTSExitModal from './ielts/IELTSExitModal';
 import type { IeltsBundleId } from './ielts/ieltsShared';
 
 type IeltsView = 'dashboard' | 'writing' | 'speaking' | 'listening' | 'reading' | IeltsBundleId;
+type WritingSubView = 'browse' | 'exam';
 
 const RAIL_KEY = 'stephen_enterprise_farmgate_ielts_rail';
 
@@ -64,19 +67,33 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onEx
     };
     const [isSubShaking, setIsSubShaking] = useState(false);
     const [shakingSubKey, setShakingSubKey] = useState<string | null>(null);
+    const [exitConfirmKey, setExitConfirmKey] = useState<IeltsView | null>(null);
+    const [writingSubView, setWritingSubView] = useState<WritingSubView>('browse');
+    const [writingExamMode, setWritingExamMode] = useState<string>('mock');
+    const [writingTimeMinutes, setWritingTimeMinutes] = useState<number>(60);
     const guardedSubNavigate = (key: string) => {
         if (examRunning) {
             setShakingSubKey(key);
             setIsSubShaking(true);
             setTimeout(() => setIsSubShaking(false), 600);
+            setExitConfirmKey(key as IeltsView);
             onLockedNavigationAttempt?.();
             return;
         }
         setView(key as IeltsView);
     };
 
+    const handleWritingStart = (mode: string, timeMinutes: number) => {
+        setWritingExamMode(mode);
+        setWritingTimeMinutes(timeMinutes);
+        setWritingSubView('exam');
+    };
+
     useEffect(() => {
         setExamRunning(false);
+        if (view !== 'writing') {
+            setWritingSubView('browse');
+        }
     }, [view]);
 
     const toggleRail = () => {
@@ -149,7 +166,7 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onEx
     );
 
     return (
-        <div className="flex h-full p-8 gap-8 overflow-hidden">
+        <div className={`flex h-full w-full ${view === 'speaking' ? 'p-0 gap-0' : 'p-8 gap-8'} overflow-hidden`}>
             <style>{`@keyframes lock-shake {0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}`}</style>
             <aside className={`shrink-0 overflow-hidden transition-[width] duration-300 ${isCollapsed ? 'w-16' : 'w-60'}`}>
                 <div className={`mb-6 pb-4 border-b border-zinc-800 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} gap-2`}>
@@ -194,7 +211,7 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onEx
                 )}
             </aside>
 
-            <main className={`flex-1 min-w-0 ${examRunning ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+            <main className={`flex-1 min-w-0 ${view === 'speaking' ? 'bg-white' : ''} ${view === 'speaking' || examRunning ? 'overflow-hidden' : 'overflow-y-auto'}`}>
                 {isSimulation ? (
                     <>
                         <IELTSSimulationRunner
@@ -215,8 +232,36 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onEx
                     <IELTSDashboard />
                 ) : (
                     <>
-                        {view === 'writing' && <IELTSWritingExam key="writing" candidateEmail={userEmail} onActiveChange={handleExamActive} exitPulse={exitPulse} />}
-                        {view === 'writing' && !examRunning && <div className="mt-6"><ModuleHistorySection moduleType="writing" /></div>}
+                        {view === 'writing' && writingSubView === 'browse' && (
+                            <WritingDashboard onStartExam={handleWritingStart} />
+                        )}
+                        {view === 'writing' && writingSubView === 'exam' && (
+                            <>
+                                <div className="mb-4">
+                                    <button
+                                        onClick={() => setWritingSubView('browse')}
+                                        className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 transition-colors"
+                                    >
+                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />
+                                        </svg>
+                                        Back to Writing Prompts
+                                    </button>
+                                </div>
+                                <IELTSWritingExam
+                                    key="writing"
+                                    candidateEmail={userEmail}
+                                    simulation={{
+                                        sectionLabel: writingExamMode === 'mock' ? 'Writing — Full Mock' : `Writing — ${writingExamMode}`,
+                                        timeLimitSeconds: writingTimeMinutes * 60,
+                                        onComplete: () => { setWritingSubView('browse'); },
+                                    }}
+                                    onActiveChange={handleExamActive}
+                                    exitPulse={exitPulse}
+                                />
+                            </>
+                        )}
+                        {view === 'writing' && writingSubView === 'browse' && !examRunning && <div className="mt-6"><ModuleHistorySection moduleType="writing" /></div>}
                         {view === 'speaking' && <IELTSSpeakingExam key="speaking" candidateEmail={userEmail} onActiveChange={handleExamActive} exitPulse={exitPulse} />}
                         {view === 'speaking' && !examRunning && <div className="mt-6"><ModuleHistorySection moduleType="speaking" /></div>}
                         {view === 'listening' && <IELTSListeningExam key="listening" candidateEmail={userEmail} onActiveChange={handleExamActive} exitPulse={exitPulse} />}
@@ -226,6 +271,12 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onEx
                     </>
                 )}
             </main>
+
+            <IELTSExitModal
+                open={exitConfirmKey !== null}
+                onConfirm={() => { if (exitConfirmKey) setView(exitConfirmKey); setExitConfirmKey(null); }}
+                onCancel={() => setExitConfirmKey(null)}
+            />
         </div>
     );
 };

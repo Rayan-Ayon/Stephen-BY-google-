@@ -2235,7 +2235,7 @@
     "semantic_hash": ""
   },
   "frontend/components/Dashboard.tsx": {
-    "mtime": 1787677184.5163808,
+    "mtime": 1788116939.3560412,
     "ast_hash": "b688941ff2f8dc027bfb84f56eb15cb0",
     "semantic_hash": ""
   },
@@ -2315,7 +2315,7 @@
     "semantic_hash": ""
   },
   "frontend/components/Sidebar.tsx": {
-    "mtime": 1787670370.6387537,
+    "mtime": 1788116912.5040033,
     "ast_hash": "2d3db62f6991e58b6dcd888798eb4079",
     "semantic_hash": ""
   },
@@ -2815,8 +2815,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/IELTSEvaluationHub.tsx": {
-    "mtime": 1787670428.5432892,
-    "ast_hash": "c59051fae3ae3bebebb25561dde93bb1",
+    "mtime": 1788117034.8703036,
+    "ast_hash": "7da6134d93bcf9ff3fec02d7e7c798de",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSDashboard.tsx": {
@@ -2835,8 +2835,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSSpeakingExam.tsx": {
-    "mtime": 1787822382.2516816,
-    "ast_hash": "e60e7da1a378b6f9e67d25bfa4b75b99",
+    "mtime": 1787949671.5334313,
+    "ast_hash": "87d374c13f05af9892f261c50c8b79f6",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSWritingExam.tsx": {
@@ -2920,8 +2920,18 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/LexiSpeakStudio.tsx": {
-    "mtime": 1787823743.9663892,
-    "ast_hash": "4db02c535714aa07cf9e8942ec30d78f",
+    "mtime": 1788115497.8590477,
+    "ast_hash": "f2c6354868232f3e7156ad568d5e643d",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/ielts/WritingDashboard.tsx": {
+    "mtime": 1788116984.9694235,
+    "ast_hash": "dbd6d2d7b6bbc25532aaf0047541998f",
+    "semantic_hash": ""
+  },
+  "frontend/data/writingPrompts.ts": {
+    "mtime": 1788116205.9074504,
+    "ast_hash": "e763efbe6d78ed2cf6a8db877689d6e6",
     "semantic_hash": ""
   }
 }
