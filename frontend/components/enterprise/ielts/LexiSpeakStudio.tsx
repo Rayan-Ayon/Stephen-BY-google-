@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import GrammarEvaluationCard from './GrammarEvaluationCard';
 
 type ExamStage = 'preset_setup' | 'topic_picker' | 'cue_card_prep' | 'live_speaking' | 'evaluation_summary';
 type PresetType = 'part1' | 'part2' | 'part3' | 'full_mock';
@@ -216,7 +217,6 @@ const LexiSpeakStudio: React.FC<{ onTimer?: (s: number) => void; onActiveChange?
     const [showMultiWordProof, setShowMultiWordProof] = useState(false);
     const [showAdvExpProof, setShowAdvExpProof] = useState(false);
     const [showLexAccuracyProof, setShowLexAccuracyProof] = useState(false);
-    const [showGrammarDetails, setShowGrammarDetails] = useState(false);
 
     const thinkTimer = useRef<number | null>(null);
     const cueTimer = useRef<number | null>(null);
@@ -1193,26 +1193,7 @@ const LexiSpeakStudio: React.FC<{ onTimer?: (s: number) => void; onActiveChange?
                                                 )}
                                             </div>
 
-                                            <div className="border border-blue-500/80 bg-white rounded-2xl p-5 shadow-sm transition-all mb-4">
-                                                <div className="flex items-center">
-                                                    <span className="font-bold text-slate-900 text-sm">Grammatical Range and Accuracy</span>
-                                                    <span className="border border-[#3B82F6] text-[#3B82F6] font-bold text-xs px-2.5 py-1 rounded-lg ml-auto">7.0</span>
-                                                </div>
-                                                <p className="text-xs text-slate-500 leading-relaxed mt-2 mb-3">You use a useful mix of simple and complex sentence forms. Accuracy is generally controlled, with a few local errors that do not block meaning.</p>
-                                                <div className="flex flex-wrap gap-2 mb-3">
-                                                    <span className="bg-slate-50 border border-slate-200 text-xs text-slate-700 px-2.5 py-1 rounded-lg flex items-center gap-1.5">Grammatical Range <strong className="font-bold">7.0</strong></span>
-                                                    <span className="bg-slate-50 border border-slate-200 text-xs text-slate-700 px-2.5 py-1 rounded-lg flex items-center gap-1.5">Grammatical Accuracy <strong className="font-bold">6.0</strong></span>
-                                                </div>
-                                                <button onClick={() => setShowGrammarDetails(!showGrammarDetails)} className="w-full text-right text-[#3B82F6] text-xs font-medium hover:underline flex items-center justify-end gap-1 mt-3">
-                                                    <span>{showGrammarDetails ? '∧ Hide details' : '∨ Show details'}</span>
-                                                </button>
-                                                {showGrammarDetails && (
-                                                    <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
-                                                        <div className="flex items-center justify-between text-xs"><span className="text-slate-600">Grammatical Range</span><span className="font-bold text-slate-800">7.0</span></div>
-                                                        <div className="flex items-center justify-between text-xs"><span className="text-slate-600">Grammatical Accuracy</span><span className="font-bold text-slate-800">6.0</span></div>
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <GrammarEvaluationCard rangeScore={7.0} accuracyScore={6.0} overallScore={7.0} />
 
                                             <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-2xl p-4.5 mb-4">
                                                 <div className="flex items-center">

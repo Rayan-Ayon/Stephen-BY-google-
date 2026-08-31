@@ -7,6 +7,7 @@ import {
     GlobeIcon, DatabaseIcon,
     MicIcon, PlayIcon, PauseIcon, RefreshIcon, StarIcon,
 } from './icons';
+import AICoPilotTestAuthor from './enterprise/curriculum/AICoPilotTestAuthor';
 
 // ── Types ──
 
@@ -79,6 +80,7 @@ const navGroups: NavGroup[] = [
         subItems: [
             { label: 'Course Deployment', key: 'course_deployment' },
             { label: 'Institute Knowledge Base', key: 'vector_repos' },
+            { label: '⚡ AI Co-Pilot Test Author', key: 'ai-test-author' },
         ],
     },
     {
@@ -1846,10 +1848,14 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                     />
                 )}
 
+                {currentSubView === 'ai-test-author' && (
+                    <AICoPilotTestAuthor />
+                )}
+
                 {currentSubView !== 'daily_engagements' && currentSubView !== 'license_seats'
                     && currentSubView !== 'overview_main' && currentSubView !== 'performance_analytics'
                     && currentSubView !== 'course_deployment' && currentSubView !== 'vector_repos'
-                    && currentSubView !== 'sso_gateways' && currentSubView !== 'node_settings'
+                    && currentSubView !== 'ai-test-author' && currentSubView !== 'sso_gateways' && currentSubView !== 'node_settings'
                     && currentSubView !== 'evaluation_queue' && currentSubView !== 'role_access_manager' && (
                     <div className="flex items-center justify-center h-full">
                         <p className="text-sm text-neutral-600">
