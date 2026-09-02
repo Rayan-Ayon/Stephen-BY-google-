@@ -8,6 +8,7 @@ import {
     MicIcon, PlayIcon, PauseIcon, RefreshIcon, StarIcon,
 } from './icons';
 import AICoPilotTestAuthor from './enterprise/curriculum/AICoPilotTestAuthor';
+import InstituteKnowledgeBase from './enterprise/curriculum/InstituteKnowledgeBase';
 
 // ── Types ──
 
@@ -164,11 +165,6 @@ const skillDomains = [
 const courseModules = [
     { name: 'Cambridge 18 Academic Writing 1', sync: 92, seats: '1,420', route: '/ielts/writing/c18-w1', live: false },
     { name: 'Speaking Cue Card Master Drill #4', sync: 100, seats: '1,110', route: '/ielts/speaking/cue-4', live: true },
-];
-
-const vectorDocs = [
-    { file: 'Cambridge_18_Official_Answers.pdf', chunks: '1,420 Items', model: 'IELTS-Eval-v4', status: 'Encrypted & Mapped' },
-    { file: 'Writing_Task2_Band9_Templates.json', chunks: '890 Prompts', model: 'IELTS-Eval-v4', status: 'Active Context Room' },
 ];
 
 const identityProviders = [
@@ -1715,44 +1711,7 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                 )}
 
                 {currentSubView === 'vector_repos' && (
-                    <>
-                        <h2 className="text-2xl font-semibold tracking-tight text-white mb-6">
-                            Knowledge Base Infrastructure // Custom Curriculum & Question Stores
-                        </h2>
-                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl overflow-hidden">
-                            <table className="w-full border-collapse text-left text-xs">
-                                <thead>
-                                    <tr className="border-b border-neutral-800">
-                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">File / Question Bank</th>
-                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Total Items / Vectors</th>
-                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">AI Evaluator Model</th>
-                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Status</th>
-                                        <th className="px-5 py-3.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {vectorDocs.map(d => (
-                                        <tr key={d.file} className="border-b border-neutral-800 last:border-b-0">
-                                            <td className="px-5 py-4 text-white font-medium font-mono text-[11px]">{d.file}</td>
-                                            <td className="px-5 py-4 text-neutral-400 font-mono">{d.chunks}</td>
-                                            <td className="px-5 py-4 text-neutral-500 font-mono text-[10px]">{d.model}</td>
-                                            <td className="px-5 py-4">
-                                                <span className="text-[10px] font-medium text-emerald-400 bg-emerald-500/5 px-2 py-0.5 rounded border border-emerald-500/20">
-                                                    {d.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-5 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <button className="text-[10px] font-medium text-neutral-500 hover:text-white transition-colors">[Inspect]</button>
-                                                    <button className="text-[10px] font-medium text-neutral-500 hover:text-red-400 transition-colors">[Purge]</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </>
+                    <InstituteKnowledgeBase />
                 )}
 
                 {currentSubView === 'sso_gateways' && (

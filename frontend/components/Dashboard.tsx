@@ -14,6 +14,7 @@ import PricingView from './PricingView';
 import HistoryView from './HistoryView';
 import InviteEarnView from './InviteEarnView';
 import ProfileView from './ProfileView';
+import ProfileWorkspace from './ProfileWorkspace';
 import Workspace from './Workspace';
 import SettingsModal from './SettingsModal';
 import FeedbackModal from './FeedbackModal';
@@ -440,7 +441,8 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             case 'history': return <HistoryView historyItems={isEnterprise ? [] : historyItems} onSelectCourse={handleSelectCourse} />;
             case 'invite_earn': return <InviteEarnView onContactUs={() => setIsContactUsOpen(true)} />;
             case 'research_lab': return <ResearchLabView />;
-            case 'profile': return <ProfileView />;
+            case 'profile': return <ProfileWorkspace />;
+            case 'profile_workspace': return <ProfileWorkspace />;
             case 'create_space': return <div className="flex items-center justify-center h-full text-gray-500">Create Space Coming Soon</div>; // Fallback if navigated via other means, though sidebar handles logic
             case 'learning_methods_1': return <LearningMethods1View />;
             case 'chrome_extension': return <div className="flex items-center justify-center h-full text-gray-500">Chrome Extension Coming Soon</div>;

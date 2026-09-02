@@ -50,6 +50,7 @@ const navConfig = [
     {
         items: [
             { name: 'Sandbox', icon: <CubeIcon className="w-5 h-5" />, key: 'sandbox' },
+            { name: 'Profile Workspace', icon: <UserIcon className="w-5 h-5" />, key: 'profile_workspace' },
             { name: 'IELTS Evaluation', icon: <ExamPaperPenIcon className="w-5 h-5" />, key: 'ielts_evaluation' },
             { name: 'Spaced Repetition', icon: <RepeatIcon className="w-5 h-5" />, key: 'spaced_repetition' },
             { name: 'Student Portal', icon: <InlineCampusIcon className="w-5 h-5" />, key: 'student_portal' },
@@ -431,7 +432,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 className={`absolute bottom-full left-0 right-0 mb-3 w-full border rounded-2xl shadow-xl overflow-visible ${theme === 'dark' ? 'bg-[#1a1a1a] border-gray-800' : 'bg-white border-neutral-200'}`}
                             >
                                 <div className="p-1.5 space-y-0.5 relative">
-                                    <button onClick={() => { guardedNavigate('profile'); setProfileOpen(false); }} className={`w-full text-left text-sm flex items-center px-3 py-2.5 rounded-xl ${hoverClasses} dark:text-gray-300 text-neutral-700`}>
+                                    <button onClick={() => { guardedNavigate('profile_workspace'); setProfileOpen(false); }} className={`w-full text-left text-sm flex items-center px-3 py-2.5 rounded-xl ${hoverClasses} dark:text-gray-300 text-neutral-700`}>
                                         <UserIcon className="w-4 h-4 mr-3 text-emerald-400" />
                                         Profile Workspace
                                     </button>

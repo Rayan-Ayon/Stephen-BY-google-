@@ -2235,8 +2235,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Dashboard.tsx": {
-    "mtime": 1788116939.3560412,
-    "ast_hash": "b688941ff2f8dc027bfb84f56eb15cb0",
+    "mtime": 1788387583.9927814,
+    "ast_hash": "0573f9f5a2a1581350b0b308d1215b36",
     "semantic_hash": ""
   },
   "frontend/components/DebateView.tsx": {
@@ -2315,8 +2315,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Sidebar.tsx": {
-    "mtime": 1788116912.5040033,
-    "ast_hash": "2d3db62f6991e58b6dcd888798eb4079",
+    "mtime": 1788387577.2155066,
+    "ast_hash": "507d7e26c848340c1f1cab90d1592c8b",
     "semantic_hash": ""
   },
   "frontend/components/SpaceView.tsx": {
@@ -2700,13 +2700,13 @@
     "semantic_hash": ""
   },
   "frontend/components/OrgSpaceView.tsx": {
-    "mtime": 1788208338.8277655,
-    "ast_hash": "bfcaaeed7fe377a27a7f718177b51bf4",
+    "mtime": 1788380438.3521314,
+    "ast_hash": "a29fd8245d03a7095ae9600031810ea9",
     "semantic_hash": ""
   },
   "frontend/components/ProfileView.tsx": {
-    "mtime": 1782729995.355717,
-    "ast_hash": "fb588730de0478effe0baef0dc456d6b",
+    "mtime": 1788387575.6539404,
+    "ast_hash": "32b2c5aa5bd00d2c9835621603d0af8b",
     "semantic_hash": ""
   },
   "frontend/components/SuperAdminView.tsx": {
@@ -2815,8 +2815,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/IELTSEvaluationHub.tsx": {
-    "mtime": 1788208063.5237534,
-    "ast_hash": "cc272f7e74956201ba1b123730c46f63",
+    "mtime": 1788380200.4888098,
+    "ast_hash": "925e41e9eac01eb3cbfb72e45e8b04c0",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSDashboard.tsx": {
@@ -2885,8 +2885,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/history/ModuleHistorySection.tsx": {
-    "mtime": 1787416931.602839,
-    "ast_hash": "26fedcbbffa1fd9266dbaaf4c8683cf5",
+    "mtime": 1788380706.2766867,
+    "ast_hash": "bc56f64cb6474c5df626a69d804c49eb",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSAnalysisView.tsx": {
@@ -2942,6 +2942,26 @@
   "frontend/components/enterprise/curriculum/AICoPilotTestAuthor.tsx": {
     "mtime": 1788208001.0868437,
     "ast_hash": "5463d8e71b9d3bb867b23979ea073d01",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/ielts/WritingAnalysisModal.tsx": {
+    "mtime": 1788380121.2528634,
+    "ast_hash": "7ac49afc29cd35ca22b9a778ca09ac7e",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/writing/WritingHistoryMatrix.tsx": {
+    "mtime": 1788380688.3802388,
+    "ast_hash": "7257d545a536d73c2175ae337fde9c51",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/curriculum/InstituteKnowledgeBase.tsx": {
+    "mtime": 1788380411.706745,
+    "ast_hash": "0cb95ae3a91c816160bb4341474ff54e",
+    "semantic_hash": ""
+  },
+  "frontend/components/ProfileWorkspace.tsx": {
+    "mtime": 1788386961.9246664,
+    "ast_hash": "14e29aac9bc35ff26d5aa36a63dac0bf",
     "semantic_hash": ""
   }
 }
