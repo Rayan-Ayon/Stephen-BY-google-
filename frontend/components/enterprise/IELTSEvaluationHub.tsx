@@ -54,11 +54,14 @@ interface IELTSEvaluationHubProps {
     onExamStateChange?: (active: boolean) => void;
     exitPulse?: boolean;
     onLockedNavigationAttempt?: () => void;
+    initialView?: IeltsView;
+    initialWritingSubView?: WritingSubView;
+    hideInternalNav?: boolean;
 }
 
-const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onExamStateChange, exitPulse, onLockedNavigationAttempt }) => {
+const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onExamStateChange, exitPulse, onLockedNavigationAttempt, initialView = 'dashboard', initialWritingSubView = 'dashboard', hideInternalNav = false }) => {
     const { activeWorkspace, workspaces, setActiveWorkspace } = useWorkspace();
-    const [view, setView] = useState<IeltsView>('dashboard');
+    const [view, setView] = useState<IeltsView>(initialView);
     const [isCollapsed, setIsCollapsed] = useState<boolean>(readRail);
     const [examRunning, setExamRunning] = useState(false);
     const handleExamActive = (active: boolean) => {
@@ -68,7 +71,7 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onEx
     const [isSubShaking, setIsSubShaking] = useState(false);
     const [shakingSubKey, setShakingSubKey] = useState<string | null>(null);
     const [exitConfirmKey, setExitConfirmKey] = useState<IeltsView | null>(null);
-    const [writingSubView, setWritingSubView] = useState<WritingSubView>('dashboard');
+    const [writingSubView, setWritingSubView] = useState<WritingSubView>(initialWritingSubView);
     const [writingExamMode, setWritingExamMode] = useState<string>('mock');
     const [writingTimeMinutes, setWritingTimeMinutes] = useState<number>(60);
     const [writingLabOpen, setWritingLabOpen] = useState(true);
@@ -170,7 +173,7 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onEx
     return (
         <div className={`flex h-full w-full ${view === 'speaking' ? 'p-0 gap-0' : 'p-8 gap-8'} overflow-hidden`}>
             <style>{`@keyframes lock-shake {0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}`}</style>
-            <aside className={`shrink-0 flex flex-col overflow-hidden transition-[width] duration-300 ${isCollapsed ? 'w-16' : 'w-60'}`}>
+            {!hideInternalNav && <aside className={`shrink-0 flex flex-col overflow-hidden transition-[width] duration-300 ${isCollapsed ? 'w-16' : 'w-60'}`}>
                 <div className={`${isCollapsed ? 'flex items-center justify-center mb-3 pb-3 border-b border-zinc-800' : 'flex flex-col gap-1.5 mb-3 pb-3 border-b border-zinc-800'}`}>
                     {!isCollapsed && (
                         <div className="flex items-center justify-between">
@@ -290,7 +293,7 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onEx
                         Data scope: Farmgate enterprise
                     </p>
                 )}
-            </aside>
+            </aside>}
 
             <main className={`flex-1 min-w-0 ${view === 'speaking' ? 'bg-white' : ''} ${view === 'speaking' || examRunning ? 'overflow-hidden' : 'overflow-y-auto'}`}>
                 {isSimulation ? (

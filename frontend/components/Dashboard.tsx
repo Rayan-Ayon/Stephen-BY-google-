@@ -23,6 +23,12 @@ import ContactUsSlide from './ContactUsSlide';
 import HawkingFab from './HawkingFab';
 import ResearchLabView from './ResearchLabView';
 import LearningMethods1View from './LearningMethods1View';
+import LeaderboardView from './LeaderboardView';
+import StreaksView from './StreaksView';
+import AISpeakingPartnerView from './AISpeakingPartnerView';
+import AIIELTSChatbotView from './AIIELTSChatbotView';
+import AIRewriterView from './AIRewriterView';
+import FreeContentLibraryView from './FreeContentLibraryView';
 import SpaceView from './SpaceView';
 import IndividualSandboxView from './IndividualSandboxView';
 import EnterpriseSandboxView from './EnterpriseSandboxView';
@@ -366,7 +372,23 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
 
         switch (currentView) {
             case 'sandbox': return <IndividualSandboxView email={userEmail} />;
+            case 'ielts_dashboard': return <IELTSEvaluationHub key="ielts_dashboard" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="dashboard" hideInternalNav />;
+            case 'speaking_studio': return <IELTSEvaluationHub key="speaking_studio" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="speaking" hideInternalNav />;
+            case 'listening_engine': return <IELTSEvaluationHub key="listening_engine" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="listening" hideInternalNav />;
+            case 'reading_hub': return <IELTSEvaluationHub key="reading_hub" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="reading" hideInternalNav />;
+            case 'writing_lab': return <IELTSEvaluationHub key="writing_lab" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="writing" hideInternalNav />;
+            case 'task2_checker': return <IELTSEvaluationHub key="writing_task2" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="writing" initialWritingSubView="task2-checker-landing" hideInternalNav />;
+            case 'task1_academic': return <IELTSEvaluationHub key="writing_t1_acad" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="writing" initialWritingSubView="task1-academic-landing" hideInternalNav />;
+            case 'task1_general': return <IELTSEvaluationHub key="writing_t1_gen" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="writing" initialWritingSubView="task1-general-landing" hideInternalNav />;
+            case 'writing_lab_overview': return <IELTSEvaluationHub key="writing_main" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="writing" initialWritingSubView="dashboard" hideInternalNav />;
+            case 'full_cambridge_mock': return <IELTSEvaluationHub key="full_cambridge_mock" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="mock" hideInternalNav />;
             case 'ielts_evaluation': return <IELTSEvaluationHub userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} />;
+            case 'leaderboard': return <LeaderboardView userEmail={userEmail} />;
+            case 'streaks': return <StreaksView userEmail={userEmail} />;
+            case 'ai_speaking_partner': return <AISpeakingPartnerView userEmail={userEmail} />;
+            case 'ai_rewriter': return <AIRewriterView userEmail={userEmail} />;
+            case 'ai_ielts_chatbot': return <AIIELTSChatbotView userEmail={userEmail} />;
+            case 'free_content_library': return <FreeContentLibraryView userEmail={userEmail} />;
             case 'spaced_repetition': return <SpacedRepetitionEngine />;
             case 'student_portal': return <StudentPortal />;
             case 'add_content':
@@ -474,7 +496,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                 onLockedNavigationAttempt={handleLockedNav}
             />
             
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+            <main className="flex-1 flex flex-col min-w-0 overflow-y-auto relative">
                 {isEnterprise && currentView === 'sandbox' ? (
                     <EnterpriseSandboxView workspace={activeWorkspace} />
                 ) : (

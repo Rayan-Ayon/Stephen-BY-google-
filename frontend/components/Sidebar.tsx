@@ -9,7 +9,7 @@ import {
     ProfessorStudentIcon, DebatePodiumIcon, EdgramIcon, GlobeIcon,
     LocationTrackerIcon, LearningMethodIcon, ChevronDownIcon, CrownIcon,
     ViewSidebarIcon, CheckCircleIcon, DollarIcon, SidebarToggleIcon, CubeIcon, DotsHorizontalIcon, TrashIcon, ShareIcon, PencilIcon, ChevronRightIcon,
-    HomeIcon, ShieldCheckIcon, UserIcon
+    HomeIcon, ShieldCheckIcon, UserIcon, MicIcon, SpeakerWaveIcon, BookOpenIcon, LabIcon, FireIcon, PhoneIcon, ChatIcon
 } from './icons';
 import type { Space } from '../utils/mockDb';
 import WorkspaceDropdown from './WorkspaceDropdown';
@@ -51,7 +51,6 @@ const navConfig = [
         items: [
             { name: 'Sandbox', icon: <CubeIcon className="w-5 h-5" />, key: 'sandbox' },
             { name: 'Profile Workspace', icon: <UserIcon className="w-5 h-5" />, key: 'profile_workspace' },
-            { name: 'IELTS Evaluation', icon: <ExamPaperPenIcon className="w-5 h-5" />, key: 'ielts_evaluation' },
             { name: 'Spaced Repetition', icon: <RepeatIcon className="w-5 h-5" />, key: 'spaced_repetition' },
             { name: 'Student Portal', icon: <InlineCampusIcon className="w-5 h-5" />, key: 'student_portal' },
             { name: 'Add Content', icon: <PlusIcon className="w-5 h-5" />, key: 'add_content' },
@@ -115,6 +114,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     const profileRef = useRef<HTMLDivElement>(null);
     const [isSidebarHovered, setIsSidebarHovered] = useState(false);
     const [showTooltip, setShowTooltip] = useState(false);
+    const [isMockTestsOpen, setIsMockTestsOpen] = useState(true);
+    const [isWritingLabOpen, setIsWritingLabOpen] = useState(false);
     
     // Space management state
     const [hoveredSpaceId, setHoveredSpaceId] = useState<string | null>(null);
@@ -246,6 +247,356 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     )}
                                 </button>
                         ))}
+                        
+                        {/* ── Mock Tests Accordion ── */}
+                        {sectionIndex === 0 && (
+                            <div className="mt-1">
+                                <button
+                                    onClick={() => isExpanded && setIsMockTestsOpen(!isMockTestsOpen)}
+                                    title={!isExpanded ? 'Mock Tests' : undefined}
+                                    className={`relative group w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200`}
+                                >
+                                    <div className={`${iconColor} shrink-0`}>
+                                        <CubeIcon className="w-5 h-5" />
+                                    </div>
+                                    {isExpanded && (
+                                        <>
+                                            <span className="ml-3 text-[15px] font-medium">Mock Tests</span>
+                                            <ChevronDownIcon className={`w-4 h-4 ml-auto shrink-0 transition-transform duration-200 ${isMockTestsOpen ? '' : '-rotate-90'}`} />
+                                        </>
+                                    )}
+                                    {!isExpanded && (
+                                        <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-neutral-800 bg-black px-2.5 py-1.5 text-[11px] text-neutral-200 opacity-0 group-hover:opacity-100 pointer-events-none z-10 shadow-xl">
+                                            Mock Tests
+                                        </span>
+                                    )}
+                                </button>
+
+                                {isExpanded && isMockTestsOpen && (
+                                    <div className="border-l border-zinc-800 ml-4 pl-3 space-y-0.5 mb-1">
+                                        <button
+                                            onClick={() => guardedNavigate('ielts_dashboard')}
+                                            className={`relative group w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${
+                                                activeItem === 'ielts_dashboard'
+                                                    ? 'bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-500'
+                                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.03]'
+                                            }`}
+                                        >
+                                            <HomeIcon className="w-4 h-4 shrink-0" />
+                                            <span>Dashboard</span>
+                                        </button>
+
+                                        <button
+                                            onClick={() => guardedNavigate('full_cambridge_mock')}
+                                            className={`relative group w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${
+                                                activeItem === 'full_cambridge_mock'
+                                                    ? 'bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-500'
+                                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.03]'
+                                            }`}
+                                        >
+                                            <TrophyIcon className="w-4 h-4 shrink-0" />
+                                            <span>Full Cambridge Mock</span>
+                                        </button>
+
+                                        <button
+                                            onClick={() => guardedNavigate('speaking_studio')}
+                                            className={`relative group w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${
+                                                activeItem === 'speaking_studio'
+                                                    ? 'bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-500'
+                                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.03]'
+                                            }`}
+                                        >
+                                            <MicIcon className="w-4 h-4 shrink-0" />
+                                            <span>Speaking Studio</span>
+                                        </button>
+
+                                        <button
+                                            onClick={() => guardedNavigate('listening_engine')}
+                                            className={`relative group w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${
+                                                activeItem === 'listening_engine'
+                                                    ? 'bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-500'
+                                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.03]'
+                                            }`}
+                                        >
+                                            <SpeakerWaveIcon className="w-4 h-4 shrink-0" />
+                                            <span>Listening Engine</span>
+                                        </button>
+
+                                        <button
+                                            onClick={() => guardedNavigate('reading_hub')}
+                                            className={`relative group w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${
+                                                activeItem === 'reading_hub'
+                                                    ? 'bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-500'
+                                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.03]'
+                                            }`}
+                                        >
+                                            <BookOpenIcon className="w-4 h-4 shrink-0" />
+                                            <span>Reading Hub</span>
+                                        </button>
+
+                                        <div>
+                                            <button
+                                                onClick={() => setIsWritingLabOpen(!isWritingLabOpen)}
+                                                className={`relative group w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${
+                                                    ['task2_checker', 'task1_academic', 'task1_general', 'writing_lab'].includes(activeItem)
+                                                        ? 'bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-500'
+                                                        : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.03]'
+                                                }`}
+                                            >
+                                                <LabIcon className="w-4 h-4 shrink-0" />
+                                                <span className="flex-1 text-left">Writing Lab</span>
+                                                <ChevronDownIcon className={`w-3 h-3 shrink-0 transition-transform duration-200 ${isWritingLabOpen ? '' : '-rotate-90'}`} />
+                                            </button>
+
+                                            {isExpanded && isWritingLabOpen && (
+                                                <div className="border-l border-zinc-800 ml-5 pl-3 space-y-0.5 mt-0.5 mb-1">
+                                                    <button
+                                                        onClick={() => guardedNavigate('task2_checker')}
+                                                        className={`w-full text-left rounded-md px-3 py-1.5 text-[12px] transition-colors ${
+                                                            activeItem === 'task2_checker'
+                                                                ? 'bg-emerald-500/10 text-emerald-400'
+                                                                : 'text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.03]'
+                                                        }`}
+                                                    >
+                                                        Task 2 Checker
+                                                    </button>
+                                                    <button
+                                                        onClick={() => guardedNavigate('task1_academic')}
+                                                        className={`w-full text-left rounded-md px-3 py-1.5 text-[12px] transition-colors ${
+                                                            activeItem === 'task1_academic'
+                                                                ? 'bg-emerald-500/10 text-emerald-400'
+                                                                : 'text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.03]'
+                                                        }`}
+                                                    >
+                                                        Task 1 Academic
+                                                    </button>
+                                                    <button
+                                                        onClick={() => guardedNavigate('task1_general')}
+                                                        className={`w-full text-left rounded-md px-3 py-1.5 text-[12px] transition-colors ${
+                                                            activeItem === 'task1_general'
+                                                                ? 'bg-emerald-500/10 text-emerald-400'
+                                                                : 'text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.03]'
+                                                        }`}
+                                                    >
+                                                        Task 1 General
+                                                    </button>
+                                                    <button
+                                                        onClick={() => guardedNavigate('writing_lab')}
+                                                        className={`w-full text-left rounded-md px-3 py-1.5 text-[12px] transition-colors ${
+                                                            activeItem === 'writing_lab'
+                                                                ? 'bg-emerald-500/10 text-emerald-400'
+                                                                : 'text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.03]'
+                                                        }`}
+                                                    >
+                                                        Mock Tests &amp; Practice
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        
+                        {/* AI Speaking Partner */}
+                        {sectionIndex === 0 && (
+                            <button
+                                onClick={() => guardedNavigate('ai_speaking_partner')}
+                                className={`relative w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === 'ai_speaking_partner' ? activeClasses : ''}${shakingKey === 'ai_speaking_partner' && isShaking ? ' ring-2 ring-rose-500/80' : ''}`}
+                            >
+                                <div className={`${activeItem === 'ai_speaking_partner' ? 'text-current' : iconColor} shrink-0`}>
+                                    <PhoneIcon className="w-5 h-5" />
+                                </div>
+                                {isExpanded && (
+                                    <AnimatePresence>
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.2, delay: 0.05 }}
+                                            className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden"
+                                        >
+                                            AI Speaking Partner
+                                        </motion.span>
+                                    </AnimatePresence>
+                                )}
+                                {!isExpanded && (
+                                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-neutral-800 bg-black px-2.5 py-1.5 text-[11px] text-neutral-200 opacity-0 group-hover:opacity-100 pointer-events-none z-10 shadow-xl">
+                                        AI Speaking Partner
+                                    </span>
+                                )}
+                                {shakingKey === 'ai_speaking_partner' && isShaking && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
+                                )}
+                            </button>
+                        )}
+                        
+                        {/* AI Rewriter */}
+                        {sectionIndex === 0 && (
+                            <button
+                                onClick={() => guardedNavigate('ai_rewriter')}
+                                className={`relative w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === 'ai_rewriter' ? activeClasses : ''}${shakingKey === 'ai_rewriter' && isShaking ? ' ring-2 ring-rose-500/80' : ''}`}
+                            >
+                                <div className={`${activeItem === 'ai_rewriter' ? 'text-current' : iconColor} shrink-0`}>
+                                    <PencilIcon className="w-5 h-5" />
+                                </div>
+                                {isExpanded && (
+                                    <AnimatePresence>
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.2, delay: 0.05 }}
+                                            className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden"
+                                        >
+                                            AI Rewriter
+                                        </motion.span>
+                                    </AnimatePresence>
+                                )}
+                                {!isExpanded && (
+                                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-neutral-800 bg-black px-2.5 py-1.5 text-[11px] text-neutral-200 opacity-0 group-hover:opacity-100 pointer-events-none z-10 shadow-xl">
+                                        AI Rewriter
+                                    </span>
+                                )}
+                                {shakingKey === 'ai_rewriter' && isShaking && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
+                                )}
+                            </button>
+                        )}
+                        
+                        {/* AI IELTS Chatbot */}
+                        {sectionIndex === 0 && (
+                            <button
+                                onClick={() => guardedNavigate('ai_ielts_chatbot')}
+                                className={`relative w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === 'ai_ielts_chatbot' ? activeClasses : ''}${shakingKey === 'ai_ielts_chatbot' && isShaking ? ' ring-2 ring-rose-500/80' : ''}`}
+                            >
+                                <div className={`${activeItem === 'ai_ielts_chatbot' ? 'text-current' : iconColor} shrink-0`}>
+                                    <ChatIcon className="w-5 h-5" />
+                                </div>
+                                {isExpanded && (
+                                    <AnimatePresence>
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.2, delay: 0.05 }}
+                                            className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden"
+                                        >
+                                            AI IELTS Chatbot
+                                        </motion.span>
+                                    </AnimatePresence>
+                                )}
+                                {!isExpanded && (
+                                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-neutral-800 bg-black px-2.5 py-1.5 text-[11px] text-neutral-200 opacity-0 group-hover:opacity-100 pointer-events-none z-10 shadow-xl">
+                                        AI IELTS Chatbot
+                                    </span>
+                                )}
+                                {shakingKey === 'ai_ielts_chatbot' && isShaking && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
+                                )}
+                            </button>
+                        )}
+                        
+                        {/* Free Content Library */}
+                        {sectionIndex === 0 && (
+                            <button
+                                onClick={() => guardedNavigate('free_content_library')}
+                                className={`relative w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${
+                                    activeItem === 'free_content_library' ? activeClasses : ''
+                                }${shakingKey === 'free_content_library' && isShaking ? ' ring-2 ring-rose-500/80' : ''}`}
+                            >
+                                <div className={`${activeItem === 'free_content_library' ? 'text-current' : iconColor} shrink-0`}>
+                                    <BookOpenIcon className="w-5 h-5" />
+                                </div>
+                                {isExpanded && (
+                                    <AnimatePresence>
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.2, delay: 0.05 }}
+                                            className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden"
+                                        >
+                                            Free Content Library
+                                        </motion.span>
+                                    </AnimatePresence>
+                                )}
+                                {!isExpanded && (
+                                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-neutral-800 bg-black px-2.5 py-1.5 text-[11px] text-neutral-200 opacity-0 group-hover:opacity-100 pointer-events-none z-10 shadow-xl">
+                                        Free Content Library
+                                    </span>
+                                )}
+                                {shakingKey === 'free_content_library' && isShaking && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
+                                )}
+                            </button>
+                        )}
+                        
+                        {/* Leaderboard */}
+                        {sectionIndex === 0 && (
+                            <button
+                                onClick={() => guardedNavigate('leaderboard')}
+                                className={`relative w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === 'leaderboard' ? activeClasses : ''}${shakingKey === 'leaderboard' && isShaking ? ' ring-2 ring-rose-500/80' : ''}`}
+                            >
+                                <div className={`${activeItem === 'leaderboard' ? 'text-current' : iconColor} shrink-0`}>
+                                    <TrophyIcon className="w-5 h-5" />
+                                </div>
+                                {isExpanded && (
+                                    <AnimatePresence>
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.2, delay: 0.05 }}
+                                            className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden"
+                                        >
+                                            Leaderboard
+                                        </motion.span>
+                                    </AnimatePresence>
+                                )}
+                                {!isExpanded && (
+                                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-neutral-800 bg-black px-2.5 py-1.5 text-[11px] text-neutral-200 opacity-0 group-hover:opacity-100 pointer-events-none z-10 shadow-xl">
+                                        Leaderboard
+                                    </span>
+                                )}
+                                {shakingKey === 'leaderboard' && isShaking && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
+                                )}
+                            </button>
+                        )}
+                        
+                        {/* Streaks */}
+                        {sectionIndex === 0 && (
+                            <button
+                                onClick={() => guardedNavigate('streaks')}
+                                className={`relative w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === 'streaks' ? activeClasses : ''}${shakingKey === 'streaks' && isShaking ? ' ring-2 ring-rose-500/80' : ''}`}
+                            >
+                                <div className={`${activeItem === 'streaks' ? 'text-current' : iconColor} shrink-0`}>
+                                    <FireIcon className="w-5 h-5" />
+                                </div>
+                                {isExpanded && (
+                                    <AnimatePresence>
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.2, delay: 0.05 }}
+                                            className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden"
+                                        >
+                                            Streaks
+                                        </motion.span>
+                                    </AnimatePresence>
+                                )}
+                                {!isExpanded && (
+                                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-neutral-800 bg-black px-2.5 py-1.5 text-[11px] text-neutral-200 opacity-0 group-hover:opacity-100 pointer-events-none z-10 shadow-xl">
+                                        Streaks
+                                    </span>
+                                )}
+                                {shakingKey === 'streaks' && isShaking && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
+                                )}
+                            </button>
+                        )}
                         
                         {/* Inject Spaces Section after the first group (index 0) */}
                         {!isEnterprise && sectionIndex === 0 && (

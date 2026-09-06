@@ -2235,8 +2235,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Dashboard.tsx": {
-    "mtime": 1788387583.9927814,
-    "ast_hash": "0573f9f5a2a1581350b0b308d1215b36",
+    "mtime": 1788696693.8856978,
+    "ast_hash": "4c3f86cd29441875e829cee4a8a8696a",
     "semantic_hash": ""
   },
   "frontend/components/DebateView.tsx": {
@@ -2315,8 +2315,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Sidebar.tsx": {
-    "mtime": 1788387577.2155066,
-    "ast_hash": "507d7e26c848340c1f1cab90d1592c8b",
+    "mtime": 1788696666.600588,
+    "ast_hash": "7854d963e7fa3d41e9c03aae59b34eb5",
     "semantic_hash": ""
   },
   "frontend/components/SpaceView.tsx": {
@@ -2815,8 +2815,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/IELTSEvaluationHub.tsx": {
-    "mtime": 1788380200.4888098,
-    "ast_hash": "925e41e9eac01eb3cbfb72e45e8b04c0",
+    "mtime": 1788389841.5091689,
+    "ast_hash": "f3e52a2fc82ef0d3e452d256f22be70e",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSDashboard.tsx": {
@@ -2962,6 +2962,36 @@
   "frontend/components/ProfileWorkspace.tsx": {
     "mtime": 1788386961.9246664,
     "ast_hash": "14e29aac9bc35ff26d5aa36a63dac0bf",
+    "semantic_hash": ""
+  },
+  "frontend/components/LeaderboardView.tsx": {
+    "mtime": 1788692237.7469585,
+    "ast_hash": "c3d74a6c09727772079e0a11f5270ca6",
+    "semantic_hash": ""
+  },
+  "frontend/components/StreaksView.tsx": {
+    "mtime": 1788692784.2868469,
+    "ast_hash": "71fc3360a3cec8c40fc1e0eb1e2c5707",
+    "semantic_hash": ""
+  },
+  "frontend/components/AISpeakingPartnerView.tsx": {
+    "mtime": 1788693364.1995792,
+    "ast_hash": "7c7a3fc14e8762caa2fb3c92fd5bb27a",
+    "semantic_hash": ""
+  },
+  "frontend/components/AIRewriterView.tsx": {
+    "mtime": 1788694335.6509914,
+    "ast_hash": "fe90d27305095814d36b9b8f54d5b089",
+    "semantic_hash": ""
+  },
+  "frontend/components/AIIELTSChatbotView.tsx": {
+    "mtime": 1788695155.918561,
+    "ast_hash": "afa2408d4097bcbfaf00543b7ed7452e",
+    "semantic_hash": ""
+  },
+  "frontend/components/FreeContentLibraryView.tsx": {
+    "mtime": 1788696754.405257,
+    "ast_hash": "bdbc158c05092818eabecff27ac12fa6",
     "semantic_hash": ""
   }
 }
