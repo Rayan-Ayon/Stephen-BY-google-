@@ -2235,8 +2235,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Dashboard.tsx": {
-    "mtime": 1788710870.793035,
-    "ast_hash": "2b628ddfaf5400945c565892c5ff8039",
+    "mtime": 1788812992.946223,
+    "ast_hash": "9cc42745fce3467e8ac2b1bfa47ec2e0",
     "semantic_hash": ""
   },
   "frontend/components/DebateView.tsx": {
@@ -2885,8 +2885,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/history/ModuleHistorySection.tsx": {
-    "mtime": 1788380706.2766867,
-    "ast_hash": "bc56f64cb6474c5df626a69d804c49eb",
+    "mtime": 1788796034.5844848,
+    "ast_hash": "bd5cb67bdc722365c562e7846910b48d",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSAnalysisView.tsx": {
@@ -2997,6 +2997,26 @@
   "frontend/components/StudyPlanView.tsx": {
     "mtime": 1788710954.51098,
     "ast_hash": "e49fdb03ffbeb5a9500480fc9b2d2352",
+    "semantic_hash": ""
+  },
+  "frontend/components/ReadingHubView.tsx": {
+    "mtime": 1788793515.475543,
+    "ast_hash": "8a443e65ed6bbdc681db61242bb10cd5",
+    "semantic_hash": ""
+  },
+  "frontend/components/WritingHubView.tsx": {
+    "mtime": 1788795916.8844438,
+    "ast_hash": "96edf977e9ef7e22ca60a45ce335d35f",
+    "semantic_hash": ""
+  },
+  "frontend/components/ListeningHubView.tsx": {
+    "mtime": 1788811329.350035,
+    "ast_hash": "5e435c894ae8d5bac6f335e8c3ceec29",
+    "semantic_hash": ""
+  },
+  "frontend/components/FullMockTestHub.tsx": {
+    "mtime": 1788813044.9647298,
+    "ast_hash": "64ec5afc27f3506fae9e882f18e3d407",
     "semantic_hash": ""
   }
 }

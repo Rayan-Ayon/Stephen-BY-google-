@@ -53,6 +53,7 @@ const buildTopic = (a: IeltsAttempt): string => {
 const ModuleHistorySection: React.FC<ModuleHistoryProps> = ({ moduleType, bundle }) => {
     const [attempts, setAttempts] = React.useState<IeltsAttempt[]>(readAttempts);
     const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('all');
+    const [taskTypeFilter, setTaskTypeFilter] = React.useState<string>('all');
     const [analysisId, setAnalysisId] = React.useState<number | null>(null);
     const [confirmClear, setConfirmClear] = React.useState(false);
 
@@ -74,6 +75,16 @@ const ModuleHistorySection: React.FC<ModuleHistoryProps> = ({ moduleType, bundle
         const status = attemptStatus(a.band).label.toLowerCase().replace(' ', '-');
         return status === statusFilter;
     });
+
+    const taskFiltered = moduleType === 'writing' && taskTypeFilter !== 'all'
+        ? filtered.filter((a) => {
+            if (taskTypeFilter === 'task2') return a.taskType === 'task2';
+            if (taskTypeFilter === 'task1-academic') return a.taskType === 'task1' && !a.title?.toLowerCase().includes('general');
+            if (taskTypeFilter === 'task1-general') return a.taskType === 'task1' && a.title?.toLowerCase().includes('general');
+            if (taskTypeFilter === 'full-mock') return !a.taskType;
+            return true;
+        })
+        : filtered;
 
     const handleClear = () => {
         if (bundle) clearAttemptsByBundle(bundle);
@@ -107,12 +118,25 @@ const ModuleHistorySection: React.FC<ModuleHistoryProps> = ({ moduleType, bundle
                         </option>
                     ))}
                 </select>
+                {moduleType === 'writing' && (
+                    <select
+                        value={taskTypeFilter}
+                        onChange={(e) => setTaskTypeFilter(e.target.value)}
+                        className="px-3 py-2 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-[11px] text-neutral-300 outline-none focus:border-neutral-600"
+                    >
+                        <option value="all">All Modules</option>
+                        <option value="task2">Task 2 Essay</option>
+                        <option value="task1-academic">Task 1 Academic</option>
+                        <option value="task1-general">Task 1 General</option>
+                        <option value="full-mock">Full Mock Exam</option>
+                    </select>
+                )}
                 <span className="text-[11px] font-mono text-neutral-600 ml-auto">
-                    {filtered.length} row{filtered.length === 1 ? '' : 's'}
+                    {taskFiltered.length} row{taskFiltered.length === 1 ? '' : 's'}
                 </span>
             </div>
 
-            {filtered.length === 0 ? (
+            {taskFiltered.length === 0 ? (
                 <p className="text-sm text-neutral-600 py-8 text-center">No attempts match the current filters.</p>
             ) : (
                 <div className="overflow-x-auto">
@@ -129,7 +153,7 @@ const ModuleHistorySection: React.FC<ModuleHistoryProps> = ({ moduleType, bundle
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-neutral-800/70">
-                            {filtered.map((a) => {
+                            {taskFiltered.map((a) => {
                                 const status = attemptStatus(a.band);
                                 return (
                                     <tr key={a.id}>

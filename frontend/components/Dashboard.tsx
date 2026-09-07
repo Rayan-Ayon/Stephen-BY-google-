@@ -34,6 +34,10 @@ import SpaceView from './SpaceView';
 import IndividualSandboxView from './IndividualSandboxView';
 import EnterpriseSandboxView from './EnterpriseSandboxView';
 import IELTSEvaluationHub from './enterprise/IELTSEvaluationHub';
+import ReadingHubView from './ReadingHubView';
+import WritingHubView from './WritingHubView';
+import ListeningHubView from './ListeningHubView';
+import FullMockTestHub from './FullMockTestHub';
 import { DORMANT_NAV_ENABLED, DORMANT_NAV_KEYS } from './dormantNav';
 import SpacedRepetitionEngine from './enterprise/srs/SpacedRepetitionEngine';
 import StudentPortal from './enterprise/portal/StudentPortal';
@@ -375,14 +379,18 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             case 'sandbox': return <IndividualSandboxView email={userEmail} />;
             case 'ielts_dashboard': return <IELTSEvaluationHub key="ielts_dashboard" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="dashboard" hideInternalNav />;
             case 'speaking_studio': return <IELTSEvaluationHub key="speaking_studio" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="speaking" hideInternalNav />;
-            case 'listening_engine': return <IELTSEvaluationHub key="listening_engine" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="listening" hideInternalNav />;
-            case 'reading_hub': return <IELTSEvaluationHub key="reading_hub" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="reading" hideInternalNav />;
-            case 'writing_lab': return <IELTSEvaluationHub key="writing_lab" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="writing" hideInternalNav />;
-            case 'task2_checker': return <IELTSEvaluationHub key="writing_task2" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="writing" initialWritingSubView="task2-checker-landing" hideInternalNav />;
-            case 'task1_academic': return <IELTSEvaluationHub key="writing_t1_acad" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="writing" initialWritingSubView="task1-academic-landing" hideInternalNav />;
-            case 'task1_general': return <IELTSEvaluationHub key="writing_t1_gen" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="writing" initialWritingSubView="task1-general-landing" hideInternalNav />;
-            case 'writing_lab_overview': return <IELTSEvaluationHub key="writing_main" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="writing" initialWritingSubView="dashboard" hideInternalNav />;
-            case 'full_cambridge_mock': return <IELTSEvaluationHub key="full_cambridge_mock" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="mock" hideInternalNav />;
+            case 'listening_engine': return <ListeningHubView userEmail={userEmail} />;
+            case 'reading_hub': return <ReadingHubView userEmail={userEmail} />;
+            case 'writing_lab':
+            case 'task2_checker':
+            case 'task1_academic':
+            case 'task1_general':
+            case 'writing_lab_overview':
+                return <WritingHubView userEmail={userEmail} />;
+            case 'full_cambridge_mock':
+            case 'full_mock_test':
+            case 'mock_tests':
+                return <FullMockTestHub userEmail={userEmail} onNavigate={(viewKey) => setCurrentView(viewKey)} />;
             case 'ielts_evaluation': return <IELTSEvaluationHub userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} />;
             case 'leaderboard': return <LeaderboardView userEmail={userEmail} />;
             case 'streaks': return <StreaksView userEmail={userEmail} />;
