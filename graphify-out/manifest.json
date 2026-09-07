@@ -2235,8 +2235,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Dashboard.tsx": {
-    "mtime": 1788696693.8856978,
-    "ast_hash": "4c3f86cd29441875e829cee4a8a8696a",
+    "mtime": 1788710870.793035,
+    "ast_hash": "2b628ddfaf5400945c565892c5ff8039",
     "semantic_hash": ""
   },
   "frontend/components/DebateView.tsx": {
@@ -2315,8 +2315,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Sidebar.tsx": {
-    "mtime": 1788696666.600588,
-    "ast_hash": "7854d963e7fa3d41e9c03aae59b34eb5",
+    "mtime": 1788773744.0566204,
+    "ast_hash": "64be7d35fa8d9e4e561e1a8431d3b1ac",
     "semantic_hash": ""
   },
   "frontend/components/SpaceView.tsx": {
@@ -2370,8 +2370,8 @@
     "semantic_hash": ""
   },
   "frontend/components/icons.tsx": {
-    "mtime": 1782497832.998033,
-    "ast_hash": "226bfc059477a0cd64aec9f245f8d439",
+    "mtime": 1788710862.4996414,
+    "ast_hash": "c9c7ba4abddaf74ec39500835678a7fa",
     "semantic_hash": ""
   },
   "frontend/components/modals.tsx": {
@@ -2990,8 +2990,13 @@
     "semantic_hash": ""
   },
   "frontend/components/FreeContentLibraryView.tsx": {
-    "mtime": 1788696754.405257,
-    "ast_hash": "bdbc158c05092818eabecff27ac12fa6",
+    "mtime": 1788775375.502411,
+    "ast_hash": "0cac735bbdf3d16d5df5bff3a0fa844a",
+    "semantic_hash": ""
+  },
+  "frontend/components/StudyPlanView.tsx": {
+    "mtime": 1788710954.51098,
+    "ast_hash": "e49fdb03ffbeb5a9500480fc9b2d2352",
     "semantic_hash": ""
   }
 }

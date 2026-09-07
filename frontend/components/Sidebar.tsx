@@ -9,7 +9,7 @@ import {
     ProfessorStudentIcon, DebatePodiumIcon, EdgramIcon, GlobeIcon,
     LocationTrackerIcon, LearningMethodIcon, ChevronDownIcon, CrownIcon,
     ViewSidebarIcon, CheckCircleIcon, DollarIcon, SidebarToggleIcon, CubeIcon, DotsHorizontalIcon, TrashIcon, ShareIcon, PencilIcon, ChevronRightIcon,
-    HomeIcon, ShieldCheckIcon, UserIcon, MicIcon, SpeakerWaveIcon, BookOpenIcon, LabIcon, FireIcon, PhoneIcon, ChatIcon
+    HomeIcon, ShieldCheckIcon, UserIcon, MicIcon, SpeakerWaveIcon, BookOpenIcon, LabIcon, FireIcon, PhoneIcon, ChatIcon, CalendarIcon
 } from './icons';
 import type { Space } from '../utils/mockDb';
 import WorkspaceDropdown from './WorkspaceDropdown';
@@ -50,6 +50,7 @@ const navConfig = [
     {
         items: [
             { name: 'Sandbox', icon: <CubeIcon className="w-5 h-5" />, key: 'sandbox' },
+            { name: 'Study Plan', icon: <CalendarIcon className="w-5 h-5" />, key: 'study_plan' },
             { name: 'Profile Workspace', icon: <UserIcon className="w-5 h-5" />, key: 'profile_workspace' },
             { name: 'Spaced Repetition', icon: <RepeatIcon className="w-5 h-5" />, key: 'spaced_repetition' },
             { name: 'Student Portal', icon: <InlineCampusIcon className="w-5 h-5" />, key: 'student_portal' },
@@ -388,7 +389,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                                 : 'text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.03]'
                                                         }`}
                                                     >
-                                                        Mock Tests &amp; Practice
+                                                        Mock Tests & Practice
                                                     </button>
                                                 </div>
                                             )}

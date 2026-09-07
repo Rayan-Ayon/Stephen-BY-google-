@@ -29,6 +29,7 @@ import AISpeakingPartnerView from './AISpeakingPartnerView';
 import AIIELTSChatbotView from './AIIELTSChatbotView';
 import AIRewriterView from './AIRewriterView';
 import FreeContentLibraryView from './FreeContentLibraryView';
+import StudyPlanView from './StudyPlanView';
 import SpaceView from './SpaceView';
 import IndividualSandboxView from './IndividualSandboxView';
 import EnterpriseSandboxView from './EnterpriseSandboxView';
@@ -389,6 +390,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             case 'ai_rewriter': return <AIRewriterView userEmail={userEmail} />;
             case 'ai_ielts_chatbot': return <AIIELTSChatbotView userEmail={userEmail} />;
             case 'free_content_library': return <FreeContentLibraryView userEmail={userEmail} />;
+            case 'study_plan': return <StudyPlanView userEmail={userEmail} />;
             case 'spaced_repetition': return <SpacedRepetitionEngine />;
             case 'student_portal': return <StudentPortal />;
             case 'add_content':
