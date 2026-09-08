@@ -2235,8 +2235,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Dashboard.tsx": {
-    "mtime": 1788812992.946223,
-    "ast_hash": "9cc42745fce3467e8ac2b1bfa47ec2e0",
+    "mtime": 1788880779.152051,
+    "ast_hash": "c27f9c70ea6e470789eb814ffb11c2cf",
     "semantic_hash": ""
   },
   "frontend/components/DebateView.tsx": {
@@ -2315,8 +2315,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Sidebar.tsx": {
-    "mtime": 1788773744.0566204,
-    "ast_hash": "64be7d35fa8d9e4e561e1a8431d3b1ac",
+    "mtime": 1788859879.0443459,
+    "ast_hash": "a1f11676db53ff40d0f66f9732fbba8b",
     "semantic_hash": ""
   },
   "frontend/components/SpaceView.tsx": {
@@ -2965,8 +2965,8 @@
     "semantic_hash": ""
   },
   "frontend/components/LeaderboardView.tsx": {
-    "mtime": 1788692237.7469585,
-    "ast_hash": "c3d74a6c09727772079e0a11f5270ca6",
+    "mtime": 1788881572.074415,
+    "ast_hash": "9942a8abee61576def6a86405d7e8cba",
     "semantic_hash": ""
   },
   "frontend/components/StreaksView.tsx": {
@@ -3017,6 +3017,26 @@
   "frontend/components/FullMockTestHub.tsx": {
     "mtime": 1788813044.9647298,
     "ast_hash": "64ec5afc27f3506fae9e882f18e3d407",
+    "semantic_hash": ""
+  },
+  "frontend/components/PartPracticeHub.tsx": {
+    "mtime": 1788860095.3431976,
+    "ast_hash": "760fafe637f82034767198035efd6e84",
+    "semantic_hash": ""
+  },
+  "frontend/components/SpeakingHubView.tsx": {
+    "mtime": 1788880692.8618999,
+    "ast_hash": "0b9889f0c08e392a1d1f9be4f91764a8",
+    "semantic_hash": ""
+  },
+  "frontend/components/NewSpeakingExamRunner.tsx": {
+    "mtime": 1788880558.0941088,
+    "ast_hash": "457ca6a908e9f8f0563f3561735706bd",
+    "semantic_hash": ""
+  },
+  "frontend/components/SpeakUIRestore.tsx": {
+    "mtime": 1788880472.8301647,
+    "ast_hash": "e2a058ab5b64cb73989bcb990c37a8df",
     "semantic_hash": ""
   }
 }

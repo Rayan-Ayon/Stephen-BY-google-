@@ -37,7 +37,11 @@ import IELTSEvaluationHub from './enterprise/IELTSEvaluationHub';
 import ReadingHubView from './ReadingHubView';
 import WritingHubView from './WritingHubView';
 import ListeningHubView from './ListeningHubView';
+import SpeakingHubView from './SpeakingHubView';
 import FullMockTestHub from './FullMockTestHub';
+import PartPracticeHub from './PartPracticeHub';
+import SpeakUIRestore from './SpeakUIRestore';
+import VocabularyMockView from './VocabularyMockView';
 import { DORMANT_NAV_ENABLED, DORMANT_NAV_KEYS } from './dormantNav';
 import SpacedRepetitionEngine from './enterprise/srs/SpacedRepetitionEngine';
 import StudentPortal from './enterprise/portal/StudentPortal';
@@ -378,7 +382,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
         switch (currentView) {
             case 'sandbox': return <IndividualSandboxView email={userEmail} />;
             case 'ielts_dashboard': return <IELTSEvaluationHub key="ielts_dashboard" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="dashboard" hideInternalNav />;
-            case 'speaking_studio': return <IELTSEvaluationHub key="speaking_studio" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="speaking" hideInternalNav />;
+            case 'speaking_studio': return <SpeakingHubView userEmail={userEmail} />;
             case 'listening_engine': return <ListeningHubView userEmail={userEmail} />;
             case 'reading_hub': return <ReadingHubView userEmail={userEmail} />;
             case 'writing_lab':
@@ -391,7 +395,11 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             case 'full_mock_test':
             case 'mock_tests':
                 return <FullMockTestHub userEmail={userEmail} onNavigate={(viewKey) => setCurrentView(viewKey)} />;
+            case 'part_practice': return <PartPracticeHub userEmail={userEmail} />;
+            case 'speak_ui_restore': return <SpeakUIRestore userEmail={userEmail} />;
             case 'ielts_evaluation': return <IELTSEvaluationHub userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} />;
+            case 'my_reports': return <IELTSEvaluationHub key="my_reports" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="dashboard" hideInternalNav />;
+            case 'vocabulary_mock': return <VocabularyMockView userEmail={userEmail} />;
             case 'leaderboard': return <LeaderboardView userEmail={userEmail} />;
             case 'streaks': return <StreaksView userEmail={userEmail} />;
             case 'ai_speaking_partner': return <AISpeakingPartnerView userEmail={userEmail} />;

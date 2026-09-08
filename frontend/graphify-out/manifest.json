@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "components/Dashboard.tsx": {
-    "mtime": 1788710870.793035,
-    "ast_hash": "2b628ddfaf5400945c565892c5ff8039",
+    "mtime": 1788883158.9893126,
+    "ast_hash": "1f67e57743f87f0558ca2133717ade9f",
     "semantic_hash": ""
   },
   "components/DebateView.tsx": {
@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "components/FreeContentLibraryView.tsx": {
-    "mtime": 1788772422.1844685,
-    "ast_hash": "d6854321fc5d4d825717cfa793dbd103",
+    "mtime": 1788775375.502411,
+    "ast_hash": "0cac735bbdf3d16d5df5bff3a0fa844a",
     "semantic_hash": ""
   },
   "components/HawkingFab.tsx": {
@@ -140,8 +140,8 @@
     "semantic_hash": ""
   },
   "components/LeaderboardView.tsx": {
-    "mtime": 1788692237.7469585,
-    "ast_hash": "c3d74a6c09727772079e0a11f5270ca6",
+    "mtime": 1788881572.074415,
+    "ast_hash": "9942a8abee61576def6a86405d7e8cba",
     "semantic_hash": ""
   },
   "components/LearningMethods1View.tsx": {
@@ -205,8 +205,8 @@
     "semantic_hash": ""
   },
   "components/Sidebar.tsx": {
-    "mtime": 1788710882.3212566,
-    "ast_hash": "a147883f484dc1e1db071dccb35c21b5",
+    "mtime": 1788883112.187037,
+    "ast_hash": "c80e02dfe26fd061347a2725f64acc63",
     "semantic_hash": ""
   },
   "components/SpaceView.tsx": {
@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "components/enterprise/history/ModuleHistorySection.tsx": {
-    "mtime": 1788380706.2766867,
-    "ast_hash": "bc56f64cb6474c5df626a69d804c49eb",
+    "mtime": 1788796034.5844848,
+    "ast_hash": "bd5cb67bdc722365c562e7846910b48d",
     "semantic_hash": ""
   },
   "components/enterprise/ielts/GrammarEvaluationCard.tsx": {
@@ -557,6 +557,51 @@
   "index.html": {
     "mtime": 1781293605.787356,
     "ast_hash": "fad97a45e558814379a47bda74f68b34",
+    "semantic_hash": ""
+  },
+  "components/FullMockTestHub.tsx": {
+    "mtime": 1788813044.9647298,
+    "ast_hash": "64ec5afc27f3506fae9e882f18e3d407",
+    "semantic_hash": ""
+  },
+  "components/ListeningHubView.tsx": {
+    "mtime": 1788811329.350035,
+    "ast_hash": "5e435c894ae8d5bac6f335e8c3ceec29",
+    "semantic_hash": ""
+  },
+  "components/NewSpeakingExamRunner.tsx": {
+    "mtime": 1788880558.0941088,
+    "ast_hash": "457ca6a908e9f8f0563f3561735706bd",
+    "semantic_hash": ""
+  },
+  "components/PartPracticeHub.tsx": {
+    "mtime": 1788860095.3431976,
+    "ast_hash": "760fafe637f82034767198035efd6e84",
+    "semantic_hash": ""
+  },
+  "components/ReadingHubView.tsx": {
+    "mtime": 1788793515.475543,
+    "ast_hash": "8a443e65ed6bbdc681db61242bb10cd5",
+    "semantic_hash": ""
+  },
+  "components/SpeakUIRestore.tsx": {
+    "mtime": 1788882943.470017,
+    "ast_hash": "ed610282829a3d7eb66f43fd4c16914a",
+    "semantic_hash": ""
+  },
+  "components/SpeakingHubView.tsx": {
+    "mtime": 1788880692.8618999,
+    "ast_hash": "0b9889f0c08e392a1d1f9be4f91764a8",
+    "semantic_hash": ""
+  },
+  "components/WritingHubView.tsx": {
+    "mtime": 1788795916.8844438,
+    "ast_hash": "96edf977e9ef7e22ca60a45ce335d35f",
+    "semantic_hash": ""
+  },
+  "components/VocabularyMockView.tsx": {
+    "mtime": 1788882926.3605216,
+    "ast_hash": "a911fdc208b25fe7968726582e22e60a",
     "semantic_hash": ""
   }
 }

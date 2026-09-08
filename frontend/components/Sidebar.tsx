@@ -9,7 +9,8 @@ import {
     ProfessorStudentIcon, DebatePodiumIcon, EdgramIcon, GlobeIcon,
     LocationTrackerIcon, LearningMethodIcon, ChevronDownIcon, CrownIcon,
     ViewSidebarIcon, CheckCircleIcon, DollarIcon, SidebarToggleIcon, CubeIcon, DotsHorizontalIcon, TrashIcon, ShareIcon, PencilIcon, ChevronRightIcon,
-    HomeIcon, ShieldCheckIcon, UserIcon, MicIcon, SpeakerWaveIcon, BookOpenIcon, LabIcon, FireIcon, PhoneIcon, ChatIcon, CalendarIcon
+    HomeIcon, ShieldCheckIcon, UserIcon, MicIcon, SpeakerWaveIcon, BookOpenIcon, LabIcon, FireIcon, PhoneIcon, ChatIcon, CalendarIcon,
+    LayersIcon
 } from './icons';
 import type { Space } from '../utils/mockDb';
 import WorkspaceDropdown from './WorkspaceDropdown';
@@ -49,33 +50,13 @@ interface SidebarProps {
 const navConfig = [
     {
         items: [
-            { name: 'Sandbox', icon: <CubeIcon className="w-5 h-5" />, key: 'sandbox' },
+            { name: 'Overview', icon: <CubeIcon className="w-5 h-5" />, key: 'sandbox' },
             { name: 'Study Plan', icon: <CalendarIcon className="w-5 h-5" />, key: 'study_plan' },
-            { name: 'Profile Workspace', icon: <UserIcon className="w-5 h-5" />, key: 'profile_workspace' },
-            { name: 'Spaced Repetition', icon: <RepeatIcon className="w-5 h-5" />, key: 'spaced_repetition' },
-            { name: 'Student Portal', icon: <InlineCampusIcon className="w-5 h-5" />, key: 'student_portal' },
-            { name: 'Add Content', icon: <PlusIcon className="w-5 h-5" />, key: 'add_content' },
-            { name: 'Add Courses', icon: <AddCoursesIcon className="w-5 h-5" />, key: 'add_courses' },
-            { name: 'Competitions', icon: <TrophyIcon className="w-5 h-5" />, key: 'competitions' },
-            { name: 'Projects', icon: <ProjectsResearchIcon className="w-5 h-5" />, key: 'projects' },
-            // Removed static "Create Space" from here
         ]
     },
     { type: 'separator' },
     {
-        items: [
-            { name: 'Research Lab', icon: <MicroscopeIcon className="w-5 h-5" />, key: 'research_lab' },
-            { name: 'Consult', icon: <ProfessorStudentIcon className="w-5 h-5" />, key: 'consult_professors' },
-            // Debate removed from here
-            { name: 'Edgram', icon: <EdgramIcon className="w-5 h-5" />, key: 'edgram' },
-            { name: 'Discover', icon: <GlobeIcon className="w-5 h-5" />, key: 'discover' },
-            { name: 'Tracker', icon: <LocationTrackerIcon className="w-5 h-5" />, key: 'tracker' },
-            { name: 'Learning Methods', icon: <LearningMethodIcon className="w-5 h-5" />, key: 'learning_methods_1' },
-        ]
-    },
-    { type: 'separator' },
-    {
-        label: 'Help & Tools',
+        label: 'Help & Tools / Other Settings',
         items: [
             { name: 'Feedback', icon: <FeedbackIcon className="w-5 h-5" />, key: 'feedback' },
             { name: 'Quick Guide', icon: <GuideIcon className="w-5 h-5" />, key: 'quick_guide' },
@@ -276,27 +257,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 {isExpanded && isMockTestsOpen && (
                                     <div className="border-l border-zinc-800 ml-4 pl-3 space-y-0.5 mb-1">
                                         <button
-                                            onClick={() => guardedNavigate('ielts_dashboard')}
+                                            onClick={() => guardedNavigate('vocabulary_mock')}
                                             className={`relative group w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${
-                                                activeItem === 'ielts_dashboard'
+                                                activeItem === 'vocabulary_mock'
                                                     ? 'bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-500'
                                                     : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.03]'
                                             }`}
                                         >
-                                            <HomeIcon className="w-4 h-4 shrink-0" />
-                                            <span>Dashboard</span>
-                                        </button>
-
-                                        <button
-                                            onClick={() => guardedNavigate('full_cambridge_mock')}
-                                            className={`relative group w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${
-                                                activeItem === 'full_cambridge_mock'
-                                                    ? 'bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-500'
-                                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.03]'
-                                            }`}
-                                        >
-                                            <TrophyIcon className="w-4 h-4 shrink-0" />
-                                            <span>Full Cambridge Mock</span>
+                                            <BookOpenIcon className="w-4 h-4 shrink-0" />
+                                            <span>Vocabulary Mock</span>
                                         </button>
 
                                         <button
@@ -308,7 +277,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                             }`}
                                         >
                                             <MicIcon className="w-4 h-4 shrink-0" />
-                                            <span>Speaking Studio</span>
+                                            <span>Speaking Tutorial</span>
                                         </button>
 
                                         <button
@@ -320,7 +289,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                             }`}
                                         >
                                             <SpeakerWaveIcon className="w-4 h-4 shrink-0" />
-                                            <span>Listening Engine</span>
+                                            <span>Listening</span>
                                         </button>
 
                                         <button
@@ -332,71 +301,56 @@ const Sidebar: React.FC<SidebarProps> = ({
                                             }`}
                                         >
                                             <BookOpenIcon className="w-4 h-4 shrink-0" />
-                                            <span>Reading Hub</span>
+                                            <span>Reading</span>
                                         </button>
 
-                                        <div>
-                                            <button
-                                                onClick={() => setIsWritingLabOpen(!isWritingLabOpen)}
-                                                className={`relative group w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${
-                                                    ['task2_checker', 'task1_academic', 'task1_general', 'writing_lab'].includes(activeItem)
-                                                        ? 'bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-500'
-                                                        : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.03]'
-                                                }`}
-                                            >
-                                                <LabIcon className="w-4 h-4 shrink-0" />
-                                                <span className="flex-1 text-left">Writing Lab</span>
-                                                <ChevronDownIcon className={`w-3 h-3 shrink-0 transition-transform duration-200 ${isWritingLabOpen ? '' : '-rotate-90'}`} />
-                                            </button>
-
-                                            {isExpanded && isWritingLabOpen && (
-                                                <div className="border-l border-zinc-800 ml-5 pl-3 space-y-0.5 mt-0.5 mb-1">
-                                                    <button
-                                                        onClick={() => guardedNavigate('task2_checker')}
-                                                        className={`w-full text-left rounded-md px-3 py-1.5 text-[12px] transition-colors ${
-                                                            activeItem === 'task2_checker'
-                                                                ? 'bg-emerald-500/10 text-emerald-400'
-                                                                : 'text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.03]'
-                                                        }`}
-                                                    >
-                                                        Task 2 Checker
-                                                    </button>
-                                                    <button
-                                                        onClick={() => guardedNavigate('task1_academic')}
-                                                        className={`w-full text-left rounded-md px-3 py-1.5 text-[12px] transition-colors ${
-                                                            activeItem === 'task1_academic'
-                                                                ? 'bg-emerald-500/10 text-emerald-400'
-                                                                : 'text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.03]'
-                                                        }`}
-                                                    >
-                                                        Task 1 Academic
-                                                    </button>
-                                                    <button
-                                                        onClick={() => guardedNavigate('task1_general')}
-                                                        className={`w-full text-left rounded-md px-3 py-1.5 text-[12px] transition-colors ${
-                                                            activeItem === 'task1_general'
-                                                                ? 'bg-emerald-500/10 text-emerald-400'
-                                                                : 'text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.03]'
-                                                        }`}
-                                                    >
-                                                        Task 1 General
-                                                    </button>
-                                                    <button
-                                                        onClick={() => guardedNavigate('writing_lab')}
-                                                        className={`w-full text-left rounded-md px-3 py-1.5 text-[12px] transition-colors ${
-                                                            activeItem === 'writing_lab'
-                                                                ? 'bg-emerald-500/10 text-emerald-400'
-                                                                : 'text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.03]'
-                                                        }`}
-                                                    >
-                                                        Mock Tests & Practice
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
+                                        <button
+                                            onClick={() => guardedNavigate('writing_lab')}
+                                            className={`relative group w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${
+                                                activeItem === 'writing_lab'
+                                                    ? 'bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-500'
+                                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.03]'
+                                            }`}
+                                        >
+                                            <LabIcon className="w-4 h-4 shrink-0" />
+                                            <span>Writing Class</span>
+                                        </button>
                                     </div>
                                 )}
                             </div>
+                        )}
+                        
+                        {/* Part Practice */}
+                        {sectionIndex === 0 && (
+                            <button
+                                onClick={() => guardedNavigate('part_practice')}
+                                className={`relative w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === 'part_practice' ? 'bg-red-950/40 text-red-400 border-r-2 border-red-500' : ''}${shakingKey === 'part_practice' && isShaking ? ' ring-2 ring-rose-500/80' : ''}`}
+                            >
+                                <div className={`${activeItem === 'part_practice' ? 'text-current' : iconColor} shrink-0`}>
+                                    <LayersIcon className="w-5 h-5" />
+                                </div>
+                                {isExpanded && (
+                                    <AnimatePresence>
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.2, delay: 0.05 }}
+                                            className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden"
+                                        >
+                                            Part Practice
+                                        </motion.span>
+                                    </AnimatePresence>
+                                )}
+                                {!isExpanded && (
+                                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-neutral-800 bg-black px-2.5 py-1.5 text-[11px] text-neutral-200 opacity-0 group-hover:opacity-100 pointer-events-none z-10 shadow-xl">
+                                        Part Practice
+                                    </span>
+                                )}
+                                {shakingKey === 'part_practice' && isShaking && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
+                                )}
+                            </button>
                         )}
                         
                         {/* AI Speaking Partner */}
@@ -533,6 +487,39 @@ const Sidebar: React.FC<SidebarProps> = ({
                             </button>
                         )}
                         
+                        {/* My Reports */}
+                        {sectionIndex === 0 && (
+                            <button
+                                onClick={() => guardedNavigate('my_reports')}
+                                className={`relative w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === 'my_reports' ? activeClasses : ''}${shakingKey === 'my_reports' && isShaking ? ' ring-2 ring-rose-500/80' : ''}`}
+                            >
+                                <div className={`${activeItem === 'my_reports' ? 'text-current' : iconColor} shrink-0`}>
+                                    <HomeIcon className="w-5 h-5" />
+                                </div>
+                                {isExpanded && (
+                                    <AnimatePresence>
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.2, delay: 0.05 }}
+                                            className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden"
+                                        >
+                                            My Reports
+                                        </motion.span>
+                                    </AnimatePresence>
+                                )}
+                                {!isExpanded && (
+                                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-neutral-800 bg-black px-2.5 py-1.5 text-[11px] text-neutral-200 opacity-0 group-hover:opacity-100 pointer-events-none z-10 shadow-xl">
+                                        My Reports
+                                    </span>
+                                )}
+                                {shakingKey === 'my_reports' && isShaking && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
+                                )}
+                            </button>
+                        )}
+                        
                         {/* Leaderboard */}
                         {sectionIndex === 0 && (
                             <button
@@ -594,6 +581,204 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     </span>
                                 )}
                                 {shakingKey === 'streaks' && isShaking && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
+                                )}
+                            </button>
+                        )}
+                        
+                        {/* Test Repetition */}
+                        {sectionIndex === 0 && (
+                            <button
+                                onClick={() => guardedNavigate('spaced_repetition')}
+                                className={`relative w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === 'spaced_repetition' ? activeClasses : ''}${shakingKey === 'spaced_repetition' && isShaking ? ' ring-2 ring-rose-500/80' : ''}`}
+                            >
+                                <div className={`${activeItem === 'spaced_repetition' ? 'text-current' : iconColor} shrink-0`}>
+                                    <RepeatIcon className="w-5 h-5" />
+                                </div>
+                                {isExpanded && (
+                                    <AnimatePresence>
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.2, delay: 0.05 }}
+                                            className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden"
+                                        >
+                                            Test Repetition
+                                        </motion.span>
+                                    </AnimatePresence>
+                                )}
+                                {!isExpanded && (
+                                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-neutral-800 bg-black px-2.5 py-1.5 text-[11px] text-neutral-200 opacity-0 group-hover:opacity-100 pointer-events-none z-10 shadow-xl">
+                                        Test Repetition
+                                    </span>
+                                )}
+                                {shakingKey === 'spaced_repetition' && isShaking && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
+                                )}
+                            </button>
+                        )}
+                        
+                        {/* Student Portal */}
+                        {sectionIndex === 0 && (
+                            <button
+                                onClick={() => guardedNavigate('student_portal')}
+                                className={`relative w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === 'student_portal' ? activeClasses : ''}${shakingKey === 'student_portal' && isShaking ? ' ring-2 ring-rose-500/80' : ''}`}
+                            >
+                                <div className={`${activeItem === 'student_portal' ? 'text-current' : iconColor} shrink-0`}>
+                                    <InlineCampusIcon className="w-5 h-5" />
+                                </div>
+                                {isExpanded && (
+                                    <AnimatePresence>
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.2, delay: 0.05 }}
+                                            className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden"
+                                        >
+                                            Student Portal
+                                        </motion.span>
+                                    </AnimatePresence>
+                                )}
+                                {!isExpanded && (
+                                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-neutral-800 bg-black px-2.5 py-1.5 text-[11px] text-neutral-200 opacity-0 group-hover:opacity-100 pointer-events-none z-10 shadow-xl">
+                                        Student Portal
+                                    </span>
+                                )}
+                                {shakingKey === 'student_portal' && isShaking && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
+                                )}
+                            </button>
+                        )}
+                        
+                        {/* Add Content */}
+                        {sectionIndex === 0 && (
+                            <button
+                                onClick={() => guardedNavigate('add_content')}
+                                className={`relative w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === 'add_content' ? activeClasses : ''}${shakingKey === 'add_content' && isShaking ? ' ring-2 ring-rose-500/80' : ''}`}
+                            >
+                                <div className={`${activeItem === 'add_content' ? 'text-current' : iconColor} shrink-0`}>
+                                    <PlusIcon className="w-5 h-5" />
+                                </div>
+                                {isExpanded && (
+                                    <AnimatePresence>
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.2, delay: 0.05 }}
+                                            className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden"
+                                        >
+                                            Add Content
+                                        </motion.span>
+                                    </AnimatePresence>
+                                )}
+                                {!isExpanded && (
+                                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-neutral-800 bg-black px-2.5 py-1.5 text-[11px] text-neutral-200 opacity-0 group-hover:opacity-100 pointer-events-none z-10 shadow-xl">
+                                        Add Content
+                                    </span>
+                                )}
+                                {shakingKey === 'add_content' && isShaking && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
+                                )}
+                            </button>
+                        )}
+                        
+                        {/* Project */}
+                        {sectionIndex === 0 && (
+                            <button
+                                onClick={() => guardedNavigate('projects')}
+                                className={`relative w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === 'projects' ? activeClasses : ''}${shakingKey === 'projects' && isShaking ? ' ring-2 ring-rose-500/80' : ''}`}
+                            >
+                                <div className={`${activeItem === 'projects' ? 'text-current' : iconColor} shrink-0`}>
+                                    <ProjectsResearchIcon className="w-5 h-5" />
+                                </div>
+                                {isExpanded && (
+                                    <AnimatePresence>
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.2, delay: 0.05 }}
+                                            className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden"
+                                        >
+                                            Project
+                                        </motion.span>
+                                    </AnimatePresence>
+                                )}
+                                {!isExpanded && (
+                                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-neutral-800 bg-black px-2.5 py-1.5 text-[11px] text-neutral-200 opacity-0 group-hover:opacity-100 pointer-events-none z-10 shadow-xl">
+                                        Project
+                                    </span>
+                                )}
+                                {shakingKey === 'projects' && isShaking && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
+                                )}
+                            </button>
+                        )}
+                        
+                        {/* Speak UI Restore */}
+                        {sectionIndex === 0 && (
+                            <button
+                                onClick={() => guardedNavigate('speak_ui_restore')}
+                                className={`relative w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === 'speak_ui_restore' ? activeClasses : ''}${shakingKey === 'speak_ui_restore' && isShaking ? ' ring-2 ring-rose-500/80' : ''}`}
+                            >
+                                <div className={`${activeItem === 'speak_ui_restore' ? 'text-current' : iconColor} shrink-0`}>
+                                    <MicIcon className="w-5 h-5" />
+                                </div>
+                                {isExpanded && (
+                                    <AnimatePresence>
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.2, delay: 0.05 }}
+                                            className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden"
+                                        >
+                                            Speak UI Restore
+                                        </motion.span>
+                                    </AnimatePresence>
+                                )}
+                                {!isExpanded && (
+                                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-neutral-800 bg-black px-2.5 py-1.5 text-[11px] text-neutral-200 opacity-0 group-hover:opacity-100 pointer-events-none z-10 shadow-xl">
+                                        Speak UI Restore
+                                    </span>
+                                )}
+                                {shakingKey === 'speak_ui_restore' && isShaking && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
+                                )}
+                            </button>
+                        )}
+                        
+                        {/* Learning Method */}
+                        {sectionIndex === 0 && (
+                            <button
+                                onClick={() => guardedNavigate('learning_methods_1')}
+                                className={`relative w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === 'learning_methods_1' ? activeClasses : ''}${shakingKey === 'learning_methods_1' && isShaking ? ' ring-2 ring-rose-500/80' : ''}`}
+                            >
+                                <div className={`${activeItem === 'learning_methods_1' ? 'text-current' : iconColor} shrink-0`}>
+                                    <LearningMethodIcon className="w-5 h-5" />
+                                </div>
+                                {isExpanded && (
+                                    <AnimatePresence>
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.2, delay: 0.05 }}
+                                            className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden"
+                                        >
+                                            Learning Method
+                                        </motion.span>
+                                    </AnimatePresence>
+                                )}
+                                {!isExpanded && (
+                                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-neutral-800 bg-black px-2.5 py-1.5 text-[11px] text-neutral-200 opacity-0 group-hover:opacity-100 pointer-events-none z-10 shadow-xl">
+                                        Learning Method
+                                    </span>
+                                )}
+                                {shakingKey === 'learning_methods_1' && isShaking && (
                                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
                                 )}
                             </button>
