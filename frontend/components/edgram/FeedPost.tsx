@@ -11,7 +11,7 @@ const tierBorderColor: Record<string, string> = {
 
 const FeedPost: React.FC<{ post: Post; index: number }> = ({ post, index }) => {
     return (
-        <div className="dark:bg-black bg-white border-b dark:border-gray-800 border-neutral-200 pb-6">
+        <div className="dark:bg-black bg-white border-b dark:border-border border-neutral-200 pb-6">
             {/* Header */}
             <div className="flex items-center py-3 px-1">
                 <div className="p-[2px] rounded-full bg-gradient-to-tr from-yellow-400 to-fuchsia-600 mr-3">
@@ -27,7 +27,7 @@ const FeedPost: React.FC<{ post: Post; index: number }> = ({ post, index }) => {
             </div>
 
             {/* Image */}
-            <div className="relative aspect-square dark:bg-gray-900 bg-neutral-100 rounded-sm overflow-hidden border dark:border-gray-800 border-neutral-200">
+            <div className="relative aspect-square dark:bg-gray-900 bg-neutral-100 rounded-sm overflow-hidden border dark:border-border border-neutral-200">
                 <img src={post.image} alt="Post content" className="w-full h-full object-cover" />
             </div>
 

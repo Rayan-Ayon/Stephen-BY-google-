@@ -35,7 +35,7 @@ const BaseModal: React.FC<ModalProps> = ({ onClose, title, children, ctaText, on
             >
                 <div className="flex items-center justify-between px-8 py-7">
                     <div className="flex items-center gap-3">
-                        {icon && <div className="text-white bg-[#1a1a1a] p-2 rounded-lg border border-white/10">{icon}</div>}
+                        {icon && <div className="text-white bg-surfaceAlt p-2 rounded-lg border border-white/10">{icon}</div>}
                         <h2 className="text-[20px] font-medium dark:text-white text-black tracking-tight leading-none">{title}</h2>
                     </div>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-800/50 transition-colors"><XIcon className="w-5 h-5 text-gray-400" /></button>
@@ -81,7 +81,7 @@ export const ShareSpaceModal: React.FC<{ onClose: () => void }> = ({ onClose }) 
             <div className="space-y-4">
                 <button 
                     onClick={() => setAccess('private')}
-                    className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${access === 'private' ? 'dark:bg-[#1a1a1a] dark:border-white/20 bg-neutral-100 border-neutral-300' : 'dark:border-white/5 border-neutral-200 hover:dark:bg-[#111] hover:bg-neutral-50'}`}
+                    className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${access === 'private' ? 'dark:bg-surfaceAlt dark:border-white/20 bg-neutral-100 border-neutral-300' : 'dark:border-white/5 border-neutral-200 hover:dark:bg-[#111] hover:bg-neutral-50'}`}
                 >
                     <div className="flex items-center gap-4">
                         <div className="p-2 rounded-full dark:bg-[#222] bg-white">
@@ -97,7 +97,7 @@ export const ShareSpaceModal: React.FC<{ onClose: () => void }> = ({ onClose }) 
 
                 <button 
                     onClick={() => setAccess('public')}
-                    className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${access === 'public' ? 'dark:bg-[#1a1a1a] dark:border-white/20 bg-neutral-100 border-neutral-300' : 'dark:border-white/5 border-neutral-200 hover:dark:bg-[#111] hover:bg-neutral-50'}`}
+                    className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${access === 'public' ? 'dark:bg-surfaceAlt dark:border-white/20 bg-neutral-100 border-neutral-300' : 'dark:border-white/5 border-neutral-200 hover:dark:bg-[#111] hover:bg-neutral-50'}`}
                 >
                     <div className="flex items-center gap-4">
                         <div className="p-2 rounded-full dark:bg-[#222] bg-white">
@@ -144,7 +144,7 @@ export const FlashcardModal: React.FC<{ onClose: () => void; onConfirm: (setting
                     <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Select topics</label>
                     <div className="mt-2 p-3 dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                            <span className="text-[12px] font-bold bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-white/5 flex items-center">
+                            <span className="text-[12px] font-bold bg-surfaceAlt px-3 py-1.5 rounded-lg border border-white/5 flex items-center">
                                 Selected All Topics <XIcon className="w-3 h-3 ml-2 text-gray-500" />
                             </span>
                             <button className="text-[12px] font-bold text-gray-500 hover:text-white flex items-center">
@@ -183,7 +183,7 @@ export const QuizModal: React.FC<{ onClose: () => void, onGenerate?: (config: { 
     const pillClasses = (isSelected: boolean) => `flex-1 py-2.5 text-[13px] font-bold rounded-full border transition-all flex items-center justify-center space-x-1.5 ${
         isSelected 
         ? 'dark:bg-[#1a2333] dark:border-blue-500/30 bg-blue-50 border-blue-200 text-blue-600 dark:text-blue-400' 
-        : 'dark:bg-transparent dark:border-gray-800 bg-white border-neutral-200 dark:text-gray-400 text-neutral-600 hover:dark:bg-[#1a1a1a] hover:bg-neutral-50'
+        : 'dark:bg-transparent dark:border-border bg-white border-neutral-200 dark:text-gray-400 text-neutral-600 hover:dark:bg-surfaceAlt hover:bg-neutral-50'
     }`;
 
     return (
@@ -251,7 +251,7 @@ export const PodcastModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
                     <div>
                         <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Voice 1</label>
                          <div className="relative">
-                            <select className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-300 rounded-xl p-4 appearance-none text-sm dark:text-white focus:outline-none">
+                            <select className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-border border-neutral-300 rounded-xl p-4 appearance-none text-sm dark:text-white focus:outline-none">
                                 <option>Charon</option>
                                 <option>Laomedeia</option>
                             </select>
@@ -261,7 +261,7 @@ export const PodcastModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
                      <div>
                         <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Voice 2</label>
                         <div className="relative">
-                            <select className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-300 rounded-xl p-4 appearance-none text-sm dark:text-white focus:outline-none">
+                            <select className="w-full dark:bg-[#0d0d0d] bg-white border dark:border-border border-neutral-300 rounded-xl p-4 appearance-none text-sm dark:text-white focus:outline-none">
                                 <option>Laomedeia</option>
                                 <option>Charon</option>
                             </select>
@@ -273,7 +273,7 @@ export const PodcastModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
                     <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Length</label>
                     <div className="flex space-x-2">
                         {['Short', 'Default', 'Detailed'].map(len => (
-                             <button key={len} onClick={() => setLength(len)} className={`flex-1 py-3 text-[13px] font-bold border rounded-xl transition-all ${length === len ? 'dark:bg-[#1a1a1a] border-white text-white' : 'dark:bg-transparent dark:border-gray-800 dark:text-gray-500'}`}>{len}</button>
+                             <button key={len} onClick={() => setLength(len)} className={`flex-1 py-3 text-[13px] font-bold border rounded-xl transition-all ${length === len ? 'dark:bg-surfaceAlt border-white text-white' : 'dark:bg-transparent dark:border-border dark:text-gray-500'}`}>{len}</button>
                         ))}
                     </div>
                 </div>
@@ -281,7 +281,7 @@ export const PodcastModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
                     <label className="text-sm font-bold dark:text-white text-neutral-800 block mb-2">Topics (Optional)</label>
                     <div className="p-3 dark:bg-[#0d0d0d] bg-white border dark:border-gray-700 border-neutral-300 rounded-xl flex items-center justify-between">
                          <div className="flex items-center space-x-2">
-                            <span className="text-[12px] font-bold bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-white/5">Selected All Topics x</span>
+                            <span className="text-[12px] font-bold bg-surfaceAlt px-3 py-1.5 rounded-lg border border-white/5">Selected All Topics x</span>
                             <span className="text-[12px] font-bold text-gray-500">Show all items {'>'}</span>
                          </div>
                          <XIcon className="w-5 h-5 text-gray-600" />
@@ -325,7 +325,7 @@ export const SummaryModal: React.FC<{ onClose: () => void; onGenerate?: () => vo
                             <button 
                                 key={template.id} 
                                 onClick={() => setSelectedTemplate(template.id)}
-                                className={`w-full text-left flex items-start p-4 border rounded-[16px] transition-all duration-200 ${selectedTemplate === template.id ? 'dark:bg-[#1a1a1a] dark:border-white/20 border-gray-300 bg-neutral-50' : 'dark:bg-[#0d0d0d] dark:border-white/5 border-neutral-100'}`}
+                                className={`w-full text-left flex items-start p-4 border rounded-[16px] transition-all duration-200 ${selectedTemplate === template.id ? 'dark:bg-surfaceAlt dark:border-white/20 border-gray-300 bg-neutral-50' : 'dark:bg-[#0d0d0d] dark:border-white/5 border-neutral-100'}`}
                             >
                                 <div className="mt-1 mr-4 shrink-0">
                                     <div className={`w-5 h-5 rounded-full border-2 transition-all flex items-center justify-center ${selectedTemplate === template.id ? 'dark:border-white border-black' : 'dark:border-white/20 border-gray-300'}`}>
@@ -623,7 +623,7 @@ export const UpgradeModal: React.FC<{ onClose: () => void, onNavigateToPricing: 
                         onClick={() => setBillingCycle('monthly')}
                         className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
                             billingCycle === 'monthly' 
-                            ? 'bg-[#1a1a1a] border-gray-600' 
+                            ? 'bg-surfaceAlt border-gray-600' 
                             : 'bg-[#111] border-[#2a2a2a] hover:border-gray-700'
                         }`}
                     >

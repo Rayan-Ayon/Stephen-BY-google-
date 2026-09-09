@@ -79,7 +79,7 @@ const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ moduleFilte
     const filterLabel = moduleFilter ? TASK_LABELS[moduleFilter] ?? 'Writing History' : 'Writing History Matrix';
 
     return (
-        <section className="rounded-2xl bg-[#141414] border border-neutral-800 p-6">
+        <section className="rounded-2xl bg-surface border border-neutral-800 p-6">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold tracking-tight text-white">
                     {filterLabel}
@@ -95,7 +95,7 @@ const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ moduleFilte
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                    className="px-3 py-2 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-[11px] text-neutral-300 outline-none focus:border-neutral-600"
+                    className="px-3 py-2 rounded-lg bg-canvas border border-neutral-800 text-[11px] text-neutral-300 outline-none focus:border-neutral-600"
                 >
                     {(Object.keys(STATUS_LABEL) as StatusFilter[]).map((s) => (
                         <option key={s} value={s}>
@@ -200,7 +200,7 @@ const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ moduleFilte
                         <h4 className="text-sm font-semibold text-white mb-2">Clear Writing History?</h4>
                         <p className="text-xs text-neutral-400 mb-4">This will remove all writing attempts. This action cannot be undone.</p>
                         <div className="flex gap-2 justify-end">
-                            <button onClick={() => setConfirmClear(false)} className="px-4 py-2 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-xs text-neutral-300 hover:border-neutral-600 transition-colors">Cancel</button>
+                            <button onClick={() => setConfirmClear(false)} className="px-4 py-2 rounded-lg bg-canvas border border-neutral-800 text-xs text-neutral-300 hover:border-neutral-600 transition-colors">Cancel</button>
                             <button onClick={handleClear} className="px-4 py-2 rounded-lg bg-red-500/20 border border-red-500/40 text-xs text-red-400 hover:bg-red-500/30 transition-colors">Clear All</button>
                         </div>
                     </div>

@@ -25,7 +25,7 @@ const DebateSidebar: React.FC<{
     onSelectDebate: (id: number) => void;
     activeDebateId: number | null;
 }> = ({ onNewDebate, debateHistory, onSelectDebate, activeDebateId }) => (
-    <aside className="w-72 dark:bg-[#131313] bg-neutral-100 border-r dark:border-gray-800/50 border-neutral-200 p-6 pt-20 flex flex-col shrink-0">
+    <aside className="w-72 dark:bg-[#131313] bg-neutral-100 border-r dark:border-border/50 border-neutral-200 p-6 pt-20 flex flex-col shrink-0">
         <h1 className="text-3xl font-bold dark:text-white text-black mb-2" style={{ fontFamily: "'Lora', serif" }}>Debate</h1>
         <p className="text-sm dark:text-gray-400 text-neutral-500 mb-8">Place where you can debate with the Hawking in any topics.</p>
         <button 
@@ -214,7 +214,7 @@ const DebateView: React.FC<DebateViewProps> = ({ initialMessage }) => {
 
     const renderChatUI = () => (
         <div className="flex-1 flex flex-col h-full w-full max-w-4xl mx-auto pt-20 lg:pt-0">
-            <div className="relative flex items-center justify-center p-4 border-b dark:border-gray-800 border-neutral-200 shrink-0">
+            <div className="relative flex items-center justify-center p-4 border-b dark:border-border border-neutral-200 shrink-0">
                 <h2 className="text-lg font-semibold dark:text-white text-black" style={{ fontFamily: "'Lora', serif" }}>DebateBot</h2>
             </div>
             <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-6 p-6">
@@ -230,7 +230,7 @@ const DebateView: React.FC<DebateViewProps> = ({ initialMessage }) => {
                                 <BrainIcon className="w-5 h-5 text-orange-500" />
                             </div>
                         )}
-                        <div className={`p-4 rounded-2xl max-w-lg ${msg.role === 'user' ? 'dark:bg-gray-700 bg-neutral-800 text-white rounded-br-none' : 'dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 dark:text-gray-300 text-neutral-800 rounded-bl-none'}`}>
+                        <div className={`p-4 rounded-2xl max-w-lg ${msg.role === 'user' ? 'dark:bg-gray-700 bg-neutral-800 text-white rounded-br-none' : 'dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-border border-neutral-200 dark:text-gray-300 text-neutral-800 rounded-bl-none'}`}>
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                         </div>
                          {msg.role === 'user' && (

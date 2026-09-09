@@ -101,7 +101,7 @@ const LearningMethods1View: React.FC = () => {
             </div>
 
             {/* Sidebar: 4 cols */}
-            <aside className="w-96 border-l dark:border-gray-800 border-neutral-200 p-6 pt-24 overflow-y-auto hidden lg:block shrink-0 dark:bg-black bg-neutral-50">
+            <aside className="w-96 border-l dark:border-border border-neutral-200 p-6 pt-24 overflow-y-auto hidden lg:block shrink-0 dark:bg-black bg-neutral-50">
                 <DiagnosticsSidebar
                     methods={seedMethodsLm1}
                     selectedIds={selectedIds}

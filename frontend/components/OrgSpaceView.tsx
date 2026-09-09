@@ -9,6 +9,19 @@ import {
 } from './icons';
 import AICoPilotTestAuthor from './enterprise/curriculum/AICoPilotTestAuthor';
 import InstituteKnowledgeBase from './enterprise/curriculum/InstituteKnowledgeBase';
+import AtRiskRadar from './enterprise/org/AtRiskRadar';
+import MisconceptionLog from './enterprise/org/MisconceptionLog';
+import HandwrittenQueue from './enterprise/org/HandwrittenQueue';
+import SpeakingAudits from './enterprise/org/SpeakingAudits';
+import TeacherOverride from './enterprise/org/TeacherOverride';
+import MissionBuilder from './enterprise/org/MissionBuilder';
+import MockDeployment from './enterprise/org/MockDeployment';
+import BatchRoster from './enterprise/org/BatchRoster';
+import BrandingSettings from './enterprise/org/BrandingSettings';
+import AIPromptRules from './enterprise/org/AIPromptRules';
+import BillingLicenses from './enterprise/org/BillingLicenses';
+import DashboardView from './DashboardView';
+import RightSidebar from './RightSidebar';
 
 // ── Types ──
 
@@ -72,14 +85,25 @@ const navGroups: NavGroup[] = [
     {
         label: 'Cohort Telemetry', icon: <BarChartIcon className="w-4 h-4" />, key: 'telemetry',
         subItems: [
+            { label: 'At-Risk Radar & Alerts', key: 'at_risk_radar' },
             { label: 'Daily Engagements', key: 'daily_engagements' },
-            { label: 'Performance Analytics', key: 'performance_analytics' },
+            { label: 'Skill Performance & Gaps', key: 'performance_analytics' },
+            { label: 'Misconception Log (AI)', key: 'misconception_log' },
+        ],
+    },
+    {
+        label: 'Evaluation Studio', icon: <MicIcon className="w-4 h-4" />, key: 'evaluation',
+        subItems: [
+            { label: 'Handwritten Essay Queue', key: 'handwritten_queue' },
+            { label: 'Speaking Audio Audits', key: 'speaking_audits' },
+            { label: 'Teacher Review & Override', key: 'teacher_override' },
         ],
     },
     {
         label: 'Curriculum Assets', icon: <BookOpenIcon className="w-4 h-4" />, key: 'curriculum',
         subItems: [
-            { label: 'Course Deployment', key: 'course_deployment' },
+            { label: 'Study Plan & Mission Builder', key: 'mission_builder' },
+            { label: 'Cambridge Mock Deployment', key: 'mock_deployment' },
             { label: 'Institute Knowledge Base', key: 'vector_repos' },
             { label: '⚡ AI Co-Pilot Test Author', key: 'ai-test-author' },
         ],
@@ -87,17 +111,25 @@ const navGroups: NavGroup[] = [
     {
         label: 'Identity & Seats', icon: <LockClosedIcon className="w-4 h-4" />, key: 'identity',
         subItems: [
-            { label: 'License Allocation', key: 'license_seats' },
-            { label: 'LMS & Portal Bridges', key: 'sso_gateways' },
+            { label: 'Batch & Candidate Roster', key: 'batch_roster' },
+            { label: 'License & AI Coin Allocation', key: 'license_seats' },
             { label: 'Role & Access Manager', key: 'role_access_manager' },
+            { label: 'LMS & Portal Bridges', key: 'sso_gateways' },
         ],
     },
-    { label: 'Node Settings', icon: <SettingsIcon className="w-4 h-4" />, key: 'settings', isLeaf: true, leafKey: 'node_settings' },
+    {
+        label: 'Node Settings', icon: <SettingsIcon className="w-4 h-4" />, key: 'settings',
+        subItems: [
+            { label: 'White-Label Branding', key: 'branding_settings' },
+            { label: 'Custom AI Prompts & Rules', key: 'ai_prompt_rules' },
+            { label: 'Billing & Licenses', key: 'billing_licenses' },
+        ],
+    },
 ];
 
 const allowedNavKeysFor = (role: 'super_admin' | 'instructor' | 'operator'): Set<string> => {
-    if (role === 'super_admin') return new Set(['overview', 'telemetry', 'curriculum', 'identity', 'settings']);
-    return new Set(['overview', 'telemetry', 'curriculum']);
+    if (role === 'super_admin') return new Set(['overview', 'telemetry', 'evaluation', 'curriculum', 'identity', 'settings']);
+    return new Set(['overview', 'telemetry', 'evaluation', 'curriculum']);
 };
 
 const students: StudentTelemetry[] = [
@@ -1209,9 +1241,9 @@ const RoleAccessManager: React.FC<{
 // ── Component ──
 
 const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
-    const [currentSection, setCurrentSection] = useState('telemetry');
-    const [currentSubView, setCurrentSubView] = useState('daily_engagements');
-    const [expandedSection, setExpandedSection] = useState<string | null>('telemetry');
+    const [currentSection, setCurrentSection] = useState('overview');
+    const [currentSubView, setCurrentSubView] = useState('overview_main');
+    const [expandedSection, setExpandedSection] = useState<string | null>(null);
     const [engagementTab, setEngagementTab] = useState('Videos');
     const [hoveredProfileId, setHoveredProfileId] = useState<string | null>(null);
     const [simulatedSessionRole, setSimulatedSessionRole] = useState<'super_admin' | 'instructor' | 'operator'>('super_admin');
@@ -1222,6 +1254,34 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
     const [dispatchModal, setDispatchModal] = useState<{ open: boolean; student: { name: string; id: string; deficiency: string } | null }>({ open: false, student: null });
     const [reportModal, setReportModal] = useState<{ open: boolean; studentId: string | null }>({ open: false, studentId: null });
     const [ownerApprovalQueue, setOwnerApprovalQueue] = useState<OwnerApprovalItem[]>([]);
+
+    const orgSession = useMemo(() => {
+        try {
+            const raw = localStorage.getItem('stephen_active_tenant_session');
+            return raw ? JSON.parse(raw) : null;
+        } catch { return null; }
+    }, []);
+    const userEmail = orgSession?.email || 'owner@farmgateielts.com';
+
+    const handleOverviewNavigate = (view: string) => {
+        const viewMap: Record<string, string> = {
+            reading_hub: 'course_deployment',
+            listening_engine: 'course_deployment',
+            writing_lab: 'course_deployment',
+            speaking_studio: 'course_deployment',
+            study_plan: 'mission_builder',
+            leaderboard: 'performance_analytics',
+        };
+        const target = viewMap[view];
+        if (target) {
+            const group = navGroups.find(g => g.leafKey === target || g.subItems?.some(s => s.key === target));
+            if (group) {
+                setCurrentSection(group.key);
+                setExpandedSection(group.isLeaf ? null : group.key);
+            }
+            setCurrentSubView(target);
+        }
+    };
 
     const sortedStudents = useMemo(() => {
         return [...students].sort((a, b) => getTabMetric(b, engagementTab) - getTabMetric(a, engagementTab));
@@ -1266,11 +1326,8 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
     };
 
     const visibleNavGroups = useMemo(() => {
-        const withEval = navGroups.map(g => g.key === 'telemetry'
-            ? { ...g, subItems: [...(g.subItems ?? []), { label: 'Evaluation Queue', key: 'evaluation_queue' }, { label: 'Teacher Review Studio', key: 'teacher_review_studio' }] }
-            : g);
         const allowed = allowedNavKeysFor(simulatedSessionRole);
-        return withEval.filter(g => allowed.has(g.key));
+        return navGroups.filter(g => allowed.has(g.key));
     }, [simulatedSessionRole]);
 
     const currentSectionLocked = !allowedNavKeysFor(simulatedSessionRole).has(currentSection);
@@ -1510,54 +1567,14 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                 )}
 
                 {currentSubView === 'overview_main' && (
-                    <>
-                        <h2 className="text-2xl font-semibold tracking-tight text-white mb-6">
-                            Institute Operational Node // System Performance & AI Ingestion
-                        </h2>
-                        <div className="grid grid-cols-3 gap-4 mb-6">
-                            {overviewMetrics.map(m => (
-                                <div key={m.label} className="bg-[#0a0a0a] border border-neutral-800 rounded-lg p-4">
-                                    <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-1">{m.label}</p>
-                                    <p className="text-2xl font-semibold tracking-tight text-white">{m.value}</p>
-                                    {m.subtext && <p className="text-xs text-neutral-400 mt-1 font-mono">{m.subtext}</p>}
-                                </div>
-                            ))}
+                    <div className="flex gap-6">
+                        <div className="flex-[7] min-w-0">
+                            <DashboardView userEmail={userEmail} onNavigate={handleOverviewNavigate} />
                         </div>
-                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5 mb-6">
-                            <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-4">INSTITUTE BAND GROWTH TRAJECTORY (24H)</p>
-                            <svg viewBox="0 0 600 120" className="w-full h-24">
-                                <polyline points="0,90 40,70 80,80 120,40 160,50 200,20 240,35 280,55 320,30 360,45 400,15 440,25 480,50 520,35 560,10 600,30" fill="none" stroke="#555" strokeWidth="1.5" />
-                                <polyline points="0,95 40,75 80,85 120,45 160,55 200,25 240,40 280,60 320,35 360,50 400,20 440,30 480,55 520,40 560,15 600,35" fill="none" stroke="#888" strokeWidth="0.8" opacity="0.5" />
-                            </svg>
+                        <div className="flex-[3] min-w-0">
+                            <RightSidebar onNavigate={handleOverviewNavigate} />
                         </div>
-                        <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5">
-                            <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-4">INSTITUTE REAL-TIME AUDIT LOG</p>
-                            <div className="space-y-2">
-                                {auditLogs.map((task, i) => (
-                                    <div key={i} className="flex items-start gap-3 py-2 border-b border-neutral-800 last:border-b-0">
-                                        <ClockIcon className="w-3.5 h-3.5 text-neutral-600 mt-0.5 shrink-0" />
-                                        <p className="text-xs text-neutral-400">{task}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        {ownerApprovalQueue.length > 0 && (
-                            <div className="bg-[#0a0a0a] border border-amber-500/30 rounded-xl p-5 mt-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <p className="text-[10px] font-medium uppercase tracking-wider text-amber-400">Owner Approval Queue // Sign-off Gate</p>
-                                    <span className="text-[10px] font-mono font-semibold text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded">{ownerApprovalQueue.length} Pending</span>
-                                </div>
-                                <div className="space-y-2">
-                                    {ownerApprovalQueue.map(item => (
-                                        <div key={item.id} className="flex items-start gap-3 py-2 border-b border-neutral-800 last:border-b-0">
-                                            <span className="text-amber-400 mt-0.5">⭐</span>
-                                            <p className="text-xs text-neutral-300">{item.label} <span className="text-neutral-500 font-mono text-[10px]">// {item.ts}</span></p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </>
+                    </div>
                 )}
 
                 <BatchForecastWidget />
@@ -1811,11 +1828,29 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                     <AICoPilotTestAuthor />
                 )}
 
+                {currentSubView === 'at_risk_radar' && <AtRiskRadar />}
+                {currentSubView === 'misconception_log' && <MisconceptionLog />}
+                {currentSubView === 'handwritten_queue' && <HandwrittenQueue />}
+                {currentSubView === 'speaking_audits' && <SpeakingAudits />}
+                {currentSubView === 'teacher_override' && <TeacherOverride />}
+                {currentSubView === 'mission_builder' && <MissionBuilder />}
+                {currentSubView === 'mock_deployment' && <MockDeployment />}
+                {currentSubView === 'batch_roster' && <BatchRoster />}
+                {currentSubView === 'branding_settings' && <BrandingSettings />}
+                {currentSubView === 'ai_prompt_rules' && <AIPromptRules />}
+                {currentSubView === 'billing_licenses' && <BillingLicenses />}
+
                 {currentSubView !== 'daily_engagements' && currentSubView !== 'license_seats'
                     && currentSubView !== 'overview_main' && currentSubView !== 'performance_analytics'
                     && currentSubView !== 'course_deployment' && currentSubView !== 'vector_repos'
                     && currentSubView !== 'ai-test-author' && currentSubView !== 'sso_gateways' && currentSubView !== 'node_settings'
-                    && currentSubView !== 'evaluation_queue' && currentSubView !== 'role_access_manager' && (
+                    && currentSubView !== 'evaluation_queue' && currentSubView !== 'role_access_manager'
+                    && currentSubView !== 'at_risk_radar' && currentSubView !== 'misconception_log'
+                    && currentSubView !== 'handwritten_queue' && currentSubView !== 'speaking_audits'
+                    && currentSubView !== 'teacher_override' && currentSubView !== 'mission_builder'
+                    && currentSubView !== 'mock_deployment' && currentSubView !== 'batch_roster'
+                    && currentSubView !== 'branding_settings' && currentSubView !== 'ai_prompt_rules'
+                    && currentSubView !== 'billing_licenses' && (
                     <div className="flex items-center justify-center h-full">
                         <p className="text-sm text-neutral-600">
                             {currentSubView.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}

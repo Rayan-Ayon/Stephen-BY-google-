@@ -76,7 +76,7 @@ const IndividualSandboxView: React.FC<IndividualSandboxViewProps> = ({ email }) 
     };
 
     return (
-        <div className="flex-1 h-full bg-[#0b0b0b] p-8 lg:p-12 overflow-y-auto">
+        <div className="flex-1 h-full bg-canvas p-8 lg:p-12 overflow-y-auto">
             <div className="max-w-4xl mx-auto space-y-8">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
@@ -91,21 +91,21 @@ const IndividualSandboxView: React.FC<IndividualSandboxViewProps> = ({ email }) 
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="rounded-2xl bg-[#141414] border border-neutral-800 p-5">
+                    <div className="rounded-2xl bg-surface border border-neutral-800 p-5">
                         <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">Prompts Run</p>
                         <p className="mt-2 text-2xl font-semibold tracking-tight text-white">{prompts.length}</p>
                     </div>
-                    <div className="rounded-2xl bg-[#141414] border border-neutral-800 p-5">
+                    <div className="rounded-2xl bg-surface border border-neutral-800 p-5">
                         <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">History Entries</p>
                         <p className="mt-2 text-2xl font-semibold tracking-tight text-white">{prompts.length}</p>
                     </div>
-                    <div className="rounded-2xl bg-[#141414] border border-neutral-800 p-5">
+                    <div className="rounded-2xl bg-surface border border-neutral-800 p-5">
                         <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">Sessions</p>
                         <p className="mt-2 text-2xl font-semibold tracking-tight text-white">{activity.sessions}</p>
                     </div>
                 </div>
 
-                <div className="rounded-2xl bg-[#141414] border border-neutral-800 p-6">
+                <div className="rounded-2xl bg-surface border border-neutral-800 p-6">
                     <h2 className="text-lg font-semibold tracking-tight text-white mb-4">Prompt Sandbox</h2>
                     <textarea
                         value={promptInput}
@@ -115,7 +115,7 @@ const IndividualSandboxView: React.FC<IndividualSandboxViewProps> = ({ email }) 
                         }}
                         placeholder="Enter a prompt to log in your private sandbox…"
                         rows={4}
-                        className="w-full rounded-xl bg-[#0b0b0b] border border-neutral-800 p-4 text-sm text-neutral-200 placeholder:text-neutral-600 outline-none focus:border-neutral-600 resize-none"
+                        className="w-full rounded-xl bg-canvas border border-neutral-800 p-4 text-sm text-neutral-200 placeholder:text-neutral-600 outline-none focus:border-neutral-600 resize-none"
                     />
                     <div className="flex items-center justify-between mt-4">
                         <button
@@ -133,7 +133,7 @@ const IndividualSandboxView: React.FC<IndividualSandboxViewProps> = ({ email }) 
                     </div>
                 </div>
 
-                <div className="rounded-2xl bg-[#141414] border border-neutral-800 p-6">
+                <div className="rounded-2xl bg-surface border border-neutral-800 p-6">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-semibold tracking-tight text-white">Private History Logs</h2>
                         <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-500">{prompts.length} entries</span>
@@ -143,7 +143,7 @@ const IndividualSandboxView: React.FC<IndividualSandboxViewProps> = ({ email }) 
                     ) : (
                         <div className="space-y-2">
                             {prompts.map(entry => (
-                                <div key={entry.id} className="rounded-xl bg-[#0b0b0b] border border-neutral-800 px-4 py-3">
+                                <div key={entry.id} className="rounded-xl bg-canvas border border-neutral-800 px-4 py-3">
                                     <p className="text-sm text-neutral-200 break-words">{entry.prompt}</p>
                                     <p className="mt-1 text-[11px] font-mono text-neutral-600">{entry.time}</p>
                                 </div>

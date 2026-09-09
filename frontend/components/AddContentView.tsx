@@ -225,7 +225,7 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated, recent
 
     const renderChatUI = () => (
         <motion.div key="chat-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col w-full max-w-2xl mx-auto h-full">
-            <div className="relative flex items-center justify-center p-4 border-b dark:border-gray-800 border-neutral-200 shrink-0">
+            <div className="relative flex items-center justify-center p-4 border-b dark:border-border border-neutral-200 shrink-0">
                 <button onClick={() => setIsChatActive(false)} className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center text-sm text-gray-400 dark:hover:text-white hover:text-black p-2 rounded-lg dark:hover:bg-gray-800 hover:bg-neutral-200 transition-colors">
                     <ChevronLeftIcon className="w-5 h-5 mr-1" />
                     <span>Back</span>
@@ -240,7 +240,7 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated, recent
                                 <BrainIcon className="w-5 h-5 text-orange-500" />
                             </div>
                         )}
-                        <div className={`p-4 rounded-2xl max-w-lg ${msg.role === 'user' ? 'dark:bg-gray-700 bg-neutral-800 text-white rounded-br-none' : 'dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 dark:text-gray-300 text-neutral-800 rounded-bl-none'}`}>
+                        <div className={`p-4 rounded-2xl max-w-lg ${msg.role === 'user' ? 'dark:bg-gray-700 bg-neutral-800 text-white rounded-br-none' : 'dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-border border-neutral-200 dark:text-gray-300 text-neutral-800 rounded-bl-none'}`}>
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                         </div>
                          {msg.role === 'user' && (
@@ -445,7 +445,7 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated, recent
     );
 
     return (
-        <div className="flex-1 flex flex-col items-center justify-start p-8 lg:p-12 overflow-y-auto h-full dark:bg-[#0b0b0b] bg-white transition-colors duration-500">
+        <div className="flex-1 flex flex-col items-center justify-start p-8 lg:p-12 overflow-y-auto h-full dark:bg-canvas bg-white transition-colors duration-500">
             <AnimatePresence mode="wait">
                  {isChatActive ? renderChatUI() : renderInitialUI()}
             </AnimatePresence>

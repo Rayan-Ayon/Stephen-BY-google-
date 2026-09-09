@@ -30,7 +30,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center h-screen bg-[#0b0b0b] text-white p-8">
+        <div className="flex flex-col items-center justify-center h-screen bg-canvas text-white p-8">
           <h1 className="text-2xl font-bold mb-4">Something went wrong.</h1>
           <p className="text-gray-400 mb-6 text-center">We encountered an error while loading the dashboard. Please check your console for details.</p>
           <button
@@ -76,7 +76,7 @@ const App: React.FC = () => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
       document.body.classList.add('dark');
-      document.body.style.backgroundColor = '#0b0b0b';
+      document.body.style.backgroundColor = '#0A0B0D';
     } else {
       document.documentElement.classList.remove('dark');
       document.body.classList.remove('dark');
@@ -207,9 +207,9 @@ const App: React.FC = () => {
         position="bottom-right"
         toastOptions={{
           style: {
-            background: '#1a1a1a',
+            background: '#14161A',
             color: '#fff',
-            border: '1px solid #333'
+            border: '1px solid #22262F'
           }
         }}
       />

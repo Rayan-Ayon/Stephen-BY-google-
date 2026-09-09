@@ -1,6 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
+import DashboardView from './DashboardView';
+import WorkspaceOverview from './WorkspaceOverview';
+import RightSidebar from './RightSidebar';
 import AddContentView from './AddContentView';
 import AddCoursesView from './AddCoursesView';
 import CompetitionView from './CompetitionView';
@@ -47,6 +50,7 @@ import StudentPortal from './enterprise/portal/StudentPortal';
 import { DeleteSpaceModal, ShareSpaceModal } from './modals';
 import { Theme } from '../App';
 import { useWorkspace } from '../workspaceContext';
+import WorkspaceDropdown from './WorkspaceDropdown';
 import {
   initMockDb,
   getSpaces,
@@ -83,23 +87,23 @@ interface DashboardProps {
 }
 
 const ShimmerLoader = () => (
-    <div className="flex-1 h-full bg-[#0b0b0b] p-8 lg:p-12">
+    <div className="flex-1 h-full bg-canvas p-8 lg:p-12">
         <div className="animate-pulse space-y-8">
             <div className="flex justify-between items-center">
-                <div className="h-8 bg-gray-800 rounded w-1/3"></div>
+                <div className="h-8 bg-surface rounded w-1/3"></div>
                 <div className="flex gap-3">
-                    <div className="h-10 bg-gray-800 rounded w-24"></div>
-                    <div className="h-10 bg-gray-800 rounded w-24"></div>
+                    <div className="h-10 bg-surface rounded w-24"></div>
+                    <div className="h-10 bg-surface rounded w-24"></div>
                 </div>
             </div>
             <div className="flex flex-col items-center justify-center pt-20 space-y-6">
-                <div className="h-12 bg-gray-800 rounded w-1/2"></div>
+                <div className="h-12 bg-surface rounded w-1/2"></div>
                 <div className="grid grid-cols-4 gap-4 w-full max-w-3xl">
                     {[1, 2, 3, 4].map(i => (
-                        <div key={i} className="h-28 bg-gray-800 rounded-2xl"></div>
+                        <div key={i} className="h-28 bg-surface rounded-2xl"></div>
                     ))}
                 </div>
-                <div className="h-14 bg-gray-800 rounded-2xl w-full max-w-3xl"></div>
+                <div className="h-14 bg-surface rounded-2xl w-full max-w-3xl"></div>
             </div>
         </div>
     </div>
@@ -116,7 +120,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
     const [selectedCourse, setSelectedCourse] = useState<HistoryItem | null>(null);
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
     const [sidebarMode, setSidebarMode] = useState<'hover' | 'manual'>('hover');
-    
+
     // Modals state
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
@@ -143,23 +147,17 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
     const [deleteSpaceId, setDeleteSpaceId] = useState<string | null>(null);
     const [shareSpaceId, setShareSpaceId] = useState<string | null>(null);
 
-    // Recent Videos State — starts empty; populated per-user via scoped localStorage + server fetch
+    // Recent Videos State
     const [recentVideos, setRecentVideos] = useState<HistoryItem[]>([]);
 
-    // Persist recentVideos to a per-user localStorage key (write-through cache)
     useEffect(() => {
         if (!userEmail || isEnterprise) return;
         localStorage.setItem(`recents_${userEmail}`, JSON.stringify(recentVideos));
     }, [recentVideos, userEmail, isEnterprise]);
 
-    // Reset state on email change, then hydrate from scoped localStorage + server
     useEffect(() => {
         if (!userEmail || isEnterprise) return;
-
-        // 1. Immediately clear stale data so old account's videos never linger
         setRecentVideos([]);
-
-        // 2. Fast-fill from per-user localStorage cache
         const storageKey = `recents_${userEmail}`;
         const cached = localStorage.getItem(storageKey);
         if (cached) {
@@ -170,8 +168,6 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                 }
             } catch { /* ignore corrupt cache */ }
         }
-
-        // 3. Fetch fresh data from server — overrides localStorage when it arrives
         const controller = new AbortController();
         fetch(`/api/user/recent-videos?userEmail=${encodeURIComponent(userEmail)}`, {
             signal: controller.signal,
@@ -225,7 +221,6 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
         }
     ]);
 
-    // Load spaces from localStorage on mount
     useEffect(() => {
         initMockDb();
         const stored = getSpaces();
@@ -245,7 +240,6 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             onExit();
             return;
         }
-
         if (view === 'settings') {
             setIsSettingsOpen(true);
         } else if (view === 'feedback') {
@@ -255,7 +249,6 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
         } else if (view === 'contact_us') {
              setIsContactUsOpen(true);
         } else {
-            // Handle data passing for specific views
             if (view === 'add_courses' && data?.topic) {
                 setAddCoursesContext({ flow: 'qa', topic: data.topic });
             }
@@ -266,7 +259,6 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                     setDebateInitialMessage('');
                 }
             }
-
             setCurrentView(view);
             setSelectedCourse(null);
         }
@@ -274,7 +266,6 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
 
     const handleSelectCourse = (course: HistoryItem) => {
         setSelectedCourse(course);
-        // Add to history if not present
         if (!historyItems.find(i => i.id === course.id)) {
             setHistoryItems([course, ...historyItems]);
         }
@@ -287,16 +278,12 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
 
     const handleCourseCreated = (course: HistoryItem) => {
         setHistoryItems([course, ...historyItems]);
-        
-        // Add to recent videos if it's a video type - dedupe by YouTube video ID
         if (course.type === 'video' && course.videoUrl) {
             const videoId = extractYouTubeId(course.videoUrl);
             setRecentVideos(prev => {
                 const filtered = prev.filter(v => extractYouTubeId(v.videoUrl) !== videoId);
                 return [course, ...filtered].slice(0, 20);
             });
-
-            // Write-through: save to backend (fire-and-forget, never blocks UI)
             if (userEmail) {
                 fetch('/api/user/recent-video', {
                     method: 'POST',
@@ -313,7 +300,6 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                 }).catch((err) => console.warn('Failed to sync recent video to server:', err));
             }
         }
-        
         handleSelectCourse(course);
     };
 
@@ -345,6 +331,8 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
         }
     };
 
+    const isDashboardView = currentView === 'sandbox';
+
     const renderContent = () => {
         if (selectedCourse) {
             return <Workspace course={selectedCourse} showHeader={false} onBack={() => setSelectedCourse(null)} userEmail={userEmail} />;
@@ -357,10 +345,10 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
         if (currentView.startsWith('space_')) {
             if (isEnterprise) {
                 return (
-                    <div className="flex-1 h-full bg-[#0b0b0b] p-8 lg:p-12 flex items-center justify-center">
+                    <div className="flex-1 h-full bg-canvas p-8 lg:p-12 flex items-center justify-center">
                         <div className="text-center">
-                            <p className="text-sm text-neutral-400">Spaces are private to your Personal Sandbox.</p>
-                            <p className="text-xs text-neutral-600 mt-1">Switch back to your individual workspace to access them.</p>
+                            <p className="text-sm text-gray-400">Spaces are private to your Personal Sandbox.</p>
+                            <p className="text-xs text-gray-600 mt-1">Switch back to your individual workspace to access them.</p>
                         </div>
                     </div>
                 );
@@ -379,7 +367,18 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
         }
 
         switch (currentView) {
-            case 'sandbox': return <IndividualSandboxView email={userEmail} />;
+            case 'sandbox': return isEnterprise
+                ? (
+                    <div className="flex gap-6 w-full min-h-screen bg-[#0E0F12] p-6">
+                        <div className="flex-[7] min-w-0">
+                            <DashboardView userEmail={userEmail} onNavigate={handleNavigate} />
+                        </div>
+                        <div className="flex-[3] min-w-0">
+                            <RightSidebar onNavigate={handleNavigate} />
+                        </div>
+                    </div>
+                )
+                : <WorkspaceOverview userEmail={userEmail} onNavigate={handleNavigate} />;
             case 'ielts_dashboard': return <IELTSEvaluationHub key="ielts_dashboard" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="dashboard" hideInternalNav />;
             case 'speaking_studio': return <SpeakingHubView userEmail={userEmail} />;
             case 'listening_engine': return <ListeningHubView userEmail={userEmail} />;
@@ -410,25 +409,23 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             case 'add_content':
                 if (isInstitutionalSpace(spaceCode)) {
                     return (
-                        <div className="flex-1 h-full bg-[#0b0b0b] p-8 lg:p-12 overflow-y-auto">
+                        <div className="flex-1 h-full bg-canvas p-8 lg:p-12 overflow-y-auto">
                             <div className="max-w-4xl mx-auto space-y-8">
                                 <div>
                                     <h1 className="text-3xl font-bold text-white mb-2">Welcome to {spaceCode} Workspace</h1>
                                     <p className="text-gray-400 text-sm">Your institutional learning environment</p>
                                 </div>
-
-                                <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-5 flex items-start gap-4">
+                                <div className="rounded-2xl bg-warning/10 border border-warning/30 p-5 flex items-start gap-4">
                                     <div className="shrink-0 mt-0.5">
-                                        <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                        <svg className="w-5 h-5 text-warning" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="text-amber-200 text-sm font-medium">You are currently viewing materials assigned by your institution.</p>
-                                        <p className="text-amber-400/60 text-xs mt-1">Content is curated and managed by your {spaceCode} administrators.</p>
+                                        <p className="text-warning text-sm font-medium">You are currently viewing materials assigned by your institution.</p>
+                                        <p className="text-warning/60 text-xs mt-1">Content is curated and managed by your {spaceCode} administrators.</p>
                                     </div>
                                 </div>
-
                                 <div>
                                     <h2 className="text-lg font-semibold text-white mb-4">Assigned Content</h2>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -437,12 +434,12 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                                                 <div
                                                     key={item.id}
                                                     onClick={() => handleSelectCourse(item)}
-                                                    className="group cursor-pointer rounded-2xl bg-[#141414] border border-neutral-800 p-5 hover:border-neutral-600 transition-all"
+                                                    className="group cursor-pointer rounded-2xl bg-surface border border-border p-5 hover:border-gray-600 transition-all"
                                                 >
-                                                    <h3 className="text-white font-medium text-sm mb-1 group-hover:text-amber-300 transition-colors">{item.title}</h3>
+                                                    <h3 className="text-white font-medium text-sm mb-1 group-hover:text-warning transition-colors">{item.title}</h3>
                                                     <p className="text-gray-500 text-xs line-clamp-2">{item.description}</p>
                                                     <div className="flex items-center gap-2 mt-3">
-                                                        <span className="text-[10px] uppercase tracking-wider text-gray-600 bg-neutral-800 px-2 py-0.5 rounded-full">{item.type}</span>
+                                                        <span className="text-[10px] uppercase tracking-wider text-gray-600 bg-surfaceAlt px-2 py-0.5 rounded-full">{item.type}</span>
                                                         <span className="text-[10px] text-gray-600">{item.time}</span>
                                                     </div>
                                                 </div>
@@ -481,16 +478,16 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             case 'research_lab': return <ResearchLabView />;
             case 'profile': return <ProfileWorkspace />;
             case 'profile_workspace': return <ProfileWorkspace />;
-            case 'create_space': return <div className="flex items-center justify-center h-full text-gray-500">Create Space Coming Soon</div>; // Fallback if navigated via other means, though sidebar handles logic
+            case 'create_space': return <div className="flex items-center justify-center h-full text-gray-500">Create Space Coming Soon</div>;
             case 'learning_methods_1': return <LearningMethods1View />;
             case 'chrome_extension': return <div className="flex items-center justify-center h-full text-gray-500">Chrome Extension Coming Soon</div>;
             default:
-                return <AddContentView onCourseCreated={handleCourseCreated} recentVideos={isEnterprise ? [] : recentVideos} onSelectRecent={handleSelectCourse} />;
+                return <DashboardView userEmail={userEmail} onNavigate={handleNavigate} />;
         }
     };
 
     return (
-        <div className="flex h-screen w-full overflow-hidden bg-white dark:bg-black">
+        <div className="flex h-screen w-full overflow-hidden bg-canvas">
             <Sidebar 
                 toggleTheme={toggleTheme} 
                 theme={theme} 
@@ -512,15 +509,31 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                 onLockedNavigationAttempt={handleLockedNav}
             />
             
-            <main className="flex-1 flex flex-col min-w-0 overflow-y-auto relative">
-                {isEnterprise && currentView === 'sandbox' ? (
-                    <EnterpriseSandboxView workspace={activeWorkspace} />
-                ) : (
-                    renderContent()
-                )}
-                <HawkingFab onNavigate={handleNavigate} />
+            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                {/* Header with WorkspaceDropdown */}
+                <div className="h-16 shrink-0 border-b border-border bg-canvas flex items-center px-6 gap-4">
+                    <WorkspaceDropdown theme={theme} isExpanded={true} />
+                    <div className="flex-1" />
+                </div>
+
+                {/* Content Area */}
+                <div className="flex-1 flex min-h-0 overflow-hidden">
+                    {/* Left Column (~68%) */}
+                    <div className="flex-[7] min-w-0 overflow-y-auto">
+                        {renderContent()}
+                    </div>
+
+                    {/* Right Sidebar (~32%) — Dashboard Only */}
+                    {isDashboardView && !isEnterprise && (
+                        <div className="flex-[3] border-l border-border overflow-y-auto bg-canvas">
+                            <RightSidebar onNavigate={handleNavigate} />
+                        </div>
+                    )}
+                </div>
             </main>
 
+            <HawkingFab onNavigate={handleNavigate} />
+            
             {isSettingsOpen && <SettingsModal onClose={() => setIsSettingsOpen(false)} />}
             {isFeedbackOpen && <FeedbackModal onClose={() => setIsFeedbackOpen(false)} />}
             {isQuickGuideOpen && <QuickGuideModal onClose={() => setIsQuickGuideOpen(false)} />}

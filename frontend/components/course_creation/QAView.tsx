@@ -63,7 +63,7 @@ const QAView: React.FC<QAViewProps> = ({ topic, onFinish }) => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: 0.2 }}
                         >
-                            <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-xl p-4 flex justify-between items-center">
+                            <div className="dark:bg-[#1a1a1a] bg-white border dark:border-border border-neutral-200 rounded-xl p-4 flex justify-between items-center">
                                 <p className="dark:text-gray-200 text-neutral-800">{q}</p>
                                 {answers.length > index && 
                                     <motion.div initial={{scale:0}} animate={{scale:1}}>
@@ -96,7 +96,7 @@ const QAView: React.FC<QAViewProps> = ({ topic, onFinish }) => {
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyPress={handleKeyPress}
                         placeholder="Type your answer..."
-                        className="w-full dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-xl py-3.5 pl-5 pr-14 text-md focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                        className="w-full dark:bg-[#1a1a1a] bg-white border dark:border-border border-neutral-200 rounded-xl py-3.5 pl-5 pr-14 text-md focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
                         disabled={answers.length !== activeQuestionIndex}
                     />
                     <button 

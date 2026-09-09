@@ -42,7 +42,7 @@ const InviteEarnView: React.FC<InviteEarnViewProps> = ({ onContactUs }) => {
     const [openIndex, setOpenIndex] = useState<number | null>(null);
 
     return (
-        <div className="flex-1 overflow-y-auto h-full dark:bg-[#0b0b0b] bg-neutral-50 dark:text-white text-black p-8 lg:p-16">
+        <div className="flex-1 overflow-y-auto h-full dark:bg-canvas bg-neutral-50 dark:text-white text-black p-8 lg:p-16">
             <div className="max-w-4xl mx-auto flex flex-col items-center">
                 
                 {/* Hero Section */}
@@ -74,7 +74,7 @@ const InviteEarnView: React.FC<InviteEarnViewProps> = ({ onContactUs }) => {
 
                     <div className="space-y-1">
                         {faqs.map((faq, index) => (
-                            <div key={index} className="border-b dark:border-gray-800 border-neutral-200 overflow-hidden">
+                            <div key={index} className="border-b dark:border-border border-neutral-200 overflow-hidden">
                                 <button
                                     onClick={() => setOpenIndex(openIndex === index ? null : index)}
                                     className="w-full flex items-center justify-between py-6 text-left group transition-colors"

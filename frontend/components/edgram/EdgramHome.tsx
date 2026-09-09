@@ -48,7 +48,7 @@ const EdgramHome: React.FC<{ feedConfig: FeedConfig }> = ({ feedConfig }) => {
     return (
         <div className="w-full max-w-lg mx-auto py-6 pt-16 space-y-4 dark:text-white text-black">
             {/* Stories Section */}
-            <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide px-1 border-b dark:border-gray-800 border-neutral-200">
+            <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide px-1 border-b dark:border-border border-neutral-200">
                 {storiesData.map((story, i) => (
                     <div key={i} className="flex flex-col items-center space-y-1 shrink-0 cursor-pointer group relative">
                         <div className={`p-[3px] rounded-full ${

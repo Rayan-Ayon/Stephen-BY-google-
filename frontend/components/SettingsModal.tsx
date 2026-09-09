@@ -23,21 +23,21 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
 
     const PersonalizationView = () => (
         <div className="max-w-2xl mx-auto space-y-6">
-            <div className="flex items-center justify-between py-4 border-b border-gray-800">
+            <div className="flex items-center justify-between py-4 border-b border-border">
                 <span className="text-sm font-semibold text-white">Language</span>
                 <div className="flex items-center space-x-2 text-gray-300 cursor-pointer hover:text-white">
                     <span className="text-sm">US GB English</span>
                     <ChevronDownIcon className="w-4 h-4" />
                 </div>
             </div>
-            <div className="flex items-center justify-between py-4 border-b border-gray-800">
+            <div className="flex items-center justify-between py-4 border-b border-border">
                 <span className="text-sm font-semibold text-white">Theme</span>
                 <div className="flex items-center space-x-2 text-gray-300 cursor-pointer hover:text-white">
                     <span className="text-sm">Dark</span>
                     <ChevronDownIcon className="w-4 h-4" />
                 </div>
             </div>
-            <div className="flex items-center justify-between py-4 border-b border-gray-800">
+            <div className="flex items-center justify-between py-4 border-b border-border">
                 <span className="text-sm font-semibold text-white">Chat Model</span>
                 <div className="flex items-center space-x-2 text-gray-300 cursor-pointer hover:text-white">
                     <span className="text-sm">Auto</span>
@@ -49,7 +49,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
 
     const PlanBillingView = () => (
         <div className="max-w-2xl mx-auto">
-            <div className="flex items-center justify-between pb-6 border-b border-gray-800">
+            <div className="flex items-center justify-between pb-6 border-b border-border">
                 <div>
                     <h3 className="text-base font-bold text-white mb-1">Upgrade</h3>
                     <p className="text-sm text-gray-500">You are currently on the free plan</p>
@@ -79,7 +79,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
 
     const DataControlsView = () => (
         <div className="max-w-2xl mx-auto">
-            <div className="flex items-center justify-between pb-6 border-b border-gray-800">
+            <div className="flex items-center justify-between pb-6 border-b border-border">
                 <span className="text-base font-bold text-white">Delete Account</span>
                 <button className="px-5 py-2 border border-red-900/50 text-red-500 text-sm font-medium rounded-lg hover:bg-red-900/20 hover:border-red-500 transition-colors">
                     Delete
@@ -101,10 +101,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="relative w-full max-w-5xl h-[80vh] max-h-[700px] bg-[#0d0d0d] rounded-2xl border border-gray-800 shadow-2xl flex overflow-hidden z-10"
+                className="relative w-full max-w-5xl h-[80vh] max-h-[700px] bg-[#0d0d0d] rounded-2xl border border-border shadow-2xl flex overflow-hidden z-10"
             >
                 {/* Sidebar */}
-                <div className="w-64 border-r border-gray-800 p-6 flex flex-col shrink-0">
+                <div className="w-64 border-r border-border p-6 flex flex-col shrink-0">
                     <button onClick={onClose} className="mb-8 text-gray-400 hover:text-white transition-colors self-start">
                         <XIcon className="w-6 h-6" />
                     </button>
@@ -148,29 +148,29 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
 
                             {/* Form Fields */}
                             <div className="space-y-6">
-                                <div className="flex items-center justify-between py-2 border-b border-gray-800">
+                                <div className="flex items-center justify-between py-2 border-b border-border">
                                     <span className="text-sm font-medium text-white">Name</span>
                                     <div className="flex items-center space-x-2 text-gray-400">
                                         <span>AyonLogy</span>
                                         <PencilIcon className="w-4 h-4 cursor-pointer hover:text-white" />
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-between py-2 border-b border-gray-800">
+                                <div className="flex items-center justify-between py-2 border-b border-border">
                                     <span className="text-sm font-medium text-white">Email</span>
                                     <span className="text-gray-400">ayonburg@gmail.com</span>
                                 </div>
-                                <div className="flex items-center justify-between py-2 border-b border-gray-800">
+                                <div className="flex items-center justify-between py-2 border-b border-border">
                                     <span className="text-sm font-medium text-white">Date Created</span>
                                     <span className="text-gray-400 font-medium">May 15, 2025</span>
                                 </div>
-                                <div className="flex items-center justify-between py-2 border-b border-gray-800">
+                                <div className="flex items-center justify-between py-2 border-b border-border">
                                     <span className="text-sm font-medium text-white">Streaks</span>
                                     <div className="flex items-center space-x-2 text-orange-500 font-medium">
                                         <FireIcon className="w-4 h-4" />
                                         <span>1</span>
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-between py-2 border-b border-gray-800">
+                                <div className="flex items-center justify-between py-2 border-b border-border">
                                     <span className="text-sm font-medium text-white">Content Count</span>
                                     <div className="flex items-center space-x-2 text-blue-500 font-medium">
                                         <FileTextIcon className="w-4 h-4" />
@@ -182,7 +182,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
                             {/* Referral */}
                              <div className="pt-4">
                                 <h3 className="text-sm font-medium text-white mb-4">15% Off - Referral Link</h3>
-                                <div className="p-4 rounded-xl bg-[#131313] border border-gray-800 flex items-center justify-between">
+                                <div className="p-4 rounded-xl bg-[#131313] border border-border flex items-center justify-between">
                                     <div>
                                         <p className="text-sm text-gray-400 mb-1">Invite friends, get 15% off for 1 month per referral</p>
                                     </div>

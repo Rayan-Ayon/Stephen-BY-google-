@@ -13,9 +13,26 @@
         theme: {
           extend: {
             fontFamily: {
-              sans: ['Rubik', 'sans-serif'],
+              sans: ['Inter', 'sans-serif'],
               serif: ['Lora', 'serif'],
               display: ['Bebas Neue', 'sans-serif'],
+            },
+            colors: {
+              canvas: '#0A0B0D',
+              rail: '#0D0E11',
+              surface: '#121316',
+              surfaceAlt: '#181A20',
+              border: '#1E2026',
+              borderRail: '#1E222B',
+              brand: '#FF4D4D',
+              brandSolid: '#F04438',
+              brandGlow: '#2C1517',
+              success: '#22C55E',
+              warning: '#EAB308',
+              info: '#3B82F6',
+              accent: '#A855F7',
+              muted: '#565E6D',
+              secondary: '#8E95A3',
             }
           }
         }
@@ -23,19 +40,19 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lora:wght@400;500;600;700&family=Rubik:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lora:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
       body {
         background-color: #ffffff;
       }
       body.dark {
-        background-color: #111111;
+        background-color: #0A0B0D;
       }
       
       /* Custom scrollbar for a more refined look */
       ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 6px;
+        height: 6px;
       }
       ::-webkit-scrollbar-track {
         background: #f1f1f1;
@@ -48,13 +65,13 @@
         background-color: #a3a3a3;
       }
        body.dark ::-webkit-scrollbar-track {
-        background: #1f1f1f;
+        background: #0A0B0D;
       }
       body.dark ::-webkit-scrollbar-thumb {
-        background-color: #444;
+        background-color: #1E2026;
       }
       body.dark ::-webkit-scrollbar-thumb:hover {
-        background-color: #666;
+        background-color: #333;
       }
     </style>
   <script type="importmap">

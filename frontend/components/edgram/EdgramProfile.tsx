@@ -105,14 +105,14 @@ const ProfileView = () => {
             </header>
 
             {/* Mobile Stats */}
-            <div className="md:hidden flex items-center justify-around text-center border-y dark:border-gray-800 border-neutral-200 py-3 mb-4">
+            <div className="md:hidden flex items-center justify-around text-center border-y dark:border-border border-neutral-200 py-3 mb-4">
                 <div><span className="font-bold dark:text-white text-black block">102</span> <span className="text-gray-500 text-sm">posts</span></div>
                 <div><span className="font-bold dark:text-white text-black block">5.1k</span> <span className="text-gray-500 text-sm">followers</span></div>
                 <div><span className="font-bold dark:text-white text-black block">420</span> <span className="text-gray-500 text-sm">following</span></div>
             </div>
 
             {/* Tab Navigation */}
-            <div className="border-t dark:border-gray-800 border-neutral-200 flex justify-center gap-4 sm:gap-12 -mt-px">
+            <div className="border-t dark:border-border border-neutral-200 flex justify-center gap-4 sm:gap-12 -mt-px">
                 <TabButton name="reels" label="REELS" icon={<ReelsIcon />} active={activeTab === 'reels'} />
                 <TabButton name="courses" label="COURSES" icon={<BookOpenIcon />} active={activeTab === 'courses'} />
                 <TabButton name="bounties" label="BOUNTIES" icon={<BriefcaseIcon />} active={activeTab === 'bounties'} />
@@ -137,7 +137,7 @@ const ProfileView = () => {
                         <motion.div key="courses" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {mockCourses.map(course => (
-                                    <div key={course.id} className="dark:bg-[#121212] bg-gray-50 rounded-xl border dark:border-gray-800 border-gray-200 overflow-hidden hover:border-blue-500/50 transition-colors group">
+                                    <div key={course.id} className="dark:bg-[#121212] bg-gray-50 rounded-xl border dark:border-border border-gray-200 overflow-hidden hover:border-blue-500/50 transition-colors group">
                                         <div className="aspect-[3/2] overflow-hidden dark:bg-gray-800 bg-gray-200">
                                             <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                                         </div>
@@ -151,7 +151,7 @@ const ProfileView = () => {
                                                 </div>
                                                 <div className="text-gray-500">{course.enrolled} enrolled</div>
                                             </div>
-                                            <div className="mt-3 flex items-center justify-between border-t dark:border-gray-800 border-gray-200 pt-3">
+                                            <div className="mt-3 flex items-center justify-between border-t dark:border-border border-gray-200 pt-3">
                                                 <div className="flex items-center gap-1 text-emerald-400 font-bold text-sm">
                                                     <DollarIcon className="w-4 h-4" /> {course.price}
                                                 </div>
@@ -168,7 +168,7 @@ const ProfileView = () => {
                         <motion.div key="bounties" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4">
                             <div className="space-y-3">
                                 {mockBounties.map(bounty => (
-                                    <div key={bounty.id} className="dark:bg-[#121212] bg-gray-50 rounded-xl border dark:border-gray-800 border-gray-200 p-4 flex items-start justify-between hover:border-amber-500/30 transition-colors">
+                                    <div key={bounty.id} className="dark:bg-[#121212] bg-gray-50 rounded-xl border dark:border-border border-gray-200 p-4 flex items-start justify-between hover:border-amber-500/30 transition-colors">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <h4 className="font-bold text-sm dark:text-white text-black">{bounty.title}</h4>

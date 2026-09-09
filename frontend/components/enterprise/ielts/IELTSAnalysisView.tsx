@@ -526,7 +526,7 @@ const IELTSAnalysisView: React.FC<IELTSAnalysisViewProps> = ({ attemptId, bundle
                 className="w-full max-w-5xl my-8 rounded-2xl bg-[#0D0D0E] border border-neutral-800 shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
-                <header className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-4 bg-[#141414] border-b border-neutral-800 rounded-t-2xl">
+                <header className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-4 bg-surface border-b border-neutral-800 rounded-t-2xl">
                     <div className="min-w-0">
                         <p className="text-[10px] uppercase tracking-wider text-neutral-500">Test Analysis</p>
                         <h2 className={`text-lg font-semibold tracking-tight truncate ${accent}`}>{title}</h2>
@@ -537,7 +537,7 @@ const IELTSAnalysisView: React.FC<IELTSAnalysisViewProps> = ({ attemptId, bundle
                         <span className="text-[10px] uppercase tracking-wider text-neutral-500 border border-neutral-800 rounded-full px-3 py-1">Target 7.5</span>
                         <button
                             onClick={onClose}
-                            className="w-9 h-9 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors"
+                            className="w-9 h-9 rounded-lg bg-canvas border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors"
                         >
                             ✕
                         </button>

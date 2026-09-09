@@ -24,7 +24,7 @@ const EnterpriseSandboxView: React.FC<EnterpriseSandboxViewProps> = ({ workspace
     const visibleLeaderboard = showMoreLeaderboard ? LEADERBOARD_DATA : LEADERBOARD_DATA.slice(0, 5);
 
     return (
-        <div className="w-full h-full overflow-y-auto bg-[#fafafa] dark:bg-[#0b0b0b] text-zinc-900 dark:text-zinc-100">
+        <div className="w-full h-full overflow-y-auto bg-[#fafafa] dark:bg-canvas text-zinc-900 dark:text-zinc-100">
             <div className="mx-auto max-w-5xl py-8 px-6 space-y-8 pb-20">
                 {/* Enterprise Context Title Bar */}
                 <div className="border-b border-zinc-200 dark:border-zinc-800 pb-4 mb-8">
@@ -54,7 +54,7 @@ const EnterpriseSandboxView: React.FC<EnterpriseSandboxViewProps> = ({ workspace
                             { label: 'Practice Time', value: '0m', icon: '⏱️' },
                             { label: 'Weekly Rank', value: '-', icon: '🏆' },
                         ].map(metric => (
-                            <div key={metric.label} className="bg-white dark:bg-[#141414] border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 flex flex-col justify-center items-center shadow-sm">
+                            <div key={metric.label} className="bg-white dark:bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 flex flex-col justify-center items-center shadow-sm">
                                 <span className="text-2xl mb-2">{metric.icon}</span>
                                 <span className="text-3xl font-bold text-zinc-800 dark:text-white">{metric.value}</span>
                                 <span className="text-xs text-zinc-500 mt-1 uppercase tracking-wider text-center">{metric.label}</span>
@@ -62,7 +62,7 @@ const EnterpriseSandboxView: React.FC<EnterpriseSandboxViewProps> = ({ workspace
                         ))}
                     </div>
 
-                    <div className="col-span-1 bg-white dark:bg-[#141414] border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                    <div className="col-span-1 bg-white dark:bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
                         <div>
                             <p className="text-sm text-zinc-500 font-medium">Your Goal</p>
                             <p className="text-2xl font-bold text-zinc-900 dark:text-white mt-1">Target 8.0</p>
@@ -92,7 +92,7 @@ const EnterpriseSandboxView: React.FC<EnterpriseSandboxViewProps> = ({ workspace
                         </div>
                     </button>
 
-                    <button className="flex items-center gap-4 bg-white dark:bg-[#141414] border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-900 dark:text-white rounded-2xl p-6 transition-colors shadow-sm text-left">
+                    <button className="flex items-center gap-4 bg-white dark:bg-surface border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-900 dark:text-white rounded-2xl p-6 transition-colors shadow-sm text-left">
                         <div className="p-3 bg-red-100 dark:bg-red-900/20 text-red-600 rounded-xl">
                             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -121,7 +121,7 @@ const EnterpriseSandboxView: React.FC<EnterpriseSandboxViewProps> = ({ workspace
                             { name: 'Writing', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>, color: 'text-purple-500 bg-purple-50 dark:bg-purple-500/10' },
                             { name: 'Speaking', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>, color: 'text-amber-500 bg-amber-50 dark:bg-amber-500/10' },
                         ].map(section => (
-                            <div key={section.name} className="bg-white dark:bg-[#141414] border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm flex flex-col">
+                            <div key={section.name} className="bg-white dark:bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm flex flex-col">
                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${section.color}`}>
                                     {section.icon}
                                 </div>
@@ -144,7 +144,7 @@ const EnterpriseSandboxView: React.FC<EnterpriseSandboxViewProps> = ({ workspace
                 </div>
 
                 {/* Progress Timeline */}
-                <div className="bg-white dark:bg-[#141414] border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm">
+                <div className="bg-white dark:bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm">
                     <div className="flex items-center gap-2 mb-8">
                         <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
                         <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Your Progress Timeline</h2>
@@ -167,7 +167,7 @@ const EnterpriseSandboxView: React.FC<EnterpriseSandboxViewProps> = ({ workspace
 
                 {/* Leaderboard & Smart Tip */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-1 bg-white dark:bg-[#141414] border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm flex flex-col">
+                    <div className="lg:col-span-1 bg-white dark:bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm flex flex-col">
                         <div className="flex items-center gap-2 mb-4">
                             <span className="text-red-600">💡</span>
                             <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Smart Tip</h2>
@@ -177,7 +177,7 @@ const EnterpriseSandboxView: React.FC<EnterpriseSandboxViewProps> = ({ workspace
                         </p>
                     </div>
 
-                    <div className="lg:col-span-2 bg-white dark:bg-[#141414] border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+                    <div className="lg:col-span-2 bg-white dark:bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden flex flex-col">
                         <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
                             <div className="flex items-center gap-2">
                                 <span className="text-red-600">🏆</span>

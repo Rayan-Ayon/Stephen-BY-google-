@@ -505,7 +505,7 @@ const RequestConsultationModal: React.FC<{ expert: Expert, onClose: () => void }
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-2xl bg-[#0a0a0a] border dark:border-white/10 border-gray-800 rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                className="relative w-full max-w-2xl bg-[#0a0a0a] border dark:border-white/10 border-border rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
                 {/* Header */}
                 <div className="px-8 py-6 border-b border-white/5 flex justify-between items-center bg-[#0a0a0a]">
@@ -1217,7 +1217,7 @@ const TeacherOnboardingModal: React.FC<{
     const Step3Processing = () => (
         <div className="flex flex-col items-center justify-center py-12 space-y-8">
             <div className="relative w-20 h-20">
-                <div className="absolute inset-0 rounded-full border-4 border-gray-800" />
+                <div className="absolute inset-0 rounded-full border-4 border-border" />
                 <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-emerald-500 animate-spin" />
                 <div className="absolute inset-0 flex items-center justify-center">
                     <RefreshIcon className="w-8 h-8 text-emerald-400 animate-pulse" />
@@ -1246,7 +1246,7 @@ const TeacherOnboardingModal: React.FC<{
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative w-full max-w-2xl bg-[#0a0a0a] border dark:border-white/10 border-gray-800 rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative w-full max-w-2xl bg-[#0a0a0a] border dark:border-white/10 border-border rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="px-8 py-6 border-b border-white/5 flex justify-between items-center bg-[#0a0a0a]">
                     <div>

@@ -133,7 +133,7 @@ const DiscoverOnboarding: React.FC<{
             <h2 className="text-2xl font-bold font-serif mb-2">Configure Your Channels</h2>
             <p className="text-gray-500 text-sm mb-4">Select specific channels and add custom links for each platform.</p>
             {platformMeta.filter(p => activePlatforms.has(p.key)).map(p => (
-                <div key={p.key} className="dark:bg-[#121212] bg-gray-50 border dark:border-gray-800 border-gray-200 rounded-xl p-5">
+                <div key={p.key} className="dark:bg-[#121212] bg-gray-50 border dark:border-border border-gray-200 rounded-xl p-5">
                     <div className="flex items-center gap-3 mb-4">
                         <div className={`p-2 rounded-lg ${p.badgeBg}/20 ${p.badgeBg.replace('bg-', 'text-')}`}>{p.icon}</div>
                         <h3 className="font-bold text-sm dark:text-white text-black">{p.label}</h3>
@@ -202,7 +202,7 @@ const DiscoverOnboarding: React.FC<{
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-3xl bg-[#0a0a0a] border dark:border-white/10 border-gray-800 rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                className="relative w-full max-w-3xl bg-[#0a0a0a] border dark:border-white/10 border-border rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
                 {/* Header */}
                 <div className="px-8 py-6 border-b border-white/5 flex justify-between items-center bg-[#0a0a0a]">

@@ -14,7 +14,7 @@ const ContentDNA: React.FC<{ feedConfig: FeedConfig; onFeedConfigChange: (config
             <p className="text-gray-500 text-sm mb-8">Control what you see and how our algorithms understand you.</p>
 
             {/* Algorithm Confidence Score */}
-            <div className="mb-8 p-6 rounded-2xl dark:bg-[#121212] bg-gray-50 border dark:border-gray-800 border-gray-200">
+            <div className="mb-8 p-6 rounded-2xl dark:bg-[#121212] bg-gray-50 border dark:border-border border-gray-200">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="font-bold">Algorithm Accuracy</h3>
                     <span className="text-green-500 font-bold">{feedConfig.education}% Match</span>

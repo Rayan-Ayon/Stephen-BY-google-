@@ -117,7 +117,7 @@ const PricingView = () => {
                     </div>
 
                     {/* Team Plan */}
-                    <div className="bg-white dark:bg-[#111111] dark:text-white text-black border border-gray-200 dark:border-gray-800 rounded-3xl p-8 flex flex-col">
+                    <div className="bg-white dark:bg-[#111111] dark:text-white text-black border border-gray-200 dark:border-border rounded-3xl p-8 flex flex-col">
                         <div className="flex justify-between items-start mb-4">
                             <h3 className="text-xl font-bold">Team <span className="text-sm font-normal text-gray-500">Billed {billingCycle === 'yearly' ? 'Annually' : 'Monthly'}</span></h3>
                         </div>
@@ -126,7 +126,7 @@ const PricingView = () => {
                             <span className="text-gray-500 ml-2">/ month / seat</span>
                         </div>
                         <p className="text-xs text-gray-500 mb-2">Minimum 3 seats required</p>
-                        <p className="text-gray-500 mb-8 border-b border-gray-200 dark:border-gray-800 pb-8">For study groups and teams.</p>
+                        <p className="text-gray-500 mb-8 border-b border-gray-200 dark:border-border pb-8">For study groups and teams.</p>
                         
                         <div className="mb-4 text-sm font-bold">Everything in Pro +</div>
                         <ul className="space-y-4 mb-8 flex-grow">
@@ -161,7 +161,7 @@ const PricingView = () => {
 
                     <div className="space-y-4">
                         {faqs.map((faq, index) => (
-                            <div key={index} className="border-b border-gray-200 dark:border-gray-800 pb-4">
+                            <div key={index} className="border-b border-gray-200 dark:border-border pb-4">
                                 <button 
                                     onClick={() => toggleFaq(index)}
                                     className="w-full flex items-center justify-between py-4 text-left focus:outline-none"

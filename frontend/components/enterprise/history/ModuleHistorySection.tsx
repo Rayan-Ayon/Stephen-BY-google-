@@ -93,7 +93,7 @@ const ModuleHistorySection: React.FC<ModuleHistoryProps> = ({ moduleType, bundle
     };
 
     return (
-        <section className="rounded-2xl bg-[#141414] border border-neutral-800 p-6">
+        <section className="rounded-2xl bg-surface border border-neutral-800 p-6">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold tracking-tight text-white">
                     {sectionLabel}
@@ -110,7 +110,7 @@ const ModuleHistorySection: React.FC<ModuleHistoryProps> = ({ moduleType, bundle
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                    className="px-3 py-2 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-[11px] text-neutral-300 outline-none focus:border-neutral-600"
+                    className="px-3 py-2 rounded-lg bg-canvas border border-neutral-800 text-[11px] text-neutral-300 outline-none focus:border-neutral-600"
                 >
                     {(Object.keys(STATUS_LABEL) as StatusFilter[]).map((s) => (
                         <option key={s} value={s}>
@@ -122,7 +122,7 @@ const ModuleHistorySection: React.FC<ModuleHistoryProps> = ({ moduleType, bundle
                     <select
                         value={taskTypeFilter}
                         onChange={(e) => setTaskTypeFilter(e.target.value)}
-                        className="px-3 py-2 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-[11px] text-neutral-300 outline-none focus:border-neutral-600"
+                        className="px-3 py-2 rounded-lg bg-canvas border border-neutral-800 text-[11px] text-neutral-300 outline-none focus:border-neutral-600"
                     >
                         <option value="all">All Modules</option>
                         <option value="task2">Task 2 Essay</option>
@@ -172,7 +172,7 @@ const ModuleHistorySection: React.FC<ModuleHistoryProps> = ({ moduleType, bundle
                                                     {a.criteria.slice(0, 4).map((c) => (
                                                         <span
                                                             key={c.label}
-                                                            className="rounded bg-[#0b0b0b] border border-neutral-800 px-2 py-0.5 text-[10px] font-mono text-neutral-400"
+                                                            className="rounded bg-canvas border border-neutral-800 px-2 py-0.5 text-[10px] font-mono text-neutral-400"
                                                         >
                                                             {c.label.split(' ')[0]} {c.band.toFixed(1)}
                                                         </span>

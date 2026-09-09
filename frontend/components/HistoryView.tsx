@@ -26,7 +26,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ historyItems, onSelectCourse 
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.3, delay: index * 0.05 }}
                         onClick={() => onSelectCourse(item)}
-                        className="dark:bg-[#1a1a1a] bg-white rounded-xl border dark:border-gray-800 border-neutral-200 p-5 cursor-pointer hover:border-orange-500 hover:scale-[1.02] transition-all duration-300 group"
+                        className="dark:bg-[#1a1a1a] bg-white rounded-xl border dark:border-border border-neutral-200 p-5 cursor-pointer hover:border-orange-500 hover:scale-[1.02] transition-all duration-300 group"
                     >
                         <div className="flex items-center justify-between mb-4">
                             <div className="p-2 dark:bg-gray-700 bg-neutral-100 rounded-full">

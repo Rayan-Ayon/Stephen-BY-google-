@@ -341,7 +341,7 @@ const CourseOutlineView: React.FC<CourseOutlineViewProps> = ({ onBack, onStartLe
             return (
                 <div className="max-w-4xl mx-auto space-y-8 animate-pulse">
                     <ShimmerBlock className="h-10 w-32 mb-8" />
-                    <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-6">
+                    <div className="border border-gray-200 dark:border-border rounded-lg p-6">
                         <div className="flex items-center gap-4 mb-4">
                             <ShimmerBlock className="h-6 w-6 rounded-full" />
                             <ShimmerBlock className="h-4 w-64" />
@@ -349,7 +349,7 @@ const CourseOutlineView: React.FC<CourseOutlineViewProps> = ({ onBack, onStartLe
                     </div>
                     <div className="space-y-4">
                         {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="flex justify-between items-center py-4 border-b border-gray-100 dark:border-gray-800">
+                            <div key={i} className="flex justify-between items-center py-4 border-b border-gray-100 dark:border-border">
                                 <div className="flex items-center gap-4">
                                     <ShimmerBlock className="h-10 w-10 rounded-full" />
                                     <div>
@@ -378,8 +378,8 @@ const CourseOutlineView: React.FC<CourseOutlineViewProps> = ({ onBack, onStartLe
                     <span className="text-sm text-gray-700 dark:text-gray-300">Due date has passed for 1 assessment items.</span>
                 </div>
 
-                <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
-                    <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#111] text-xs font-bold text-gray-500 uppercase tracking-wider">
+                <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-border rounded-xl overflow-hidden">
+                    <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-200 dark:border-border bg-gray-50 dark:bg-[#111] text-xs font-bold text-gray-500 uppercase tracking-wider">
                         <div className="col-span-6">Item</div>
                         <div className="col-span-2">Status</div>
                         <div className="col-span-2">Due</div>

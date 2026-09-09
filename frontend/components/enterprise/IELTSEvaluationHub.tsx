@@ -123,7 +123,7 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onEx
                         <span className="text-[10px] uppercase tracking-wider text-amber-400/90 bg-amber-400/10 border border-amber-400/20 rounded-full px-3 py-1 whitespace-nowrap">Enterprise</span>
                     </header>
 
-                    <div className="rounded-2xl border border-neutral-800 bg-[#141414] p-10 text-center">
+                    <div className="rounded-2xl border border-neutral-800 bg-surface p-10 text-center">
                         <p className="text-4xl mb-4 opacity-50">🔒</p>
                         <h2 className="text-lg font-semibold tracking-tight text-white">Workspace required</h2>
                         <p className="text-sm text-neutral-400 mt-2 max-w-md mx-auto">
@@ -181,7 +181,7 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onEx
                             <button
                                 onClick={toggleRail}
                                 title="Collapse sidebar"
-                                className="shrink-0 rounded-lg border border-neutral-800 bg-[#141414] text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors w-8 h-8 flex items-center justify-center"
+                                className="shrink-0 rounded-lg border border-neutral-800 bg-surface text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors w-8 h-8 flex items-center justify-center"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-4 h-4">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
@@ -196,7 +196,7 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onEx
                         <button
                             onClick={toggleRail}
                             title="Expand sidebar"
-                            className="shrink-0 rounded-lg border border-neutral-800 bg-[#141414] text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors w-9 h-9 flex items-center justify-center"
+                            className="shrink-0 rounded-lg border border-neutral-800 bg-surface text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors w-9 h-9 flex items-center justify-center"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-4 h-4">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
@@ -332,7 +332,7 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onEx
                                     </svg>
                                     Back to Writing Dashboard
                                 </button>
-                                <div className="rounded-2xl bg-[#141414] border border-neutral-800 p-8">
+                                <div className="rounded-2xl bg-surface border border-neutral-800 p-8">
                                     <h2 className="text-2xl font-bold text-white tracking-tight mb-2">Task 2 — Essay Generator & Analysis</h2>
                                     <p className="text-sm text-neutral-400 mb-6">Compose a full 250+ word essay on a discursive prompt with AI-powered evaluation.</p>
                                     <div className="flex flex-wrap gap-3 mb-6">
@@ -370,7 +370,7 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onEx
                                     </svg>
                                     Back to Writing Dashboard
                                 </button>
-                                <div className="rounded-2xl bg-[#141414] border border-neutral-800 p-8">
+                                <div className="rounded-2xl bg-surface border border-neutral-800 p-8">
                                     <h2 className="text-2xl font-bold text-white tracking-tight mb-2">Task 1 — Academic Report</h2>
                                     <p className="text-sm text-neutral-400 mb-6">Summarise visual data (chart, graph, diagram) in a structured academic report.</p>
                                     <div className="flex flex-wrap gap-3 mb-6">
@@ -408,7 +408,7 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onEx
                                     </svg>
                                     Back to Writing Dashboard
                                 </button>
-                                <div className="rounded-2xl bg-[#141414] border border-neutral-800 p-8">
+                                <div className="rounded-2xl bg-surface border border-neutral-800 p-8">
                                     <h2 className="text-2xl font-bold text-white tracking-tight mb-2">Task 1 — General Training Letter</h2>
                                     <p className="text-sm text-neutral-400 mb-6">Write a formal or semi-formal letter responding to a given situation.</p>
                                     <div className="flex flex-wrap gap-3 mb-6">

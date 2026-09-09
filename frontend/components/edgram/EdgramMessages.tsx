@@ -24,8 +24,8 @@ const EdgramMessages = () => {
     return (
         <div className="flex h-full dark:bg-black bg-white dark:text-white text-black">
             {/* Left Panel — Chat List */}
-            <div className={`${isGroup && isWorkspaceOpen ? 'w-24 md:w-72' : 'w-24 md:w-96'} border-r dark:border-gray-800 border-neutral-200 flex flex-col shrink-0 dark:bg-black bg-white transition-all duration-300`}>
-                <div className="flex items-center justify-center md:justify-between p-4 border-b dark:border-gray-800 border-neutral-200 shrink-0 h-16 md:h-20 pt-16 md:pt-4">
+            <div className={`${isGroup && isWorkspaceOpen ? 'w-24 md:w-72' : 'w-24 md:w-96'} border-r dark:border-border border-neutral-200 flex flex-col shrink-0 dark:bg-black bg-white transition-all duration-300`}>
+                <div className="flex items-center justify-center md:justify-between p-4 border-b dark:border-border border-neutral-200 shrink-0 h-16 md:h-20 pt-16 md:pt-4">
                     <h2 className="text-xl font-bold dark:text-white text-black hidden md:flex items-center cursor-pointer">
                         stephen_ai <ChevronDownIcon className="w-4 h-4 ml-1" />
                     </h2>
@@ -82,7 +82,7 @@ const EdgramMessages = () => {
                     {selectedChat ? (
                         <>
                             {/* Chat Header */}
-                            <div className="flex items-center justify-between p-4 border-b dark:border-gray-800 border-neutral-200 shrink-0">
+                            <div className="flex items-center justify-between p-4 border-b dark:border-border border-neutral-200 shrink-0">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full dark:bg-gray-800 bg-neutral-300 overflow-hidden">
                                         <img src={`https://picsum.photos/seed/${selectedChat + 600}/100/100`} className="w-full h-full object-cover" />
@@ -134,7 +134,7 @@ const EdgramMessages = () => {
                             animate={{ width: 280, opacity: 1 }}
                             exit={{ width: 0, opacity: 0 }}
                             transition={{ duration: 0.3 }}
-                            className="border-l dark:border-gray-800 border-neutral-200 dark:bg-[#0a0a0a] bg-gray-50 overflow-hidden shrink-0"
+                            className="border-l dark:border-border border-neutral-200 dark:bg-[#0a0a0a] bg-gray-50 overflow-hidden shrink-0"
                         >
                             <div className="w-[280px] h-full p-4 overflow-y-auto">
                                 <div className="flex items-center justify-between mb-6">
@@ -145,7 +145,7 @@ const EdgramMessages = () => {
                                 </div>
 
                                 {/* Level-Up Progress */}
-                                <div className="mb-6 p-4 rounded-xl dark:bg-[#121212] bg-white border dark:border-gray-800 border-gray-200">
+                                <div className="mb-6 p-4 rounded-xl dark:bg-[#121212] bg-white border dark:border-border border-gray-200">
                                     <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 flex items-center gap-1.5">
                                         <LightningIcon className="w-3.5 h-3.5 text-amber-400" /> Level-Up Progress
                                     </h4>
@@ -160,7 +160,7 @@ const EdgramMessages = () => {
                                 </div>
 
                                 {/* Daily Bug Count Tracker */}
-                                <div className="mb-6 p-4 rounded-xl dark:bg-[#121212] bg-white border dark:border-gray-800 border-gray-200">
+                                <div className="mb-6 p-4 rounded-xl dark:bg-[#121212] bg-white border dark:border-border border-gray-200">
                                     <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 flex items-center gap-1.5">
                                         <FireIcon className="w-3.5 h-3.5 text-red-400" /> Daily Bug Tracker
                                     </h4>

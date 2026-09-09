@@ -1105,7 +1105,7 @@ safeToast.error(msg);
 
     // --- Create Card Component (Reusable) ---
     const CreateCard = ({ title, desc, rightElement }: { title: string, desc: string, rightElement: React.ReactNode }) => (
-        <div className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl p-5 mb-8 flex items-center justify-between shadow-sm">
+        <div className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-border border-neutral-200 rounded-2xl p-5 mb-8 flex items-center justify-between shadow-sm">
             <div className="flex-1 pr-4">
                 <h3 className="text-base font-bold dark:text-white text-black mb-1">{title}</h3>
                 <p className="text-xs dark:text-gray-400 text-neutral-500 leading-relaxed">{desc}</p>
@@ -1186,7 +1186,7 @@ safeToast.error(msg);
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 10 }}
-                            className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl z-20 overflow-hidden py-1"
+                            className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-border rounded-xl shadow-xl z-20 overflow-hidden py-1"
                         >
                             {['Detailed Summary', 'Cheat Sheet', 'Short Summary'].map((opt) => (
                                 <button
@@ -1211,7 +1211,7 @@ safeToast.error(msg);
     const renderShimmer = () => (
         <div className="flex-1 flex flex-col p-6 overflow-hidden">
             {/* Create Card Skeleton */}
-            <div className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl p-5 mb-8 h-24 relative overflow-hidden">
+            <div className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-border border-neutral-200 rounded-2xl p-5 mb-8 h-24 relative overflow-hidden">
                  <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
             </div>
             
@@ -1223,7 +1223,7 @@ safeToast.error(msg);
             {/* List Items Skeleton */}
             <div className="space-y-4">
                 {[1, 2, 3].map(i => (
-                    <div key={i} className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl p-5 h-24 relative overflow-hidden">
+                    <div key={i} className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-border border-neutral-200 rounded-2xl p-5 h-24 relative overflow-hidden">
                         <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
                     </div>
                 ))}
@@ -1303,7 +1303,7 @@ safeToast.error(msg);
                             <button
                                 key={feature.label}
                                 onClick={() => openFeatureTab(feature.type, feature.label)}
-                                className="flex items-center justify-between p-4 rounded-xl border dark:border-gray-800 border-neutral-200 dark:bg-[#1a1a1a] bg-white hover:border-gray-400 dark:hover:border-gray-600 transition-all group"
+                                className="flex items-center justify-between p-4 rounded-xl border dark:border-border border-neutral-200 dark:bg-[#1a1a1a] bg-white hover:border-gray-400 dark:hover:border-gray-600 transition-all group"
                             >
                                 <div className="flex items-center gap-3">
                                     <span className={feature.color}>{feature.icon}</span>
@@ -1315,7 +1315,7 @@ safeToast.error(msg);
                         {/* Quiz: clicks directly into instant mock generation — bypasses Create Quiz card */}
                         <button
                             onClick={handleMockQuizGeneration}
-                            className="flex items-center justify-between p-4 rounded-xl border dark:border-gray-800 border-neutral-200 dark:bg-[#1a1a1a] bg-white hover:border-orange-500/60 dark:hover:border-orange-500/60 transition-all group"
+                            className="flex items-center justify-between p-4 rounded-xl border dark:border-border border-neutral-200 dark:bg-[#1a1a1a] bg-white hover:border-orange-500/60 dark:hover:border-orange-500/60 transition-all group"
                         >
                             <div className="flex items-center gap-3">
                                 <span className="text-orange-500"><QuizIcon className="w-5 h-5" /></span>
@@ -1400,7 +1400,7 @@ safeToast.error(msg);
                     </button>
                 </div>
                 {/* Input field */}
-                <div className="flex items-center gap-2 dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl px-4 py-2">
+                <div className="flex items-center gap-2 dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-border border-neutral-200 rounded-2xl px-4 py-2">
                     <input
                         type="text"
                         value={inputValue}
@@ -1711,7 +1711,7 @@ safeToast.error(msg);
                         {[120, 100, 130, 100, 110].map((h, i) => (
                             <div
                                 key={i}
-                                className="dark:bg-[#141414] bg-neutral-100 border dark:border-white/5 border-neutral-200 rounded-2xl relative overflow-hidden"
+                                className="dark:bg-surface bg-neutral-100 border dark:border-white/5 border-neutral-200 rounded-2xl relative overflow-hidden"
                                 style={{ height: `${h}px` }}
                             >
                                 {/* Inner content lines */}
@@ -1753,7 +1753,7 @@ safeToast.error(msg);
                         </button>
                         <span className="text-xs font-bold text-orange-500 bg-orange-500/10 px-2 py-1 rounded uppercase">Question 1/5</span>
                     </div>
-                    <div className="p-5 rounded-2xl dark:bg-[#1a1a1a] bg-neutral-50 border dark:border-gray-800 border-neutral-200">
+                    <div className="p-5 rounded-2xl dark:bg-[#1a1a1a] bg-neutral-50 border dark:border-border border-neutral-200">
                         <h4 className="font-bold dark:text-white text-black mb-4 text-lg">{quizData[0]?.question || ''}</h4>
                         <div className="space-y-3">
                             {(quizData[0]?.options || []).map((opt: string, i: number) => (
@@ -1829,7 +1829,7 @@ safeToast.error(msg);
                             <div 
                                 key={q.id}
                                                 onClick={() => { setActiveQuizId(q.id); setQuizViewingState('active'); }}
-                                className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl p-5 cursor-pointer hover:border-orange-500 transition-all group"
+                                className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-border border-neutral-200 rounded-2xl p-5 cursor-pointer hover:border-orange-500 transition-all group"
                             >
                                 <div className="flex justify-between items-start mb-3">
                                     <h4 className="font-bold dark:text-white text-black text-sm group-hover:text-orange-500 transition-colors">{q.title}</h4>
@@ -1872,7 +1872,7 @@ safeToast.error(msg);
                                         onClick={() => {
                                             setActiveDeckId(deck?.id);
                                         }}
-                                        className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl p-5 cursor-pointer hover:border-orange-500 transition-all group"
+                                        className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-border border-neutral-200 rounded-2xl p-5 cursor-pointer hover:border-orange-500 transition-all group"
                                     >
                                         <h4 className="font-bold dark:text-white text-black text-sm mb-3 group-hover:text-orange-500 transition-colors">{deck?.title}</h4>
                                         <div className="flex flex-wrap gap-2">
@@ -1932,7 +1932,7 @@ safeToast.error(msg);
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6">
                     {isSummaryGenerating && (
-                        <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6">
+                        <div className="dark:bg-[#1a1a1a] bg-white border dark:border-border border-neutral-200 rounded-2xl p-6">
                             <div className="animate-pulse space-y-4">
                                 <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
                                 <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
@@ -1944,7 +1944,7 @@ safeToast.error(msg);
                     )}
                     
                     {summaryError && !isSummaryGenerating && (
-                        <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6 text-center">
+                        <div className="dark:bg-[#1a1a1a] bg-white border dark:border-border border-neutral-200 rounded-2xl p-6 text-center">
                             <p className="text-red-500 text-sm mb-4">{summaryError}</p>
                             <button 
                                 onClick={() => {
@@ -1959,7 +1959,7 @@ safeToast.error(msg);
                     )}
                     
                     {hasSummary && !isSummaryGenerating && !summaryError && (
-                        <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6 shadow-sm space-y-6">
+                        <div className="dark:bg-[#1a1a1a] bg-white border dark:border-border border-neutral-200 rounded-2xl p-6 shadow-sm space-y-6">
                             {/* Paragraph */}
                             {summaryData.paragraph && (
                                 <div className="text-base leading-relaxed dark:text-gray-300 text-gray-700">
@@ -1997,7 +1997,7 @@ safeToast.error(msg);
                     )}
                     
                     {!hasSummary && !isSummaryGenerating && !summaryError && (
-                        <div className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl p-8 text-center">
+                        <div className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-border border-neutral-200 rounded-2xl p-8 text-center">
                             <p className="text-sm text-gray-500">Generating summary...</p>
                         </div>
                     )}
@@ -2017,7 +2017,7 @@ safeToast.error(msg);
                     rightElement={<GenerateHeader onAdjust={() => setShowPodcastModal(true)} />}
                 />
                 
-                <div className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-2xl p-6 flex flex-col items-center justify-center h-64 text-center">
+                <div className="dark:bg-[#1a1a1a] bg-neutral-100 border dark:border-border border-neutral-200 rounded-2xl p-6 flex flex-col items-center justify-center h-64 text-center">
                     <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-orange-400 to-pink-600 mb-6 flex items-center justify-center shadow-lg relative">
                         {isPlaying ? (
                             <div className="flex items-center space-x-1">

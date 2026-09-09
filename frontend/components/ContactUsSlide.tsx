@@ -13,7 +13,7 @@ const ContactUsSlide: React.FC<ContactUsSlideProps> = ({ onClose }) => {
     const [type, setType] = useState('');
     const [message, setMessage] = useState('');
 
-    const inputClasses = "w-full dark:bg-[#111] bg-neutral-100 border dark:border-gray-800 border-neutral-200 rounded-xl px-4 py-3 text-sm dark:text-white text-black outline-none focus:ring-1 focus:ring-gray-600 transition-all";
+    const inputClasses = "w-full dark:bg-[#111] bg-neutral-100 border dark:border-border border-neutral-200 rounded-xl px-4 py-3 text-sm dark:text-white text-black outline-none focus:ring-1 focus:ring-gray-600 transition-all";
     const labelClasses = "block text-sm font-bold dark:text-white text-gray-900 mb-2";
     const subLabelClasses = "block text-xs text-gray-500 mt-1.5";
 
@@ -31,7 +31,7 @@ const ContactUsSlide: React.FC<ContactUsSlideProps> = ({ onClose }) => {
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: '100%', opacity: 0 }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="relative w-full max-w-lg dark:bg-[#0b0b0b] bg-white rounded-3xl border dark:border-gray-800 border-neutral-200 shadow-2xl p-8 overflow-y-auto max-h-[90vh]"
+                className="relative w-full max-w-lg dark:bg-canvas bg-white rounded-3xl border dark:border-border border-neutral-200 shadow-2xl p-8 overflow-y-auto max-h-[90vh]"
             >
                 <button onClick={onClose} className="absolute top-6 right-6 text-gray-500 hover:text-white">
                     <XIcon className="w-6 h-6" />

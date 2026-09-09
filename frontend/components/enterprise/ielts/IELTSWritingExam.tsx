@@ -305,7 +305,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
         return (
             <div className="flex-1 min-h-0 overflow-y-auto bg-[#F2F2F2] p-6">
                 <div className="max-w-5xl mx-auto space-y-4">
-                    <div className="rounded-2xl bg-[#141414] border border-amber-500/20 p-5">
+                    <div className="rounded-2xl bg-surface border border-amber-500/20 p-5">
                         <div className="flex items-center gap-4 mb-5">
                             <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-6 py-4 text-center">
                                 <p className="text-[10px] uppercase tracking-wider text-amber-400/70 font-semibold">Overall Band</p>
@@ -322,7 +322,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
                             {metricLabels.map((metric) => {
                                 const value = result?.criteria[metric.key] ?? 0;
                                 return (
-                                    <div key={metric.key} className="rounded-xl bg-[#0b0b0b] border border-neutral-800 p-4">
+                                    <div key={metric.key} className="rounded-xl bg-canvas border border-neutral-800 p-4">
                                         <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold mb-2">{metric.label}</p>
                                         <p className="text-xl font-semibold text-white mb-2">{value.toFixed(1)}</p>
                                         <div className="h-1 rounded bg-neutral-800 overflow-hidden">
@@ -335,10 +335,10 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <div className="rounded-2xl bg-[#141414] border border-neutral-800 p-5">
+                        <div className="rounded-2xl bg-surface border border-neutral-800 p-5">
                             <div className="flex items-center justify-between mb-3">
                                 <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">Bilingual Feedback</p>
-                                <div className="flex items-center gap-1 rounded-lg bg-[#0b0b0b] border border-neutral-800 p-1">
+                                <div className="flex items-center gap-1 rounded-lg bg-canvas border border-neutral-800 p-1">
                                     {([
                                         { key: 'en' as const, label: 'EN' },
                                         { key: 'bn' as const, label: 'BN' },
@@ -360,7 +360,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
                             </p>
                         </div>
 
-                        <div className="rounded-2xl bg-[#141414] border border-neutral-800 p-5">
+                        <div className="rounded-2xl bg-surface border border-neutral-800 p-5">
                             <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold mb-3">Inline Highlight Preview</p>
                             <div className="flex items-center gap-4 mb-3">
                                 <span className="flex items-center gap-1.5 text-[11px] text-neutral-500">
@@ -370,7 +370,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
                                     <span className="w-2.5 h-2.5 rounded-sm bg-red-500/60" /> Grammar error
                                 </span>
                             </div>
-                            <div className="max-h-56 overflow-y-auto rounded-xl bg-[#0b0b0b] border border-neutral-800 p-4">
+                            <div className="max-h-56 overflow-y-auto rounded-xl bg-canvas border border-neutral-800 p-4">
                                 <p className="text-sm leading-relaxed text-neutral-200 whitespace-pre-wrap">
                                     {result ? buildSegments(result.text).map((seg, i) =>
                                         seg.kind === 'plain' ? (

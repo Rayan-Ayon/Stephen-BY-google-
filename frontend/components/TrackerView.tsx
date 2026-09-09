@@ -116,7 +116,7 @@ const TrackerView: React.FC = () => {
                         <h1 className="text-4xl font-bold dark:text-white text-black font-serif">Research Command Center</h1>
                     </div>
                     <div className="flex items-center gap-3">
-                        <button className="px-6 py-2.5 bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-xl text-sm font-bold shadow-sm hover:border-gray-400 transition-all">
+                        <button className="px-6 py-2.5 bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-border rounded-xl text-sm font-bold shadow-sm hover:border-gray-400 transition-all">
                             Export Manifest
                         </button>
                         <button className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-900/20 hover:bg-blue-700 transition-all">
@@ -135,7 +135,7 @@ const TrackerView: React.FC = () => {
                         <motion.div 
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-200 rounded-[32px] p-8 shadow-sm relative overflow-hidden group"
+                            className="dark:bg-[#0d0d0d] bg-white border dark:border-border border-neutral-200 rounded-[32px] p-8 shadow-sm relative overflow-hidden group"
                         >
                             <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-blue-500/10 transition-colors" />
                             
@@ -174,7 +174,7 @@ const TrackerView: React.FC = () => {
                             </div>
 
                             {/* 2. Research Milestones Box */}
-                            <div className="relative z-10 pt-6 border-t dark:border-gray-800 border-neutral-100">
+                            <div className="relative z-10 pt-6 border-t dark:border-border border-neutral-100">
                                 <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-6 flex items-center justify-between">
                                     <span>Research Milestones</span>
                                     <span className="text-blue-500 normal-case">AI Prediction: +3 Days Acceleration Expected</span>
@@ -204,7 +204,7 @@ const TrackerView: React.FC = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* 5. Experiments & Logs Box */}
-                            <div className="dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-200 rounded-[32px] p-6 shadow-sm">
+                            <div className="dark:bg-[#0d0d0d] bg-white border dark:border-border border-neutral-200 rounded-[32px] p-6 shadow-sm">
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="font-bold dark:text-white text-black flex items-center">
                                         <FlaskIcon className="w-5 h-5 mr-3 text-purple-500" />
@@ -229,13 +229,13 @@ const TrackerView: React.FC = () => {
                                         </div>
                                     ))}
                                 </div>
-                                <button className="w-full mt-4 py-2 text-xs font-bold text-gray-500 hover:text-white transition-colors border border-dashed dark:border-gray-800 rounded-lg">
+                                <button className="w-full mt-4 py-2 text-xs font-bold text-gray-500 hover:text-white transition-colors border border-dashed dark:border-border rounded-lg">
                                     + View All 84 Experiments
                                 </button>
                             </div>
 
                             {/* 4. Knowledge & Resources Box */}
-                            <div className="dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-200 rounded-[32px] p-6 shadow-sm flex flex-col">
+                            <div className="dark:bg-[#0d0d0d] bg-white border dark:border-border border-neutral-200 rounded-[32px] p-6 shadow-sm flex flex-col">
                                 <h3 className="font-bold dark:text-white text-black flex items-center mb-6">
                                     <BookOpenIcon className="w-5 h-5 mr-3 text-orange-500" />
                                     Knowledge Graph
@@ -258,7 +258,7 @@ const TrackerView: React.FC = () => {
                                         ))}
                                     </div>
                                 </div>
-                                <div className="pt-4 border-t dark:border-gray-800 border-neutral-100 mt-auto">
+                                <div className="pt-4 border-t dark:border-border border-neutral-100 mt-auto">
                                     <div className="flex items-center justify-between text-[10px] font-bold text-gray-500">
                                         <span>READING PROGRESS</span>
                                         <span>68% Total</span>
@@ -271,7 +271,7 @@ const TrackerView: React.FC = () => {
                         </div>
 
                         {/* 6. Output & Impact Box */}
-                        <div className="dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-200 rounded-[32px] p-8 shadow-sm">
+                        <div className="dark:bg-[#0d0d0d] bg-white border dark:border-border border-neutral-200 rounded-[32px] p-8 shadow-sm">
                             <div className="flex items-center justify-between mb-8">
                                 <h3 className="font-bold dark:text-white text-black flex items-center">
                                     <TrophyIcon className="w-5 h-5 mr-3 text-yellow-500" />
@@ -303,7 +303,7 @@ const TrackerView: React.FC = () => {
                     <div className="col-span-12 lg:col-span-4 space-y-6">
                         
                         {/* 7. AI Research Assistant Box */}
-                        <div className="dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-200 rounded-[32px] p-6 shadow-xl shadow-blue-500/5 flex flex-col h-[500px] relative overflow-hidden">
+                        <div className="dark:bg-[#0d0d0d] bg-white border dark:border-border border-neutral-200 rounded-[32px] p-6 shadow-xl shadow-blue-500/5 flex flex-col h-[500px] relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10" />
                             
                             <div className="flex items-center space-x-3 mb-6 relative z-10">
@@ -327,7 +327,7 @@ const TrackerView: React.FC = () => {
                             <div className="relative mt-auto z-10">
                                 <textarea 
                                     placeholder="Consult Hawking..." 
-                                    className="w-full dark:bg-[#151515] bg-neutral-50 border dark:border-gray-800 border-neutral-200 rounded-2xl p-4 pr-12 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all resize-none dark:text-white"
+                                    className="w-full dark:bg-[#151515] bg-neutral-50 border dark:border-border border-neutral-200 rounded-2xl p-4 pr-12 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all resize-none dark:text-white"
                                     rows={2}
                                 />
                                 <button className="absolute right-3 bottom-3 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all">
@@ -337,7 +337,7 @@ const TrackerView: React.FC = () => {
                         </div>
 
                         {/* 3. Team & Collaboration Box */}
-                        <div className="dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-200 rounded-[32px] p-6 shadow-sm">
+                        <div className="dark:bg-[#0d0d0d] bg-white border dark:border-border border-neutral-200 rounded-[32px] p-6 shadow-sm">
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="font-bold dark:text-white text-black flex items-center">
                                     <UsersIcon className="w-5 h-5 mr-3 text-teal-500" />
@@ -368,13 +368,13 @@ const TrackerView: React.FC = () => {
                         </div>
 
                         {/* 8. Personal Growth Tracker Box */}
-                        <div className="dark:bg-[#0d0d0d] bg-white border dark:border-gray-800 border-neutral-200 rounded-[32px] p-6 shadow-sm">
+                        <div className="dark:bg-[#0d0d0d] bg-white border dark:border-border border-neutral-200 rounded-[32px] p-6 shadow-sm">
                             <h3 className="font-bold dark:text-white text-black flex items-center mb-6">
                                 <DoubleChevronUpIcon className="w-5 h-5 mr-3 text-indigo-500" />
                                 Cognitive Maturity
                             </h3>
                             <RadarChart />
-                            <div className="space-y-4 mt-6 pt-6 border-t dark:border-gray-800 border-neutral-100">
+                            <div className="space-y-4 mt-6 pt-6 border-t dark:border-border border-neutral-100">
                                 <div className="flex justify-between items-center text-xs">
                                     <span className="text-gray-500 font-medium">Research Maturity</span>
                                     <span className="font-bold dark:text-white text-black px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800">LEVEL 4</span>

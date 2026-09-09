@@ -5,7 +5,7 @@ import { GoogleGenAI, Chat } from '@google/genai';
 import { 
     ArrowUpIcon, XIcon, BrainIcon, PlusIcon, AdjustIcon, ChevronDownIcon,
     MicIcon, CheckIcon, ProjectIcon, BookOpenIcon, DebatePodiumIcon,
-    MessageCircleIcon, FlashIcon, PresentationIcon, UploadIcon
+    MessageCircleIcon, FlashIcon, PresentationIcon, UploadIcon, HeadsetIcon
 } from './icons';
 import { DORMANT_NAV_ENABLED } from './dormantNav';
 
@@ -209,10 +209,10 @@ const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ duration: 0.2 }}
-                        className="fixed bottom-24 right-6 w-[90vw] md:w-[420px] h-[70vh] max-h-[600px] bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 flex flex-col z-50 overflow-hidden"
+                        className="fixed bottom-24 right-6 w-[90vw] md:w-[420px] h-[70vh] max-h-[600px] bg-white dark:bg-surfaceAlt rounded-2xl shadow-2xl border border-gray-200 dark:border-border flex flex-col z-50 overflow-hidden"
                     >
                         {/* Header */}
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-neutral-50 dark:bg-[#1f1f1f]">
+                        <div className="p-4 border-b border-gray-200 dark:border-border flex items-center justify-between bg-neutral-50 dark:bg-[#1f1f1f]">
                             {/* Toggle Switch */}
                             <div 
                                 className="relative bg-gray-200 dark:bg-black rounded-full p-1 flex items-center cursor-pointer select-none h-8 w-40" 
@@ -239,7 +239,7 @@ const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
                         </div>
 
                         {/* Messages Area */}
-                        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-white dark:bg-[#1a1a1a] relative">
+                        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-white dark:bg-surfaceAlt relative">
                             {isSwitching ? (
                                 <div className="space-y-4 animate-pulse">
                                     <div className="flex justify-start">
@@ -279,7 +279,7 @@ const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
                         </div>
 
                         {/* Chat Input Area (Replicated from ProjectsView) */}
-                        <div className="p-4 bg-white dark:bg-[#1a1a1a] border-t border-gray-200 dark:border-gray-800">
+                        <div className="p-4 bg-white dark:bg-surfaceAlt border-t border-gray-200 dark:border-border">
                             <div 
                                 ref={inputContainerRef}
                                 className={`relative dark:bg-[#111] bg-neutral-50 border border-gray-200 dark:border-[#1e1e1e] shadow-sm transition-all duration-300 ${
@@ -318,7 +318,7 @@ const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
                                                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                        className="absolute bottom-full left-0 mb-2 w-40 dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl overflow-hidden py-1 z-50"
+                                                        className="absolute bottom-full left-0 mb-2 w-40 dark:bg-surfaceAlt bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl overflow-hidden py-1 z-50"
                                                     >
                                                         {[
                                                             { label: 'Upload files', icon: <UploadIcon className="w-3 h-3" /> },
@@ -355,7 +355,7 @@ const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
                                                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                        className="absolute bottom-full left-0 mb-2 w-48 dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-xl overflow-hidden py-1 z-50"
+                                                        className="absolute bottom-full left-0 mb-2 w-48 dark:bg-surfaceAlt bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-xl overflow-hidden py-1 z-50"
                                                     >
                                                         {toolsList.map((tool) => (
                                                             <button 
@@ -412,7 +412,7 @@ const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
                                                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                        className="absolute bottom-full right-0 mb-2 w-40 dark:bg-[#1a1a1a] bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-xl overflow-hidden py-1 z-50"
+                                                        className="absolute bottom-full right-0 mb-2 w-40 dark:bg-surfaceAlt bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-xl overflow-hidden py-1 z-50"
                                                     >
                                                         {models.map((m) => (
                                                             <button 
@@ -462,14 +462,14 @@ const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
                 onClick={() => setIsOpen(!isOpen)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-black dark:bg-white text-white dark:text-black shadow-xl flex items-center justify-center z-50 group hover:shadow-2xl hover:shadow-orange-500/20 transition-all border-2 border-transparent hover:border-orange-500"
+                className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-white text-canvas shadow-xl flex items-center justify-center z-50 group hover:shadow-2xl hover:shadow-brand/20 transition-all border-2 border-transparent hover:border-brand"
             >
-                <span className="font-serif font-bold text-2xl group-hover:scale-110 transition-transform">H</span>
+                <HeadsetIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
                 
                 {/* Notification dot */}
                 <span className="absolute top-0 right-0 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-brand"></span>
                 </span>
             </motion.button>
         </>

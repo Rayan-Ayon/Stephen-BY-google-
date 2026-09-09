@@ -128,7 +128,7 @@ const IELTSDashboard: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <div className="rounded-2xl border border-amber-500/20 bg-[#141414] p-5">
+                    <div className="rounded-2xl border border-amber-500/20 bg-surface p-5">
                         <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">Overall Avg Band</p>
                         <div className="flex items-end gap-2 mt-1">
                             <p className="text-4xl font-semibold tracking-tight text-amber-400">{overall.toFixed(1)}</p>
@@ -136,19 +136,19 @@ const IELTSDashboard: React.FC = () => {
                         </div>
                         <p className="text-[11px] text-neutral-500 mt-1">{attempts.length} attempt{attempts.length === 1 ? '' : 's'} recorded</p>
                     </div>
-                    <div className="rounded-2xl border border-neutral-800 bg-[#141414] p-5">
+                    <div className="rounded-2xl border border-neutral-800 bg-surface p-5">
                         <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">Target Gap · {TARGET_BAND.toFixed(1)}</p>
                         <p className={`text-4xl font-semibold tracking-tight mt-1 ${gap >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                             {gap >= 0 ? '+' : '−'}{Math.abs(gap).toFixed(1)}
                         </p>
                         <p className="text-[11px] text-neutral-500 mt-1">{gap >= 0 ? 'At or above batch target' : 'Below batch target'}</p>
                     </div>
-                    <div className="rounded-2xl border border-neutral-800 bg-[#141414] p-5">
+                    <div className="rounded-2xl border border-neutral-800 bg-surface p-5">
                         <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">Completed Exams</p>
                         <p className="text-4xl font-semibold tracking-tight text-white mt-1">{attempts.length}</p>
                         <p className="text-[11px] text-neutral-500 mt-1">Across {SKILLS.length} exam modules</p>
                     </div>
-                    <div className="rounded-2xl border border-neutral-800 bg-[#141414] p-5">
+                    <div className="rounded-2xl border border-neutral-800 bg-surface p-5">
                         <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">Diagnostic Readiness</p>
                         <p className="text-4xl font-semibold tracking-tight text-sky-400 mt-1">{readiness}<span className="text-base text-neutral-500">/100</span></p>
                         <div className="h-1.5 rounded bg-neutral-800 overflow-hidden mt-3">
@@ -161,7 +161,7 @@ const IELTSDashboard: React.FC = () => {
             {/* ── Section 2: Trend Chart + Interactive Skill Cards ── */}
             <section>
                 <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold mb-3">Band Trend &amp; Skill Breakdown</p>
-                <div className="rounded-2xl bg-[#141414] border border-neutral-800 p-6 mb-4">
+                <div className="rounded-2xl bg-surface border border-neutral-800 p-6 mb-4">
                     <div className="flex items-center justify-between mb-4">
                         <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">Band Score Trend</p>
                         <div className="flex items-center gap-3">
@@ -201,7 +201,7 @@ const IELTSDashboard: React.FC = () => {
                             ? recent.criteria
                             : DIAGNOSTIC_SUBSKILLS.filter((d) => d.skill === skill).map((d) => ({ label: d.subSkill, band: Math.max(4, 9 - (d.weight / 100) * 3) }));
                         return (
-                            <div key={skill} className={`rounded-2xl border bg-[#141414] transition-colors ${isOpen ? 'border-neutral-600' : 'border-neutral-800'}`}>
+                            <div key={skill} className={`rounded-2xl border bg-surface transition-colors ${isOpen ? 'border-neutral-600' : 'border-neutral-800'}`}>
                                 <div className="flex items-start justify-between p-5">
                                     <button onClick={() => setExpandedSkill(isOpen ? null : skill)} className="flex-1 text-left min-w-0">
                                         <div className="flex items-center justify-between mb-2">
@@ -248,7 +248,7 @@ const IELTSDashboard: React.FC = () => {
                 <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold mt-6 mb-3">Timed Bundle Performance</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {bundleStats.map(({ id, label, avg, count }) => (
-                        <div key={id} className="rounded-2xl border bg-[#141414] p-5" style={{ borderColor: `${BUNDLE_HEX[id]}40` }}>
+                        <div key={id} className="rounded-2xl border bg-surface p-5" style={{ borderColor: `${BUNDLE_HEX[id]}40` }}>
                             <div className="flex items-center justify-between mb-2">
                                 <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">{label}</p>
                                 <span className="text-[10px] font-mono text-neutral-600">{count} attempt{count === 1 ? '' : 's'}</span>
@@ -276,7 +276,7 @@ const IELTSDashboard: React.FC = () => {
                     <span className="text-[10px] font-mono text-neutral-600">Sub-skill error detection · live</span>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="rounded-2xl bg-[#141414] border border-neutral-800 p-5">
+                    <div className="rounded-2xl bg-surface border border-neutral-800 p-5">
                         <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold mb-4">Sub-Skill Error Breakdown</p>
                         <div className="space-y-4">
                             {DIAGNOSTIC_SUBSKILLS.map((d) => (
@@ -301,7 +301,7 @@ const IELTSDashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="rounded-2xl bg-[#141414] border border-neutral-800 p-5">
+                    <div className="rounded-2xl bg-surface border border-neutral-800 p-5">
                         <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold mb-4">Frequent Mistake Tokens</p>
                         <div className="flex flex-wrap gap-2">
                             {MISTAKE_TOKENS.map((t) => (
@@ -311,7 +311,7 @@ const IELTSDashboard: React.FC = () => {
                                 </div>
                             ))}
                         </div>
-                        <div className="mt-5 rounded-xl bg-[#0b0b0b] border border-neutral-800 p-4">
+                        <div className="mt-5 rounded-xl bg-canvas border border-neutral-800 p-4">
                             <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold mb-2">Intervention Recommendation</p>
                             <p className="text-sm text-neutral-300 leading-relaxed">
                                 Prioritise <span className="text-amber-300">TFNG reading traps</span> and <span className="text-amber-300">lexical range</span> drilling. Book a focused grammar clinic before the next full mock cycle.
@@ -322,7 +322,7 @@ const IELTSDashboard: React.FC = () => {
             </section>
 
             {/* ── Section 4: Enterprise Examination History Matrix ── */}
-            <section className="rounded-2xl bg-[#141414] border border-neutral-800 p-6">
+            <section className="rounded-2xl bg-surface border border-neutral-800 p-6">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold tracking-tight text-white">Examination History Matrix</h3>
                     <button
@@ -334,7 +334,7 @@ const IELTSDashboard: React.FC = () => {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 mb-4">
-                    <div className="flex gap-1 rounded-lg bg-[#0b0b0b] border border-neutral-800 p-1">
+                    <div className="flex gap-1 rounded-lg bg-canvas border border-neutral-800 p-1">
                         {(['all', ...SKILLS] as ('all' | IeltsSkill)[]).map((m) => (
                             <button
                                 key={m}
@@ -352,7 +352,7 @@ const IELTSDashboard: React.FC = () => {
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                        className="px-3 py-2 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-[11px] text-neutral-300 outline-none focus:border-neutral-600"
+                        className="px-3 py-2 rounded-lg bg-canvas border border-neutral-800 text-[11px] text-neutral-300 outline-none focus:border-neutral-600"
                     >
                         <option value="all">All Status</option>
                         <option value="approved">Approved</option>
@@ -395,7 +395,7 @@ const IELTSDashboard: React.FC = () => {
                                                 {a.criteria && a.criteria.length > 0 ? (
                                                     <div className="flex flex-wrap gap-1.5">
                                                         {a.criteria.slice(0, 4).map((c) => (
-                                                            <span key={c.label} className="rounded bg-[#0b0b0b] border border-neutral-800 px-2 py-0.5 text-[10px] font-mono text-neutral-400">
+                                                            <span key={c.label} className="rounded bg-canvas border border-neutral-800 px-2 py-0.5 text-[10px] font-mono text-neutral-400">
                                                                 {c.label.split(' ')[0]} {c.band.toFixed(1)}
                                                             </span>
                                                         ))}

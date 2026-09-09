@@ -46,7 +46,7 @@ const IELTSLobbyCard: React.FC<IELTSLobbyCardProps> = ({
     ];
 
     return (
-        <div className="rounded-2xl border border-neutral-800 bg-[#141414] p-8">
+        <div className="rounded-2xl border border-neutral-800 bg-surface p-8">
             <div className="flex items-start justify-between mb-6">
                 <div>
                     <h2 className="text-xl font-semibold tracking-tight text-white">{title}</h2>
@@ -55,7 +55,7 @@ const IELTSLobbyCard: React.FC<IELTSLobbyCardProps> = ({
                 <span className="text-[10px] uppercase tracking-wider text-amber-400/90 bg-amber-400/10 border border-amber-400/20 rounded-full px-3 py-1 whitespace-nowrap">Pre-Test Lobby</span>
             </div>
 
-            <div className="rounded-xl bg-[#0b0b0b] border border-neutral-800 p-5 mb-5">
+            <div className="rounded-xl bg-canvas border border-neutral-800 p-5 mb-5">
                 <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold mb-3">Candidate Details</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
@@ -75,7 +75,7 @@ const IELTSLobbyCard: React.FC<IELTSLobbyCardProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
                 {stats.map((s) => (
-                    <div key={s.label} className="rounded-xl bg-[#0b0b0b] border border-neutral-800 p-4">
+                    <div key={s.label} className="rounded-xl bg-canvas border border-neutral-800 p-4">
                         <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">{s.label}</p>
                         <p className="text-sm text-neutral-200 mt-1.5">{s.value}</p>
                     </div>
@@ -83,7 +83,7 @@ const IELTSLobbyCard: React.FC<IELTSLobbyCardProps> = ({
             </div>
 
             {bundleSections && bundleSections.length > 0 && (
-                <div className="rounded-xl bg-[#0b0b0b] border border-neutral-800 p-5 mb-5">
+                <div className="rounded-xl bg-canvas border border-neutral-800 p-5 mb-5">
                     <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold mb-3">Simulation Sequence</p>
                     <div className="space-y-2">
                         {bundleSections.map((sec, i) => (
@@ -99,7 +99,7 @@ const IELTSLobbyCard: React.FC<IELTSLobbyCardProps> = ({
                 </div>
             )}
 
-            <div className="rounded-xl bg-[#0b0b0b] border border-neutral-800 p-5 mb-6">
+            <div className="rounded-xl bg-canvas border border-neutral-800 p-5 mb-6">
                 <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold mb-3">Equipment Check</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {EQUIPMENT_CHECKS.map((c) => (

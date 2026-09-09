@@ -139,11 +139,11 @@ const IELTSSimulationRunner: React.FC<IELTSSimulationRunnerProps> = ({ bundleId,
         <div className={state === 'section' ? 'h-full w-full min-h-0 flex flex-col overflow-hidden bg-white' : 'space-y-4'}>
             {state === 'section' && (
                 <>
-                    <div className="shrink-0 rounded-xl border border-neutral-800 bg-[#141414] px-4 py-3 flex items-center justify-between m-4">
+                    <div className="shrink-0 rounded-xl border border-neutral-800 bg-surface px-4 py-3 flex items-center justify-between m-4">
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => setShowExitModal(true)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0b0b0b] border border-neutral-800 text-[11px] text-neutral-400 hover:text-red-400 hover:border-red-500/30 transition-all${exitPulse ? ' scale-105 ring-2 ring-rose-500/80 shadow-[0_0_15px_rgba(225,29,72,0.5)] animate-pulse' : ''}`}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-canvas border border-neutral-800 text-[11px] text-neutral-400 hover:text-red-400 hover:border-red-500/30 transition-all${exitPulse ? ' scale-105 ring-2 ring-rose-500/80 shadow-[0_0_15px_rgba(225,29,72,0.5)] animate-pulse' : ''}`}
                             >
                                 <span>⬅️</span> Exit Exam
                             </button>
@@ -159,7 +159,7 @@ const IELTSSimulationRunner: React.FC<IELTSSimulationRunnerProps> = ({ bundleId,
 
             {state === 'break' && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-8">
-                    <div className="w-full max-w-lg rounded-2xl border border-neutral-800 bg-[#141414] p-10 text-center">
+                    <div className="w-full max-w-lg rounded-2xl border border-neutral-800 bg-surface p-10 text-center">
                         <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold mb-3">
                             {bundle.label} · Section Break
                         </p>
@@ -178,7 +178,7 @@ const IELTSSimulationRunner: React.FC<IELTSSimulationRunnerProps> = ({ bundleId,
             )}
 
             {state === 'summary' && (
-                <div className="rounded-2xl border border-neutral-800 bg-[#141414] p-8">
+                <div className="rounded-2xl border border-neutral-800 bg-surface p-8">
                     <div className="flex items-start justify-between mb-6">
                         <div>
                             <h2 className="text-xl font-semibold tracking-tight text-white">{bundle.label} — Results</h2>

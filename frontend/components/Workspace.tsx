@@ -686,7 +686,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ course, onBack, userEmail }) => {
             <div className="flex-1 flex flex-col min-w-0 relative h-full">
                 {course.isStructured && !isLeftSidebarOpen && (
                     <div className="absolute top-4 left-4 z-50">
-                        <button onClick={() => setIsLeftSidebarOpen(true)} className="p-2 bg-white dark:bg-[#1a1a1a] rounded-full shadow-md border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"><ViewSidebarIcon className="w-5 h-5" /></button>
+                        <button onClick={() => setIsLeftSidebarOpen(true)} className="p-2 bg-white dark:bg-[#1a1a1a] rounded-full shadow-md border border-gray-200 dark:border-border text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"><ViewSidebarIcon className="w-5 h-5" /></button>
                     </div>
                 )}
                 <CinematicContentPanel 

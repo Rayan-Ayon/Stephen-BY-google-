@@ -96,7 +96,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ onClose, onAddProject
                 className="relative w-full max-w-2xl bg-[#0d1117] rounded-2xl border border-gray-700/60 shadow-2xl overflow-hidden z-10 max-h-[90vh] flex flex-col"
             >
                 {/* Header */}
-                <div className="px-6 py-5 border-b border-gray-800 flex items-center justify-between shrink-0">
+                <div className="px-6 py-5 border-b border-border flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-3">
                         {step === 'form' && (
                             <button onClick={() => setStep('select')} className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
@@ -284,7 +284,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ onClose, onAddProject
 
                 {/* Footer */}
                 {step === 'form' && (
-                    <div className="px-6 py-4 border-t border-gray-800 flex justify-end gap-3 shrink-0">
+                    <div className="px-6 py-4 border-t border-border flex justify-end gap-3 shrink-0">
                         <button onClick={onClose} className="px-5 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors">
                             Cancel
                         </button>
@@ -382,7 +382,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
                 <p className="text-xs text-gray-400 leading-relaxed line-clamp-2 mb-4">{project.description}</p>
 
                 {/* AI Execution Scorecard */}
-                <div className="space-y-2.5 mt-auto pt-3 border-t border-gray-800">
+                <div className="space-y-2.5 mt-auto pt-3 border-t border-border">
                     <div>
                         <div className="flex justify-between text-[10px] font-medium mb-1">
                             <span className="text-gray-500">Completion</span>
@@ -419,7 +419,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
     const renderDebates = () => {
         if (!isDebateStarted) {
             return (
-                <div className="flex flex-col items-center justify-center h-full w-full bg-white dark:bg-[#0b0b0b]">
+                <div className="flex flex-col items-center justify-center h-full w-full bg-white dark:bg-canvas">
                     <div className="text-center space-y-6">
                         <div className="w-24 h-24 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                             <DebatePodiumIcon className="w-12 h-12 text-orange-500" />
@@ -442,13 +442,13 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
     };
 
     const renderEmptySegment = () => (
-        <div className="flex flex-col items-center justify-center h-full w-full bg-white dark:bg-[#0b0b0b]">
+        <div className="flex flex-col items-center justify-center h-full w-full bg-white dark:bg-canvas">
             <p className="text-gray-500 text-lg font-medium">this segment will be add soon</p>
         </div>
     );
 
     return (
-        <div className="flex h-full w-full bg-white dark:bg-[#0b0b0b] text-neutral-900 dark:text-neutral-100 overflow-hidden">
+        <div className="flex h-full w-full bg-white dark:bg-canvas text-neutral-900 dark:text-neutral-100 overflow-hidden">
             {/* Main Content */}
             <main className={`flex-1 ${activeSection === 'debates' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`}>
                 {['chats', 'recalls', 'presentation', 'qa', 'instant_describe'].includes(activeSection) ? (
@@ -484,12 +484,12 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
                                         placeholder="Search catalog"
                                         value={searchQuery}
                                         onChange={e => setSearchQuery(e.target.value)}
-                                        className="w-full md:w-64 pl-9 pr-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all"
+                                        className="w-full md:w-64 pl-9 pr-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all"
                                     />
                                     <SearchIcon className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
                                 </div>
                                 {/* Filters button */}
-                                <button className="flex items-center px-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap hover:border-gray-400 dark:hover:border-gray-600 transition-colors">
+                                <button className="flex items-center px-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-border rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap hover:border-gray-400 dark:hover:border-gray-600 transition-colors">
                                     <AdjustIcon className="w-4 h-4 mr-2" /> Filters
                                 </button>
                             </div>
@@ -498,7 +498,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
                             <div className="relative w-full md:w-auto">
                                 <button
                                     onClick={() => setCategoryOpen(!categoryOpen)}
-                                    className="flex items-center justify-between w-full md:w-44 px-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
+                                    className="flex items-center justify-between w-full md:w-44 px-4 py-2 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-border rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
                                 >
                                     <span>{activeCategory === 'All' ? 'Category' : activeCategory}</span>
                                     <ChevronDownIcon className={`w-4 h-4 ml-2 transition-transform ${categoryOpen ? 'rotate-180' : ''}`} />
@@ -510,7 +510,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, y: -8 }}
                                             transition={{ duration: 0.15 }}
-                                            className="absolute right-0 mt-1 w-44 bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-gray-800 rounded-xl shadow-xl z-20 overflow-hidden"
+                                            className="absolute right-0 mt-1 w-44 bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-border rounded-xl shadow-xl z-20 overflow-hidden"
                                         >
                                             {categoryFilterOptions.map(cat => (
                                                 <button
@@ -540,7 +540,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
                                     className={`flex items-center px-4 py-2 rounded-full text-xs font-bold border transition-colors whitespace-nowrap ${
                                         activeSection === item.id
                                             ? 'bg-neutral-800 dark:bg-white text-white dark:text-black border-transparent'
-                                            : 'bg-white dark:bg-[#1a1a1a] text-gray-600 dark:text-gray-300 border-neutral-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600'
+                                            : 'bg-white dark:bg-[#1a1a1a] text-gray-600 dark:text-gray-300 border-neutral-200 dark:border-border hover:border-gray-400 dark:hover:border-gray-600'
                                     }`}
                                 >
                                     <span className="mr-2 opacity-70">{item.icon}</span>
@@ -551,7 +551,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ onNavigate }) => {
 
                         {/* Toggle Switch */}
                         <div className="flex items-center justify-start mb-6">
-                            <div className="bg-neutral-100 dark:bg-[#1a1a1a] p-1 rounded-lg flex items-center border border-neutral-200 dark:border-gray-800">
+                            <div className="bg-neutral-100 dark:bg-[#1a1a1a] p-1 rounded-lg flex items-center border border-neutral-200 dark:border-border">
                                 <button
                                     onClick={() => setViewMode('incomplete')}
                                     className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${

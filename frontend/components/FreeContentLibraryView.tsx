@@ -8834,6 +8834,7 @@ const NOTES_CONTENT: Record<string, React.ReactNode> = {
   '5': MODULE_05_NOTES,
   '6': MODULE_06_NOTES,
   '7': MODULE_07_NOTES,
+  '8': MODULE_08_NOTES,
   '9': MODULE_09_NOTES,
   '10': MODULE_10_NOTES,
 };

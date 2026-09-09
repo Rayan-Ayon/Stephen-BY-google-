@@ -10,7 +10,7 @@ import {
     LocationTrackerIcon, LearningMethodIcon, ChevronDownIcon, CrownIcon,
     ViewSidebarIcon, CheckCircleIcon, DollarIcon, SidebarToggleIcon, CubeIcon, DotsHorizontalIcon, TrashIcon, ShareIcon, PencilIcon, ChevronRightIcon,
     HomeIcon, ShieldCheckIcon, UserIcon, MicIcon, SpeakerWaveIcon, BookOpenIcon, LabIcon, FireIcon, PhoneIcon, ChatIcon, CalendarIcon,
-    LayersIcon
+    LayersIcon, GridIcon
 } from './icons';
 import type { Space } from '../utils/mockDb';
 import WorkspaceDropdown from './WorkspaceDropdown';
@@ -50,7 +50,7 @@ interface SidebarProps {
 const navConfig = [
     {
         items: [
-            { name: 'Overview', icon: <CubeIcon className="w-5 h-5" />, key: 'sandbox' },
+            { name: 'Overview', icon: <GridIcon className="w-5 h-5" />, key: 'sandbox' },
             { name: 'Study Plan', icon: <CalendarIcon className="w-5 h-5" />, key: 'study_plan' },
         ]
     },

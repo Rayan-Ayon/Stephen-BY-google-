@@ -13,7 +13,7 @@ interface SpaceViewProps {
 }
 
 const ActionCard = ({ icon, label, sub }: { icon: React.ReactNode; label: string; sub: string }) => (
-  <button className="flex flex-col items-start p-4 bg-[#111] border border-gray-800 rounded-2xl hover:bg-[#161616] transition-colors text-left group w-full h-28 justify-between">
+  <button className="flex flex-col items-start p-4 bg-[#111] border border-border rounded-2xl hover:bg-[#161616] transition-colors text-left group w-full h-28 justify-between">
     <div className="text-gray-400 group-hover:text-white transition-colors">
       {React.cloneElement(icon as React.ReactElement<any>, { className: 'w-6 h-6' })}
     </div>
@@ -28,7 +28,7 @@ const InstitutionalDashboard: React.FC<{ space: Space }> = ({ space }) => {
   const libraryItems = getLibraryItems();
 
   return (
-    <div className="flex-1 h-full bg-[#0b0b0b] text-white p-8 lg:p-12 overflow-y-auto">
+    <div className="flex-1 h-full bg-canvas text-white p-8 lg:p-12 overflow-y-auto">
       {/* A. Co-Branded Header */}
       <div className="flex items-center gap-3 mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-white" style={{ fontFamily: "'Lora', serif" }}>
@@ -161,7 +161,7 @@ const SpaceView: React.FC<SpaceViewProps> = ({ space }) => {
 
   // Standard "Let's learn" layout for personal spaces
   return (
-    <div className="flex-1 h-full bg-[#0b0b0b] text-white p-8 lg:p-12 flex flex-col overflow-y-auto">
+    <div className="flex-1 h-full bg-canvas text-white p-8 lg:p-12 flex flex-col overflow-y-auto">
       <div
         className="flex flex-col md:flex-row justify-between items-start md:items-center mb-16 gap-4 group/header relative"
         onMouseEnter={() => setIsHeaderHovered(true)}
@@ -182,11 +182,11 @@ const SpaceView: React.FC<SpaceViewProps> = ({ space }) => {
           <p className="text-gray-500 text-sm">No description</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 border border-gray-800 rounded-lg text-sm font-medium text-gray-300 hover:bg-[#1a1a1a] hover:text-white transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm font-medium text-gray-300 hover:bg-[#1a1a1a] hover:text-white transition-colors">
             <SparkleIcon className="w-4 h-4 text-purple-400" />
             Learn Tabs
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 border border-gray-800 rounded-lg text-sm font-medium text-gray-300 hover:bg-[#1a1a1a] hover:text-white transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm font-medium text-gray-300 hover:bg-[#1a1a1a] hover:text-white transition-colors">
             <FileTextIcon className="w-4 h-4" />
             Create Exam
           </button>
@@ -198,7 +198,7 @@ const SpaceView: React.FC<SpaceViewProps> = ({ space }) => {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center w-full -mt-10">
-        <div className="w-full max-w-4xl border border-gray-800 rounded-[32px] p-8 md:p-12 bg-[#0a0a0a]">
+        <div className="w-full max-w-4xl border border-border rounded-[32px] p-8 md:p-12 bg-[#0a0a0a]">
           <h2 className="text-4xl mb-12 font-medium text-center" style={{ fontFamily: "'Lora', serif" }}>Let's learn, Fatema</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mb-8">
             <ActionCard icon={<UploadIcon />} label="Upload" sub="File, audio, video" />
@@ -210,7 +210,7 @@ const SpaceView: React.FC<SpaceViewProps> = ({ space }) => {
             <input
               type="text"
               placeholder="Learn anything"
-              className="w-full bg-[#111] border border-gray-800 rounded-2xl py-4 px-6 pr-14 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-all"
+              className="w-full bg-[#111] border border-border rounded-2xl py-4 px-6 pr-14 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-all"
             />
             <button className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-[#222] rounded-full text-gray-400 hover:bg-[#333] hover:text-white transition-colors">
               <ArrowUpIcon className="w-4 h-4" />

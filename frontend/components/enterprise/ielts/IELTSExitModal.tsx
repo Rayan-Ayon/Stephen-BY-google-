@@ -15,7 +15,7 @@ const IELTSExitModal: React.FC<IELTSExitModalProps> = ({ open, onConfirm, onCanc
             onClick={onCancel}
         >
             <div
-                className="w-full max-w-md rounded-2xl border border-neutral-800 bg-[#141414] p-8 text-center"
+                className="w-full max-w-md rounded-2xl border border-neutral-800 bg-surface p-8 text-center"
                 onClick={(e) => e.stopPropagation()}
             >
                 <p className="text-4xl mb-4">⚠️</p>

@@ -209,9 +209,9 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ email = 'ayonburg@gmail.com
             </div>
 
             {/* Right Sidebar — preserved exactly */}
-            <aside className="w-96 border-l dark:border-gray-800 border-neutral-200 p-6 pt-24 overflow-y-auto hidden lg:block shrink-0 dark:bg-black bg-neutral-50">
+            <aside className="w-96 border-l dark:border-border border-neutral-200 p-6 pt-24 overflow-y-auto hidden lg:block shrink-0 dark:bg-black bg-neutral-50">
 
-                <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-xl p-5 mb-6 shadow-sm">
+                <div className="dark:bg-[#1a1a1a] bg-white border dark:border-border border-neutral-200 rounded-xl p-5 mb-6 shadow-sm">
                     <div className="flex justify-between items-start">
                         <div>
                             <p className="font-bold dark:text-white text-black text-3xl">29°c</p>
@@ -223,7 +223,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ email = 'ayonburg@gmail.com
                            <p className="text-xs text-gray-500">H: 32° L: 26°</p>
                         </div>
                     </div>
-                    <div className="border-t dark:border-gray-800 border-neutral-200 my-4"></div>
+                    <div className="border-t dark:border-border border-neutral-200 my-4"></div>
                     <div className="flex justify-between text-center text-sm">
                         {['Thu', 'Fri', 'Sat', 'Sun', 'Mon'].map((day, i) => (
                              <div key={day} className="flex flex-col items-center">
@@ -235,7 +235,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ email = 'ayonburg@gmail.com
                     </div>
                 </div>
 
-                <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-xl p-5 mb-6 shadow-sm">
+                <div className="dark:bg-[#1a1a1a] bg-white border dark:border-border border-neutral-200 rounded-xl p-5 mb-6 shadow-sm">
                     <h3 className="font-bold dark:text-white text-black mb-4">Market Outlook</h3>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="text-sm">
@@ -251,7 +251,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ email = 'ayonburg@gmail.com
                     </div>
                 </div>
 
-                 <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-xl p-5 shadow-sm">
+                 <div className="dark:bg-[#1a1a1a] bg-white border dark:border-border border-neutral-200 rounded-xl p-5 shadow-sm">
                     <h3 className="font-bold dark:text-white text-black mb-4">Trending Companies</h3>
                     <div className="space-y-4">
                          {[{name: 'Apple Inc.', ticker: 'AAPL', price: '+0.23%', color: 'green'}, {name: 'Amazon.com, Inc.', ticker: 'AMZN', price: '-1.15%', color: 'red'}, {name: 'Microsoft Corporation', ticker: 'MSFT', price: '-2.45%', color: 'red'}].map(c => (

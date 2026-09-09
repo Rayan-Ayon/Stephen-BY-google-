@@ -35,7 +35,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ onClose }) => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="relative w-full max-w-lg bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden z-10"
+                className="relative w-full max-w-lg bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-2xl border border-gray-200 dark:border-border overflow-hidden z-10"
             >
                 <div className="p-5">
                      <textarea
@@ -67,7 +67,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ onClose }) => {
                         </div>
                     </div>
                 </div>
-                <div className="px-5 py-4 bg-gray-50 dark:bg-[#121212] border-t border-gray-200 dark:border-gray-800 text-xs text-gray-500 leading-relaxed">
+                <div className="px-5 py-4 bg-gray-50 dark:bg-[#121212] border-t border-gray-200 dark:border-border text-xs text-gray-500 leading-relaxed">
                     <p>
                         Join our <a href="#" className="text-green-600 dark:text-green-500 hover:underline font-medium">Discord Community</a> to connect with other learners, share ideas, and help shape our platform.
                     </p>

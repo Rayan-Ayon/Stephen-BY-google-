@@ -587,7 +587,7 @@ const NavCarousel: React.FC<{
     return (
         <div className="relative group flex items-center w-full">
             {showLeftArrow && (
-                <button onClick={() => scroll('left')} className="absolute left-0 z-10 p-1.5 bg-white dark:bg-[#1a1a1a] rounded-full shadow-md border border-gray-200 dark:border-gray-800 text-gray-500 hover:text-black dark:hover:text-white transition-all -ml-2">
+                <button onClick={() => scroll('left')} className="absolute left-0 z-10 p-1.5 bg-white dark:bg-[#1a1a1a] rounded-full shadow-md border border-gray-200 dark:border-border text-gray-500 hover:text-black dark:hover:text-white transition-all -ml-2">
                     <ChevronLeftIcon className="w-4 h-4" />
                 </button>
             )}
@@ -599,7 +599,7 @@ const NavCarousel: React.FC<{
                         className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all border shrink-0 ${
                             activeFilter === filter
                                 ? 'dark:bg-white bg-black dark:text-black text-white dark:border-white border-black'
-                                : 'dark:bg-[#1a1a1a] bg-neutral-50 dark:text-gray-400 text-neutral-600 dark:border-gray-800 border-neutral-200 hover:dark:border-gray-600'
+                                : 'dark:bg-[#1a1a1a] bg-neutral-50 dark:text-gray-400 text-neutral-600 dark:border-border border-neutral-200 hover:dark:border-gray-600'
                         }`}
                     >
                         {filter}
@@ -607,7 +607,7 @@ const NavCarousel: React.FC<{
                 ))}
             </div>
             {showRightArrow && (
-                <button onClick={() => scroll('right')} className="absolute right-0 z-10 p-1.5 bg-white dark:bg-[#1a1a1a] rounded-full shadow-md border border-gray-200 dark:border-gray-800 text-gray-500 hover:text-black dark:hover:text-white transition-all -mr-2">
+                <button onClick={() => scroll('right')} className="absolute right-0 z-10 p-1.5 bg-white dark:bg-[#1a1a1a] rounded-full shadow-md border border-gray-200 dark:border-border text-gray-500 hover:text-black dark:hover:text-white transition-all -mr-2">
                     <ChevronRightIcon className="w-4 h-4" />
                 </button>
             )}
@@ -644,7 +644,7 @@ const EventCard: React.FC<{ event: CompetitionEvent }> = ({ event }) => (
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
         className={`bg-[#161b22] border rounded-2xl p-5 flex flex-col transition-all hover:shadow-lg hover:shadow-emerald-900/5 ${
-            event.isHighlighted ? 'border-emerald-500/40' : 'border-gray-800/60'
+            event.isHighlighted ? 'border-emerald-500/40' : 'border-border/60'
         }`}
     >
         {/* Tags row */}
@@ -698,7 +698,7 @@ const EventCard: React.FC<{ event: CompetitionEvent }> = ({ event }) => (
         </div>
 
         {/* Scorecard */}
-        <div className="mt-auto pt-3 border-t border-gray-800 space-y-2.5">
+        <div className="mt-auto pt-3 border-t border-border space-y-2.5">
             <div>
                 <div className="flex justify-between text-[10px] font-medium mb-1">
                     <span className="text-gray-500 flex items-center gap-1"><SparkleIcon className="w-3 h-3" /> Dynamic Win Probability</span>
@@ -815,7 +815,7 @@ const CompetitionView: React.FC = () => {
     return (
         <div className="flex-1 flex flex-col h-full overflow-hidden dark:bg-black bg-white">
             {/* Sticky Header */}
-            <div className="sticky top-0 z-40 dark:bg-black/95 bg-white/95 backdrop-blur-md border-b dark:border-gray-800 border-neutral-200">
+            <div className="sticky top-0 z-40 dark:bg-black/95 bg-white/95 backdrop-blur-md border-b dark:border-border border-neutral-200">
                 <div className="max-w-7xl mx-auto px-6 py-4">
                     <div className="flex gap-4">
                         <div className="relative group flex-grow">
@@ -831,7 +831,7 @@ const CompetitionView: React.FC = () => {
                             />
                             <button
                                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                                className={`absolute right-2 top-1/2 -translate-y-1/2 flex items-center space-x-2 px-4 py-1.5 border rounded-full text-xs font-bold transition-colors ${isFilterOpen ? 'bg-black text-white border-black dark:bg-white dark:text-black' : 'dark:bg-black bg-white border-neutral-200 dark:border-gray-800 dark:text-gray-300 text-neutral-700 hover:dark:bg-gray-900'}`}
+                                className={`absolute right-2 top-1/2 -translate-y-1/2 flex items-center space-x-2 px-4 py-1.5 border rounded-full text-xs font-bold transition-colors ${isFilterOpen ? 'bg-black text-white border-black dark:bg-white dark:text-black' : 'dark:bg-black bg-white border-neutral-200 dark:border-border dark:text-gray-300 text-neutral-700 hover:dark:bg-gray-900'}`}
                             >
                                 <AdjustIcon className="w-4 h-4" />
                                 <span>Filters</span>

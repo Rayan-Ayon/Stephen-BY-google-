@@ -94,12 +94,12 @@ const RoadmapDay: React.FC<RoadmapDayProps> = ({ data }) => {
         >
             <h2 className="text-2xl font-bold dark:text-white text-black" style={{ fontFamily: "'Lora', serif" }}>Day {data.day}</h2>
 
-            <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-xl p-6">
+            <div className="dark:bg-[#1a1a1a] bg-white border dark:border-border border-neutral-200 rounded-xl p-6">
                 <h3 className="font-semibold dark:text-gray-200 text-neutral-800 mb-2">Goal</h3>
                 <p className="text-sm dark:text-gray-400 text-neutral-600">{data.goal}</p>
             </div>
             
-             <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-xl p-6">
+             <div className="dark:bg-[#1a1a1a] bg-white border dark:border-border border-neutral-200 rounded-xl p-6">
                 <h3 className="font-semibold dark:text-gray-200 text-neutral-800 mb-3">Key Concepts</h3>
                 <ul className="space-y-2">
                     {data.concepts.map(concept => (
@@ -111,7 +111,7 @@ const RoadmapDay: React.FC<RoadmapDayProps> = ({ data }) => {
                 </ul>
             </div>
 
-            <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-xl p-6">
+            <div className="dark:bg-[#1a1a1a] bg-white border dark:border-border border-neutral-200 rounded-xl p-6">
                 <h3 className="font-semibold dark:text-gray-200 text-neutral-800 mb-4">Resources</h3>
                 <div className="space-y-4">
                     {data.resources.map(res => (

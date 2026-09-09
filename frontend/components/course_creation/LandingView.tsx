@@ -74,7 +74,7 @@ const CinematicBlinkingBars = () => {
 
 const CourseCard: React.FC<{ course: Course, onResume: () => void, onPreview: () => void }> = ({ course, onResume, onPreview }) => {
     return (
-        <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6 mb-6 transition-all duration-300 hover:shadow-lg">
+        <div className="dark:bg-[#1a1a1a] bg-white border dark:border-border border-neutral-200 rounded-2xl p-6 mb-6 transition-all duration-300 hover:shadow-lg">
             <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-400 overflow-hidden">
@@ -111,7 +111,7 @@ const CourseCard: React.FC<{ course: Course, onResume: () => void, onPreview: ()
                 </div>
             </div>
 
-            <div className="dark:bg-[#111] bg-white border dark:border-gray-800 border-neutral-200 rounded-xl p-5 flex items-center justify-between group cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+            <div className="dark:bg-[#111] bg-white border dark:border-border border-neutral-200 rounded-xl p-5 flex items-center justify-between group cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
                 <div className="flex items-center space-x-4">
                     <div className="text-gray-400">
                         {course.nextStep?.type === 'Video' ? <VideoCameraIcon className="w-5 h-5" /> : <FileTextIcon className="w-5 h-5" />}
@@ -133,7 +133,7 @@ const CourseCard: React.FC<{ course: Course, onResume: () => void, onPreview: ()
 };
 
 const GoalsBox = () => (
-    <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6 mb-6">
+    <div className="dark:bg-[#1a1a1a] bg-white border dark:border-border border-neutral-200 rounded-2xl p-6 mb-6">
         <h3 className="text-sm font-bold text-black dark:text-white mb-6">Today's goals</h3>
         <ul className="space-y-4">
             <li className="flex items-center space-x-3 text-sm group cursor-pointer">
@@ -161,7 +161,7 @@ const GoalsBox = () => (
 const CalendarBox = () => {
     const days = Array.from({ length: 31 }, (_, i) => i + 1);
     return (
-        <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6 mb-6">
+        <div className="dark:bg-[#1a1a1a] bg-white border dark:border-border border-neutral-200 rounded-2xl p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-black dark:text-white">Learning plan</h3>
                 <button><PencilIcon className="w-3.5 h-3.5 text-gray-500 hover:text-black dark:hover:text-white" /></button>
@@ -188,7 +188,7 @@ const CalendarBox = () => {
                 ))}
             </div>
 
-            <div className="space-y-1 pt-4 border-t dark:border-gray-800">
+            <div className="space-y-1 pt-4 border-t dark:border-border">
                 <div className="flex items-center text-[10px] text-gray-500">
                     <div className="w-1.5 h-1.5 bg-[#6a4cff] rounded-full mr-2"></div>
                     1+ daily goals completed
@@ -445,7 +445,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onSelectCourse, onPreviewCour
                     <div className="w-full lg:w-1/3 shrink-0">
                         <GoalsBox />
                         <CalendarBox />
-                        <div className="dark:bg-[#1a1a1a] bg-white border dark:border-gray-800 border-neutral-200 rounded-2xl p-6">
+                        <div className="dark:bg-[#1a1a1a] bg-white border dark:border-border border-neutral-200 rounded-2xl p-6">
                             <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Last 4 weeks</h4>
                             <div className="flex items-baseline space-x-2">
                                 <span className="text-4xl font-bold dark:text-white text-black">4</span>

@@ -80,7 +80,7 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ type, setType, onClose, onSuc
         </p>
 
         {/* Google Button */}
-        <button className="w-full flex items-center justify-center py-4 px-6 border border-gray-200 dark:border-[#333] rounded-2xl bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#252525] transition-colors mb-8 shadow-sm">
+        <button className="w-full flex items-center justify-center py-4 px-6 border border-gray-200 dark:border-[#333] rounded-2xl bg-white dark:bg-surfaceAlt hover:bg-gray-50 dark:hover:bg-[#252525] transition-colors mb-8 shadow-sm">
           <GoogleIcon className="w-5 h-5 mr-3" />
           <span className="text-gray-700 dark:text-gray-200 font-semibold text-base">
             {isLogin ? 'Continue with Google' : 'Sign in with Google'}
@@ -103,7 +103,7 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ type, setType, onClose, onSuc
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-5 py-4 rounded-2xl border border-gray-200 dark:border-[#333] focus:border-gray-400 dark:focus:border-gray-500 focus:ring-0 outline-none text-gray-900 dark:text-white transition-all bg-gray-50/50 dark:bg-[#1a1a1a]"
+              className="w-full px-5 py-4 rounded-2xl border border-gray-200 dark:border-[#333] focus:border-gray-400 dark:focus:border-gray-500 focus:ring-0 outline-none text-gray-900 dark:text-white transition-all bg-gray-50/50 dark:bg-surfaceAlt"
             />
           </div>
           <div className="relative text-left">
@@ -112,7 +112,7 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ type, setType, onClose, onSuc
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-5 py-4 rounded-2xl border border-gray-200 dark:border-[#333] focus:border-gray-400 dark:focus:border-gray-500 focus:ring-0 outline-none text-gray-900 dark:text-white transition-all bg-gray-50/50 dark:bg-[#1a1a1a]"
+              className="w-full px-5 py-4 rounded-2xl border border-gray-200 dark:border-[#333] focus:border-gray-400 dark:focus:border-gray-500 focus:ring-0 outline-none text-gray-900 dark:text-white transition-all bg-gray-50/50 dark:bg-surfaceAlt"
             />
             <button
               onClick={() => setShowPassword(!showPassword)}

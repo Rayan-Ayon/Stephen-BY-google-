@@ -80,11 +80,11 @@ const NotificationsView = () => {
             <h1 className="text-2xl font-bold dark:text-white text-black mb-6">Notifications</h1>
             {Object.entries(notifications).map(([period, items]) => (
                 <div key={period} className="mb-6">
-                    <h2 className="text-md font-bold dark:text-white text-black mb-4 border-b dark:border-gray-800 border-neutral-200 pb-2">{period}</h2>
+                    <h2 className="text-md font-bold dark:text-white text-black mb-4 border-b dark:border-border border-neutral-200 pb-2">{period}</h2>
                     {items.map(item => (
                         <div key={item.id} className="flex items-center justify-between p-3 mb-1 rounded-lg hover:bg-gray-100 dark:hover:bg-[#121212] transition-colors cursor-pointer">
                             <div className="flex items-center space-x-3 overflow-hidden">
-                                <div className="w-11 h-11 rounded-full dark:bg-gray-800 bg-neutral-300 shrink-0 overflow-hidden border dark:border-gray-800 border-gray-200">
+                                <div className="w-11 h-11 rounded-full dark:bg-gray-800 bg-neutral-300 shrink-0 overflow-hidden border dark:border-border border-gray-200">
                                     <img src={`https://picsum.photos/seed/${item.id + 800}/100/100`} className="w-full h-full object-cover" />
                                 </div>
                                 <div className="text-sm pr-2">
@@ -96,7 +96,7 @@ const NotificationsView = () => {
                                 </div>
                             </div>
                             {item.postImage ? (
-                                <div className="w-11 h-11 dark:bg-gray-800 bg-neutral-200 rounded-md overflow-hidden shrink-0 ml-2 border dark:border-gray-800 border-gray-200">
+                                <div className="w-11 h-11 dark:bg-gray-800 bg-neutral-200 rounded-md overflow-hidden shrink-0 ml-2 border dark:border-border border-gray-200">
                                     <img src={item.postImage} className="w-full h-full object-cover" />
                                 </div>
                             ) : (
@@ -153,7 +153,7 @@ const EdgramView = () => {
     return (
         <div className="flex-1 flex h-full overflow-hidden dark:bg-black bg-white transition-colors duration-300 dark:text-white text-black">
             {/* Edgram Navigation */}
-            <nav className="w-16 lg:w-64 dark:bg-black bg-white border-r dark:border-gray-800 border-neutral-200 pt-24 pb-3 px-3 flex flex-col items-center lg:items-start shrink-0 transition-colors duration-300">
+            <nav className="w-16 lg:w-64 dark:bg-black bg-white border-r dark:border-border border-neutral-200 pt-24 pb-3 px-3 flex flex-col items-center lg:items-start shrink-0 transition-colors duration-300">
                 <div className="text-2xl font-bold dark:text-white text-black hidden lg:block py-6 px-4 mb-2" style={{ fontFamily: "'Lora', serif" }}>Edgram</div>
                 <div className="w-10 h-10 lg:hidden flex items-center justify-center mb-4 mt-4">
                     <EdgramIcon className="w-8 h-8 dark:text-white text-black" />
