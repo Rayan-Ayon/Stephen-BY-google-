@@ -2235,8 +2235,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Dashboard.tsx": {
-    "mtime": 1788880779.152051,
-    "ast_hash": "c27f9c70ea6e470789eb814ffb11c2cf",
+    "mtime": 1788888861.8776274,
+    "ast_hash": "f555a9958cc11fdf7a4c6465bcb0ab3e",
     "semantic_hash": ""
   },
   "frontend/components/DebateView.tsx": {
@@ -2315,8 +2315,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Sidebar.tsx": {
-    "mtime": 1788859879.0443459,
-    "ast_hash": "a1f11676db53ff40d0f66f9732fbba8b",
+    "mtime": 1788888832.590817,
+    "ast_hash": "a36440821c5b10b6862717f00ad5c624",
     "semantic_hash": ""
   },
   "frontend/components/SpaceView.tsx": {
@@ -2370,8 +2370,8 @@
     "semantic_hash": ""
   },
   "frontend/components/icons.tsx": {
-    "mtime": 1788710862.4996414,
-    "ast_hash": "c9c7ba4abddaf74ec39500835678a7fa",
+    "mtime": 1788893244.4110684,
+    "ast_hash": "3f3b28da86e7cc881b78267d57474767",
     "semantic_hash": ""
   },
   "frontend/components/modals.tsx": {
@@ -2975,8 +2975,8 @@
     "semantic_hash": ""
   },
   "frontend/components/AISpeakingPartnerView.tsx": {
-    "mtime": 1788693364.1995792,
-    "ast_hash": "7c7a3fc14e8762caa2fb3c92fd5bb27a",
+    "mtime": 1788895657.4326377,
+    "ast_hash": "99dcce18fb159f31e3a4968addcdb13c",
     "semantic_hash": ""
   },
   "frontend/components/AIRewriterView.tsx": {
@@ -2990,8 +2990,8 @@
     "semantic_hash": ""
   },
   "frontend/components/FreeContentLibraryView.tsx": {
-    "mtime": 1788775375.502411,
-    "ast_hash": "0cac735bbdf3d16d5df5bff3a0fa844a",
+    "mtime": 1788945515.805568,
+    "ast_hash": "7da750a7184576592f10e735247f7438",
     "semantic_hash": ""
   },
   "frontend/components/StudyPlanView.tsx": {
@@ -3020,8 +3020,8 @@
     "semantic_hash": ""
   },
   "frontend/components/PartPracticeHub.tsx": {
-    "mtime": 1788860095.3431976,
-    "ast_hash": "760fafe637f82034767198035efd6e84",
+    "mtime": 1788889162.453793,
+    "ast_hash": "134af85be863f1de49d2b271abc566c8",
     "semantic_hash": ""
   },
   "frontend/components/SpeakingHubView.tsx": {
@@ -3035,8 +3035,8 @@
     "semantic_hash": ""
   },
   "frontend/components/SpeakUIRestore.tsx": {
-    "mtime": 1788880472.8301647,
-    "ast_hash": "e2a058ab5b64cb73989bcb990c37a8df",
+    "mtime": 1788882943.470017,
+    "ast_hash": "ed610282829a3d7eb66f43fd4c16914a",
     "semantic_hash": ""
   }
 }

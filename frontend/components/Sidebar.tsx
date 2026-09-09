@@ -257,15 +257,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 {isExpanded && isMockTestsOpen && (
                                     <div className="border-l border-zinc-800 ml-4 pl-3 space-y-0.5 mb-1">
                                         <button
-                                            onClick={() => guardedNavigate('vocabulary_mock')}
+                                            onClick={() => guardedNavigate('full_cambridge_mock')}
                                             className={`relative group w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${
-                                                activeItem === 'vocabulary_mock'
+                                                activeItem === 'full_cambridge_mock'
                                                     ? 'bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-500'
                                                     : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.03]'
                                             }`}
                                         >
-                                            <BookOpenIcon className="w-4 h-4 shrink-0" />
-                                            <span>Vocabulary Mock</span>
+                                            <TrophyIcon className="w-4 h-4 shrink-0" />
+                                            <span>Full Cambridge Mock</span>
                                         </button>
 
                                         <button

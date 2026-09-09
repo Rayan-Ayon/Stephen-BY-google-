@@ -1,16 +1,16 @@
-# Graph Report - frontend  (2026-09-08)
+# Graph Report - frontend  (2026-09-09)
 
 ## Corpus Check
-- 120 files · ~214,970 words
+- 119 files · ~217,590 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1303 nodes · 2260 edges · 72 communities (69 shown, 3 thin omitted)
+- 1310 nodes · 2267 edges · 72 communities (69 shown, 3 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e11ffd29`
+- Built from commit: `bb5fc750`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -103,45 +103,45 @@
   components/Dashboard.tsx → App.tsx
 - `EnterpriseViewProps` --references--> `Theme`  [EXTRACTED]
   components/EnterpriseView.tsx → App.tsx
+- `LandingPageProps` --references--> `Theme`  [EXTRACTED]
+  components/LandingPage.tsx → App.tsx
 - `WorkspaceDropdownProps` --references--> `Theme`  [EXTRACTED]
   components/WorkspaceDropdown.tsx → App.tsx
 - `AuthOverlayProps` --references--> `AuthType`  [EXTRACTED]
   components/AuthOverlay.tsx → App.tsx
-- `LandingPageProps` --references--> `AuthType`  [EXTRACTED]
-  components/LandingPage.tsx → App.tsx
 
 ## Import Cycles
-- 3-file cycle: `components/Dashboard.tsx -> components/Workspace.tsx -> components/TutorPanel.tsx -> components/Dashboard.tsx`
 - 3-file cycle: `App.tsx -> components/Dashboard.tsx -> components/Sidebar.tsx -> App.tsx`
 - 3-file cycle: `App.tsx -> components/LandingPage.tsx -> components/EnterpriseView.tsx -> App.tsx`
+- 3-file cycle: `components/Dashboard.tsx -> components/Workspace.tsx -> components/TutorPanel.tsx -> components/Dashboard.tsx`
 - 3-file cycle: `components/Dashboard.tsx -> components/Workspace.tsx -> components/TutorPanelErrorBoundary.tsx -> components/Dashboard.tsx`
 - 4-file cycle: `App.tsx -> components/Dashboard.tsx -> components/Sidebar.tsx -> components/WorkspaceDropdown.tsx -> App.tsx`
 
 ## Communities (72 total, 3 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.13
-Nodes (20): allFormalSourcesList, defaultPreferences, domainOptions, gridEvents, heroEvents, historyBenchmarks, CompetitionEvent, CompetitionSource (+12 more)
+Cohesion: 0.08
+Nodes (26): allFormalSourcesList, defaultPreferences, domainOptions, gridEvents, heroEvents, historyBenchmarks, CompetitionEvent, CompetitionSource (+18 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.09
-Nodes (16): defaultOnboardingData, Expert, filters, filterTypeMap, initialExperts, CheckCircleIcon(), ChevronDownIcon(), ClockIcon() (+8 more)
+Cohesion: 0.07
+Nodes (24): CirclePlusIcon(), CopyIcon(), FlowChartIcon(), LineChartIcon(), LoadingSpinnerIcon(), MaximizeIcon(), MicOffIcon(), MindMapIcon() (+16 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.05
-Nodes (32): ContactUsSlideProps, DebateSession, DebateViewProps, Message, socialIcons, BookmarkIcon(), BriefcaseIcon(), CompassIcon() (+24 more)
+Cohesion: 0.17
+Nodes (11): BookmarkIcon(), DotsHorizontalIcon(), LightningIcon(), basePosts, mentorBorderColors, storiesData, tierBorderColor, Bounty (+3 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.08
-Nodes (33): AddCoursesIcon(), CalendarIcon(), ChatIcon(), CrownIcon(), CubeIcon(), EdgramIcon(), ExamPaperPenIcon(), ExtensionIcon() (+25 more)
+Nodes (35): AddCoursesIcon(), CalendarIcon(), ChatIcon(), CrownIcon(), CubeIcon(), DebatePodiumIcon(), DollarIcon(), EdgramIcon() (+27 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.09
-Nodes (14): AlertIcon(), ArrowUpRightIcon(), DoubleChevronUpIcon(), FlashcardIcon(), FlaskIcon(), GlobeIcon(), QuestionMarkIcon(), ShieldCheckIcon() (+6 more)
+Cohesion: 0.08
+Nodes (20): defaultOnboardingData, Expert, filters, filterTypeMap, initialExperts, AdjustIcon(), AlertIcon(), BookOpenIcon() (+12 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.25
-Nodes (6): ChevronRightIcon(), CreditCardIcon(), DatabaseIcon(), FileTextIcon(), PaletteIcon(), SettingsModalProps
+Cohesion: 0.10
+Nodes (22): ModuleHistoryItem, ModuleHistoryProps, STATUS_LABEL, StatusFilter, BundleAnalysis, BundleSectionAnalysis, ResolvedAnalysis, EQUIPMENT_CHECKS (+14 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.06
@@ -156,44 +156,44 @@ Cohesion: 0.06
 Nodes (17): AssignedTask, BatchNotice, InlineCampusIcon(), NOTICE, PASSPORT, PROFILE, QA_THREADS, QaReply (+9 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.07
-Nodes (23): CirclePlusIcon(), CopyIcon(), FlowChartIcon(), LineChartIcon(), LoadingSpinnerIcon(), MicOffIcon(), MindMapIcon(), PaperclipIcon() (+15 more)
+Cohesion: 0.20
+Nodes (6): AddContentViewProps, Message, models, PasteTextModal(), PasteUrlModal(), RecordLectureModal()
 
 ### Community 10 - "Community 10"
 Cohesion: 0.07
 Nodes (26): ACCURACY_ERRORS, AccuracyError, GrammarEvaluationCardProps, SENTENCE_PROOFS, SentenceProof, ChatMessage, ChatRole, DrawerTab (+18 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.26
-Nodes (10): ActivationView(), ActivationViewProps, OrgAuthModal(), OrgAuthModalProps, activateTenant(), approvePartnershipRequest(), getTenantByPasskey(), getTenants() (+2 more)
+Cohesion: 0.13
+Nodes (13): BarChartIcon(), PauseIcon(), EvaluationItem, NavGroup, NavLeaf, OwnerApprovalItem, RbacTier, ReviewSubmission (+5 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.09
-Nodes (26): BUNDLE_HEX, SKILL_HEX, SKILLS, TOKEN_TYPE_COLOR, addAttempt(), ATTEMPTS_KEY, clearAttempts(), clearAttemptsByBundle() (+18 more)
+Cohesion: 0.12
+Nodes (23): addAttempt(), ATTEMPTS_KEY, clampBand(), clearAttempts(), clearAttemptsByBundle(), clearAttemptsBySkill(), DEMO_TITLES, DiagnosticSubSkill (+15 more)
 
 ### Community 13 - "Community 13"
-Cohesion: 0.11
-Nodes (17): defaultConfig, DiscoverViewProps, processingLogs, CloudyIcon(), RedditIcon(), TrendingDownIcon(), XLogoIcon(), YoutubeIcon() (+9 more)
+Cohesion: 0.14
+Nodes (13): HeartIcon(), RedditIcon(), XLogoIcon(), YoutubeIcon(), mockCards, sourceMeta, defaultChannels, domains (+5 more)
 
 ### Community 14 - "Community 14"
 Cohesion: 0.08
-Nodes (18): ACTIVE_IDS, ALL_IDS, IELTSListeningExam(), IELTSListeningExamProps, LISTENING_PART1_DATA, LISTENING_PART2_DATA, LISTENING_PART3_DATA, LISTENING_PART4_DATA (+10 more)
+Nodes (16): IELTSExitModalProps, ACTIVE_IDS, ALL_IDS, IELTSListeningExamProps, LISTENING_PART1_DATA, LISTENING_PART2_DATA, LISTENING_PART3_DATA, LISTENING_PART4_DATA (+8 more)
 
 ### Community 15 - "Community 15"
 Cohesion: 0.08
 Nodes (3): ScoreFilter, StreaksViewProps, TimeFilter
 
 ### Community 16 - "Community 16"
-Cohesion: 0.09
-Nodes (6): CATEGORIES, INITIAL_BOOKS, KnowledgeBook, ParsedRule, PRIORITIES, STRICTNESS_OPTIONS
+Cohesion: 0.05
+Nodes (18): ALTERNATE_QUESTIONS, BAND_OPTIONS, CohortBatch, COHORTS, EXAM_OPTIONS, FilterState, INITIAL_QUESTIONS, MODULE_OPTIONS (+10 more)
 
 ### Community 17 - "Community 17"
-Cohesion: 0.14
-Nodes (7): PARTS, QUESTIONS, ReadingPart, ReadingQuestion, TestState, GAP_FILL, GROUP_ANSWERS
+Cohesion: 0.13
+Nodes (9): IELTSListeningExam(), IELTSReadingExam(), PARTS, QUESTIONS, ReadingPart, ReadingQuestion, TestState, rawToBand() (+1 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.09
-Nodes (13): IELTSExitModalProps, buildBilingual(), buildSegments(), TASK2_PROMPTS, WritingCriteria, IELTSWritingExam(), TestState, WRITING_PART1_CHART_DATA (+5 more)
+Cohesion: 0.14
+Nodes (8): buildBilingual(), buildSegments(), TASK2_PROMPTS, WritingCriteria, IELTSWritingExam(), TestState, WRITING_PART1_CHART_DATA, WritingResult
 
 ### Community 19 - "Community 19"
 Cohesion: 0.09
@@ -204,8 +204,8 @@ Cohesion: 0.09
 Nodes (15): BASE_CARDS, CardFormat, COHORT_ERRORS, CohortError, Deck, DeckCategory, DECKS, EXTRA_CARDS (+7 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.21
-Nodes (9): AuthType, AuthGatewayProps, AuthOverlayProps, EyeIcon(), EyeSlashIcon(), GoogleIcon(), getAuthErrorMessage(), isNetworkError() (+1 more)
+Cohesion: 0.19
+Nodes (10): AuthType, AuthGatewayProps, AuthOverlayProps, EyeIcon(), EyeSlashIcon(), GoogleIcon(), LandingPageProps, getAuthErrorMessage() (+2 more)
 
 ### Community 22 - "Community 22"
 Cohesion: 0.14
@@ -216,8 +216,8 @@ Cohesion: 0.10
 Nodes (10): A11Y_CLASSES, A11yState, CONTRAST_CLASS, ContrastMode, contrastOptions, IconProps, IeltsExamOptionsModalProps, TEXTSIZE_CLASS (+2 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.08
-Nodes (19): Message, models, ChevronLeftIcon(), LinkIcon(), LockClosedIcon(), PlusSquareIcon(), SparkleIcon(), StarIcon() (+11 more)
+Cohesion: 0.13
+Nodes (6): AccordionCardProps, CAMBRIDGE_SERIES, DIFFICULTY_MAP, ListeningHubViewProps, MOCK_SERIES, TestSeries
 
 ### Community 25 - "Community 25"
 Cohesion: 0.08
@@ -232,16 +232,16 @@ Cohesion: 0.12
 Nodes (11): ObjectiveAnalysis, SegmentKind, SpeakingAnalysis, WritingAnalysis, BandPill(), IELTSAnalysisViewProps, segColor, segNote() (+3 more)
 
 ### Community 28 - "Community 28"
-Cohesion: 0.11
-Nodes (5): AIIELTSChatbotViewProps, Conversation, Message, MIHU_RESPONSES, QUICK_PROMPTS
+Cohesion: 0.06
+Nodes (17): AIIELTSChatbotViewProps, Conversation, Message, MIHU_RESPONSES, QUICK_PROMPTS, BAND_MOCK_USERS, CURRENT_STREAK_USER, CURRENT_XP_USER (+9 more)
 
 ### Community 29 - "Community 29"
-Cohesion: 0.11
-Nodes (4): baseCards, CardData, demoCards, FlashcardReviewController()
+Cohesion: 0.05
+Nodes (17): baseCards, CardData, demoCards, FlashcardReviewController(), ChevronLeftIcon(), DAYS_OF_WEEK, LessonTask, SEPTEMBER_GRID (+9 more)
 
 ### Community 30 - "Community 30"
-Cohesion: 0.11
-Nodes (17): IELTSReadingExamProps, clampBand(), evaluateWritingText(), roundToHalf(), SimulationProps, CUE_CARD, formatTime(), IELTS_SpeakingExam() (+9 more)
+Cohesion: 0.10
+Nodes (15): SpeakUIRestoreProps, IELTSReadingExamProps, SimulationProps, CUE_CARD, formatTime(), IELTS_SpeakingExam(), IELTSSpeakingExamProps, PART1_QUESTIONS (+7 more)
 
 ### Community 31 - "Community 31"
 Cohesion: 0.11
@@ -249,19 +249,19 @@ Nodes (17): compilerOptions, allowImportingTsExtensions, allowJs, experimentalDe
 
 ### Community 32 - "Community 32"
 Cohesion: 0.12
-Nodes (8): DoubleChevronDownIcon(), MaximizeIcon(), MinimizeIcon(), Chapter, MOCK_CHAPTERS, MOCK_TRANSCRIPTS, TranscriptItem, Window
+Nodes (7): DoubleChevronDownIcon(), MinimizeIcon(), Chapter, MOCK_CHAPTERS, MOCK_TRANSCRIPTS, TranscriptItem, Window
 
 ### Community 33 - "Community 33"
-Cohesion: 0.12
-Nodes (6): AISpeakingPartnerViewProps, Language, LANGUAGE_LABELS, Partner, PARTNERS, VoiceMode
+Cohesion: 0.08
+Nodes (11): AISpeakingPartnerViewProps, CallState, ChatMessage, Language, LANGUAGE_LABELS, MOCK_RESPONSES, Partner, PARTNERS (+3 more)
 
 ### Community 34 - "Community 34"
-Cohesion: 0.13
-Nodes (14): ALL_QUESTION_KEYS, ANSWER_HEADINGS, GAP_ANSWERS, GapFillQuestion, GROUP_MAP, HEADING_SLOTS, HeadingOption, HEADINGS (+6 more)
+Cohesion: 0.12
+Nodes (15): ALL_QUESTION_KEYS, ANSWER_HEADINGS, GAP_ANSWERS, GAP_FILL, GapFillQuestion, GROUP_ANSWERS, GROUP_MAP, HEADING_SLOTS (+7 more)
 
 ### Community 35 - "Community 35"
-Cohesion: 0.10
-Nodes (22): ModuleHistoryItem, ModuleHistoryProps, STATUS_LABEL, StatusFilter, BundleAnalysis, BundleSectionAnalysis, ResolvedAnalysis, EQUIPMENT_CHECKS (+14 more)
+Cohesion: 0.17
+Nodes (6): socialIcons, CompassIcon(), FacebookIcon(), InstagramIcon(), TiktokIcon(), FeedConfig
 
 ### Community 36 - "Community 36"
 Cohesion: 0.07
@@ -276,8 +276,8 @@ Cohesion: 0.14
 Nodes (4): ActiveTab, AIRewriterViewProps, MOCK_EVALUATION, TaskType
 
 ### Community 39 - "Community 39"
-Cohesion: 0.16
-Nodes (19): InstitutionalDashboard(), addLibraryItem(), addPartnershipRequest(), addSpace(), defaultInstitutionalSpace, defaultLibraryItem, defaultPartnershipRequest, defaultTenant (+11 more)
+Cohesion: 0.08
+Nodes (37): ActivationView(), ActivationViewProps, BuildingLibraryIcon(), ClipboardCheckIcon(), PodcastIcon(), OrgAuthModal(), OrgAuthModalProps, OrgTab (+29 more)
 
 ### Community 40 - "Community 40"
 Cohesion: 0.17
@@ -296,24 +296,24 @@ Cohesion: 0.12
 Nodes (6): AccordionCardProps, CAMBRIDGE_SERIES, DIFFICULTY_MAP, MOCK_SERIES, ReadingHubViewProps, TestSeries
 
 ### Community 44 - "Community 44"
-Cohesion: 0.12
-Nodes (12): BAND_MOCK_USERS, CURRENT_STREAK_USER, CURRENT_XP_USER, FilterTab, LeaderboardUser, LeaderboardViewProps, STREAK_GLOBAL_USERS, StreakScope (+4 more)
+Cohesion: 0.18
+Nodes (8): DeleteSpaceModal(), FlashcardModal(), ModalProps, PodcastModal(), QuizModal(), ShareSpaceModal(), SummaryModal(), UpgradeModal()
 
 ### Community 45 - "Community 45"
-Cohesion: 0.13
-Nodes (6): AccordionCardProps, CAMBRIDGE_SERIES, DIFFICULTY_MAP, ListeningHubViewProps, MOCK_SERIES, TestSeries
+Cohesion: 0.25
+Nodes (7): Theme, EnterpriseViewProps, SidebarProps, SpaceViewProps, WorkspaceDropdownProps, Space, INDIVIDUAL_WORKSPACE
 
 ### Community 46 - "Community 46"
-Cohesion: 0.14
-Nodes (17): HawkingFabProps, Message, models, AdjustIcon(), ArrowUpIcon(), BookOpenIcon(), BrainIcon(), CheckIcon() (+9 more)
+Cohesion: 0.09
+Nodes (23): FeedbackModalProps, HawkingFabProps, Message, models, CheckIcon(), FlashIcon(), MicIcon(), PaperclipIcon() (+15 more)
 
 ### Community 47 - "Community 47"
 Cohesion: 0.20
 Nodes (9): PartContentHandle, PART3_ANSWERS, PART3_SUMMARY, PART3_TFNG, Part3Content, Part3ContentProps, Part3TFNGQuestion, SummarySegment (+1 more)
 
 ### Community 48 - "Community 48"
-Cohesion: 0.09
-Nodes (15): BuildingLibraryIcon(), ClipboardCheckIcon(), MapPinIcon(), PodcastIcon(), SearchIcon(), UsersIcon(), OrgTab, skillData (+7 more)
+Cohesion: 0.22
+Nodes (7): BriefcaseIcon(), ReelsIcon(), StarIcon(), difficultyColor, mockBounties, mockCourses, statusColor
 
 ### Community 49 - "Community 49"
 Cohesion: 0.22
@@ -323,89 +323,89 @@ Nodes (7): ACADEMIC_BOOKS, FullMockTestHubProps, GT_BOOKS, MockBook, SECTION_DUR
 Cohesion: 0.24
 Nodes (9): AnalysisSegment, CRITERION_DETAILS, segColor, segNote(), WritingAnalysisModal(), WritingAnalysisModalProps, WritingCriterion, WritingRewrite (+1 more)
 
+### Community 51 - "Community 51"
+Cohesion: 0.22
+Nodes (6): BUNDLE_HEX, SKILL_HEX, SKILLS, TOKEN_TYPE_COLOR, DIAGNOSTIC_SUBSKILLS, MISTAKE_TOKENS
+
 ### Community 52 - "Community 52"
-Cohesion: 0.11
-Nodes (13): Theme, DashboardProps, DISABLED_DORMANT_NAV_ITEMS, DORMANT_NAV_KEYS, EnterpriseViewProps, LandingPageProps, guideSections, SidebarProps (+5 more)
+Cohesion: 0.33
+Nodes (3): DashboardProps, DISABLED_DORMANT_NAV_ITEMS, DORMANT_NAV_KEYS
 
 ### Community 53 - "Community 53"
 Cohesion: 0.22
 Nodes (5): IeltsAttempt, STATUS_LABEL, StatusFilter, TASK_LABELS, WritingHistoryMatrixProps
 
 ### Community 54 - "Community 54"
-Cohesion: 0.13
-Nodes (13): BarChartIcon(), PauseIcon(), EvaluationItem, NavGroup, NavLeaf, OwnerApprovalItem, RbacTier, ReviewSubmission (+5 more)
+Cohesion: 0.25
+Nodes (6): defaultConfig, DiscoverViewProps, processingLogs, CloudyIcon(), RefreshIcon(), TrendingDownIcon()
 
 ### Community 55 - "Community 55"
 Cohesion: 0.29
 Nodes (3): Activity, IndividualSandboxViewProps, PromptEntry
 
 ### Community 56 - "Community 56"
-Cohesion: 0.14
-Nodes (12): ALTERNATE_QUESTIONS, BAND_OPTIONS, CohortBatch, COHORTS, EXAM_OPTIONS, FilterState, INITIAL_QUESTIONS, MODULE_OPTIONS (+4 more)
+Cohesion: 0.18
+Nodes (4): ArrowUpRightIcon(), QuestionMarkIcon(), TrophyIcon(), universities
 
 ### Community 57 - "Community 57"
-Cohesion: 0.18
-Nodes (4): ErrorBoundary, root, rootElement, WorkspaceProvider()
+Cohesion: 0.17
+Nodes (5): ErrorBoundary, root, rootElement, initMockDb(), WorkspaceProvider()
 
 ### Community 58 - "Community 58"
-Cohesion: 0.15
-Nodes (9): DAYS_OF_WEEK, LessonTask, SEPTEMBER_GRID, Skill, SKILL_COLORS, SKILL_EMOJI, SKILL_ICON_CIRCLE, STUDY_PLAN_DATA (+1 more)
+Cohesion: 0.33
+Nodes (4): MOCK_SAMPLES, MockSample, QR_PATTERN, Stage
+
+### Community 59 - "Community 59"
+Cohesion: 0.09
+Nodes (15): ChevronDownIcon(), ChevronRightIcon(), CreditCardIcon(), DatabaseIcon(), FileTextIcon(), MessageCircleIcon(), PaletteIcon(), PencilIcon() (+7 more)
 
 ### Community 60 - "Community 60"
 Cohesion: 0.50
 Nodes (3): description, name, requestFramePermissions
 
 ### Community 63 - "Community 63"
-Cohesion: 0.18
-Nodes (10): AddProjectModalProps, categoryOptions, courseOptions, moduleOptions, seedProjects, ProjectCard, ProjectCategory, ProjectMeta (+2 more)
+Cohesion: 0.22
+Nodes (5): DebateSession, DebateViewProps, Message, BrainIcon(), LinkIcon()
 
 ### Community 64 - "Community 64"
-Cohesion: 0.21
-Nodes (9): INDIVIDUAL_WORKSPACE, KNOWN_WORKSPACE_CODES, KnownWorkspaceEntry, migrateStored(), readStoredActive(), readStoredWorkspaces(), SEEDED_WORKSPACES, WorkspaceContext (+1 more)
+Cohesion: 0.19
+Nodes (11): EnterpriseSandboxViewProps, LEADERBOARD_DATA, KNOWN_WORKSPACE_CODES, KnownWorkspaceEntry, migrateStored(), readStoredActive(), readStoredWorkspaces(), SEEDED_WORKSPACES (+3 more)
 
 ### Community 65 - "Community 65"
 Cohesion: 0.22
-Nodes (8): AddContentViewProps, HistoryItem, HistoryViewProps, VideoCameraIcon(), TutorPanelProps, CinematicContentPanelProps, WorkspaceProps, LandingViewProps
+Nodes (8): AddCoursesViewProps, initialCourses, HistoryItem, TutorPanelProps, Props, State, CinematicContentPanelProps, WorkspaceProps
 
 ### Community 66 - "Community 66"
 Cohesion: 0.24
 Nodes (4): WRITING_PROMPTS, WritingPrompt, TASK_TYPES, WritingDashboardProps
 
 ### Community 67 - "Community 67"
-Cohesion: 0.22
-Nodes (5): AddCoursesViewProps, initialCourses, dummyAnswers, QAViewProps, questions
-
-### Community 68 - "Community 68"
-Cohesion: 0.25
-Nodes (3): Props, State, TutorPanelErrorBoundary
+Cohesion: 0.14
+Nodes (9): ArrowUpIcon(), FlashcardIcon(), LockClosedIcon(), PlusSquareIcon(), ShieldCheckIcon(), SparkleIcon(), dummyAnswers, QAViewProps (+1 more)
 
 ### Community 69 - "Community 69"
 Cohesion: 0.29
 Nodes (4): containerVariants, itemVariants, reasoningSteps, ReasoningViewProps
 
-### Community 70 - "Community 70"
-Cohesion: 0.50
-Nodes (3): EnterpriseSandboxViewProps, LEADERBOARD_DATA, Workspace
-
 ## Knowledge Gaps
-- **494 isolated node(s):** `AuthSessionData`, `ApiError`, `Message`, `Conversation`, `MIHU_RESPONSES` (+489 more)
+- **498 isolated node(s):** `AuthSessionData`, `ApiError`, `Message`, `Conversation`, `MIHU_RESPONSES` (+493 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `HistoryItem` connect `Community 65` to `Community 32`, `Community 1`, `Community 67`, `Community 68`, `Community 9`, `Community 52`, `Community 24`?**
+- **Why does `HistoryItem` connect `Community 65` to `Community 32`, `Community 1`, `Community 4`, `Community 71`, `Community 9`, `Community 44`, `Community 52`?**
   _High betweenness centrality (0.009) - this node is a cross-community bridge._
-- **Why does `IeltsBundleId` connect `Community 35` to `Community 40`, `Community 27`, `Community 12`, `Community 7`?**
-  _High betweenness centrality (0.009) - this node is a cross-community bridge._
+- **Why does `IeltsBundleId` connect `Community 5` to `Community 7`, `Community 40`, `Community 12`, `Community 51`, `Community 27`?**
+  _High betweenness centrality (0.008) - this node is a cross-community bridge._
+- **Why does `XIcon()` connect `Community 59` to `Community 0`, `Community 1`, `Community 32`, `Community 35`, `Community 4`, `Community 3`, `Community 70`, `Community 39`, `Community 44`, `Community 13`, `Community 46`, `Community 21`, `Community 54`, `Community 26`, `Community 29`?**
+  _High betweenness centrality (0.006) - this node is a cross-community bridge._
 - **What connects `AuthSessionData`, `ApiError`, `Message` to the rest of the system?**
-  _494 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _498 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.12923076923076923 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07557354925775979 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.09113300492610837 - nodes in this community are weakly interconnected._
-- **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.05185185185185185 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07007575757575757 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
-  _Cohesion score 0.08362369337979095 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.080338266384778 - nodes in this community are weakly interconnected._

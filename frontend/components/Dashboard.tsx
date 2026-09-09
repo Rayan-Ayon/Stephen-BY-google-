@@ -41,7 +41,6 @@ import SpeakingHubView from './SpeakingHubView';
 import FullMockTestHub from './FullMockTestHub';
 import PartPracticeHub from './PartPracticeHub';
 import SpeakUIRestore from './SpeakUIRestore';
-import VocabularyMockView from './VocabularyMockView';
 import { DORMANT_NAV_ENABLED, DORMANT_NAV_KEYS } from './dormantNav';
 import SpacedRepetitionEngine from './enterprise/srs/SpacedRepetitionEngine';
 import StudentPortal from './enterprise/portal/StudentPortal';
@@ -399,7 +398,6 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             case 'speak_ui_restore': return <SpeakUIRestore userEmail={userEmail} />;
             case 'ielts_evaluation': return <IELTSEvaluationHub userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} />;
             case 'my_reports': return <IELTSEvaluationHub key="my_reports" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="dashboard" hideInternalNav />;
-            case 'vocabulary_mock': return <VocabularyMockView userEmail={userEmail} />;
             case 'leaderboard': return <LeaderboardView userEmail={userEmail} />;
             case 'streaks': return <StreaksView userEmail={userEmail} />;
             case 'ai_speaking_partner': return <AISpeakingPartnerView userEmail={userEmail} />;

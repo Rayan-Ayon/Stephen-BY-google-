@@ -272,8 +272,8 @@ const PartPracticeHub: React.FC<PartPracticeHubProps> = ({ userEmail }) => {
 
     /* ─── Main Hub View ─── */
     return (
-        <div className="min-h-screen bg-[#0B0C0E] p-6">
-            <div className="max-w-6xl mx-auto">
+        <div className="h-screen flex flex-col overflow-hidden bg-[#0B0C0E] p-6">
+            <div className="max-w-6xl mx-auto flex flex-col flex-1 min-h-0">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-6">
                     <div>
@@ -495,16 +495,16 @@ const PartPracticeHub: React.FC<PartPracticeHubProps> = ({ userEmail }) => {
                             <p className="text-xs text-zinc-400 mt-1">Choose a Reading, Listening, or Writing question family. Practice with authentic Cambridge context and focused feedback.</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 min-h-0 overflow-hidden">
                             {/* Reading Drills */}
-                            <div>
-                                <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                            <div className="flex flex-col h-full min-h-0">
+                                <h3 className="text-sm font-bold text-white flex items-center gap-2 flex-shrink-0 pb-2">
                                     <span className="bg-blue-500/10 border border-blue-500/20 p-1.5 rounded-lg text-blue-400">
                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                                     </span>
                                     Reading
                                 </h3>
-                                <div className="space-y-2">
+                                <div className="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
                                     {READING_DRILLS.map(drill => (
                                         <button
                                             key={drill.id}
@@ -525,14 +525,14 @@ const PartPracticeHub: React.FC<PartPracticeHubProps> = ({ userEmail }) => {
                             </div>
 
                             {/* Listening Drills */}
-                            <div>
-                                <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                            <div className="flex flex-col h-full min-h-0">
+                                <h3 className="text-sm font-bold text-white flex items-center gap-2 flex-shrink-0 pb-2">
                                     <span className="bg-emerald-500/10 border border-emerald-500/20 p-1.5 rounded-lg text-emerald-400">
                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M9 10a1 1 0 011-1h1a1 1 0 011 1v4a1 1 0 01-1 1h-1a1 1 0 01-1-1v-4z" /></svg>
                                     </span>
                                     Listening
                                 </h3>
-                                <div className="space-y-2">
+                                <div className="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
                                     {LISTEN_DRILLS.map(drill => (
                                         <button
                                             key={drill.id}
@@ -553,14 +553,14 @@ const PartPracticeHub: React.FC<PartPracticeHubProps> = ({ userEmail }) => {
                             </div>
 
                             {/* Writing Drills */}
-                            <div>
-                                <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                            <div className="flex flex-col h-full min-h-0">
+                                <h3 className="text-sm font-bold text-white flex items-center gap-2 flex-shrink-0 pb-2">
                                     <span className="bg-amber-500/10 border border-amber-500/20 p-1.5 rounded-lg text-amber-400">
                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                     </span>
                                     Writing
                                 </h3>
-                                <div className="space-y-2">
+                                <div className="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
                                     {WRITING_DRILLS.map(drill => (
                                         <button
                                             key={drill.id}

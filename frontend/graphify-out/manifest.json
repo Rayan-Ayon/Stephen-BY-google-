@@ -20,8 +20,8 @@
     "semantic_hash": ""
   },
   "components/AISpeakingPartnerView.tsx": {
-    "mtime": 1788693364.1995792,
-    "ast_hash": "7c7a3fc14e8762caa2fb3c92fd5bb27a",
+    "mtime": 1788891245.3810866,
+    "ast_hash": "c6d93a456c15a7130fa63c9108dbe243",
     "semantic_hash": ""
   },
   "components/ActivationView.tsx": {
@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "components/Dashboard.tsx": {
-    "mtime": 1788883158.9893126,
-    "ast_hash": "1f67e57743f87f0558ca2133717ade9f",
+    "mtime": 1788888861.8776274,
+    "ast_hash": "f555a9958cc11fdf7a4c6465bcb0ab3e",
     "semantic_hash": ""
   },
   "components/DebateView.tsx": {
@@ -205,8 +205,8 @@
     "semantic_hash": ""
   },
   "components/Sidebar.tsx": {
-    "mtime": 1788883112.187037,
-    "ast_hash": "c80e02dfe26fd061347a2725f64acc63",
+    "mtime": 1788888832.590817,
+    "ast_hash": "a36440821c5b10b6862717f00ad5c624",
     "semantic_hash": ""
   },
   "components/SpaceView.tsx": {
@@ -575,8 +575,8 @@
     "semantic_hash": ""
   },
   "components/PartPracticeHub.tsx": {
-    "mtime": 1788860095.3431976,
-    "ast_hash": "760fafe637f82034767198035efd6e84",
+    "mtime": 1788889162.453793,
+    "ast_hash": "134af85be863f1de49d2b271abc566c8",
     "semantic_hash": ""
   },
   "components/ReadingHubView.tsx": {
@@ -597,11 +597,6 @@
   "components/WritingHubView.tsx": {
     "mtime": 1788795916.8844438,
     "ast_hash": "96edf977e9ef7e22ca60a45ce335d35f",
-    "semantic_hash": ""
-  },
-  "components/VocabularyMockView.tsx": {
-    "mtime": 1788882926.3605216,
-    "ast_hash": "a911fdc208b25fe7968726582e22e60a",
     "semantic_hash": ""
   }
 }
