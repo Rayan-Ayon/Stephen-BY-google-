@@ -20,8 +20,6 @@ import BatchRoster from './enterprise/org/BatchRoster';
 import BrandingSettings from './enterprise/org/BrandingSettings';
 import AIPromptRules from './enterprise/org/AIPromptRules';
 import BillingLicenses from './enterprise/org/BillingLicenses';
-import DashboardView from './DashboardView';
-import RightSidebar from './RightSidebar';
 
 // ── Types ──
 
@@ -1263,26 +1261,6 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
     }, []);
     const userEmail = orgSession?.email || 'owner@farmgateielts.com';
 
-    const handleOverviewNavigate = (view: string) => {
-        const viewMap: Record<string, string> = {
-            reading_hub: 'course_deployment',
-            listening_engine: 'course_deployment',
-            writing_lab: 'course_deployment',
-            speaking_studio: 'course_deployment',
-            study_plan: 'mission_builder',
-            leaderboard: 'performance_analytics',
-        };
-        const target = viewMap[view];
-        if (target) {
-            const group = navGroups.find(g => g.leafKey === target || g.subItems?.some(s => s.key === target));
-            if (group) {
-                setCurrentSection(group.key);
-                setExpandedSection(group.isLeaf ? null : group.key);
-            }
-            setCurrentSubView(target);
-        }
-    };
-
     const sortedStudents = useMemo(() => {
         return [...students].sort((a, b) => getTabMetric(b, engagementTab) - getTabMetric(a, engagementTab));
     }, [engagementTab]);
@@ -1566,16 +1544,255 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                     </>
                 )}
 
-                {currentSubView === 'overview_main' && (
-                    <div className="flex gap-6">
-                        <div className="flex-[7] min-w-0">
-                            <DashboardView userEmail={userEmail} onNavigate={handleOverviewNavigate} />
+                {currentSubView === 'overview_main' && (() => {
+                    const submissionsList = [
+                        { id: 'STU-2814', name: 'Ayon Rahman', test: 'CAMBRIDGE 18', title: 'Writing Task 2 - Education Essay', time: '4 mins ago', band: 7.0, status: 'graded' as const },
+                        { id: 'STU-1903', name: 'Nusrat Jahan', test: 'CAMBRIDGE 17', title: 'Writing Task 1 - Process Diagram', time: '12 mins ago', band: 0, status: 'processing' as const },
+                        { id: 'STU-2201', name: 'Tanvir Ahmed', test: 'SPEAKING PART 3', title: 'Audio Recording - Technology & Society', time: '18 mins ago', band: 5.5, status: 'flagged' as const },
+                        { id: 'STU-1756', name: 'Saimon Chowdhury', test: 'CAMBRIDGE 18', title: 'Writing Task 2 - Environment Essay', time: '27 mins ago', band: 6.5, status: 'graded' as const },
+                        { id: 'STU-2480', name: 'Farhan Kabir', test: 'CAMBRIDGE 16', title: 'Writing Task 1 - Bar Chart Report', time: '34 mins ago', band: 0, status: 'processing' as const },
+                        { id: 'STU-2099', name: 'Mim Akter', test: 'SPEAKING PART 2', title: 'Audio Recording - Describe a Place', time: '41 mins ago', band: 7.5, status: 'graded' as const },
+                    ];
+                    const atRiskStudents = [
+                        { name: 'Tanvir Ahmed', target: 7.0, current: 5.5, issue: 'Writing dropped -1.0 Band', action: 'Send Practice Assignment' },
+                        { name: 'Nusrat Jahan', target: 6.5, current: 5.5, issue: 'Inactive for 5 days', action: 'Ping Student' },
+                        { name: 'Saimon Chowdhury', target: 7.5, current: 6.0, issue: 'Speaking fluency flag', action: 'Schedule 1-on-1' },
+                    ];
+                    const telemetryLogs = [
+                        { time: '13:54:02', tag: 'SYSTEM', msg: 'Synced 12 new submissions from Farmgate Batch' },
+                        { time: '13:54:18', tag: 'AI ENGINE', msg: 'Evaluated Writing Task #8821 in 1.42s (Band 6.5)' },
+                        { time: '13:55:01', tag: 'AUDIT', msg: "Teacher 'Instructor_Rafi' overridden Band score from 6.0 to 6.5 for Student #2814" },
+                        { time: '13:55:12', tag: 'ALERT', msg: 'Student #1092 dropped below baseline threshold' },
+                        { time: '13:55:30', tag: 'SYSTEM', msg: 'Cambridge 18 - Test 2 deployed to Batch A-2024 (48 candidates)' },
+                        { time: '13:56:01', tag: 'AI ENGINE', msg: 'Speaking evaluation queued for 3 pending audio submissions' },
+                    ];
+
+                    return (
+                        <div className="p-6 space-y-6 bg-[#090A0C] min-h-screen">
+                            {/* ── HEADER BAR ── */}
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white">Workspace Operations & Worksheet Overview</h2>
+                                    <p className="text-sm text-[#8E95A3] mt-1">Real-time cohort telemetry, live AI grading queue, and student worksheet tracking.</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2 bg-[#12141A] border border-[#1F232D] rounded-lg px-3 py-2">
+                                        <span className="relative flex h-2.5 w-2.5">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00E699] opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#00E699]"></span>
+                                        </span>
+                                        <span className="text-xs font-mono text-[#00E699]">IELTS AI NODE #04 ONLINE (12ms)</span>
+                                    </div>
+                                    <button className="bg-[#00E699] hover:bg-[#00CC8A] text-[#090A0C] text-sm font-semibold px-4 py-2 rounded-lg transition-all">
+                                        + Assign Batch Worksheet
+                                    </button>
+                                    <button className="border border-[#1F232D] hover:border-[#2A2F3A] text-[#8E95A3] hover:text-white text-sm font-medium px-4 py-2 rounded-lg transition-all">
+                                        Export Cohort Analytics
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* ── SECTION A: TOP 4 METRIC CARDS ── */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="bg-[#12141A] border border-[#1F232D] rounded-xl p-5">
+                                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#565E6D] mb-2">Active Seat Allocation</p>
+                                    <p className="text-2xl font-bold font-mono text-white">184 <span className="text-sm font-normal text-[#565E6D]">/ 200</span></p>
+                                    <div className="w-full h-1.5 bg-[#1A1D26] rounded-full mt-3 mb-2 overflow-hidden">
+                                        <div className="h-full rounded-full bg-gradient-to-r from-[#00E699] to-[#00CC8A]" style={{ width: '92%' }} />
+                                    </div>
+                                    <p className="text-[11px] text-[#565E6D]">16 seats remaining in Farmgate Executive Batch</p>
+                                </div>
+                                <div className="bg-[#12141A] border border-[#1F232D] rounded-xl p-5 relative">
+                                    <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-[#FFAB00] animate-pulse" />
+                                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#565E6D] mb-2">Worksheet Submissions Today</p>
+                                    <p className="text-2xl font-bold font-mono text-white">170 <span className="text-sm font-normal text-[#565E6D]">Total</span></p>
+                                    <div className="flex items-center gap-3 mt-2">
+                                        <span className="text-xs font-mono text-[#FFAB00]">42 Pending</span>
+                                        <span className="text-xs text-[#1F232D]">|</span>
+                                        <span className="text-xs font-mono text-[#00E699]">128 Auto-Graded</span>
+                                    </div>
+                                    <p className="text-[11px] text-[#565E6D] mt-2">+24% higher engagement vs last week</p>
+                                </div>
+                                <div className="bg-[#12141A] border border-[#1F232D] rounded-xl p-5">
+                                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#565E6D] mb-2">Institute Average Band</p>
+                                    <p className="text-2xl font-bold font-mono text-white">6.85 <span className="text-sm font-normal text-[#565E6D]">Band</span></p>
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <span className="text-xs font-mono font-semibold text-[#00E699]">▲ +0.35</span>
+                                        <span className="text-[11px] text-[#565E6D]">Target: 7.00</span>
+                                    </div>
+                                    <p className="text-[11px] text-[#565E6D] mt-1">Based on 1,420 graded worksheets this month</p>
+                                </div>
+                                <div className="bg-[#12141A] border border-[#1F232D] rounded-xl p-5">
+                                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#565E6D] mb-2">AI Evaluation Latency</p>
+                                    <p className="text-2xl font-bold font-mono text-white">1.8s <span className="text-sm font-normal text-[#565E6D]">/ Essay</span></p>
+                                    <p className="text-xs font-mono text-[#00E699] mt-2">100% Accuracy Rate · 0 Queue Backlog</p>
+                                    <p className="text-[11px] text-[#565E6D] mt-1">Auto-Feedback Engine operational</p>
+                                </div>
+                            </div>
+
+                            {/* ── SECTION B: MAIN ASYMMETRIC GRID ── */}
+                            <div className="flex gap-6">
+
+                                {/* LEFT COLUMN (Flex-7) */}
+                                <div className="flex-[7] min-w-0 space-y-6">
+
+                                    {/* Live Worksheet Assessment Pipeline */}
+                                    <div className="bg-[#12141A] border border-[#1F232D] rounded-xl overflow-hidden">
+                                        <div className="p-5 pb-0">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h3 className="text-sm font-semibold text-white">Recent Worksheet Submissions</h3>
+                                                <div className="flex items-center gap-2">
+                                                    {['All (170)', 'Writing Task 2', 'Speaking Audios', 'Pending Human Review (42)'].map((f, i) => (
+                                                        <button key={i} className={`text-[10px] font-medium px-2.5 py-1 rounded-full border transition-all ${i === 0 ? 'bg-[#00E699]/10 border-[#00E699]/30 text-[#00E699]' : 'border-[#1F232D] text-[#565E6D] hover:text-white hover:border-[#2A2F3A]'}`}>
+                                                            {f}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <table className="w-full text-left text-xs">
+                                            <thead>
+                                                <tr className="border-t border-[#1F232D]">
+                                                    <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-[#565E6D]">Student</th>
+                                                    <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-[#565E6D]">Test / Worksheet</th>
+                                                    <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-[#565E6D]">Submitted</th>
+                                                    <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-[#565E6D]">Band / Status</th>
+                                                    <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-[#565E6D]">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {submissionsList.map((s) => (
+                                                    <tr key={s.id} className="border-t border-[#1F232D] hover:bg-[#16181D] transition-colors">
+                                                        <td className="px-5 py-3">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className="w-7 h-7 rounded-full bg-[#1A1D26] flex items-center justify-center text-[10px] font-bold text-[#8E95A3]">{s.name.charAt(0)}</div>
+                                                                <div>
+                                                                    <p className="text-white font-medium">{s.name}</p>
+                                                                    <p className="text-[10px] text-[#565E6D] font-mono">#{s.id}</p>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-5 py-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[9px] font-bold uppercase tracking-wider bg-[#1A1D26] text-[#8E95A3] px-1.5 py-0.5 rounded">{s.test}</span>
+                                                                <span className="text-[#8E95A3]">{s.title}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-5 py-3 text-[#565E6D]">{s.time}</td>
+                                                        <td className="px-5 py-3">
+                                                            {s.status === 'graded' && (
+                                                                <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold bg-[#00E699]/10 text-[#00E699] border border-[#00E699]/30 px-2 py-0.5 rounded-full">
+                                                                    Band {s.band.toFixed(1)}
+                                                                </span>
+                                                            )}
+                                                            {s.status === 'processing' && (
+                                                                <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold bg-[#FFAB00]/10 text-[#FFAB00] border border-[#FFAB00]/30 px-2 py-0.5 rounded-full">
+                                                                    <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" /><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
+                                                                    AI Processing...
+                                                                </span>
+                                                            )}
+                                                            {s.status === 'flagged' && (
+                                                                <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold bg-[#FF4D4D]/10 text-[#FF4D4D] border border-[#FF4D4D]/30 px-2 py-0.5 rounded-full">
+                                                                    Review Flagged
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-5 py-3">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <button className="text-[10px] font-medium text-[#8E95A3] hover:text-white border border-[#1F232D] hover:border-[#2A2F3A] px-2 py-1 rounded transition-all">Review Essay</button>
+                                                                <button className="text-[10px] font-medium text-[#8E95A3] hover:text-white border border-[#1F232D] hover:border-[#2A2F3A] px-2 py-1 rounded transition-all">Override</button>
+                                                                <button className="text-[10px] font-medium text-[#8E95A3] hover:text-white border border-[#1F232D] hover:border-[#2A2F3A] px-2 py-1 rounded transition-all">Feedback</button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {/* Cohort Skill Accuracy & Band Distribution */}
+                                    <div className="bg-[#12141A] border border-[#1F232D] rounded-xl p-5">
+                                        <h3 className="text-sm font-semibold text-white mb-4">Cohort Skill Accuracy & Band Distribution</h3>
+                                        <div className="space-y-4">
+                                            {[
+                                                { label: 'Reading', avg: 7.2, pct: 81, color: '#00E699' },
+                                                { label: 'Listening', avg: 7.5, pct: 84, color: '#00E699' },
+                                                { label: 'Writing', avg: 6.2, pct: 64, color: '#FFAB00' },
+                                                { label: 'Speaking', avg: 6.5, pct: 68, color: '#00B8D9' },
+                                            ].map((s) => (
+                                                <div key={s.label} className="flex items-center gap-4">
+                                                    <span className="text-xs text-[#8E95A3] w-20 shrink-0">{s.label}</span>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <span className="text-[11px] text-[#565E6D]">Avg {s.avg}</span>
+                                                            <span className="text-[11px] font-mono font-semibold" style={{ color: s.color }}>{s.pct}%</span>
+                                                        </div>
+                                                        <div className="w-full h-1.5 bg-[#1A1D26] rounded-full overflow-hidden">
+                                                            <div className="h-full rounded-full transition-all" style={{ width: `${s.pct}%`, backgroundColor: s.color }} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="mt-4 pt-4 border-t border-[#1F232D] bg-[#0D0E12] rounded-lg p-3">
+                                            <p className="text-xs text-[#FFAB00]">
+                                                💡 <span className="font-semibold">System Recommendation:</span> Writing Task 2 Lexical Resource is the primary bottleneck for 38% of students in this cohort.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* RIGHT COLUMN (Flex-3) */}
+                                <div className="flex-[3] min-w-0 space-y-6">
+
+                                    {/* At-Risk Students Monitor */}
+                                    <div className="bg-[#12141A] border border-[#1F232D] rounded-xl p-5">
+                                        <div className="mb-4">
+                                            <h3 className="text-sm font-semibold text-white">Students Needing Attention</h3>
+                                            <p className="text-[11px] text-[#565E6D] mt-0.5">Falling below target band 6.0</p>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {atRiskStudents.map((s, i) => (
+                                                <div key={i} className="bg-[#090A0C] border border-[#1F232D] rounded-lg p-3">
+                                                    <div className="flex items-center justify-between mb-1.5">
+                                                        <span className="text-xs font-semibold text-white">{s.name}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-[11px] mb-1.5">
+                                                        <span className="text-[#565E6D]">Target {s.target}</span>
+                                                        <span className="text-[#565E6D]">→</span>
+                                                        <span className="font-mono font-semibold text-[#FF4D4D]">Current {s.current}</span>
+                                                    </div>
+                                                    <p className="text-[10px] text-[#FFAB00] mb-2">{s.issue}</p>
+                                                    <button className="w-full text-[10px] font-semibold bg-[#FF4D4D]/10 border border-[#FF4D4D]/30 text-[#FF4D4D] hover:bg-[#FF4D4D]/20 py-1.5 rounded transition-all">
+                                                        {s.action}
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Real-Time AI Node Logs */}
+                                    <div className="bg-[#12141A] border border-[#1F232D] rounded-xl overflow-hidden">
+                                        <div className="px-5 pt-4 pb-2">
+                                            <h3 className="text-sm font-semibold text-white">Real-Time AI Node Logs</h3>
+                                        </div>
+                                        <div className="bg-[#0B0C0E] border-t border-[#1A1D26] font-mono text-[11px] p-3 h-48 overflow-y-auto">
+                                            {telemetryLogs.map((log, i) => (
+                                                <div key={i} className="flex items-start gap-2 mb-1.5">
+                                                    <span className="text-[#565E6D] shrink-0">[{log.time}]</span>
+                                                    <span className={`shrink-0 font-semibold ${log.tag === 'ALERT' ? 'text-[#FF4D4D]' : log.tag === 'AI ENGINE' ? 'text-[#00B8D9]' : log.tag === 'AUDIT' ? 'text-[#FFAB00]' : 'text-[#00E699]'}`}>
+                                                        [{log.tag}]
+                                                    </span>
+                                                    <span className="text-[#8E95A3]">{log.msg}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex-[3] min-w-0">
-                            <RightSidebar onNavigate={handleOverviewNavigate} />
-                        </div>
-                    </div>
-                )}
+                    );
+                })()}
 
                 <BatchForecastWidget />
 
