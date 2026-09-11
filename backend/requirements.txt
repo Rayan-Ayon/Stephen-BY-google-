@@ -11,3 +11,4 @@ aiosqlite
 httpx
 chromadb
 pyjwt
+asyncpg
