@@ -82,6 +82,7 @@ interface DashboardProps {
     initialView: string;
     onExit: () => void;
     userEmail: string;
+    userId?: string;
     spaceCode: string;
     onLogout: () => void;
 }
@@ -113,7 +114,7 @@ const isInstitutionalSpace = (code: string): boolean => {
     return !!code && code !== 'Personal Sandbox';
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, onExit, userEmail, spaceCode, onLogout }) => {
+const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, onExit, userEmail, userId, spaceCode, onLogout }) => {
     const { activeWorkspace } = useWorkspace();
     const isEnterprise = activeWorkspace.type === 'enterprise';
     const [currentView, setCurrentView] = useState(() => initialView === 'add_content' ? 'sandbox' : initialView);

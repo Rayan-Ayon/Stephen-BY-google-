@@ -1,15 +1,16 @@
 import logging
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from app.schemas.ai_features import FeatureResponse, VideoIdRequest
 from app.services.ai_feature_service import get_or_generate_feature
+from app.core.auth import get_current_user, AuthUser
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
 @router.post("/video/summary")
-async def create_summary(request: VideoIdRequest) -> FeatureResponse:
+async def create_summary(request: VideoIdRequest, user: AuthUser = Depends(get_current_user)) -> FeatureResponse:
     if not request.videoId:
         raise HTTPException(status_code=400, detail="videoId is required")
     try:
@@ -17,7 +18,7 @@ async def create_summary(request: VideoIdRequest) -> FeatureResponse:
             request.videoId,
             "summary",
             force_refresh=request.forceRefresh,
-            user_email=request.userEmail,
+            user_email=user.email,
         )
     except Exception as e:
         error_msg = str(e)
@@ -27,7 +28,7 @@ async def create_summary(request: VideoIdRequest) -> FeatureResponse:
 
 
 @router.post("/video/flashcards")
-async def create_flashcards(request: VideoIdRequest) -> FeatureResponse:
+async def create_flashcards(request: VideoIdRequest, user: AuthUser = Depends(get_current_user)) -> FeatureResponse:
     if not request.videoId:
         raise HTTPException(status_code=400, detail="videoId is required")
     try:
@@ -38,7 +39,7 @@ async def create_flashcards(request: VideoIdRequest) -> FeatureResponse:
             count=request.count,
             focus=request.focus,
             transcript_data=request.transcript,
-            user_email=request.userEmail,
+            user_email=user.email,
         )
     except Exception as e:
         error_msg = str(e)
@@ -48,7 +49,7 @@ async def create_flashcards(request: VideoIdRequest) -> FeatureResponse:
 
 
 @router.post("/video/quiz")
-async def create_quiz(request: VideoIdRequest) -> FeatureResponse:
+async def create_quiz(request: VideoIdRequest, user: AuthUser = Depends(get_current_user)) -> FeatureResponse:
     if not request.videoId:
         raise HTTPException(status_code=400, detail="videoId is required")
     try:
@@ -56,7 +57,7 @@ async def create_quiz(request: VideoIdRequest) -> FeatureResponse:
             request.videoId,
             "quiz",
             force_refresh=request.forceRefresh,
-            user_email=request.userEmail,
+            user_email=user.email,
         )
     except Exception as e:
         error_msg = str(e)
@@ -66,7 +67,7 @@ async def create_quiz(request: VideoIdRequest) -> FeatureResponse:
 
 
 @router.post("/video/notes")
-async def create_notes(request: VideoIdRequest) -> FeatureResponse:
+async def create_notes(request: VideoIdRequest, user: AuthUser = Depends(get_current_user)) -> FeatureResponse:
     if not request.videoId:
         raise HTTPException(status_code=400, detail="videoId is required")
     try:
@@ -74,7 +75,7 @@ async def create_notes(request: VideoIdRequest) -> FeatureResponse:
             request.videoId,
             "notes",
             force_refresh=request.forceRefresh,
-            user_email=request.userEmail,
+            user_email=user.email,
         )
     except Exception as e:
         error_msg = str(e)
@@ -84,7 +85,7 @@ async def create_notes(request: VideoIdRequest) -> FeatureResponse:
 
 
 @router.post("/video/rag-query")
-async def rag_query(request: VideoIdRequest):
+async def rag_query(request: VideoIdRequest, user: AuthUser = Depends(get_current_user)):
     """
     Direct RAG query endpoint for testing and custom queries.
     Returns relevant chunks from the vector database.
@@ -112,7 +113,7 @@ async def rag_query(request: VideoIdRequest):
 
 
 @router.post("/video/index-transcript")
-async def index_transcript(request: VideoIdRequest):
+async def index_transcript(request: VideoIdRequest, user: AuthUser = Depends(get_current_user)):
     """
     Force indexing of a video transcript into ChromaDB.
     """
@@ -133,7 +134,7 @@ async def index_transcript(request: VideoIdRequest):
 
 
 @router.get("/video/index-status")
-async def get_index_status(videoId: str):
+async def get_index_status(videoId: str, user: AuthUser = Depends(get_current_user)):
     """
     Check if a video's transcript has been indexed into ChromaDB.
     Returns { "isIndexed": true/false, "videoId": str }
@@ -162,7 +163,7 @@ async def get_index_status(videoId: str):
 
 
 @router.get("/video/features")
-async def get_cached_features(videoId: str, type: str = "flashcards", userEmail: str = ""):
+async def get_cached_features(videoId: str, type: str = "flashcards", user: AuthUser = Depends(get_current_user)):
     """
     Check if cached AI features exist for a video.
     Returns cached data if available, or { "cached": false } if not.
@@ -179,7 +180,7 @@ async def get_cached_features(videoId: str, type: str = "flashcards", userEmail:
         import json
         
         async with async_session_maker() as db:
-            cached = await get_cached_result(db, videoId, type, user_email=userEmail)
+            cached = await get_cached_result(db, videoId, type, user_email=user.email)
             if cached:
                 return {
                     "cached": True,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster } from 'sonner';
 import { supabase } from './supabaseClient';
+import { AuthProvider, useAuth } from './authContext';
 import Dashboard from './components/Dashboard';
 import LandingPage from './components/LandingPage';
 import AuthOverlay from './components/AuthOverlay';
@@ -46,13 +47,13 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { userId, userEmail, isLoading: authLoading, isAuthenticated, signOut } = useAuth();
   const [theme, setTheme] = useState<Theme>('dark');
   const [showDashboard, setShowDashboard] = useState(false);
   const [initialView, setInitialView] = useState('add_content');
   const [authType, setAuthType] = useState<AuthType>(null);
   const [sessionChecked, setSessionChecked] = useState(false);
-  const [userEmail, setUserEmail] = useState('');
   const [spaceCode, setSpaceCode] = useState('');
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isOrgManager, setIsOrgManager] = useState(false);
@@ -85,20 +86,13 @@ const App: React.FC = () => {
   }, [theme]);
 
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.email) {
-          setUserEmail(session.user.email);
-          setShowDashboard(true);
-        }
-      } catch {
-        // Session lookup failed — stay on landing page.
+    if (!authLoading) {
+      if (isAuthenticated) {
+        setShowDashboard(true);
       }
       setSessionChecked(true);
-    };
-    checkSession();
-  }, []);
+    }
+  }, [authLoading, isAuthenticated]);
 
   const toggleTheme = () => {
     setTheme(prevTheme => (prevTheme === 'dark' ? 'light' : 'dark'));
@@ -110,15 +104,13 @@ const App: React.FC = () => {
   };
 
   const handleAuthSuccess = (email: string, code: string) => {
-    setUserEmail(email);
     setSpaceCode(code);
     setAuthType(null);
     handleStartLearning();
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUserEmail('');
+    await signOut();
     setSpaceCode('');
     setShowDashboard(false);
   };
@@ -178,6 +170,7 @@ const App: React.FC = () => {
               initialView={initialView}
               onExit={() => setShowDashboard(false)}
               userEmail={userEmail}
+              userId={userId}
               spaceCode={spaceCode}
               onLogout={handleLogout}
             />
@@ -214,6 +207,14 @@ const App: React.FC = () => {
         }}
       />
     </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 };
 

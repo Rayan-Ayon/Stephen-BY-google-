@@ -10,24 +10,24 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app",
-      "community": 57,
+      "community": 21,
       "norm_label": "app.tsx"
     },
     {
       "label": "Theme",
       "file_type": "code",
       "source_file": "App.tsx",
-      "source_location": "L13",
+      "source_location": "L14",
       "_origin": "ast",
       "id": "app_theme",
-      "community": 52,
+      "community": 4,
       "norm_label": "theme"
     },
     {
       "label": "AuthType",
       "file_type": "code",
       "source_file": "App.tsx",
-      "source_location": "L14",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "app_authtype",
       "community": 21,
@@ -37,201 +37,121 @@
       "label": "ErrorBoundary",
       "file_type": "code",
       "source_file": "App.tsx",
-      "source_location": "L16",
+      "source_location": "L17",
       "_origin": "ast",
       "id": "app_errorboundary",
-      "community": 57,
+      "community": 21,
       "norm_label": "errorboundary"
     },
     {
       "label": ".constructor()",
       "file_type": "code",
       "source_file": "App.tsx",
-      "source_location": "L17",
+      "source_location": "L18",
       "_origin": "ast",
       "id": "app_errorboundary_constructor",
-      "community": 57,
+      "community": 21,
       "norm_label": ".constructor()"
     },
     {
       "label": ".getDerivedStateFromError()",
       "file_type": "code",
       "source_file": "App.tsx",
-      "source_location": "L22",
+      "source_location": "L23",
       "_origin": "ast",
       "id": "app_errorboundary_getderivedstatefromerror",
-      "community": 57,
+      "community": 21,
       "norm_label": ".getderivedstatefromerror()"
     },
     {
       "label": ".componentDidCatch()",
       "file_type": "code",
       "source_file": "App.tsx",
-      "source_location": "L26",
+      "source_location": "L27",
       "_origin": "ast",
       "id": "app_errorboundary_componentdidcatch",
-      "community": 57,
+      "community": 21,
       "norm_label": ".componentdidcatch()"
     },
     {
       "label": ".render()",
       "file_type": "code",
       "source_file": "App.tsx",
-      "source_location": "L30",
+      "source_location": "L31",
       "_origin": "ast",
       "id": "app_errorboundary_render",
-      "community": 57,
+      "community": 21,
       "norm_label": ".render()"
+    },
+    {
+      "label": "AppContent()",
+      "file_type": "code",
+      "source_file": "App.tsx",
+      "source_location": "L50",
+      "_origin": "ast",
+      "id": "app_appcontent",
+      "community": 21,
+      "norm_label": "appcontent()"
     },
     {
       "label": "App()",
       "file_type": "code",
       "source_file": "App.tsx",
-      "source_location": "L49",
+      "source_location": "L213",
       "_origin": "ast",
       "id": "app_app",
-      "community": 57,
+      "community": 21,
       "norm_label": "app()"
     },
     {
-      "label": "authApi.ts",
+      "label": "authContext.tsx",
       "file_type": "code",
-      "source_file": "authApi.ts",
+      "source_file": "authContext.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "authapi",
-      "community": 37,
-      "norm_label": "authapi.ts"
+      "id": "authcontext",
+      "community": 21,
+      "norm_label": "authcontext.tsx"
     },
     {
-      "label": "AuthSessionData",
+      "label": "AuthContextType",
       "file_type": "code",
-      "source_file": "authApi.ts",
-      "source_location": "L4",
+      "source_file": "authContext.tsx",
+      "source_location": "L5",
       "_origin": "ast",
-      "id": "authapi_authsessiondata",
-      "community": 37,
-      "norm_label": "authsessiondata"
+      "id": "authcontext_authcontexttype",
+      "community": 21,
+      "norm_label": "authcontexttype"
     },
     {
-      "label": "getStoredToken()",
+      "label": "AuthContext",
       "file_type": "code",
-      "source_file": "authApi.ts",
-      "source_location": "L10",
+      "source_file": "authContext.tsx",
+      "source_location": "L16",
       "_origin": "ast",
-      "id": "authapi_getstoredtoken",
-      "community": 37,
-      "norm_label": "getstoredtoken()"
+      "id": "authcontext_authcontext",
+      "community": 21,
+      "norm_label": "authcontext"
     },
     {
-      "label": "getStoredEmail()",
+      "label": "useAuth()",
       "file_type": "code",
-      "source_file": "authApi.ts",
-      "source_location": "L14",
-      "_origin": "ast",
-      "id": "authapi_getstoredemail",
-      "community": 37,
-      "norm_label": "getstoredemail()"
-    },
-    {
-      "label": "setSession()",
-      "file_type": "code",
-      "source_file": "authApi.ts",
+      "source_file": "authContext.tsx",
       "source_location": "L18",
       "_origin": "ast",
-      "id": "authapi_setsession",
-      "community": 37,
-      "norm_label": "setsession()"
+      "id": "authcontext_useauth",
+      "community": 21,
+      "norm_label": "useauth()"
     },
     {
-      "label": "clearSession()",
+      "label": "AuthProvider()",
       "file_type": "code",
-      "source_file": "authApi.ts",
-      "source_location": "L23",
+      "source_file": "authContext.tsx",
+      "source_location": "L26",
       "_origin": "ast",
-      "id": "authapi_clearsession",
-      "community": 37,
-      "norm_label": "clearsession()"
-    },
-    {
-      "label": "ApiError",
-      "file_type": "code",
-      "source_file": "authApi.ts",
-      "source_location": "L28",
-      "_origin": "ast",
-      "id": "authapi_apierror",
-      "community": 37,
-      "norm_label": "apierror"
-    },
-    {
-      "label": "isNetworkError()",
-      "file_type": "code",
-      "source_file": "authApi.ts",
-      "source_location": "L33",
-      "_origin": "ast",
-      "id": "authapi_isnetworkerror",
-      "community": 37,
-      "norm_label": "isnetworkerror()"
-    },
-    {
-      "label": "getAuthErrorMessage()",
-      "file_type": "code",
-      "source_file": "authApi.ts",
-      "source_location": "L46",
-      "_origin": "ast",
-      "id": "authapi_getautherrormessage",
-      "community": 37,
-      "norm_label": "getautherrormessage()"
-    },
-    {
-      "label": "request()",
-      "file_type": "code",
-      "source_file": "authApi.ts",
-      "source_location": "L54",
-      "_origin": "ast",
-      "id": "authapi_request",
-      "community": 37,
-      "norm_label": "request()"
-    },
-    {
-      "label": "login()",
-      "file_type": "code",
-      "source_file": "authApi.ts",
-      "source_location": "L84",
-      "_origin": "ast",
-      "id": "authapi_login",
-      "community": 37,
-      "norm_label": "login()"
-    },
-    {
-      "label": "signup()",
-      "file_type": "code",
-      "source_file": "authApi.ts",
-      "source_location": "L93",
-      "_origin": "ast",
-      "id": "authapi_signup",
-      "community": 37,
-      "norm_label": "signup()"
-    },
-    {
-      "label": "logout()",
-      "file_type": "code",
-      "source_file": "authApi.ts",
-      "source_location": "L102",
-      "_origin": "ast",
-      "id": "authapi_logout",
-      "community": 37,
-      "norm_label": "logout()"
-    },
-    {
-      "label": "getSession()",
-      "file_type": "code",
-      "source_file": "authApi.ts",
-      "source_location": "L113",
-      "_origin": "ast",
-      "id": "authapi_getsession",
-      "community": 37,
-      "norm_label": "getsession()"
+      "id": "authcontext_authprovider",
+      "community": 21,
+      "norm_label": "authprovider()"
     },
     {
       "label": "AIIELTSChatbotView.tsx",
@@ -1010,7 +930,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "components_addcontentview_addcontentviewprops",
-      "community": 32,
+      "community": 57,
       "norm_label": "addcontentviewprops"
     },
     {
@@ -1070,7 +990,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_addcoursesview",
-      "community": 32,
+      "community": 57,
       "norm_label": "addcoursesview.tsx"
     },
     {
@@ -1080,7 +1000,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "components_addcoursesview_initialcourses",
-      "community": 32,
+      "community": 57,
       "norm_label": "initialcourses"
     },
     {
@@ -1090,7 +1010,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "components_addcoursesview_addcoursesviewprops",
-      "community": 32,
+      "community": 57,
       "norm_label": "addcoursesviewprops"
     },
     {
@@ -1100,7 +1020,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "components_addcoursesview_addcoursesview",
-      "community": 32,
+      "community": 57,
       "norm_label": "addcoursesview()"
     },
     {
@@ -1380,7 +1300,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_contactusslide",
-      "community": 2,
+      "community": 45,
       "norm_label": "contactusslide.tsx"
     },
     {
@@ -1390,7 +1310,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "components_contactusslide_contactusslideprops",
-      "community": 2,
+      "community": 45,
       "norm_label": "contactusslideprops"
     },
     {
@@ -1400,7 +1320,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "components_contactusslide_contactusslide",
-      "community": 2,
+      "community": 45,
       "norm_label": "contactusslide()"
     },
     {
@@ -1420,7 +1340,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_dashboard",
-      "community": 52,
+      "community": 74,
       "norm_label": "dashboard.tsx"
     },
     {
@@ -1430,7 +1350,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "components_dashboard_historyitem",
-      "community": 32,
+      "community": 57,
       "norm_label": "historyitem"
     },
     {
@@ -1440,34 +1360,34 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "components_dashboard_dashboardprops",
-      "community": 52,
+      "community": 4,
       "norm_label": "dashboardprops"
     },
     {
       "label": "ShimmerLoader()",
       "file_type": "code",
       "source_file": "components/Dashboard.tsx",
-      "source_location": "L89",
+      "source_location": "L90",
       "_origin": "ast",
       "id": "components_dashboard_shimmerloader",
-      "community": 52,
+      "community": 74,
       "norm_label": "shimmerloader()"
     },
     {
       "label": "isInstitutionalSpace()",
       "file_type": "code",
       "source_file": "components/Dashboard.tsx",
-      "source_location": "L112",
+      "source_location": "L113",
       "_origin": "ast",
       "id": "components_dashboard_isinstitutionalspace",
-      "community": 52,
+      "community": 74,
       "norm_label": "isinstitutionalspace()"
     },
     {
       "label": "Dashboard()",
       "file_type": "code",
       "source_file": "components/Dashboard.tsx",
-      "source_location": "L116",
+      "source_location": "L117",
       "_origin": "ast",
       "id": "components_dashboard_dashboard",
       "community": 52,
@@ -1580,7 +1500,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_discoverview",
-      "community": 26,
+      "community": 81,
       "norm_label": "discoverview.tsx"
     },
     {
@@ -1590,7 +1510,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "components_discoverview_processinglogs",
-      "community": 26,
+      "community": 81,
       "norm_label": "processinglogs"
     },
     {
@@ -1600,7 +1520,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "components_discoverview_discoverviewprops",
-      "community": 26,
+      "community": 81,
       "norm_label": "discoverviewprops"
     },
     {
@@ -1610,7 +1530,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "components_discoverview_defaultconfig",
-      "community": 26,
+      "community": 81,
       "norm_label": "defaultconfig"
     },
     {
@@ -1620,7 +1540,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "components_discoverview_discoverview",
-      "community": 26,
+      "community": 81,
       "norm_label": "discoverview()"
     },
     {
@@ -1630,7 +1550,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_edgramview",
-      "community": 2,
+      "community": 79,
       "norm_label": "edgramview.tsx"
     },
     {
@@ -1640,7 +1560,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "components_edgramview_socialicons",
-      "community": 2,
+      "community": 79,
       "norm_label": "socialicons"
     },
     {
@@ -1650,7 +1570,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "components_edgramview_exploreview",
-      "community": 2,
+      "community": 79,
       "norm_label": "exploreview()"
     },
     {
@@ -1660,7 +1580,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "components_edgramview_notificationsview",
-      "community": 2,
+      "community": 79,
       "norm_label": "notificationsview()"
     },
     {
@@ -1670,7 +1590,7 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "components_edgramview_placeholderview",
-      "community": 2,
+      "community": 79,
       "norm_label": "placeholderview()"
     },
     {
@@ -1680,7 +1600,7 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "components_edgramview_edgramview",
-      "community": 2,
+      "community": 79,
       "norm_label": "edgramview()"
     },
     {
@@ -2360,7 +2280,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_hawkingfab",
-      "community": 13,
+      "community": 72,
       "norm_label": "hawkingfab.tsx"
     },
     {
@@ -2370,7 +2290,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "components_hawkingfab_message",
-      "community": 13,
+      "community": 72,
       "norm_label": "message"
     },
     {
@@ -2380,7 +2300,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "components_hawkingfab_hawkingfabprops",
-      "community": 13,
+      "community": 72,
       "norm_label": "hawkingfabprops"
     },
     {
@@ -2390,7 +2310,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "components_hawkingfab_models",
-      "community": 13,
+      "community": 72,
       "norm_label": "models"
     },
     {
@@ -2400,7 +2320,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "components_hawkingfab_hawkingfab",
-      "community": 13,
+      "community": 72,
       "norm_label": "hawkingfab()"
     },
     {
@@ -2410,7 +2330,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_historyview",
-      "community": 32,
+      "community": 57,
       "norm_label": "historyview.tsx"
     },
     {
@@ -2420,7 +2340,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "components_historyview_historyviewprops",
-      "community": 32,
+      "community": 57,
       "norm_label": "historyviewprops"
     },
     {
@@ -2430,7 +2350,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "components_historyview_historyview",
-      "community": 32,
+      "community": 57,
       "norm_label": "historyview()"
     },
     {
@@ -4010,7 +3930,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_quickguidemodal",
-      "community": 2,
+      "community": 45,
       "norm_label": "quickguidemodal.tsx"
     },
     {
@@ -4020,7 +3940,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "components_quickguidemodal_guidesections",
-      "community": 2,
+      "community": 45,
       "norm_label": "guidesections"
     },
     {
@@ -4030,7 +3950,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "components_quickguidemodal_quickguidemodal",
-      "community": 2,
+      "community": 45,
       "norm_label": "quickguidemodal()"
     },
     {
@@ -4310,7 +4230,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_rightsidebar",
-      "community": 11,
+      "community": 74,
       "norm_label": "rightsidebar.tsx"
     },
     {
@@ -4320,7 +4240,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "components_rightsidebar_rightsidebarprops",
-      "community": 11,
+      "community": 74,
       "norm_label": "rightsidebarprops"
     },
     {
@@ -4330,7 +4250,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "components_rightsidebar_rightsidebar",
-      "community": 11,
+      "community": 74,
       "norm_label": "rightsidebar()"
     },
     {
@@ -4390,7 +4310,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "components_sidebar_sidebarprops",
-      "community": 52,
+      "community": 80,
       "norm_label": "sidebarprops"
     },
     {
@@ -4420,7 +4340,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_spaceview",
-      "community": 67,
+      "community": 80,
       "norm_label": "spaceview.tsx"
     },
     {
@@ -4430,7 +4350,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "components_spaceview_spaceviewprops",
-      "community": 52,
+      "community": 80,
       "norm_label": "spaceviewprops"
     },
     {
@@ -4440,7 +4360,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "components_spaceview_actioncard",
-      "community": 67,
+      "community": 80,
       "norm_label": "actioncard()"
     },
     {
@@ -4450,7 +4370,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "components_spaceview_institutionaldashboard",
-      "community": 56,
+      "community": 80,
       "norm_label": "institutionaldashboard()"
     },
     {
@@ -4460,7 +4380,7 @@
       "source_location": "L154",
       "_origin": "ast",
       "id": "components_spaceview_spaceview",
-      "community": 67,
+      "community": 80,
       "norm_label": "spaceview()"
     },
     {
@@ -4470,7 +4390,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_speakuirestore",
-      "community": 52,
+      "community": 84,
       "norm_label": "speakuirestore.tsx"
     },
     {
@@ -4480,7 +4400,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "components_speakuirestore_speakuirestoreprops",
-      "community": 52,
+      "community": 84,
       "norm_label": "speakuirestoreprops"
     },
     {
@@ -4490,7 +4410,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "components_speakuirestore_speakuirestore",
-      "community": 52,
+      "community": 84,
       "norm_label": "speakuirestore()"
     },
     {
@@ -5280,7 +5200,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_tutorpanel",
-      "community": 1,
+      "community": 37,
       "norm_label": "tutorpanel.tsx"
     },
     {
@@ -5290,7 +5210,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "components_tutorpanel_safetoast",
-      "community": 1,
+      "community": 37,
       "norm_label": "safetoast"
     },
     {
@@ -5300,7 +5220,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "components_tutorpanel_tutorpanelprops",
-      "community": 32,
+      "community": 57,
       "norm_label": "tutorpanelprops"
     },
     {
@@ -5310,7 +5230,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "components_tutorpanel_message",
-      "community": 1,
+      "community": 37,
       "norm_label": "message"
     },
     {
@@ -5320,7 +5240,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "components_tutorpanel_models",
-      "community": 1,
+      "community": 37,
       "norm_label": "models"
     },
     {
@@ -5330,7 +5250,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "components_tutorpanel_typingindicator",
-      "community": 1,
+      "community": 37,
       "norm_label": "typingindicator()"
     },
     {
@@ -5340,7 +5260,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "components_tutorpanel_mock_quizzes",
-      "community": 1,
+      "community": 37,
       "norm_label": "mock_quizzes"
     },
     {
@@ -5350,7 +5270,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "components_tutorpanel_mock_flashcards",
-      "community": 1,
+      "community": 37,
       "norm_label": "mock_flashcards"
     },
     {
@@ -5360,7 +5280,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "components_tutorpanel_mock_quiz_questions",
-      "community": 1,
+      "community": 37,
       "norm_label": "mock_quiz_questions"
     },
     {
@@ -5370,7 +5290,7 @@
       "source_location": "L164",
       "_origin": "ast",
       "id": "components_tutorpanel_tutorpanel",
-      "community": 1,
+      "community": 37,
       "norm_label": "tutorpanel()"
     },
     {
@@ -5380,7 +5300,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_tutorpanelerrorboundary",
-      "community": 58,
+      "community": 57,
       "norm_label": "tutorpanelerrorboundary.tsx"
     },
     {
@@ -5390,7 +5310,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "components_tutorpanelerrorboundary_props",
-      "community": 58,
+      "community": 57,
       "norm_label": "props"
     },
     {
@@ -5400,7 +5320,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "components_tutorpanelerrorboundary_state",
-      "community": 58,
+      "community": 57,
       "norm_label": "state"
     },
     {
@@ -5480,7 +5400,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "components_workspace_workspaceprops",
-      "community": 32,
+      "community": 57,
       "norm_label": "workspaceprops"
     },
     {
@@ -5580,7 +5500,7 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "components_workspace_cinematiccontentpanelprops",
-      "community": 32,
+      "community": 57,
       "norm_label": "cinematiccontentpanelprops"
     },
     {
@@ -6000,7 +5920,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "course_creation_courseoutlineview",
-      "community": 4,
+      "community": 45,
       "norm_label": "courseoutlineview.tsx"
     },
     {
@@ -6010,7 +5930,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "course_creation_courseoutlineview_courseoutlineviewprops",
-      "community": 4,
+      "community": 45,
       "norm_label": "courseoutlineviewprops"
     },
     {
@@ -6020,7 +5940,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "course_creation_courseoutlineview_shimmerblock",
-      "community": 4,
+      "community": 45,
       "norm_label": "shimmerblock()"
     },
     {
@@ -6030,7 +5950,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "course_creation_courseoutlineview_courseoutlineview",
-      "community": 4,
+      "community": 45,
       "norm_label": "courseoutlineview()"
     },
     {
@@ -6060,7 +5980,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "course_creation_landingview_landingviewprops",
-      "community": 32,
+      "community": 57,
       "norm_label": "landingviewprops"
     },
     {
@@ -6130,7 +6050,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "course_creation_qaview",
-      "community": 4,
+      "community": 72,
       "norm_label": "qaview.tsx"
     },
     {
@@ -6140,7 +6060,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "course_creation_qaview_qaviewprops",
-      "community": 4,
+      "community": 72,
       "norm_label": "qaviewprops"
     },
     {
@@ -6150,7 +6070,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "course_creation_qaview_questions",
-      "community": 4,
+      "community": 72,
       "norm_label": "questions"
     },
     {
@@ -6160,7 +6080,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "course_creation_qaview_dummyanswers",
-      "community": 4,
+      "community": 72,
       "norm_label": "dummyanswers"
     },
     {
@@ -6170,7 +6090,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "course_creation_qaview_qaview",
-      "community": 4,
+      "community": 72,
       "norm_label": "qaview()"
     },
     {
@@ -6250,7 +6170,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "course_creation_roadmapview",
-      "community": 0,
+      "community": 83,
       "norm_label": "roadmapview.tsx"
     },
     {
@@ -6260,7 +6180,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "course_creation_roadmapview_roadmapviewprops",
-      "community": 0,
+      "community": 83,
       "norm_label": "roadmapviewprops"
     },
     {
@@ -6270,7 +6190,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "course_creation_roadmapview_daydata",
-      "community": 0,
+      "community": 83,
       "norm_label": "daydata"
     },
     {
@@ -6280,7 +6200,7 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "course_creation_roadmapview_roadmapdayprops",
-      "community": 0,
+      "community": 83,
       "norm_label": "roadmapdayprops"
     },
     {
@@ -6290,7 +6210,7 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "course_creation_roadmapview_roadmapday",
-      "community": 0,
+      "community": 83,
       "norm_label": "roadmapday()"
     },
     {
@@ -6300,7 +6220,7 @@
       "source_location": "L144",
       "_origin": "ast",
       "id": "course_creation_roadmapview_roadmapview",
-      "community": 0,
+      "community": 83,
       "norm_label": "roadmapview()"
     },
     {
@@ -6460,7 +6380,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_dormantnav",
-      "community": 52,
+      "community": 74,
       "norm_label": "dormantnav.ts"
     },
     {
@@ -6470,7 +6390,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "components_dormantnav_dormant_nav_keys",
-      "community": 52,
+      "community": 74,
       "norm_label": "dormant_nav_keys"
     },
     {
@@ -6480,7 +6400,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "components_dormantnav_disabled_dormant_nav_items",
-      "community": 52,
+      "community": 74,
       "norm_label": "disabled_dormant_nav_items"
     },
     {
@@ -6490,7 +6410,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "edgram_contentdna",
-      "community": 2,
+      "community": 79,
       "norm_label": "contentdna.tsx"
     },
     {
@@ -6500,7 +6420,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "edgram_contentdna_contentdna",
-      "community": 2,
+      "community": 79,
       "norm_label": "contentdna()"
     },
     {
@@ -6580,7 +6500,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "edgram_edgramprofile",
-      "community": 2,
+      "community": 82,
       "norm_label": "edgramprofile.tsx"
     },
     {
@@ -6590,7 +6510,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "edgram_edgramprofile_mockcourses",
-      "community": 2,
+      "community": 82,
       "norm_label": "mockcourses"
     },
     {
@@ -6600,7 +6520,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "edgram_edgramprofile_mockbounties",
-      "community": 2,
+      "community": 82,
       "norm_label": "mockbounties"
     },
     {
@@ -6610,7 +6530,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "edgram_edgramprofile_difficultycolor",
-      "community": 2,
+      "community": 82,
       "norm_label": "difficultycolor"
     },
     {
@@ -6620,7 +6540,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "edgram_edgramprofile_statuscolor",
-      "community": 2,
+      "community": 82,
       "norm_label": "statuscolor"
     },
     {
@@ -6630,7 +6550,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "edgram_edgramprofile_profileview",
-      "community": 2,
+      "community": 82,
       "norm_label": "profileview()"
     },
     {
@@ -6720,7 +6640,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "edgram_types_feedconfig",
-      "community": 2,
+      "community": 79,
       "norm_label": "feedconfig"
     },
     {
@@ -11820,7 +11740,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "components_icons_lockclosedicon",
-      "community": 67,
+      "community": 45,
       "norm_label": "lockclosedicon()"
     },
     {
@@ -11860,7 +11780,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "components_icons_checkcircleicon",
-      "community": 4,
+      "community": 22,
       "norm_label": "checkcircleicon()"
     },
     {
@@ -11880,7 +11800,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "components_icons_adjusticon",
-      "community": 4,
+      "community": 45,
       "norm_label": "adjusticon()"
     },
     {
@@ -11910,7 +11830,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "components_icons_sparkleicon",
-      "community": 67,
+      "community": 80,
       "norm_label": "sparkleicon()"
     },
     {
@@ -12020,7 +11940,7 @@
       "source_location": "L172",
       "_origin": "ast",
       "id": "components_icons_projecticon",
-      "community": 13,
+      "community": 72,
       "norm_label": "projecticon()"
     },
     {
@@ -12050,7 +11970,7 @@
       "source_location": "L190",
       "_origin": "ast",
       "id": "components_icons_usersicon",
-      "community": 2,
+      "community": 4,
       "norm_label": "usersicon()"
     },
     {
@@ -12170,7 +12090,7 @@
       "source_location": "L279",
       "_origin": "ast",
       "id": "components_icons_chevronlefticon",
-      "community": 0,
+      "community": 83,
       "norm_label": "chevronlefticon()"
     },
     {
@@ -12180,7 +12100,7 @@
       "source_location": "L285",
       "_origin": "ast",
       "id": "components_icons_chevronrighticon",
-      "community": 4,
+      "community": 40,
       "norm_label": "chevronrighticon()"
     },
     {
@@ -12190,7 +12110,7 @@
       "source_location": "L291",
       "_origin": "ast",
       "id": "components_icons_xicon",
-      "community": 2,
+      "community": 45,
       "norm_label": "xicon()"
     },
     {
@@ -12240,7 +12160,7 @@
       "source_location": "L321",
       "_origin": "ast",
       "id": "components_icons_flashcardicon",
-      "community": 67,
+      "community": 80,
       "norm_label": "flashcardicon()"
     },
     {
@@ -12330,7 +12250,7 @@
       "source_location": "L376",
       "_origin": "ast",
       "id": "components_icons_arrowupicon",
-      "community": 4,
+      "community": 72,
       "norm_label": "arrowupicon()"
     },
     {
@@ -12370,7 +12290,7 @@
       "source_location": "L400",
       "_origin": "ast",
       "id": "components_icons_refreshicon",
-      "community": 26,
+      "community": 81,
       "norm_label": "refreshicon()"
     },
     {
@@ -12380,7 +12300,7 @@
       "source_location": "L406",
       "_origin": "ast",
       "id": "components_icons_copyicon",
-      "community": 1,
+      "community": 37,
       "norm_label": "copyicon()"
     },
     {
@@ -12460,7 +12380,7 @@
       "source_location": "L454",
       "_origin": "ast",
       "id": "components_icons_dotshorizontalicon",
-      "community": 2,
+      "community": 83,
       "norm_label": "dotshorizontalicon()"
     },
     {
@@ -12470,7 +12390,7 @@
       "source_location": "L460",
       "_origin": "ast",
       "id": "components_icons_reelsicon",
-      "community": 2,
+      "community": 82,
       "norm_label": "reelsicon()"
     },
     {
@@ -12510,7 +12430,7 @@
       "source_location": "L484",
       "_origin": "ast",
       "id": "components_icons_facebookicon",
-      "community": 2,
+      "community": 79,
       "norm_label": "facebookicon()"
     },
     {
@@ -12520,7 +12440,7 @@
       "source_location": "L490",
       "_origin": "ast",
       "id": "components_icons_tiktokicon",
-      "community": 2,
+      "community": 79,
       "norm_label": "tiktokicon()"
     },
     {
@@ -12530,7 +12450,7 @@
       "source_location": "L496",
       "_origin": "ast",
       "id": "components_icons_instagramicon",
-      "community": 2,
+      "community": 79,
       "norm_label": "instagramicon()"
     },
     {
@@ -12550,7 +12470,7 @@
       "source_location": "L510",
       "_origin": "ast",
       "id": "components_icons_compassicon",
-      "community": 2,
+      "community": 79,
       "norm_label": "compassicon()"
     },
     {
@@ -12560,7 +12480,7 @@
       "source_location": "L517",
       "_origin": "ast",
       "id": "components_icons_sendicon",
-      "community": 2,
+      "community": 45,
       "norm_label": "sendicon()"
     },
     {
@@ -12570,7 +12490,7 @@
       "source_location": "L523",
       "_origin": "ast",
       "id": "components_icons_plussquareicon",
-      "community": 67,
+      "community": 80,
       "norm_label": "plussquareicon()"
     },
     {
@@ -12670,7 +12590,7 @@
       "source_location": "L585",
       "_origin": "ast",
       "id": "components_icons_cloudyicon",
-      "community": 26,
+      "community": 81,
       "norm_label": "cloudyicon()"
     },
     {
@@ -12680,7 +12600,7 @@
       "source_location": "L591",
       "_origin": "ast",
       "id": "components_icons_trendingupicon",
-      "community": 4,
+      "community": 81,
       "norm_label": "trendingupicon()"
     },
     {
@@ -12690,7 +12610,7 @@
       "source_location": "L597",
       "_origin": "ast",
       "id": "components_icons_trendingdownicon",
-      "community": 26,
+      "community": 81,
       "norm_label": "trendingdownicon()"
     },
     {
@@ -12700,7 +12620,7 @@
       "source_location": "L603",
       "_origin": "ast",
       "id": "components_icons_videocameraicon",
-      "community": 22,
+      "community": 57,
       "norm_label": "videocameraicon()"
     },
     {
@@ -12710,7 +12630,7 @@
       "source_location": "L609",
       "_origin": "ast",
       "id": "components_icons_bookopenicon",
-      "community": 32,
+      "community": 59,
       "norm_label": "bookopenicon()"
     },
     {
@@ -12780,7 +12700,7 @@
       "source_location": "L651",
       "_origin": "ast",
       "id": "components_icons_wrenchicon",
-      "community": 1,
+      "community": 37,
       "norm_label": "wrenchicon()"
     },
     {
@@ -12790,7 +12710,7 @@
       "source_location": "L657",
       "_origin": "ast",
       "id": "components_icons_flowcharticon",
-      "community": 1,
+      "community": 37,
       "norm_label": "flowcharticon()"
     },
     {
@@ -12810,7 +12730,7 @@
       "source_location": "L669",
       "_origin": "ast",
       "id": "components_icons_linecharticon",
-      "community": 1,
+      "community": 37,
       "norm_label": "linecharticon()"
     },
     {
@@ -12820,7 +12740,7 @@
       "source_location": "L675",
       "_origin": "ast",
       "id": "components_icons_piecharticon",
-      "community": 1,
+      "community": 37,
       "norm_label": "piecharticon()"
     },
     {
@@ -12830,7 +12750,7 @@
       "source_location": "L682",
       "_origin": "ast",
       "id": "components_icons_venndiagramicon",
-      "community": 1,
+      "community": 37,
       "norm_label": "venndiagramicon()"
     },
     {
@@ -12920,7 +12840,7 @@
       "source_location": "L738",
       "_origin": "ast",
       "id": "components_icons_flaskicon",
-      "community": 0,
+      "community": 4,
       "norm_label": "flaskicon()"
     },
     {
@@ -12970,7 +12890,7 @@
       "source_location": "L770",
       "_origin": "ast",
       "id": "components_icons_presentationicon",
-      "community": 13,
+      "community": 72,
       "norm_label": "presentationicon()"
     },
     {
@@ -12980,7 +12900,7 @@
       "source_location": "L777",
       "_origin": "ast",
       "id": "components_icons_flashicon",
-      "community": 13,
+      "community": 72,
       "norm_label": "flashicon()"
     },
     {
@@ -12990,7 +12910,7 @@
       "source_location": "L783",
       "_origin": "ast",
       "id": "components_icons_staricon",
-      "community": 4,
+      "community": 82,
       "norm_label": "staricon()"
     },
     {
@@ -13040,7 +12960,7 @@
       "source_location": "L813",
       "_origin": "ast",
       "id": "components_icons_briefcaseicon",
-      "community": 2,
+      "community": 82,
       "norm_label": "briefcaseicon()"
     },
     {
@@ -13140,7 +13060,7 @@
       "source_location": "L877",
       "_origin": "ast",
       "id": "components_icons_headseticon",
-      "community": 13,
+      "community": 72,
       "norm_label": "headseticon()"
     },
     {
@@ -13300,7 +13220,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_modals",
-      "community": 44,
+      "community": 37,
       "norm_label": "modals.tsx"
     },
     {
@@ -13310,7 +13230,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "components_modals_modalprops",
-      "community": 44,
+      "community": 37,
       "norm_label": "modalprops"
     },
     {
@@ -13320,7 +13240,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "components_modals_basemodal",
-      "community": 44,
+      "community": 37,
       "norm_label": "basemodal()"
     },
     {
@@ -13330,7 +13250,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "components_modals_deletespacemodal",
-      "community": 44,
+      "community": 37,
       "norm_label": "deletespacemodal()"
     },
     {
@@ -13340,7 +13260,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "components_modals_sharespacemodal",
-      "community": 44,
+      "community": 37,
       "norm_label": "sharespacemodal()"
     },
     {
@@ -13350,7 +13270,7 @@
       "source_location": "L118",
       "_origin": "ast",
       "id": "components_modals_flashcardmodal",
-      "community": 44,
+      "community": 37,
       "norm_label": "flashcardmodal()"
     },
     {
@@ -13360,7 +13280,7 @@
       "source_location": "L173",
       "_origin": "ast",
       "id": "components_modals_quizmodal",
-      "community": 44,
+      "community": 37,
       "norm_label": "quizmodal()"
     },
     {
@@ -13370,7 +13290,7 @@
       "source_location": "L243",
       "_origin": "ast",
       "id": "components_modals_podcastmodal",
-      "community": 44,
+      "community": 37,
       "norm_label": "podcastmodal()"
     },
     {
@@ -13380,7 +13300,7 @@
       "source_location": "L296",
       "_origin": "ast",
       "id": "components_modals_summarymodal",
-      "community": 44,
+      "community": 37,
       "norm_label": "summarymodal()"
     },
     {
@@ -13390,7 +13310,7 @@
       "source_location": "L370",
       "_origin": "ast",
       "id": "components_modals_custompromptmodal",
-      "community": 44,
+      "community": 37,
       "norm_label": "custompromptmodal()"
     },
     {
@@ -13430,7 +13350,7 @@
       "source_location": "L550",
       "_origin": "ast",
       "id": "components_modals_upgrademodal",
-      "community": 44,
+      "community": 37,
       "norm_label": "upgrademodal()"
     },
     {
@@ -13580,7 +13500,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "index",
-      "community": 57,
+      "community": 21,
       "norm_label": "index.tsx"
     },
     {
@@ -13590,7 +13510,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "index_rootelement",
-      "community": 57,
+      "community": 21,
       "norm_label": "rootelement"
     },
     {
@@ -13600,7 +13520,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "index_root",
-      "community": 57,
+      "community": 21,
       "norm_label": "root"
     },
     {
@@ -13887,7 +13807,7 @@
       "label": "isNetworkError()",
       "file_type": "code",
       "source_file": "supabaseClient.ts",
-      "source_location": "L12",
+      "source_location": "L18",
       "_origin": "ast",
       "id": "supabaseclient_isnetworkerror",
       "community": 21,
@@ -13897,7 +13817,7 @@
       "label": "getAuthErrorMessage()",
       "file_type": "code",
       "source_file": "supabaseClient.ts",
-      "source_location": "L26",
+      "source_location": "L32",
       "_origin": "ast",
       "id": "supabaseclient_getautherrormessage",
       "community": 21,
@@ -14110,7 +14030,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "utils_mockdb_space",
-      "community": 52,
+      "community": 80,
       "norm_label": "space"
     },
     {
@@ -14180,7 +14100,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "utils_mockdb_initmockdb",
-      "community": 57,
+      "community": 21,
       "norm_label": "initmockdb()"
     },
     {
@@ -14320,7 +14240,7 @@
       "source_location": "L215",
       "_origin": "ast",
       "id": "utils_mockdb_getspaces",
-      "community": 56,
+      "community": 74,
       "norm_label": "getspaces()"
     },
     {
@@ -14330,7 +14250,7 @@
       "source_location": "L237",
       "_origin": "ast",
       "id": "utils_mockdb_savespaces",
-      "community": 56,
+      "community": 74,
       "norm_label": "savespaces()"
     },
     {
@@ -14340,7 +14260,7 @@
       "source_location": "L241",
       "_origin": "ast",
       "id": "utils_mockdb_addspace",
-      "community": 56,
+      "community": 74,
       "norm_label": "addspace()"
     },
     {
@@ -14350,7 +14270,7 @@
       "source_location": "L247",
       "_origin": "ast",
       "id": "utils_mockdb_updatespace",
-      "community": 56,
+      "community": 74,
       "norm_label": "updatespace()"
     },
     {
@@ -14360,7 +14280,7 @@
       "source_location": "L256",
       "_origin": "ast",
       "id": "utils_mockdb_deletespace",
-      "community": 56,
+      "community": 74,
       "norm_label": "deletespace()"
     },
     {
@@ -14500,7 +14420,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "workspacecontext_workspaceprovider",
-      "community": 57,
+      "community": 64,
       "norm_label": "workspaceprovider()"
     },
     {
@@ -14524,6 +14444,16 @@
       "confidence_score": 1.0,
       "source": "app",
       "target": "app_app"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "App.tsx",
+      "source_location": "L50",
+      "weight": 1.0,
+      "source": "app",
+      "target": "app_appcontent",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -14554,6 +14484,39 @@
       "confidence_score": 1.0,
       "source": "app",
       "target": "app_theme"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "App.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "app",
+      "target": "authcontext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "App.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "app",
+      "target": "authcontext_authprovider",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "App.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "app",
+      "target": "authcontext_useauth",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -14926,222 +14889,77 @@
       "target": "app_errorboundary_render"
     },
     {
-      "relation": "contains",
+      "relation": "calls",
+      "context": "call",
       "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L28",
-      "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "authapi",
-      "target": "authapi_apierror"
+      "source_file": "App.tsx",
+      "source_location": "L51",
+      "weight": 1.0,
+      "source": "app_appcontent",
+      "target": "authcontext_useauth"
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L4",
+      "source_file": "authContext.tsx",
+      "source_location": "L16",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi",
-      "target": "authapi_authsessiondata"
+      "source": "authcontext",
+      "target": "authcontext_authcontext",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L23",
+      "source_file": "authContext.tsx",
+      "source_location": "L5",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi",
-      "target": "authapi_clearsession"
+      "source": "authcontext",
+      "target": "authcontext_authcontexttype",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L46",
+      "source_file": "authContext.tsx",
+      "source_location": "L26",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi",
-      "target": "authapi_getautherrormessage"
+      "source": "authcontext",
+      "target": "authcontext_authprovider",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L113",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi",
-      "target": "authapi_getsession"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L14",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi",
-      "target": "authapi_getstoredemail"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L10",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi",
-      "target": "authapi_getstoredtoken"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L33",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi",
-      "target": "authapi_isnetworkerror"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L84",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi",
-      "target": "authapi_login"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L102",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi",
-      "target": "authapi_logout"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L54",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi",
-      "target": "authapi_request"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
+      "source_file": "authContext.tsx",
       "source_location": "L18",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi",
-      "target": "authapi_setsession"
+      "source": "authcontext",
+      "target": "authcontext_useauth",
+      "confidence_score": 1.0
     },
     {
-      "relation": "contains",
+      "relation": "imports_from",
+      "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L93",
+      "source_file": "authContext.tsx",
+      "source_location": "L3",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi",
-      "target": "authapi_signup"
+      "source": "authcontext",
+      "target": "supabaseclient",
+      "confidence_score": 1.0
     },
     {
-      "relation": "calls",
-      "context": "call",
+      "relation": "imports",
+      "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L114",
+      "source_file": "authContext.tsx",
+      "source_location": "L3",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi_getsession",
-      "target": "authapi_getstoredtoken"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L103",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi_logout",
-      "target": "authapi_getstoredtoken"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L89",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi_login",
-      "target": "authapi_setsession"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L98",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi_signup",
-      "target": "authapi_setsession"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L121",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi_getsession",
-      "target": "authapi_clearsession"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L109",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi_logout",
-      "target": "authapi_clearsession"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L47",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi_getautherrormessage",
-      "target": "authapi_isnetworkerror"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "authApi.ts",
-      "source_location": "L106",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "authapi_logout",
-      "target": "authapi_request"
+      "source": "authcontext",
+      "target": "supabaseclient_supabase",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -22043,9 +21861,9 @@
       "source_file": "components/OrgSpaceView.tsx",
       "source_location": "L1269",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_orgspaceview",
-      "target": "components_orgspaceview_if",
-      "confidence_score": 1.0
+      "target": "components_orgspaceview_if"
     },
     {
       "relation": "contains",
@@ -39995,5 +39813,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "e4c1787ec6e30402e26737a1811ef030a9ef33f4"
+  "built_at_commit": "d599ddfe53e7f42e7e40ac573575dcf62850cac1"
 }

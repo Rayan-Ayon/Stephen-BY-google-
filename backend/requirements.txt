@@ -10,3 +10,4 @@ sqlalchemy
 aiosqlite
 httpx
 chromadb
+pyjwt
