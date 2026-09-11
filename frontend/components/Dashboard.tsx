@@ -389,7 +389,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             case 'task1_academic':
             case 'task1_general':
             case 'writing_lab_overview':
-                return <WritingHubView userEmail={userEmail} />;
+                return <WritingHubView userEmail={userEmail} onExamStateChange={setIsExamActive} />;
             case 'full_cambridge_mock':
             case 'full_mock_test':
             case 'mock_tests':
@@ -487,45 +487,49 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
         }
     };
 
-    return (
+return (
         <div className="flex h-screen w-full overflow-hidden bg-canvas">
-            <Sidebar 
-                toggleTheme={toggleTheme} 
-                theme={theme} 
-                onNavigate={(view) => handleNavigate(view)} 
-                activeItem={currentView}
-                sidebarMode={sidebarMode}
-                setSidebarMode={setSidebarMode}
-                isExpanded={isSidebarExpanded}
-                setIsExpanded={setIsSidebarExpanded}
-                spaces={spaces}
-                onCreateSpace={handleCreateSpace}
-                onRenameSpace={handleRenameSpace}
-                onDeleteSpace={(id) => setDeleteSpaceId(id)}
-                onShareSpace={(id) => setShareSpaceId(id)}
-                userEmail={userEmail}
-                onLogout={onLogout}
-                isEnterprise={isEnterprise}
-                isExamActive={isExamActive}
-                onLockedNavigationAttempt={handleLockedNav}
-            />
+            {!isExamActive && (
+                <Sidebar 
+                    toggleTheme={toggleTheme} 
+                    theme={theme} 
+                    onNavigate={(view) => handleNavigate(view)} 
+                    activeItem={currentView}
+                    sidebarMode={sidebarMode}
+                    setSidebarMode={setSidebarMode}
+                    isExpanded={isSidebarExpanded}
+                    setIsExpanded={setIsSidebarExpanded}
+                    spaces={spaces}
+                    onCreateSpace={handleCreateSpace}
+                    onRenameSpace={handleRenameSpace}
+                    onDeleteSpace={(id) => setDeleteSpaceId(id)}
+                    onShareSpace={(id) => setShareSpaceId(id)}
+                    userEmail={userEmail}
+                    onLogout={onLogout}
+                    isEnterprise={isEnterprise}
+                    isExamActive={isExamActive}
+                    onLockedNavigationAttempt={handleLockedNav}
+                />
+            )}
             
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <main className={`flex-1 flex flex-col min-w-0 overflow-hidden ${isExamActive ? 'w-full' : ''}`}>
                 {/* Header with WorkspaceDropdown */}
-                <div className="h-16 shrink-0 border-b border-border bg-canvas flex items-center px-6 gap-4">
-                    <WorkspaceDropdown theme={theme} isExpanded={true} />
-                    <div className="flex-1" />
-                </div>
+                {!isExamActive && (
+                    <div className="h-16 shrink-0 border-b border-border bg-canvas flex items-center px-6 gap-4">
+                        <WorkspaceDropdown theme={theme} isExpanded={true} />
+                        <div className="flex-1" />
+                    </div>
+                )}
 
                 {/* Content Area */}
-                <div className="flex-1 flex min-h-0 overflow-hidden">
+                <div className={`flex-1 flex min-h-0 overflow-hidden ${isExamActive ? 'w-full' : ''}`}>
                     {/* Left Column (~68%) */}
-                    <div className="flex-[7] min-w-0 overflow-y-auto">
+                    <div className={`${isExamActive ? 'flex-1 min-w-0 overflow-y-auto' : 'flex-[7] min-w-0 overflow-y-auto'}`}>
                         {renderContent()}
                     </div>
 
                     {/* Right Sidebar (~32%) — Dashboard Only */}
-                    {isDashboardView && !isEnterprise && (
+                    {!isExamActive && isDashboardView && !isEnterprise && (
                         <div className="flex-[3] border-l border-border overflow-y-auto bg-canvas">
                             <RightSidebar onNavigate={handleNavigate} />
                         </div>
@@ -533,7 +537,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                 </div>
             </main>
 
-            <HawkingFab onNavigate={handleNavigate} />
+            {!isExamActive && <HawkingFab onNavigate={handleNavigate} />}
             
             {isSettingsOpen && <SettingsModal onClose={() => setIsSettingsOpen(false)} />}
             {isFeedbackOpen && <FeedbackModal onClose={() => setIsFeedbackOpen(false)} />}

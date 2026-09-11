@@ -2210,8 +2210,8 @@
     "semantic_hash": ""
   },
   "frontend/components/AuthOverlay.tsx": {
-    "mtime": 1789119885.498582,
-    "ast_hash": "7e77fcefd0512c1af5db726ff9ff049d",
+    "mtime": 1789120528.866832,
+    "ast_hash": "6b1d2882b8fe98f6126cf2c97ebb6463",
     "semantic_hash": ""
   },
   "frontend/components/CompetitionView.tsx": {
@@ -2235,8 +2235,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Dashboard.tsx": {
-    "mtime": 1789117382.2931595,
-    "ast_hash": "9feea6298cb18cbee091530ed7134e05",
+    "mtime": 1789152045.2827191,
+    "ast_hash": "61c30a0faf85dab0bfec3b28ee6ac36e",
     "semantic_hash": ""
   },
   "frontend/components/DebateView.tsx": {
@@ -2835,13 +2835,13 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSWritingExam.tsx": {
-    "mtime": 1789115004.0101235,
-    "ast_hash": "a75bbe314bc7b93c710100eb522c2d69",
+    "mtime": 1789154456.2228777,
+    "ast_hash": "4af11e5811c5f23aa9f8a0d45a51a43e",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/ieltsShared.ts": {
-    "mtime": 1789115004.0220077,
-    "ast_hash": "0918fd278c8d1f80a3604a75bcdf3bab",
+    "mtime": 1789151823.834263,
+    "ast_hash": "0e93eece00cf0e8cf18ade4e318976d4",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSLobbyCard.tsx": {
@@ -3000,8 +3000,8 @@
     "semantic_hash": ""
   },
   "frontend/components/WritingHubView.tsx": {
-    "mtime": 1789115003.9810002,
-    "ast_hash": "5eec6d210d6fd208a4bdd2ad3337d4ae",
+    "mtime": 1789154468.6335452,
+    "ast_hash": "589dd4f0e617ada4b5bb5cdbe92095d8",
     "semantic_hash": ""
   },
   "frontend/components/ListeningHubView.tsx": {

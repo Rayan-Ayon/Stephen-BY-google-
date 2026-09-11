@@ -222,6 +222,7 @@ export interface SimSectionResult {
 export interface SimulationProps {
     sectionLabel: string;
     timeLimitSeconds: number;
+    testMode?: string;
     onComplete: (result: SimSectionResult) => void;
     onExit?: () => void;
 }
@@ -272,6 +273,19 @@ export const TASK2_PROMPTS = [
     'In many countries, remote work is becoming the norm. Discuss the advantages and disadvantages of this trend.',
     'Governments should invest more in public transport than in private road networks. Do you agree or disagree?',
 ];
+
+export const GENERAL_TASK1_PROMPTS = [
+    'Write a letter to your local council about a problem in your neighbourhood. You should explain the problem, say how it affects you, and suggest a solution. You should write at least 150 words.',
+    'You recently moved to a new city and want to join a local sports club. Write a letter to the club manager. You should say why you want to join, what type of club you are interested in, and ask for information. You should write at least 150 words.',
+    'You bought a product online but it arrived damaged. Write a letter to the company. You should explain the problem, say what you want done, and say why it is important. You should write at least 150 words.',
+];
+
+export const SIMULATION_MODES: Record<string, { timeMinutes: number; taskLabel: string; minWords: number; showTaskSwitcher: boolean }> = {
+    full_mock: { timeMinutes: 60, taskLabel: 'Full Mock', minWords: 0, showTaskSwitcher: true },
+    task_2: { timeMinutes: 40, taskLabel: 'Task 2', minWords: 250, showTaskSwitcher: false },
+    task_1_academic: { timeMinutes: 20, taskLabel: 'Task 1 Academic', minWords: 150, showTaskSwitcher: false },
+    task_1_general: { timeMinutes: 20, taskLabel: 'Task 1 General', minWords: 150, showTaskSwitcher: false },
+};
 
 export const SAMPLE_TASK1 = `The chart shows the percentage of people who used public transport in four major cities between 2000 and 2020. Overall, the figures for all cities increased over the period, although there were some differences between them.
 
