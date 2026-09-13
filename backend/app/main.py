@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 
-from app.api.routes import videos, ai_features, recent_videos, auth
+from app.api.routes import videos, ai_features, recent_videos, auth, ielts
 from app.db.session import init_db, backfill_user_email
 
 load_dotenv()
@@ -38,7 +38,7 @@ app = FastAPI(title="Stephen API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -48,6 +48,7 @@ app.include_router(videos.router, prefix="/api")
 app.include_router(ai_features.router, prefix="/api")
 app.include_router(recent_videos.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
+app.include_router(ielts.router, prefix="/api")
 
 
 @app.get("/api/health")

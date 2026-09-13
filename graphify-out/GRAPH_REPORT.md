@@ -1,16 +1,16 @@
-# Graph Report - Stephen-google  (2026-09-12)
+# Graph Report - Stephen-google  (2026-09-13)
 
 ## Corpus Check
-- 580 files · ~710,830 words
+- 582 files · ~712,755 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 8647 nodes · 17312 edges · 538 communities (503 shown, 35 thin omitted)
-- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 760 edges (avg confidence: 0.6)
+- 8665 nodes · 17351 edges · 543 communities (508 shown, 35 thin omitted)
+- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 770 edges (avg confidence: 0.6)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `586e2f18`
+- Built from commit: `ceddaa3c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -505,18 +505,23 @@
 - [[_COMMUNITY_Community 523|Community 523]]
 - [[_COMMUNITY_Community 524|Community 524]]
 - [[_COMMUNITY_Community 525|Community 525]]
+- [[_COMMUNITY_Community 526|Community 526]]
 - [[_COMMUNITY_Community 527|Community 527]]
 - [[_COMMUNITY_Community 528|Community 528]]
 - [[_COMMUNITY_Community 529|Community 529]]
 - [[_COMMUNITY_Community 530|Community 530]]
+- [[_COMMUNITY_Community 531|Community 531]]
 - [[_COMMUNITY_Community 532|Community 532]]
 - [[_COMMUNITY_Community 533|Community 533]]
 - [[_COMMUNITY_Community 534|Community 534]]
 - [[_COMMUNITY_Community 535|Community 535]]
 - [[_COMMUNITY_Community 536|Community 536]]
 - [[_COMMUNITY_Community 537|Community 537]]
+- [[_COMMUNITY_Community 538|Community 538]]
+- [[_COMMUNITY_Community 539|Community 539]]
 - [[_COMMUNITY_Community 540|Community 540]]
 - [[_COMMUNITY_Community 541|Community 541]]
+- [[_COMMUNITY_Community 542|Community 542]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `Dashboard` - 256 edges
@@ -533,14 +538,14 @@
 ## Surprising Connections (you probably didn't know these)
 - `get_or_generate_feature()` --calls--> `Exception`  [INFERRED]
   backend/app/services/ai_feature_service.py → everything-claude-code/skills/videodb/scripts/ws_listener.py
-- `get_youtube_transcript()` --calls--> `Exception`  [INFERRED]
-  backend/app/services/video_service.py → everything-claude-code/skills/videodb/scripts/ws_listener.py
-- `get_ai_response()` --calls--> `Exception`  [INFERRED]
-  backend/app/services/ai_client.py → everything-claude-code/skills/videodb/scripts/ws_listener.py
-- `get_ai_response_json()` --calls--> `Exception`  [INFERRED]
-  backend/app/services/ai_client.py → everything-claude-code/skills/videodb/scripts/ws_listener.py
 - `get_embedding()` --calls--> `Exception`  [INFERRED]
   backend/app/services/embedding_service.py → everything-claude-code/skills/videodb/scripts/ws_listener.py
+- `get_embeddings_batch()` --calls--> `Exception`  [INFERRED]
+  backend/app/services/embedding_service.py → everything-claude-code/skills/videodb/scripts/ws_listener.py
+- `generate()` --calls--> `Exception`  [INFERRED]
+  backend/app/services/llm_service.py → everything-claude-code/skills/videodb/scripts/ws_listener.py
+- `get_youtube_transcript()` --calls--> `Exception`  [INFERRED]
+  backend/app/services/video_service.py → everything-claude-code/skills/videodb/scripts/ws_listener.py
 
 ## Import Cycles
 - 1-file cycle: `backend/app/main.py -> backend/app/main.py`
@@ -563,23 +568,23 @@
 - 3-file cycle: `frontend/components/Dashboard.tsx -> frontend/components/Workspace.tsx -> frontend/components/TutorPanel.tsx -> frontend/components/Dashboard.tsx`
 - 3-file cycle: `frontend/components/Dashboard.tsx -> frontend/components/Workspace.tsx -> frontend/components/TutorPanelErrorBoundary.tsx -> frontend/components/Dashboard.tsx`
 
-## Communities (538 total, 35 thin omitted)
+## Communities (543 total, 35 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.02
-Nodes (63): ContextGraphCompactionStats, ContextGraphEntityDetail, ContextGraphObservation, ContextGraphSyncStats, MergeQueueReport, OtlpAnyValue, attr_value(), Commands (+55 more)
+Nodes (60): ContextGraphCompactionStats, ContextGraphEntityDetail, ContextGraphObservation, ContextGraphSyncStats, MergeQueueReport, OtlpAnyValue, attr_value(), Commands (+52 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.08
 Nodes (103): Config, Option, Path, PathBuf, Result, String, Vec, WorktreeInfo (+95 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.03
-Nodes (39): DelegatedChildSummary, DesktopNotifier, DiffViewMode, DaemonActivity, F, HashSet, KeyEvent, Path (+31 more)
+Cohesion: 0.04
+Nodes (30): DelegatedChildSummary, DesktopNotifier, DiffViewMode, DaemonActivity, HashSet, Receiver, SessionOutputStore, VecDeque (+22 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.04
-Nodes (62): AssignmentPreview, ConflictIncident, Color, FileActivityEntry, Option, Row, Session, SessionMessage (+54 more)
+Nodes (64): AssignmentPreview, ConflictIncident, BTreeMap, Color, FileActivityEntry, Option, Row, Session (+56 more)
 
 ### Community 4 - "Community 4"
 Cohesion: 0.07
@@ -587,7 +592,7 @@ Nodes (61): Box, BTreeMap, Config, ContextObservationPriority, DateTime, Default
 
 ### Community 5 - "Community 5"
 Cohesion: 0.04
-Nodes (146): AssignmentAction, BTreeMap, FileActivityAction, Result, Span, active_session_count_only_counts_live_queue_states(), aggregate_cost_summary_mentions_fifty_percent_alert(), aggregate_cost_summary_mentions_ninety_percent_alert() (+138 more)
+Nodes (144): AssignmentAction, FileActivityAction, Result, Span, active_session_count_only_counts_live_queue_states(), aggregate_cost_summary_mentions_fifty_percent_alert(), aggregate_cost_summary_mentions_ninety_percent_alert(), aggregate_cost_summary_mentions_total_cost() (+136 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.08
@@ -595,7 +600,7 @@ Nodes (39): ContextGraphEntity, DateTime, DecisionLogEntry, HashMap, Into, Line,
 
 ### Community 7 - "Community 7"
 Cohesion: 0.05
-Nodes (72): BTreeMap, ContextGraphEntity, ContextGraphRelation, DecisionLogEntry, RemoteDispatchAction, String, OrchestrationTemplateConfig, build_legacy_plugin_draft() (+64 more)
+Nodes (69): ContextGraphEntity, ContextGraphRelation, DecisionLogEntry, RemoteDispatchAction, String, build_legacy_plugin_draft(), build_legacy_skill_draft(), build_legacy_tool_draft() (+61 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.14
@@ -606,12 +611,12 @@ Cohesion: 0.13
 Nodes (17): BudgetEnforcementOutcome, ConflictEnforcementOutcome, Config, SessionHarnessInfo, StateStore, HeartbeatEnforcementOutcome, budget_auto_pause_note(), conflict_enforcement_note() (+9 more)
 
 ### Community 10 - "Community 10"
-Cohesion: 0.07
-Nodes (17): Connection, OutputLine, OutputStream, Path, RemoteDispatchKind, RemoteDispatchRequest, Result, Self (+9 more)
+Cohesion: 0.08
+Nodes (15): Connection, ContextGraphEntityDetail, OutputStream, Path, Result, Self, SessionAgentProfile, SessionMetrics (+7 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.10
-Nodes (61): CoordinateBacklogRun, Config, R, Result, Session, StateStore, MemoryConnectorJsonlDirectoryConfig, MemoryConnectorJsonlFileConfig (+53 more)
+Nodes (67): CoordinateBacklogRun, Config, R, Result, Self, Session, StateStore, MemoryConnectorJsonlDirectoryConfig (+59 more)
 
 ### Community 12 - "Community 12"
 Cohesion: 0.06
@@ -646,12 +651,12 @@ Cohesion: 0.09
 Nodes (32): BacklogPressureSummary, CoordinateBacklogOutcome, Session, InboxDrainOutcome, LeadDispatchOutcome, LeadRebalanceOutcome, RebalanceOutcome, assign_session_in_dir_with_runner_program() (+24 more)
 
 ### Community 20 - "Community 20"
-Cohesion: 0.09
-Nodes (50): Drop, Path, PathBuf, Vec, OtlpResource, OtlpResourceSpans, OtlpScopeSpans, build_legacy_migration_audit_report() (+42 more)
+Cohesion: 0.10
+Nodes (42): Drop, Path, PathBuf, Vec, OtlpInstrumentationScope, OtlpResource, OtlpResourceSpans, OtlpScopeSpans (+34 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.13
-Nodes (37): BTreeMap, ContextGraphObservation, ContextObservationPriority, Drop, PathBuf, SessionHarnessInfo, add_and_list_context_observations(), add_context_observation_auto_compacts_entity_history() (+29 more)
+Cohesion: 0.15
+Nodes (35): BTreeMap, ContextGraphObservation, ContextObservationPriority, Drop, add_and_list_context_observations(), add_context_observation_auto_compacts_entity_history(), append_output_line_keeps_latest_buffer_window(), approval_queue_counts_only_queries_and_conflicts() (+27 more)
 
 ### Community 22 - "Community 22"
 Cohesion: 0.07
@@ -672,8 +677,8 @@ Nodes (34): {
 } (+26 more)
 
 ### Community 23 - "Community 23"
-Cohesion: 0.11
-Nodes (14): BudgetState, Constraint, Rect, Frame, Text, AggregateUsage, centered_rect(), highlight_output_line() (+6 more)
+Cohesion: 0.12
+Nodes (13): BudgetState, Constraint, Rect, Frame, Text, AggregateUsage, centered_rect(), highlight_output_line() (+5 more)
 
 ### Community 24 - "Community 24"
 Cohesion: 0.06
@@ -698,20 +703,20 @@ Cohesion: 0.14
 Nodes (48): AssignmentOutcome, BTreeMap, Config, F, Option, RemoteDispatchAction, RemoteDispatchKind, RemoteDispatchRequest (+40 more)
 
 ### Community 27 - "Community 27"
-Cohesion: 0.09
-Nodes (40): createInstallPlanFromRequest(), {
+Cohesion: 0.13
+Nodes (31): createInstallPlanFromRequest(), {
   createLegacyCompatInstallPlan,
   createLegacyInstallPlan,
   createManifestInstallPlan,
-}, getInstallTargetAdapter(), listInstallTargetAdapters(), planInstallTargetScaffold(), addFileCopyOperation(), addMatchingRuleOperations(), addRecursiveCopyOperations() (+32 more)
+}, addFileCopyOperation(), addMatchingRuleOperations(), addRecursiveCopyOperations(), buildCopyFileOperation(), createLegacyCompatInstallPlan(), createLegacyInstallPlan() (+23 more)
 
 ### Community 28 - "Community 28"
 Cohesion: 0.08
-Nodes (40): assertKnownModuleIds(), COMPONENT_FAMILY_PREFIXES, dedupeStrings(), DEFAULT_REPO_ROOT, expandComponentIdsToModuleIds(), fs, getInstallComponent(), { getInstallTargetAdapter, planInstallTargetScaffold } (+32 more)
+Nodes (42): getInstallTargetAdapter(), planInstallTargetScaffold(), assertKnownModuleIds(), COMPONENT_FAMILY_PREFIXES, dedupeStrings(), DEFAULT_REPO_ROOT, expandComponentIdsToModuleIds(), fs (+34 more)
 
 ### Community 29 - "Community 29"
 Cohesion: 0.08
-Nodes (44): Commands, ContextGraphRecallEntry, Option, RemoteDispatchKind, Self, SessionState, Value, From (+36 more)
+Nodes (44): Commands, ContextGraphRecallEntry, Option, RemoteDispatchKind, SessionState, Value, From, MemoryConnectorConfig (+36 more)
 
 ### Community 30 - "Community 30"
 Cohesion: 0.14
@@ -745,11 +750,11 @@ Nodes (38): author, bugs, url, description, devDependencies, @opencode-ai/plugin
 
 ### Community 37 - "Community 37"
 Cohesion: 0.10
-Nodes (37): actionForFileKey(), {
+Nodes (36): actionForFileKey(), {
   appendFile,
   getClaudeDir,
   stripAnsi,
-}, buildActivityRow(), buildCreationPreview(), buildDiffPreviewFromPatchPreview(), buildPatchPreviewFromContent(), buildPatchPreviewFromReplacement(), buildReplacementPreview() (+29 more)
+}, buildActivityRow(), buildCreationPreview(), buildDiffPreviewFromPatchPreview(), buildPatchPreviewFromContent(), buildPatchPreviewFromReplacement(), buildReplacementPreview() (+28 more)
 
 ### Community 38 - "Community 38"
 Cohesion: 0.23
@@ -776,8 +781,8 @@ Cohesion: 0.06
 Nodes (34): blockedRemovalComponents, blockedRemovalPackages, conflictingPackages, effectiveProfile, files, generatedAt, generatedBy, managedFiles (+26 more)
 
 ### Community 44 - "Community 44"
-Cohesion: 0.09
-Nodes (14): ACTIVE_IDS, ALL_IDS, LISTENING_PART1_DATA, LISTENING_PART2_DATA, LISTENING_PART3_DATA, LISTENING_PART4_DATA, MAP_SLOTS, PART1_IDS (+6 more)
+Cohesion: 0.05
+Nodes (35): SpeakUIRestoreProps, ACTIVE_IDS, ALL_IDS, IELTSListeningExam(), IELTSListeningExamProps, LISTENING_PART1_DATA, LISTENING_PART2_DATA, LISTENING_PART3_DATA (+27 more)
 
 ### Community 45 - "Community 45"
 Cohesion: 0.11
@@ -796,8 +801,8 @@ Cohesion: 0.09
 Nodes (29): Ajv, CONFIG_SCHEMA_PATH, dedupeStrings(), findDefaultInstallConfigPath(), formatValidationErrors(), fs, getValidator(), loadInstallConfig() (+21 more)
 
 ### Community 49 - "Community 49"
-Cohesion: 0.06
-Nodes (36): Any, test(), test(), test(), Exception, OpenAI, OpenAI provider adapter., get_ai_response() (+28 more)
+Cohesion: 0.08
+Nodes (29): Any, test(), test(), test(), Exception, OpenAI, OpenAI provider adapter., get_ai_response() (+21 more)
 
 ### Community 50 - "Community 50"
 Cohesion: 0.14
@@ -872,15 +877,15 @@ Cohesion: 0.13
 Nodes (26): buildAggregates(), DEFAULT_RECORDING_DIR, deriveClaudeWorkerId(), deriveDmuxSessionState(), deriveWorkerHealth(), ensureInteger(), ensureOptionalString(), ensureString() (+18 more)
 
 ### Community 65 - "Community 65"
-Cohesion: 0.07
-Nodes (38): addAttempt(), ATTEMPTS_KEY, buildBilingual(), buildSegments(), clampBand(), clearAttempts(), clearAttemptsByBundle(), clearAttemptsBySkill() (+30 more)
+Cohesion: 0.05
+Nodes (43): BUNDLE_HEX, SKILL_HEX, SKILLS, TOKEN_TYPE_COLOR, ATTEMPTS_KEY, buildBilingual(), buildSegments(), clampBand() (+35 more)
 
 ### Community 66 - "Community 66"
-Cohesion: 0.12
-Nodes (24): dedupeStrings(), LEGACY_INSTALL_TARGETS, normalizeInstallRequest(), parseInstallArgs(), { validateInstallModuleIds }, assert, {
+Cohesion: 0.11
+Nodes (25): dedupeStrings(), LEGACY_INSTALL_TARGETS, normalizeInstallRequest(), parseInstallArgs(), { validateInstallModuleIds }, listLegacyCompatibilityLanguages(), assert, {
   normalizeInstallRequest,
   parseInstallArgs,
-}, runTests() (+16 more)
+} (+17 more)
 
 ### Community 67 - "Community 67"
 Cohesion: 0.08
@@ -903,8 +908,8 @@ Cohesion: 0.11
 Nodes (22): { collectSkillHealth, formatHealthReport }, main(), parseArgs(), { renderDashboard }, requireValue(), showHelp(), renderDashboard(), calculateSuccessRate() (+14 more)
 
 ### Community 72 - "Community 72"
-Cohesion: 0.15
-Nodes (16): Any, CloudClient, Collection, add_transcript_chunks(), create_video_chunks(), delete_video_chunks(), _get_client(), get_collection() (+8 more)
+Cohesion: 0.12
+Nodes (20): Any, CloudClient, Collection, add_transcript_chunks(), create_video_chunks(), delete_video_chunks(), _get_client(), get_collection() (+12 more)
 
 ### Community 73 - "Community 73"
 Cohesion: 0.10
@@ -964,8 +969,8 @@ Cohesion: 0.09
 Nodes (22): author, email, name, url, description, homepage, interface, capabilities (+14 more)
 
 ### Community 86 - "Community 86"
-Cohesion: 0.06
-Nodes (14): baseCards, CardData, demoCards, FlashcardReviewController(), ChevronRightIcon(), DAYS_OF_WEEK, LessonTask, SEPTEMBER_GRID (+6 more)
+Cohesion: 0.04
+Nodes (44): AlertIcon(), BriefcaseIcon(), CheckCircleIcon(), CreditCardIcon(), DatabaseIcon(), DoubleChevronUpIcon(), FileTextIcon(), FlaskIcon() (+36 more)
 
 ### Community 87 - "Community 87"
 Cohesion: 0.18
@@ -996,8 +1001,8 @@ Cohesion: 0.05
 Nodes (28): PauseIcon(), EvaluationItem, NavGroup, NavLeaf, OwnerApprovalItem, RbacTier, ReviewSubmission, SegmentKey (+20 more)
 
 ### Community 94 - "Community 94"
-Cohesion: 0.20
-Nodes (10): DateTime, ScheduledTask, Utc, ConnectorCheckpointSummary, context_graph_recall_score(), DaemonActivity, parse_store_timestamp(), parse_timestamp_column() (+2 more)
+Cohesion: 0.19
+Nodes (11): DateTime, PathBuf, ScheduledTask, Utc, ConnectorCheckpointSummary, context_graph_recall_score(), DaemonActivity, parse_store_timestamp() (+3 more)
 
 ### Community 95 - "Community 95"
 Cohesion: 0.14
@@ -1020,8 +1025,8 @@ Cohesion: 0.12
 Nodes (17): evaluate(), findFileIssues(), fs, getStagedFileContent(), getStagedFiles(), path, run(), runLinter() (+9 more)
 
 ### Community 100 - "Community 100"
-Cohesion: 0.14
-Nodes (23): main(), dedupeRecentSessions(), { detectProjectType }, fs, {
+Cohesion: 0.12
+Nodes (22): main(), dedupeRecentSessions(), { detectProjectType }, fs, {
   getClaudeDir,
   getSessionsDir,
   getSessionSearchDirs,
@@ -1032,11 +1037,11 @@ Nodes (23): main(), dedupeRecentSessions(), { detectProjectType }, fs, {
   readFile,
   stripAnsi,
   log
-}, { getPackageManager, getSelectionPrompt }, getSessionRetentionDays(), { listAliases } (+15 more)
+}, { getPackageManager, getSelectionPrompt }, getSessionRetentionDays(), { listAliases } (+14 more)
 
 ### Community 101 - "Community 101"
-Cohesion: 0.16
-Nodes (16): buildSessionRecord(), fs, getAllSessions(), getMatchingSessionCandidates(), getSessionById(), getSessionCandidates(), getSessionContent(), getSessionPath() (+8 more)
+Cohesion: 0.15
+Nodes (18): buildSessionRecord(), fs, getAllSessions(), getMatchingSessionCandidates(), getSessionById(), getSessionCandidates(), getSessionContent(), getSessionPath() (+10 more)
 
 ### Community 102 - "Community 102"
 Cohesion: 0.12
@@ -1063,16 +1068,16 @@ Cohesion: 0.18
 Nodes (18): analyzeForGovernanceEvents(), APPROVAL_COMMANDS, crypto, detectApprovalRequired(), detectSecrets(), detectSensitivePath(), emitGovernanceEvent(), fingerprintCommand() (+10 more)
 
 ### Community 108 - "Community 108"
-Cohesion: 0.10
-Nodes (30): configDiffers(), ECC_SERVERS, findSubSections(), fs, LEGACY_ALIASES, log(), main(), { parseDisabledMcpServers } (+22 more)
+Cohesion: 0.18
+Nodes (17): applyInstallPlan(), buildFilteredMcpWrites(), buildResolvedClaudeHooks(), { filterMcpConfig, parseDisabledMcpServers }, findHooksSourcePath(), fs, isMcpConfigPath(), path (+9 more)
 
 ### Community 109 - "Community 109"
 Cohesion: 0.18
 Nodes (18): allowedModes, buildAgentCatalog(), compressToCatalog(), compressToSummary(), extractSummary(), fs, lazyLoadAgent(), loadAgent() (+10 more)
 
 ### Community 110 - "Community 110"
-Cohesion: 0.12
-Nodes (16): assert, cleanupTempDir(), createTempDir(), fs, health, HEALTH_SCRIPT, os, path (+8 more)
+Cohesion: 0.06
+Nodes (34): assert, cleanupTempDir(), createTempDir(), fs, health, HEALTH_SCRIPT, os, path (+26 more)
 
 ### Community 111 - "Community 111"
 Cohesion: 0.16
@@ -1151,12 +1156,12 @@ Cohesion: 0.15
 Nodes (8): days, durations, metrics, Mission, mockData, modules, priorities, timeBlocks
 
 ### Community 130 - "Community 130"
-Cohesion: 0.25
-Nodes (17): AuthUser, FeatureResponse, create_flashcards(), create_notes(), create_quiz(), create_summary(), get_cached_features(), get_index_status() (+9 more)
+Cohesion: 0.22
+Nodes (18): AuthUser, FeatureResponse, create_flashcards(), create_notes(), create_quiz(), create_summary(), get_cached_features(), get_index_status() (+10 more)
 
 ### Community 131 - "Community 131"
-Cohesion: 0.18
-Nodes (15): assert, path, runScript(), runTests(), script, { spawnSync }, test(), extractSummary() (+7 more)
+Cohesion: 0.10
+Nodes (24): assert, path, runScript(), runTests(), script, { spawnSync }, test(), assert (+16 more)
 
 ### Community 132 - "Community 132"
 Cohesion: 0.15
@@ -1175,8 +1180,8 @@ Cohesion: 0.15
 Nodes (16): appendJsonl(), assert, cleanupTempDir(), createSkill(), createTempDir(), dashboard, fs, HEALTH_SCRIPT (+8 more)
 
 ### Community 136 - "Community 136"
-Cohesion: 0.13
-Nodes (15): $ref, additionalProperties, properties, required, type, decision, alternatives, rationale (+7 more)
+Cohesion: 0.12
+Nodes (17): $ref, additionalProperties, properties, required, type, decision, alternatives, rationale (+9 more)
 
 ### Community 137 - "Community 137"
 Cohesion: 0.12
@@ -1184,11 +1189,11 @@ Nodes (17): $ref, $ref, skillVersion, $ref, amendmentReason, contentHash, promot
 
 ### Community 138 - "Community 138"
 Cohesion: 0.12
-Nodes (17): $defs, governanceEvent, jsonArray, jsonValue, nonEmptyString, nullableInteger, nullableString, additionalProperties (+9 more)
+Nodes (17): $defs, jsonArray, jsonValue, nonEmptyString, nullableInteger, nullableString, skillRun, type (+9 more)
 
 ### Community 139 - "Community 139"
-Cohesion: 0.11
-Nodes (19): skillRun, $ref, $ref, $ref, durationMs, failureReason, outcome, skillVersion (+11 more)
+Cohesion: 0.12
+Nodes (17): $ref, $ref, $ref, $ref, createdAt, durationMs, failureReason, outcome (+9 more)
 
 ### Community 140 - "Community 140"
 Cohesion: 0.16
@@ -1207,8 +1212,8 @@ Cohesion: 0.13
 Nodes (16): DateTime, Utc, OtlpKeyValue, OtlpSpanLink, OtlpSpanStatus, build_session_otel_spans(), format_graph_connector_status_report_human(), format_graph_connector_status_report_human_renders_connector_details() (+8 more)
 
 ### Community 144 - "Community 144"
-Cohesion: 0.05
-Nodes (34): defaultOnboardingData, Expert, filters, filterTypeMap, initialExperts, DashboardViewProps, AcademicCapIcon(), AddCoursesIcon() (+26 more)
+Cohesion: 0.12
+Nodes (10): F, KeyEvent, Path, PaneLayout, configured_pane_size(), directional_pane_focus_uses_grid_neighbors(), pane_center(), pane_layout_name() (+2 more)
 
 ### Community 145 - "Community 145"
 Cohesion: 0.14
@@ -1233,8 +1238,8 @@ Cohesion: 0.13
 Nodes (10): assert, { execFileSync }, fs, INSTALL_SCRIPT, os, path, REPO_ROOT, runTests() (+2 more)
 
 ### Community 149 - "Community 149"
-Cohesion: 0.21
-Nodes (15): bucketByDay(), formatPercent(), getTrendArrow(), groupRecordsBySkill(), health, horizontalBar(), panelBox(), renderAmendmentPanel() (+7 more)
+Cohesion: 0.29
+Nodes (8): AuthRequest, get_session(), login(), _normalize_email(), signup(), AuthRequest, AuthResponse, SessionResponse
 
 ### Community 150 - "Community 150"
 Cohesion: 0.25
@@ -1250,7 +1255,7 @@ Nodes (20): allFormalSourcesList, defaultPreferences, domainOptions, gridEvents,
 
 ### Community 153 - "Community 153"
 Cohesion: 0.05
-Nodes (46): ALLOCATED_MINUTES, AnalysisKind, buildBundle(), buildEssaySegments(), buildObjective(), buildSpeaking(), buildWriting(), bundleIdFromLabel() (+38 more)
+Nodes (59): buildTopic(), ModuleHistoryItem, ModuleHistoryProps, ModuleHistorySection(), STATUS_LABEL, StatusFilter, ALLOCATED_MINUTES, AnalysisKind (+51 more)
 
 ### Community 154 - "Community 154"
 Cohesion: 0.09
@@ -1289,7 +1294,7 @@ Nodes (11): addToTree(), buildTree(), changes, ChangeType, getChangedPaths(), ha
 
 ### Community 161 - "Community 161"
 Cohesion: 0.13
-Nodes (15): $ref, $ref, properties, $ref, $ref, createdAt, eventType, id (+7 more)
+Nodes (15): governanceEvent, $ref, additionalProperties, properties, required, type, $ref, $ref (+7 more)
 
 ### Community 162 - "Community 162"
 Cohesion: 0.13
@@ -1333,7 +1338,7 @@ Nodes (13): additionalProperties, enum, type, properties, packageManager, setAt,
 
 ### Community 172 - "Community 172"
 Cohesion: 0.14
-Nodes (14): oneOf, type, type, type, properties, author, description, license (+6 more)
+Nodes (14): oneOf, type, format, type, type, type, properties, author (+6 more)
 
 ### Community 173 - "Community 173"
 Cohesion: 0.14
@@ -1348,8 +1353,8 @@ Cohesion: 0.22
 Nodes (11): adaptAgents(), adaptFrontmatter(), ensureDirectory(), formatToolLine(), fs, main(), parseArgs(), parseToolList() (+3 more)
 
 ### Community 176 - "Community 176"
-Cohesion: 0.21
-Nodes (12): listAvailableLanguages(), readDirectoryNames(), listLegacyCompatibilityLanguages(), COMMANDS, { listAvailableLanguages }, main(), path, PRIMARY_COMMANDS (+4 more)
+Cohesion: 0.23
+Nodes (11): listAvailableLanguages(), readDirectoryNames(), COMMANDS, { listAvailableLanguages }, main(), path, PRIMARY_COMMANDS, resolveCommand() (+3 more)
 
 ### Community 177 - "Community 177"
 Cohesion: 0.16
@@ -1360,8 +1365,8 @@ Cohesion: 0.17
 Nodes (8): metrics, MockTest, StatusFilter, statusOptions, tests, TestStatus, TypeFilter, typeOptions
 
 ### Community 180 - "Community 180"
-Cohesion: 0.15
-Nodes (20): AuthRequest, BaseModel, get_session(), login(), _normalize_email(), signup(), ErrorResponse, FeatureResponse (+12 more)
+Cohesion: 0.17
+Nodes (20): BaseModel, _parse_task_eval(), Parse raw Gemini JSON into TaskEvaluation, handling field name variations., ErrorResponse, FeatureResponse, FlashcardItem, FlashcardsData, NotesData (+12 more)
 
 ### Community 181 - "Community 181"
 Cohesion: 0.27
@@ -1373,7 +1378,7 @@ Nodes (11): AREA_PATTERNS, AreaInfo, buildTree(), classifyFiles(), generateAreaD
 
 ### Community 183 - "Community 183"
 Cohesion: 0.06
-Nodes (35): IELTSExitModalProps, IELTSListeningExam(), IELTSReadingExam(), PARTS, QUESTIONS, ReadingPart, ReadingQuestion, TestState (+27 more)
+Nodes (31): IELTSExitModalProps, PARTS, QUESTIONS, ReadingPart, ReadingQuestion, TestState, ALL_QUESTION_KEYS, ANSWER_HEADINGS (+23 more)
 
 ### Community 184 - "Community 184"
 Cohesion: 0.11
@@ -1404,8 +1409,8 @@ Cohesion: 0.09
 Nodes (22): defaultConfig, DiscoverViewProps, processingLogs, ChatIcon(), CloudyIcon(), GlobeIcon(), RedditIcon(), RefreshIcon() (+14 more)
 
 ### Community 191 - "Community 191"
-Cohesion: 0.24
-Nodes (4): WRITING_PROMPTS, WritingPrompt, TASK_TYPES, WritingDashboardProps
+Cohesion: 0.12
+Nodes (11): WRITING_PROMPTS, WritingPrompt, FALLBACK_FARMGATE, IELTSEvaluationHubProps, IeltsNavItem, IeltsView, PRACTICE_ITEMS, SIMULATION_ITEMS (+3 more)
 
 ### Community 192 - "Community 192"
 Cohesion: 0.17
@@ -1524,8 +1529,8 @@ Cohesion: 0.24
 Nodes (10): AliasEntry, AliasListItem, AliasResult, AliasStore, CleanupResult, DeleteAliasResult, ListAliasesOptions, RenameAliasResult (+2 more)
 
 ### Community 221 - "Community 221"
-Cohesion: 0.18
-Nodes (11): agent, build, build-error-resolver, description, description, mode, model, prompt (+3 more)
+Cohesion: 0.33
+Nodes (6): build-error-resolver, description, mode, model, prompt, tools
 
 ### Community 222 - "Community 222"
 Cohesion: 0.18
@@ -1656,8 +1661,8 @@ Cohesion: 0.36
 Nodes (9): checkCommand(), detectGitCommand(), extractCommand(), findGit(), GIT_COMMANDS_WITH_NO_VERIFY, hasHooksPathOverride(), hasNoVerifyFlag(), isInComment() (+1 more)
 
 ### Community 254 - "Community 254"
-Cohesion: 0.07
-Nodes (32): FALLBACK_FARMGATE, IELTSEvaluationHubProps, IeltsNavItem, IeltsView, PRACTICE_ITEMS, SIMULATION_ITEMS, WritingSubView, buildTopic() (+24 more)
+Cohesion: 0.10
+Nodes (17): ACADEMIC_BOOKS, FullMockTestHubProps, GT_BOOKS, MockBook, SECTION_DURATION_ITEMS, SKILL_PILLS, ViewMode, EQUIPMENT_CHECKS (+9 more)
 
 ### Community 255 - "Community 255"
 Cohesion: 0.20
@@ -1757,11 +1762,11 @@ Nodes (15): AuthSession, AsyncSession, Base, AuthSession, User, authenticate_use
 
 ### Community 279 - "Community 279"
 Cohesion: 0.22
-Nodes (9): description, type, url, args, command, description, mcpServers, cloudflare-docs (+1 more)
+Nodes (9): description, type, url, args, command, description, mcpServers, clickhouse (+1 more)
 
 ### Community 280 - "Community 280"
-Cohesion: 0.33
-Nodes (6): java-build-resolver, description, mode, model, prompt, tools
+Cohesion: 0.22
+Nodes (9): java-build-resolver, tools, description, mode, model, prompt, tools, bash (+1 more)
 
 ### Community 281 - "Community 281"
 Cohesion: 0.22
@@ -1769,7 +1774,7 @@ Nodes (9): type, type, legacyMode, profile, request, additionalProperties, prope
 
 ### Community 282 - "Community 282"
 Cohesion: 0.22
-Nodes (9): minimum, type, type, additionalProperties, properties, type, agents, configAssets (+1 more)
+Nodes (9): type, items, type, additionalProperties, properties, type, configAssets, customTools (+1 more)
 
 ### Community 283 - "Community 283"
 Cohesion: 0.25
@@ -1872,12 +1877,12 @@ Cohesion: 0.25
 Nodes (8): JIRA_API_TOKEN, JIRA_EMAIL, JIRA_URL, args, command, description, env, jira
 
 ### Community 304 - "Community 304"
-Cohesion: 0.29
-Nodes (8): MemoryConnectorDotenvFileConfig, build_legacy_env_connector(), dotenv_key_included(), dotenv_key_is_secret(), DotenvMemoryEntry, parse_dotenv_assignment(), parse_dotenv_memory_entries(), parse_dotenv_value()
+Cohesion: 0.13
+Nodes (19): BTreeMap, MemoryConnectorDotenvFileConfig, OrchestrationTemplateConfig, build_legacy_env_connector(), dotenv_key_included(), dotenv_key_is_secret(), DotenvMemoryEntry, JsonlMemoryConnectorRecord (+11 more)
 
 ### Community 305 - "Community 305"
-Cohesion: 0.25
-Nodes (8): items, items, type, items, type, type, customTools, hookEvents
+Cohesion: 0.67
+Nodes (3): items, type, hookEvents
 
 ### Community 306 - "Community 306"
 Cohesion: 0.29
@@ -2032,12 +2037,12 @@ Cohesion: 0.33
 Nodes (6): OPENAI_API_KEY, args, command, description, env, evalview
 
 ### Community 349 - "Community 349"
-Cohesion: 0.22
-Nodes (9): code-reviewer, tools, description, mode, model, prompt, tools, bash (+1 more)
+Cohesion: 0.33
+Nodes (6): code-reviewer, description, mode, model, prompt, tools
 
 ### Community 350 - "Community 350"
-Cohesion: 0.33
-Nodes (6): cpp-build-resolver, description, mode, model, prompt, tools
+Cohesion: 0.18
+Nodes (11): agent, build, cpp-build-resolver, description, mode, model, description, mode (+3 more)
 
 ### Community 351 - "Community 351"
 Cohesion: 0.33
@@ -2248,12 +2253,12 @@ Cohesion: 0.50
 Nodes (3): { execFileSync }, fs, path
 
 ### Community 411 - "Community 411"
-Cohesion: 0.04
-Nodes (44): AlertIcon(), BriefcaseIcon(), CheckCircleIcon(), CreditCardIcon(), DatabaseIcon(), DoubleChevronUpIcon(), FileTextIcon(), FlaskIcon() (+36 more)
+Cohesion: 0.05
+Nodes (34): defaultOnboardingData, Expert, filters, filterTypeMap, initialExperts, DashboardViewProps, AcademicCapIcon(), AddCoursesIcon() (+26 more)
 
 ### Community 412 - "Community 412"
-Cohesion: 0.10
-Nodes (16): SpeakUIRestoreProps, IELTSListeningExamProps, IELTSReadingExamProps, SimulationProps, CUE_CARD, formatTime(), IELTS_SpeakingExam(), IELTSSpeakingExamProps (+8 more)
+Cohesion: 0.19
+Nodes (13): configDiffers(), ECC_SERVERS, findSubSections(), fs, LEGACY_ALIASES, log(), main(), { parseDisabledMcpServers } (+5 more)
 
 ### Community 413 - "Community 413"
 Cohesion: 0.09
@@ -2273,16 +2278,16 @@ Nodes (16): cleanupAliases(), deleteAlias(), fs, getAliasesForSession(), getAlia
 }, getDefaultAliases(), listAliases() (+8 more)
 
 ### Community 416 - "Community 416"
-Cohesion: 0.21
-Nodes (13): { appendFile }, fs, getRunsFilePath(), normalizeExecutionRecord(), os, path, readJsonl(), readSkillExecutionRecords() (+5 more)
+Cohesion: 0.14
+Nodes (7): AccordionCardProps, CAMBRIDGE_SERIES, DIFFICULTY_MAP, GT_CAMBRIDGE_SERIES, MOCK_SERIES, SpeakingHubViewProps, TestSeries
 
 ### Community 417 - "Community 417"
 Cohesion: 0.50
 Nodes (4): description, type, url, laraplugins
 
 ### Community 418 - "Community 418"
-Cohesion: 0.16
-Nodes (8): ContextGraphCompactionStats, ContextGraphEntityDetail, Option, SessionAgentProfile, context_graph_entity_key(), parse_persisted_file_events(), PersistedFileEvent, session_profile_round_trips_with_launch_settings()
+Cohesion: 0.12
+Nodes (11): ContextGraphCompactionStats, HashMap, Option, SessionHarnessInfo, String, context_graph_entity_key(), default_input_params_json(), map_scheduled_task() (+3 more)
 
 ### Community 419 - "Community 419"
 Cohesion: 0.22
@@ -2325,8 +2330,8 @@ Cohesion: 0.50
 Nodes (4): resolution, additionalProperties, required, type
 
 ### Community 429 - "Community 429"
-Cohesion: 0.50
-Nodes (4): skills, items, minimum, type
+Cohesion: 0.22
+Nodes (9): items, type, items, type, keywords, skills, items, minimum (+1 more)
 
 ### Community 435 - "Community 435"
 Cohesion: 0.67
@@ -2357,8 +2362,11 @@ Cohesion: 0.67
 Nodes (3): learn, description, template
 
 ### Community 445 - "Community 445"
-Cohesion: 0.25
-Nodes (6): ENTRIES, METRICS, ModuleFilter, ReviewEntry, STATUS_PILL, StatusFilter
+Cohesion: 0.15
+Nodes (10): assert, {
+  createInstallState,
+  writeInstallState,
+}, { execFileSync }, fs, os, path, REPO_ROOT, runTests() (+2 more)
 
 ### Community 447 - "Community 447"
 Cohesion: 0.29
@@ -2373,8 +2381,11 @@ Cohesion: 0.29
 Nodes (5): assert, fs, os, path, qualityGate
 
 ### Community 450 - "Community 450"
-Cohesion: 0.22
-Nodes (7): ACADEMIC_BOOKS, FullMockTestHubProps, GT_BOOKS, MockBook, SECTION_DURATION_ITEMS, SKILL_PILLS, ViewMode
+Cohesion: 0.15
+Nodes (10): assert, {
+  createInstallState,
+  writeInstallState,
+}, { execFileSync }, fs, os, path, REPO_ROOT, runTests() (+2 more)
 
 ### Community 451 - "Community 451"
 Cohesion: 0.67
@@ -2389,32 +2400,24 @@ Cohesion: 0.24
 Nodes (9): interpolate_optional_string(), interpolate_required_string(), orchestration_templates_fail_when_required_variables_are_missing(), orchestration_templates_resolve_steps_and_interpolate_variables(), save_round_trips_automation_settings(), BTreeMap, Path, Result (+1 more)
 
 ### Community 454 - "Community 454"
-Cohesion: 0.06
-Nodes (44): buildDoctorReport(), discoverInstalledStates(), readPackageVersion(), repairInstalledStates(), assert, {
-  buildDoctorReport,
-  discoverInstalledStates,
-  repairInstalledStates,
-  uninstallInstalledStates,
-}, {
-  createInstallState,
-  writeInstallState,
-}, fs (+36 more)
+Cohesion: 0.10
+Nodes (27): buildDoctorReport(), discoverInstalledStates(), readPackageVersion(), repairInstalledStates(), SUPPORTED_INSTALL_TARGETS, { buildDoctorReport }, main(), os (+19 more)
 
 ### Community 455 - "Community 455"
-Cohesion: 0.22
-Nodes (9): assert, fs, path, runCustomHook(), runHook(), runner, runTests(), { spawnSync } (+1 more)
+Cohesion: 0.25
+Nodes (6): ENTRIES, METRICS, ModuleFilter, ReviewEntry, STATUS_PILL, StatusFilter
 
 ### Community 456 - "Community 456"
 Cohesion: 0.50
 Nodes (4): memory, args, command, description
 
 ### Community 504 - "Community 504"
-Cohesion: 0.07
-Nodes (17): formatClock(), NewSpeakingExamRunner(), NewSpeakingExamRunnerProps, PART1_TOPICS, Part1Topic, PART2_TOPICS, Part2Topic, PART3_TOPICS (+9 more)
+Cohesion: 0.14
+Nodes (10): formatClock(), NewSpeakingExamRunner(), NewSpeakingExamRunnerProps, PART1_TOPICS, Part1Topic, PART2_TOPICS, Part2Topic, PART3_TOPICS (+2 more)
 
 ### Community 505 - "Community 505"
-Cohesion: 0.16
-Nodes (12): ContextGraphRelation, DecisionLogEntry, Row, TaskPriority, list_recent_decisions_across_sessions_returns_latest_subset_in_order(), map_context_graph_relation(), map_decision_log_entry(), map_remote_dispatch_request() (+4 more)
+Cohesion: 0.27
+Nodes (6): RemoteDispatchKind, RemoteDispatchRequest, TaskPriority, map_remote_dispatch_request(), task_priority_db_value(), task_priority_from_db_value()
 
 ### Community 506 - "Community 506"
 Cohesion: 0.50
@@ -2422,23 +2425,31 @@ Nodes (4): description, type, url, cloudflare-workers-bindings
 
 ### Community 507 - "Community 507"
 Cohesion: 0.15
-Nodes (13): description, template, command, checkpoint, eval, instinct-import, setup-pm, description (+5 more)
+Nodes (13): description, template, command, checkpoint, eval, instinct-import, projects, description (+5 more)
 
 ### Community 508 - "Community 508"
-Cohesion: 0.33
-Nodes (4): MOCK_SAMPLES, MockSample, QR_PATTERN, Stage
+Cohesion: 0.24
+Nodes (11): buildDiscoveryRecord(), assertValidInstallState(), createFallbackValidator(), formatValidationErrors(), fs, getValidator(), path, readInstallState() (+3 more)
 
 ### Community 509 - "Community 509"
-Cohesion: 0.16
-Nodes (6): Error, Regex, compile_search_regex(), refresh_loads_selected_session_output_and_follows_tail(), search_agent_filter_selected_agent_type_limits_global_search(), SearchAgentFilter
+Cohesion: 0.25
+Nodes (7): listInstallTargetAdapters(), normalizeTargets(), assert, {
+  getInstallTargetAdapter,
+  listInstallTargetAdapters,
+  planInstallTargetScaffold,
+}, path, runTests(), test()
 
 ### Community 510 - "Community 510"
 Cohesion: 0.07
 Nodes (31): Dashboard(), DashboardProps, DISABLED_DORMANT_NAV_ITEMS, DORMANT_NAV_KEYS, EnterpriseSandboxViewProps, LEADERBOARD_DATA, EnterpriseViewProps, Activity (+23 more)
 
 ### Community 511 - "Community 511"
-Cohesion: 0.50
-Nodes (4): description, type, url, devfleet
+Cohesion: 0.22
+Nodes (7): assert, {
+  createInstallState,
+  readInstallState,
+  writeInstallState,
+}, fs, os, path, runTests(), test()
 
 ### Community 512 - "Community 512"
 Cohesion: 0.50
@@ -2465,28 +2476,39 @@ Cohesion: 0.67
 Nodes (3): instinct-export, description, template
 
 ### Community 518 - "Community 518"
-Cohesion: 0.21
-Nodes (8): ContextGraphEntity, ContextGraphRecallEntry, HashMap, String, context_graph_matched_terms(), context_graph_recall_terms(), default_input_params_json(), map_context_graph_entity()
+Cohesion: 0.11
+Nodes (14): ContextGraphEntity, ContextGraphRecallEntry, ContextGraphRelation, DecisionLogEntry, OutputLine, Row, SessionMessage, Vec (+6 more)
 
 ### Community 519 - "Community 519"
-Cohesion: 0.33
-Nodes (5): dashboard, health, provenance, tracker, versioning
+Cohesion: 0.12
+Nodes (17): assert, {
+  buildDoctorReport,
+  discoverInstalledStates,
+  repairInstalledStates,
+  uninstallInstalledStates,
+}, {
+  createInstallState,
+  writeInstallState,
+}, fs, os, path, REPO_ROOT, runTests() (+9 more)
 
 ### Community 520 - "Community 520"
-Cohesion: 0.50
-Nodes (4): description, type, url, clickhouse
+Cohesion: 0.16
+Nodes (6): Error, Regex, compile_search_regex(), refresh_loads_selected_session_output_and_follows_tail(), search_agent_filter_selected_agent_type_limits_global_search(), SearchAgentFilter
 
 ### Community 521 - "Community 521"
-Cohesion: 0.04
-Nodes (56): buildDiscoveryRecord(), writeState(), assertValidInstallState(), createFallbackValidator(), createInstallState(), formatValidationErrors(), fs, getValidator() (+48 more)
+Cohesion: 0.14
+Nodes (11): assert, {
+  createInstallState,
+  writeInstallState,
+}, { execFileSync }, fs, INSTALL_SCRIPT, os, path, REPO_ROOT (+3 more)
 
 ### Community 522 - "Community 522"
 Cohesion: 0.09
 Nodes (18): ACADEMIC_BOOKS, BookTest, ExamModeType, GT_BOOKS, LISTEN_DRILLS, LISTENING_SECTION_TITLES, PartPracticeHubProps, PracticeItem (+10 more)
 
 ### Community 523 - "Community 523"
-Cohesion: 0.67
-Nodes (3): projects, description, template
+Cohesion: 0.06
+Nodes (14): baseCards, CardData, demoCards, FlashcardReviewController(), ChevronRightIcon(), DAYS_OF_WEEK, LessonTask, SEPTEMBER_GRID (+6 more)
 
 ### Community 524 - "Community 524"
 Cohesion: 0.06
@@ -2495,6 +2517,10 @@ Nodes (27): AuthGatewayProps, AuthOverlayProps, carouselItems, ArrowUpRightIcon(
 ### Community 525 - "Community 525"
 Cohesion: 0.22
 Nodes (8): aliases, assert, fs, os, path, runTests(), test(), tmpHome
+
+### Community 526 - "Community 526"
+Cohesion: 0.48
+Nodes (7): writeState(), createInstallState(), writeInstallState(), writeState(), writeState(), writeState(), writeState()
 
 ### Community 527 - "Community 527"
 Cohesion: 0.67
@@ -2508,37 +2534,53 @@ Nodes (7): assert, fs, os, path, runTests(), sessionManager, test()
 Cohesion: 0.33
 Nodes (5): additionalProperties, $id, $schema, title, type
 
+### Community 531 - "Community 531"
+Cohesion: 0.50
+Nodes (4): description, type, url, devfleet
+
 ### Community 532 - "Community 532"
 Cohesion: 0.22
 Nodes (5): ContextGraphSyncStats, Session, PersistedFileEvent, context_graph_file_name(), file_activity_action_value()
 
 ### Community 533 - "Community 533"
 Cohesion: 0.67
-Nodes (3): skill-create, description, template
+Nodes (3): setup-pm, description, template
 
 ### Community 534 - "Community 534"
-Cohesion: 0.67
-Nodes (3): verify, description, template
+Cohesion: 0.21
+Nodes (15): bucketByDay(), formatPercent(), getTrendArrow(), groupRecordsBySkill(), health, horizontalBar(), panelBox(), renderAmendmentPanel() (+7 more)
 
 ### Community 535 - "Community 535"
-Cohesion: 0.67
-Nodes (3): format, type, homepage
+Cohesion: 0.50
+Nodes (4): description, type, url, cloudflare-docs
 
 ### Community 536 - "Community 536"
 Cohesion: 0.67
-Nodes (3): items, type, keywords
+Nodes (3): skill-create, description, template
 
 ### Community 537 - "Community 537"
 Cohesion: 0.67
 Nodes (3): Update the projects.json registry.      Uses file locking (where available) to, _update_registry(), test_update_registry_atomic_replaces_file()
+
+### Community 538 - "Community 538"
+Cohesion: 0.67
+Nodes (3): verify, description, template
+
+### Community 539 - "Community 539"
+Cohesion: 0.67
+Nodes (3): minimum, type, agents
 
 ### Community 540 - "Community 540"
 Cohesion: 0.50
 Nodes (4): description, type, url, cloudflare-observability
 
 ### Community 541 - "Community 541"
+Cohesion: 0.30
+Nodes (10): AuthUser, EvaluationRequest, EvaluationResponse, build_task_section(), evaluate_writing(), Evaluate IELTS writing tasks using Gemini 1.5 Flash., generate(), generate_json() (+2 more)
+
+### Community 542 - "Community 542"
 Cohesion: 0.67
-Nodes (3): OtlpInstrumentationScope, OtlpSpan, OtlpScopeSpans
+Nodes (3): version, pattern, type
 
 ## Knowledge Gaps
 - **2900 isolated node(s):** `$schema`, `plugin`, `@kilocode/plugin`, `@opencode-ai/plugin`, `CloudClient` (+2895 more)
@@ -2548,17 +2590,17 @@ Nodes (3): OtlpInstrumentationScope, OtlpSpan, OtlpScopeSpans
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `spawnSync()` connect `Community 131` to `Community 133`, `Community 135`, `Community 263`, `Community 265`, `Community 145`, `Community 146`, `Community 276`, `Community 284`, `Community 159`, `Community 31`, `Community 162`, `Community 37`, `Community 294`, `Community 295`, `Community 296`, `Community 168`, `Community 298`, `Community 173`, `Community 46`, `Community 47`, `Community 176`, `Community 177`, `Community 186`, `Community 58`, `Community 188`, `Community 60`, `Community 63`, `Community 323`, `Community 197`, `Community 455`, `Community 199`, `Community 200`, `Community 74`, `Community 202`, `Community 206`, `Community 216`, `Community 217`, `Community 98`, `Community 99`, `Community 110`, `Community 248`, `Community 121`?**
+- **Why does `spawnSync()` connect `Community 131` to `Community 133`, `Community 135`, `Community 263`, `Community 265`, `Community 145`, `Community 146`, `Community 276`, `Community 284`, `Community 159`, `Community 31`, `Community 162`, `Community 37`, `Community 294`, `Community 295`, `Community 296`, `Community 168`, `Community 298`, `Community 173`, `Community 46`, `Community 47`, `Community 176`, `Community 177`, `Community 186`, `Community 58`, `Community 188`, `Community 60`, `Community 63`, `Community 323`, `Community 197`, `Community 199`, `Community 200`, `Community 74`, `Community 202`, `Community 206`, `Community 216`, `Community 217`, `Community 98`, `Community 99`, `Community 110`, `Community 248`, `Community 121`?**
   _High betweenness centrality (0.040) - this node is a cross-community bridge._
 - **Why does `runCommand()` connect `Community 176` to `Community 131`?**
-  _High betweenness centrality (0.017) - this node is a cross-community bridge._
+  _High betweenness centrality (0.015) - this node is a cross-community bridge._
 - **Why does `commandExists()` connect `Community 58` to `Community 24`, `Community 131`?**
-  _High betweenness centrality (0.009) - this node is a cross-community bridge._
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
 - **What connects `$schema`, `plugin`, `@kilocode/plugin` to the rest of the system?**
-  _3070 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _3073 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.019025249559600704 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.019315944881889764 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.0847985347985348 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.03220738413197172 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0374684527276257 - nodes in this community are weakly interconnected._

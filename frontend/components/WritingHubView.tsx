@@ -200,6 +200,9 @@ export default function WritingHubView({ userEmail, onExamStateChange }: Writing
   const [expandedSeriesId, setExpandedSeriesId] = useState<string | null>(null);
   const [showExam, setShowExam] = useState<boolean>(false);
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
+  const [examSourceType, setExamSourceType] = useState<'cambridge' | 'mock_series'>('cambridge');
+  const [examBookNumber, setExamBookNumber] = useState<number>(18);
+  const [examTestNumber, setExamTestNumber] = useState<number>(1);
   const customGradingRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -228,6 +231,11 @@ export default function WritingHubView({ userEmail, onExamStateChange }: Writing
     sessionStorage.setItem('writing_exam_series', seriesId);
     sessionStorage.setItem('writing_exam_index', String(testIndex));
     sessionStorage.setItem('writing_exam_mode', writingMode);
+    const isCambridge = seriesId.startsWith('cambridge-');
+    const bookNum = parseInt(seriesId.split('-')[1]) || 18;
+    setExamSourceType(isCambridge ? 'cambridge' : 'mock_series');
+    setExamBookNumber(bookNum);
+    setExamTestNumber(testIndex + 1);
     setShowExam(true);
     onExamStateChange?.(true);
   };
@@ -254,6 +262,10 @@ export default function WritingHubView({ userEmail, onExamStateChange }: Writing
         <IELTSWritingExam
           candidateEmail={userEmail}
           testMode={writingMode}
+          sourceType={examSourceType}
+          bookNumber={examBookNumber}
+          testNumber={examTestNumber}
+          moduleType={activeTab}
           simulation={{
             sectionLabel: modeConfig.sectionLabel,
             timeLimitSeconds: modeConfig.timeMinutes * 60,

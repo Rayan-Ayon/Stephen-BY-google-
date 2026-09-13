@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { supabase } from '../../../supabaseClient';
 import {
     TASK2_PROMPTS,
     GENERAL_TASK1_PROMPTS,
@@ -47,11 +48,21 @@ const writeDraft = (key: string, value: string) => {
 type TestState = 'lobby' | 'active' | 'saving' | 'evaluating' | 'completed';
 
 interface WritingResult {
-    taskType: 'task1' | 'task2';
-    prompt: string;
-    text: string;
-    band: number;
-    criteria: WritingCriteria;
+    task1: {
+        prompt: string; text: string; wordCount: number; band: number; criteria: WritingCriteria;
+        strengths: string[]; improvements: string[];
+        grammarCorrections: Array<{ original: string; suggested: string }>;
+        modelAnswer: { en: string; bn: string };
+        summary: string;
+    } | null;
+    task2: {
+        prompt: string; text: string; wordCount: number; band: number; criteria: WritingCriteria;
+        strengths: string[]; improvements: string[];
+        grammarCorrections: Array<{ original: string; suggested: string }>;
+        modelAnswer: { en: string; bn: string };
+        summary: string;
+    } | null;
+    overallBand: number;
     feedback: { en: string; bn: string };
     date: string;
 }
@@ -64,6 +75,10 @@ interface IELTSWritingExamProps {
     testMode?: WritingMode;
     onActiveChange?: (active: boolean) => void;
     exitPulse?: boolean;
+    sourceType?: 'cambridge' | 'mock_series';
+    bookNumber?: number;
+    testNumber?: number;
+    moduleType?: 'academic' | 'general';
 }
 
 const ChartSVG: React.FC = () => {
@@ -117,7 +132,17 @@ const ChartSVG: React.FC = () => {
     );
 };
 
-const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, simulation, testMode = 'full_mock', onActiveChange, exitPulse }) => {
+const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
+    candidateEmail,
+    simulation,
+    testMode = 'full_mock',
+    onActiveChange,
+    exitPulse,
+    sourceType = 'cambridge',
+    bookNumber = 18,
+    testNumber = 1,
+    moduleType = 'academic',
+}) => {
     const [testState, setTestState] = useState<TestState>(simulation ? 'active' : 'lobby');
     const [activePart, setActivePart] = useState<1 | 2>(1);
     const [essayPart1, setEssayPart1] = useState<string>(() => readDraft(DRAFT_KEY_P1));
@@ -130,6 +155,51 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
     const [showSubmitModal, setShowSubmitModal] = useState(false);
     const [resultsTab, setResultsTab] = useState<1 | 2>(1);
     const [expandedAnswer, setExpandedAnswer] = useState(false);
+    const [dbTask1, setDbTask1] = useState<any>(null);
+    const [dbTask2, setDbTask2] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        const fetchExamData = async () => {
+            setIsLoading(true);
+            const { data, error } = await supabase
+                .from('writing_questions')
+                .select('*')
+                .eq('source_type', sourceType)
+                .eq('book_or_set_number', bookNumber)
+                .eq('test_number', testNumber);
+
+            if (!error && data && data.length > 0) {
+                const t1 = data.find((q: any) =>
+                    q.task_type === 'task_1' &&
+                    (moduleType === 'general' ? q.module_type === 'general' : q.module_type === 'academic')
+                );
+                const t2 = data.find((q: any) =>
+                    q.task_type === 'task_2' &&
+                    (moduleType === 'general' ? q.module_type === 'general' : q.module_type === 'academic')
+                );
+                setDbTask1(t1 || null);
+                setDbTask2(t2 || null);
+            }
+            setIsLoading(false);
+        };
+        fetchExamData();
+    }, [sourceType, bookNumber, testNumber, moduleType]);
+
+    useEffect(() => {
+        if (testState !== 'active') return;
+        const id = window.setInterval(() => setSeconds((prev) => (prev <= 1 ? 0 : prev - 1)), 1000);
+        return () => window.clearInterval(id);
+    }, [testState]);
+
+    useEffect(() => {
+        if (testState === 'active' && seconds === 0) finalizeSubmit();
+    }, [seconds, testState]);
+
+    useEffect(() => {
+        onActiveChange?.(testState !== 'lobby');
+    }, [testState, onActiveChange]);
 
     const timeLimit = simulation ? simulation.timeLimitSeconds : 60 * 60;
     const showTaskSwitcher = testMode === 'full_mock';
@@ -138,7 +208,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
     const timerLow = seconds <= 300;
     const isEvaluating = testState === 'evaluating';
 
-    const effectivePart = isSingleTask
+    const effectivePart: 1 | 2 = isSingleTask
         ? (testMode === 'task_2' ? 2 : 1)
         : activePart;
 
@@ -146,18 +216,36 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
     const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
     const wordCount1 = essayPart1.trim() ? essayPart1.trim().split(/\s+/).length : 0;
     const wordCount2 = essayPart2.trim() ? essayPart2.trim().split(/\s+/).length : 0;
-    const promptForPart = effectivePart === 1 ? TASK1_ACADEMIC_TITLE : TASK2_PROMPTS[0];
-    const instructionForPart = effectivePart === 1 ? TASK1_INSTRUCTION : '';
+
+    const t1Prompt = dbTask1?.prompt_text || TASK1_ACADEMIC_TITLE;
+    const t1Instruction = dbTask1?.instruction || TASK1_INSTRUCTION;
+    const t1ImageUrl = dbTask1?.image_url || null;
+    const t2Prompt = dbTask2?.prompt_text || TASK2_PROMPTS[0];
+
+    const promptForPart = effectivePart === 1 ? t1Prompt : t2Prompt;
+    const instructionForPart = effectivePart === 1 ? t1Instruction : '';
 
     const prompt = effectivePart === 1
-        ? (testMode === 'task_1_general' ? GENERAL_TASK1_PROMPTS[0] : promptForPart)
-        : TASK2_PROMPTS[0];
+        ? (testMode === 'task_1_general'
+            ? (dbTask1?.prompt_text || GENERAL_TASK1_PROMPTS[0])
+            : promptForPart)
+        : t2Prompt;
 
     const minWords = effectivePart === 2 ? 250 : 150;
     const taskLabel = testMode === 'task_2' ? 'Task 2' : testMode === 'task_1_general' ? 'Task 1 Letter' : effectivePart === 1 ? 'Task 1 Academic' : 'Task 2';
     const pillText = testMode === 'task_1_general' ? '📄 Task 1 Letter Prompt' : effectivePart === 1 ? '📄 Task 1 Prompt' : '📄 Task 2 Prompt';
 
     const showChart = testMode !== 'task_1_general';
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col h-full w-full items-center justify-center bg-white min-h-[60vh]">
+                <div className="w-12 h-12 rounded-full border-4 border-neutral-200 border-t-orange-500 animate-spin mb-6" />
+                <h2 className="text-xl font-bold text-neutral-900 mb-2">Loading exam paper...</h2>
+                <p className="text-sm text-neutral-500">Fetching your question data from Supabase.</p>
+            </div>
+        );
+    }
 
     const updatePart = (value: string) => {
         if (effectivePart === 1) {
@@ -175,94 +263,159 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
         if (next === 1 || next === 2) setActivePart(next as 1 | 2);
     };
 
-    useEffect(() => {
-        if (testState !== 'active') return;
-        const id = window.setInterval(() => setSeconds((prev) => (prev <= 1 ? 0 : prev - 1)), 1000);
-        return () => window.clearInterval(id);
-    }, [testState]);
-
     const openSubmitModal = () => {
         if (testState !== 'active') return;
         setShowSubmitModal(true);
     };
 
-    const finalizeSubmit = (force = false) => {
-        if (testState !== 'active') return;
-        const trimmed1 = essayPart1.trim();
-        const trimmed2 = essayPart2.trim();
-        const activeTrimmed = (effectivePart === 1 ? trimmed1 : trimmed2) || '';
-        if (!activeTrimmed && !trimmed1 && !trimmed2 && !force) return;
+    const finalizeSubmit = async () => {
+        if (testState !== 'active' || isSubmitting) return;
+        setIsSubmitting(true);
         setShowSubmitModal(false);
         setTestState('saving');
-        window.setTimeout(() => {
-            const evalText = activeTrimmed || trimmed2 || trimmed1 || ' ';
-            const { criteria, band } = evaluateWritingText(evalText);
-            const count = evalText.trim() ? evalText.trim().split(/\s+/).length : 0;
-            const timeSpent = Math.max(1, Math.round((timeLimit - seconds) / 60));
-            const taskType = effectivePart === 1 ? 'task1' : 'task2';
-            const criteriaList = [
-                { label: effectivePart === 1 ? 'Task Achievement' : 'Task Response', band: criteria.taskAchievement },
-                { label: 'Coherence & Cohesion', band: criteria.coherence },
-                { label: 'Lexical Resource', band: criteria.lexical },
-                { label: 'Grammar Accuracy', band: criteria.grammar },
-            ];
-            if (simulation) {
-                const evalResult: WritingResult = {
-                    taskType,
-                    prompt,
-                    text: evalText,
-                    band,
-                    criteria,
-                    feedback: buildBilingual(band, count),
-                    date: new Date().toLocaleString(),
-                };
-                setResult(evalResult);
-                addAttempt({
-                    id: Date.now(),
-                    skill: 'writing',
-                    band,
-                    taskType,
-                    timeSpent,
-                    criteria: criteriaList,
-                    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                });
-                setTestState('completed');
-            } else {
-                const evalResult: WritingResult = {
-                    taskType,
-                    prompt,
-                    text: evalText,
-                    band,
-                    criteria,
-                    feedback: buildBilingual(band, count),
-                    date: new Date().toLocaleString(),
-                };
-                setResult(evalResult);
-                addAttempt({
-                    id: Date.now(),
-                    skill: 'writing',
-                    band,
-                    taskType,
-                    timeSpent,
-                    criteria: criteriaList,
-                    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                });
-                setTestState('completed');
+
+        const t1Text = essayPart1.trim();
+        const t2Text = essayPart2.trim();
+        const t1WordCount = t1Text ? t1Text.split(/\s+/).length : 0;
+        const t2WordCount = t2Text ? t2Text.split(/\s+/).length : 0;
+        const showT1 = showTaskSwitcher || effectivePart === 1;
+        const showT2 = showTaskSwitcher || effectivePart === 2;
+        const count = (t1WordCount + t2WordCount) || 1;
+        const timeSpent = Math.max(1, Math.round((timeLimit - seconds) / 60));
+
+        try {
+            setTestState('evaluating');
+
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            const response = await fetch('/api/ielts/evaluate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    task1Prompt: showT1 ? t1Prompt : null,
+                    task1Response: showT1 ? t1Text || null : null,
+                    task2Prompt: showT2 ? t2Prompt : null,
+                    task2Response: showT2 ? t2Text || null : null,
+                    sourceType,
+                    bookOrSetNumber: bookNumber,
+                    testNumber,
+                    moduleType,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error("Evaluation API Error:", response.status, errorData);
+                throw new Error(errorData.detail || `API returned ${response.status}`);
             }
-        }, 2000);
+            const data = await response.json();
+            console.log("Live AI Response:", data);
+
+            const mapTask = (aiTask: any, promptText: string, essayText: string, wc: number) => {
+                if (!aiTask) return null;
+                return {
+                    prompt: promptText,
+                    text: essayText,
+                    wordCount: wc,
+                    band: aiTask.band ?? 6.5,
+                    criteria: {
+                        taskAchievement: aiTask.criteria?.taskAchievement ?? 6.5,
+                        coherence: aiTask.criteria?.coherenceCohesion ?? 6.5,
+                        lexical: aiTask.criteria?.lexicalResource ?? 6.5,
+                        grammar: aiTask.criteria?.grammaticalRange ?? 6.5,
+                    },
+                    strengths: aiTask.strengths ?? [],
+                    improvements: aiTask.improvements ?? [],
+                    grammarCorrections: (aiTask.grammarCorrections ?? []).map((c: any) => ({
+                        original: c.original ?? '',
+                        suggested: c.correction ?? '',
+                    })),
+                    modelAnswer: {
+                        en: aiTask.modelAnswer?.en ?? '',
+                        bn: aiTask.modelAnswer?.bn ?? '',
+                    },
+                    summary: aiTask.summary ?? '',
+                };
+            };
+
+            const evalResult: WritingResult = {
+                task1: mapTask(data.task1, t1Prompt, t1Text, t1WordCount),
+                task2: mapTask(data.task2, t2Prompt, t2Text, t2WordCount),
+                overallBand: data.overallBand ?? 7.0,
+                feedback: buildBilingual(data.overallBand ?? 7.0, count),
+                date: new Date().toLocaleString(),
+            };
+            setResult(evalResult);
+
+            addAttempt({
+                id: Date.now(),
+                skill: 'writing',
+                band: evalResult.overallBand,
+                taskType: showT1 && showT2 ? 'full_mock' : showT1 ? 'task1' : 'task2',
+                timeSpent,
+                criteria: [
+                    ...(evalResult.task1 ? [{ label: 'Task 1', band: evalResult.task1.band }] : []),
+                    ...(evalResult.task2 ? [{ label: 'Task 2', band: evalResult.task2.band }] : []),
+                ],
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            });
+
+            setIsSubmitting(false);
+            setTestState('completed');
+        } catch (err) {
+            console.error('Gemini evaluation failed, falling back to local mock:', err);
+            toast.error('AI evaluation unavailable — using local grading');
+
+            const evaluateTask = (text: string, taskNum: 1 | 2) => {
+                const { criteria, band } = evaluateWritingText(text);
+                return {
+                    prompt: taskNum === 1 ? t1Prompt : t2Prompt,
+                    text,
+                    wordCount: taskNum === 1 ? t1WordCount : t2WordCount,
+                    band,
+                    criteria,
+                    strengths: [],
+                    improvements: [],
+                    grammarCorrections: [],
+                    modelAnswer: { en: '', bn: '' },
+                    summary: '',
+                };
+            };
+
+            const t1Result = showT1 ? evaluateTask(t1Text || ' ', 1) : null;
+            const t2Result = showT2 ? evaluateTask(t2Text || ' ', 2) : null;
+            const bands = [t1Result?.band, t2Result?.band].filter(Boolean) as number[];
+            const overallBand = bands.length > 0 ? bands.reduce((a, b) => a + b, 0) / bands.length : 7.5;
+
+            setResult({
+                task1: t1Result,
+                task2: t2Result,
+                overallBand,
+                feedback: buildBilingual(overallBand, count),
+                date: new Date().toLocaleString(),
+            });
+
+            addAttempt({
+                id: Date.now(),
+                skill: 'writing',
+                band: overallBand,
+                taskType: showT1 && showT2 ? 'full_mock' : showT1 ? 'task1' : 'task2',
+                timeSpent,
+                criteria: [
+                    ...(t1Result ? [{ label: 'Task 1', band: t1Result.band }] : []),
+                    ...(t2Result ? [{ label: 'Task 2', band: t2Result.band }] : []),
+                ],
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            });
+
+            setIsSubmitting(false);
+            setTestState('completed');
+        }
     };
-
-    const submit = (force = false) => {
-        openSubmitModal();
-    };
-
-    useEffect(() => {
-        if (testState === 'active' && seconds === 0) finalizeSubmit(true);
-    }, [seconds, testState]);
-
-    useEffect(() => {
-        onActiveChange?.(testState !== 'lobby');
-    }, [testState, onActiveChange]);
 
     const startExam = () => { setTestState('active'); };
 
@@ -276,6 +429,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
         setTestState('lobby');
         setShowExitModal(false);
         setShowSubmitModal(false);
+        setIsSubmitting(false);
     };
 
     const handleExit = () => {
@@ -302,41 +456,40 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
         );
     }
 
-    const overallBand = result?.band ?? 7.5;
+    const overallBand = result?.overallBand ?? 7.5;
+    const activeTaskData = resultsTab === 1 ? result?.task1 : result?.task2;
     const criteriaScores = {
-        task: result?.criteria.taskAchievement ?? 7.5,
-        coherence: result?.criteria.coherence ?? 7.0,
-        lexical: result?.criteria.lexical ?? 8.0,
-        grammar: result?.criteria.grammar ?? 7.5,
+        task: activeTaskData?.criteria.taskAchievement ?? 7.5,
+        coherence: activeTaskData?.criteria.coherence ?? 7.0,
+        lexical: activeTaskData?.criteria.lexical ?? 8.0,
+        grammar: activeTaskData?.criteria.grammar ?? 7.5,
     };
 
     if (testState === 'saving' || testState === 'evaluating') {
         return (
             <div className="flex flex-col h-full w-full items-center justify-center bg-white min-h-[60vh]">
                 <div className="w-12 h-12 rounded-full border-4 border-neutral-200 border-t-orange-500 animate-spin mb-6" />
-                <h2 className="text-xl font-bold text-neutral-900 mb-2">Saving your test...</h2>
-                <p className="text-sm text-neutral-500">Your answers are being recorded and sent for AI grading.</p>
+                <h2 className="text-xl font-bold text-neutral-900 mb-2">
+                    {testState === 'saving' ? 'Saving your test...' : 'Evaluating your responses...'}
+                </h2>
+                <p className="text-sm text-neutral-500">
+                    {testState === 'saving'
+                        ? 'Recording your answers.'
+                        : 'AI is analyzing your writing against IELTS criteria.'}
+                </p>
             </div>
         );
     }
 
     if (testState === 'completed') {
-        const activeAnswer = resultsTab === 1 ? essayPart1 : essayPart2;
-        const activeWords = resultsTab === 1 ? wordCount1 : wordCount2;
-        const strengths = resultsTab === 1
-            ? ['Clear overview with well-selected main trends', 'Good use of comparison language and data grouping', 'Appropriate academic tone with varied vocabulary']
-            : ['Well-structured paragraphs with clear topic sentences', 'Good range of linking words and academic vocabulary', 'Clear position maintained throughout the essay'];
-        const improvements = resultsTab === 1
-            ? ['Add more precise data references to support comparisons', 'Vary sentence starters to improve sentence variety', 'Check article usage in overview sentences for coherence']
-            : ['Develop second body paragraph with a more specific example', 'Reduce repetition of high-frequency adjectives', 'Review subject-verb agreement in complex sentences'];
-        const corrections = [
-            { original: 'Many peoples now choose public transport because it is very good.', suggested: 'Many people now choose public transport because it is efficient and affordable.' },
-            { original: 'The the results are clear in their innovation.', suggested: 'The results are clearly reflected in their innovation.' },
-            { original: 'This is a very good thing because it creates a level playing field.', suggested: 'This is beneficial because it creates a level playing field.' },
-        ];
-        const modelAnswer = resultsTab === 1
-            ? 'The chart compares adult participation in seven major sports in one region in 1997 and 2017. Overall, tennis remained the most popular sport in both years, while participation in basketball, football and rugby rose sharply. In contrast, cricket experienced a dramatic decline. In 1997, around 50,000 adults played tennis, rising slightly to 55,000 by 2017. Football and rugby both increased from roughly 32-33,000 to 48-49,000, overtaking swimming, which remained stable at 35,000. Basketball more than doubled from 9,000 to 23,000. Cricket, however, fell from 26,000 to just 7,000, the steepest drop of any sport. Golf changed little, edging up from 32,000 to 33,000.'
-            : 'University education should be accessible to all, and making it free is one of the most effective ways to achieve this. Firstly, free tuition removes financial barriers for talented students from disadvantaged backgrounds, allowing them to focus on study rather than part-time work. Secondly, an educated workforce strengthens the economy and public services, as seen in Germany and Norway. Critics argue that free education lowers quality, but many tuition-free universities maintain world-class standards through public funding. In conclusion, the long-term social and economic benefits of free university education far outweigh the costs.';
+        const activeAnswer = activeTaskData?.text || (resultsTab === 1 ? essayPart1 : essayPart2);
+        const activeWords = activeTaskData?.wordCount ?? (resultsTab === 1 ? wordCount1 : wordCount2);
+        const strengths = activeTaskData?.strengths ?? [];
+        const improvements = activeTaskData?.improvements ?? [];
+        const corrections = activeTaskData?.grammarCorrections ?? [];
+        const modelAnswer = activeTaskData?.modelAnswer?.en ?? '';
+        const modelAnswerBn = activeTaskData?.modelAnswer?.bn ?? '';
+        const aiSummary = activeTaskData?.summary ?? '';
         return (
             <div className="flex flex-col h-full w-full bg-white text-black overflow-hidden">
                 <header className="shrink-0 h-14 bg-[#121212] flex items-center justify-between px-6">
@@ -357,7 +510,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
                             <div className="text-center bg-orange-50 border border-orange-200 rounded-2xl px-8 py-6 min-w-[180px]">
                                 <p className="text-[11px] uppercase tracking-wider text-orange-600 font-bold mb-1">Overall Band</p>
                                 <p className="text-5xl font-black text-neutral-900">{overallBand.toFixed(1)}</p>
-                                <p className="text-xs text-neutral-500 mt-2">{wordCount1 + wordCount2} words · Task 1: {wordCount1} · Task 2: {wordCount2}</p>
+                                <p className="text-xs text-neutral-500 mt-2">{(result?.task1?.wordCount ?? 0) + (result?.task2?.wordCount ?? 0)} words · Task 1: {result?.task1?.wordCount ?? 0} · Task 2: {result?.task2?.wordCount ?? 0}</p>
                             </div>
                             <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                                 {[
@@ -433,13 +586,13 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
 
                             <div className="rounded-xl bg-[#121212] p-5">
                                 <h4 className="text-sm font-bold text-white mb-2">Model Answer / High Band Sample (Band 8.0+)</h4>
-                                <p className="text-sm leading-relaxed text-gray-300 whitespace-pre-wrap">{modelAnswer}</p>
+                                <p className="text-sm leading-relaxed text-gray-300 whitespace-pre-wrap">{lang === 'en' ? modelAnswer : (modelAnswerBn || modelAnswer)}</p>
                                 <div className="flex items-center gap-1 rounded-lg bg-neutral-800 border border-neutral-700 p-1 w-fit mt-4">
                                     {(['en', 'bn'] as const).map((l) => (
                                         <button key={l} onClick={() => setLang(l)} className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-colors ${lang === l ? 'bg-white text-black' : 'text-neutral-400 hover:text-white'}`}>{l.toUpperCase()}</button>
                                     ))}
                                 </div>
-                                <p className="text-sm text-gray-400 leading-relaxed whitespace-pre-wrap mt-3">{lang === 'en' ? result?.feedback.en : result?.feedback.bn || result?.feedback.en}</p>
+                                {aiSummary && <p className="text-sm text-gray-400 leading-relaxed whitespace-pre-wrap mt-3">{aiSummary}</p>}
                             </div>
                         </div>
 
@@ -504,7 +657,23 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
                                 <p className="text-[15px] font-medium mb-3">{instructionForPart}</p>
                                 {showChart && (
                                     <div className="rounded-md border border-neutral-200 p-2 mt-3">
-                                        <ChartSVG />
+                                        {t1ImageUrl ? (
+                                            <img
+                                                src={t1ImageUrl}
+                                                alt="Task 1 chart or diagram"
+                                                className="w-full h-auto max-h-[400px] object-contain rounded"
+                                                onError={(e) => {
+                                                    const img = e.target as HTMLImageElement;
+                                                    img.style.display = 'none';
+                                                    const fb = document.createElement('p');
+                                                    fb.textContent = 'No chart diagram available for this question';
+                                                    fb.className = 'text-sm text-neutral-500 text-center py-4';
+                                                    img.parentElement?.appendChild(fb);
+                                                }}
+                                            />
+                                        ) : (
+                                            <ChartSVG />
+                                        )}
                                     </div>
                                 )}
                                 <p className="text-xs text-neutral-500 mt-3">{TASK1_WORD_HINT}</p>
@@ -546,7 +715,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
             {/* ── Bottom Task Navigation Bar ── */}
             <footer className="shrink-0 h-12 bg-white border-t border-neutral-200 flex items-center justify-between px-4 z-10">
                 <div className="flex items-center gap-6 h-full flex-1 px-4">
-                    {([1, 2] as (1 | 2)[]).map((p) => {
+                    {(showTaskSwitcher ? [1, 2] : [effectivePart] as (1 | 2)[]).map((p: 1 | 2) => {
                         const isActive = effectivePart === p;
                         const liveCount = p === 1 ? wordCount1 : wordCount2;
                         return (
@@ -591,7 +760,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({ candidateEmail, sim
                         </div>
                         <div className="flex gap-3">
                             <button onClick={() => setShowSubmitModal(false)} className="flex-1 py-3 rounded-full font-bold text-sm bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors">Continue Writing</button>
-                            <button onClick={() => finalizeSubmit(false)} className="flex-1 py-3 rounded-full font-bold text-sm bg-orange-500 hover:bg-orange-600 text-white transition-colors shadow-lg shadow-orange-500/20">Submit Test</button>
+                            <button onClick={() => finalizeSubmit()} className="flex-1 py-3 rounded-full font-bold text-sm bg-orange-500 hover:bg-orange-600 text-white transition-colors shadow-lg shadow-orange-500/20">Submit Test</button>
                         </div>
                     </div>
                 </div>

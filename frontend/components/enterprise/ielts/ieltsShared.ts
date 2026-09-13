@@ -6,7 +6,7 @@ export interface IeltsAttempt {
     band: number;
     title?: string;
     score?: number;
-    taskType?: 'task1' | 'task2';
+    taskType?: 'task1' | 'task2' | 'full_mock';
     date: string;
     timeSpent?: number;
     criteria?: { label: string; band: number }[];
