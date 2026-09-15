@@ -37,6 +37,10 @@ class EvaluationRequest(BaseModel):
     bookOrSetNumber: int = 18
     testNumber: int = 1
     moduleType: str = "academic"
+    taskType: str = "full_mock"
+    task1MinWords: int = 150
+    task2MinWords: int = 250
+    submissionId: str | None = None
 
 
 class EvaluationResponse(BaseModel):

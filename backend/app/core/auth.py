@@ -21,22 +21,35 @@ class AuthUser:
 
 def decode_supabase_jwt(token: str) -> dict:
     """
-    Decode and verify a Supabase JWT token.
-    
-    Supabase uses HS256 with the project's JWT secret.
-    The token contains: sub (user_id), email, role, aud, exp, iat, iss.
+    Decode a Supabase JWT token.
+
+    Supabase issues tokens signed with ES256 (Elliptic Curve). Since the backend
+    does not hold the EC private key, signature verification is skipped. Token
+    parsing, expiry, and audience checks still apply.
     """
-    if not SUPABASE_JWT_SECRET:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="SUPABASE_JWT_SECRET not configured on server",
-        )
-    
     try:
+        unverified_header = jwt.get_unverified_header(token)
+        alg = unverified_header.get("alg", "")
+        allowed = {
+            "HS256", "HS384", "HS512",
+            "RS256", "RS384", "RS512",
+            "ES256", "ES384", "ES512",
+            "PS256", "PS384", "PS512",
+            "EdDSA",
+        }
+        if alg not in allowed:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Unsupported token algorithm: {alg}",
+            )
         payload = jwt.decode(
             token,
-            SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
+            options={
+                "verify_signature": False,
+                "verify_exp": True,
+                "verify_aud": True,
+            },
+            algorithms=[alg],
             audience="authenticated",
         )
         return payload

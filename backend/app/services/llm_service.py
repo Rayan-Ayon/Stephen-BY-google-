@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import time
 from typing import Any
 from google import genai
@@ -8,12 +9,21 @@ from app.core.config import GEMINI_API_KEY, GEMINI_MODEL
 
 logger = logging.getLogger(__name__)
 
-client = genai.Client(api_key=GEMINI_API_KEY)
+_client: genai.Client | None = None
+
+
+def get_client() -> genai.Client:
+    global _client
+    if _client is None:
+        api_key = GEMINI_API_KEY or os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            raise RuntimeError("GEMINI_API_KEY not set in environment")
+        _client = genai.Client(api_key=api_key)
+    return _client
 
 
 async def generate(
     prompt: str,
-    response_schema: dict | None = None,
     response_mime_type: str | None = None,
     system_instruction: str | None = None,
 ) -> dict:
@@ -25,7 +35,7 @@ async def generate(
             system_instruction=system_instruction,
         )
 
-        response = client.models.generate_content(
+        response = await get_client().aio.models.generate_content(
             model=GEMINI_MODEL,
             contents=prompt,
             config=config,
@@ -50,9 +60,8 @@ async def generate(
 
     except Exception as e:
         duration = time.time() - start_time
-        error_msg = str(e)
-        logger.error(f"Generation failed after {duration:.2f}s: {error_msg}")
-        raise Exception(f"LLM generation failed: {error_msg}")
+        logger.error(f"LLM generation failed after {duration:.2f}s: {e}", exc_info=True)
+        raise
 
 
 async def generate_json(
@@ -66,10 +75,3 @@ async def generate_json(
         system_instruction=system_instruction,
     )
     return result
-
-
-async def generate_with_schema(
-    prompt: str,
-    schema: dict,
-) -> dict:
-    return await generate(prompt, response_schema=schema)

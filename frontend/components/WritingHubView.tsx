@@ -25,7 +25,7 @@ const CAMBRIDGE_SERIES: TestSeries[] = Array.from({ length: 15 }, (_, i) => ({
   id: `cambridge-${i + 7}`,
   label: `Cambridge IELTS ${i + 7}`,
   setLabel: `BOOK ${i + 7}`,
-  testCount: 4,
+  testCount: (i + 7) <= 10 ? 2 : 4,
   group: 'cambridge' as const,
 }));
 

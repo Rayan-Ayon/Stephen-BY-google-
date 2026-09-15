@@ -4,7 +4,6 @@ import { toast } from 'sonner';
 import { supabase } from '../../../supabaseClient';
 import {
     TASK2_PROMPTS,
-    GENERAL_TASK1_PROMPTS,
     buildSegments,
     buildBilingual,
     evaluateWritingText,
@@ -34,9 +33,6 @@ export const WRITING_PART1_CHART_DATA: { sport: string; y1997: number; y2017: nu
 const TASK1_ACADEMIC_TITLE = 'The chart below shows the number of adults participating in different major sports in one area, in 1997 and 2017.';
 const TASK1_INSTRUCTION = 'Summarise the information by selecting and reporting the main features, and make comparisons where relevant.';
 const TASK1_WORD_HINT = 'Write at least 150 words.';
-
-const DRAFT_KEY_P1 = 'stephen_enterprise_farmgate_ielts_writing_p1';
-const DRAFT_KEY_P2 = 'stephen_enterprise_farmgate_ielts_writing_p2';
 
 const readDraft = (key: string): string => {
     try { return localStorage.getItem(key) || ''; } catch { return ''; }
@@ -145,8 +141,10 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
 }) => {
     const [testState, setTestState] = useState<TestState>(simulation ? 'active' : 'lobby');
     const [activePart, setActivePart] = useState<1 | 2>(1);
-    const [essayPart1, setEssayPart1] = useState<string>(() => readDraft(DRAFT_KEY_P1));
-    const [essayPart2, setEssayPart2] = useState<string>(() => readDraft(DRAFT_KEY_P2));
+    const draftKeyP1 = `ielts_writing_${sourceType}_${bookNumber}_${testNumber}_${moduleType}_p1`;
+    const draftKeyP2 = `ielts_writing_${sourceType}_${bookNumber}_${testNumber}_${moduleType}_p2`;
+    const [essayPart1, setEssayPart1] = useState<string>(() => readDraft(draftKeyP1));
+    const [essayPart2, setEssayPart2] = useState<string>(() => readDraft(draftKeyP2));
     const [seconds, setSeconds] = useState(simulation ? simulation.timeLimitSeconds : 60 * 60);
     const [result, setResult] = useState<WritingResult | null>(null);
     const [lang, setLang] = useState<'en' | 'bn'>('en');
@@ -159,6 +157,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
     const [dbTask2, setDbTask2] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submissionId, setSubmissionId] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchExamData = async () => {
@@ -173,11 +172,15 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
             if (!error && data && data.length > 0) {
                 const t1 = data.find((q: any) =>
                     q.task_type === 'task_1' &&
-                    (moduleType === 'general' ? q.module_type === 'general' : q.module_type === 'academic')
+                    (moduleType === 'general'
+                        ? ['general', 'general_training'].includes(q.module_type)
+                        : q.module_type === 'academic')
                 );
                 const t2 = data.find((q: any) =>
                     q.task_type === 'task_2' &&
-                    (moduleType === 'general' ? q.module_type === 'general' : q.module_type === 'academic')
+                    (moduleType === 'general'
+                        ? ['general', 'general_training'].includes(q.module_type)
+                        : q.module_type === 'academic')
                 );
                 setDbTask1(t1 || null);
                 setDbTask2(t2 || null);
@@ -217,25 +220,26 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
     const wordCount1 = essayPart1.trim() ? essayPart1.trim().split(/\s+/).length : 0;
     const wordCount2 = essayPart2.trim() ? essayPart2.trim().split(/\s+/).length : 0;
 
-    const t1Prompt = dbTask1?.prompt_text || TASK1_ACADEMIC_TITLE;
-    const t1Instruction = dbTask1?.instruction || TASK1_INSTRUCTION;
+    const t1Prompt = moduleType === 'general'
+        ? (dbTask1?.prompt_text ?? '')
+        : (dbTask1?.prompt_text || TASK1_ACADEMIC_TITLE);
+    const t1Instruction = moduleType === 'general'
+        ? (dbTask1?.instruction ?? '')
+        : (dbTask1?.instruction || TASK1_INSTRUCTION);
     const t1ImageUrl = dbTask1?.image_url || null;
-    const t2Prompt = dbTask2?.prompt_text || TASK2_PROMPTS[0];
+    const t2Prompt = moduleType === 'general'
+        ? (dbTask2?.prompt_text ?? '')
+        : (dbTask2?.prompt_text || TASK2_PROMPTS[0]);
 
     const promptForPart = effectivePart === 1 ? t1Prompt : t2Prompt;
     const instructionForPart = effectivePart === 1 ? t1Instruction : '';
-
-    const prompt = effectivePart === 1
-        ? (testMode === 'task_1_general'
-            ? (dbTask1?.prompt_text || GENERAL_TASK1_PROMPTS[0])
-            : promptForPart)
-        : t2Prompt;
+    const prompt = promptForPart;
 
     const minWords = effectivePart === 2 ? 250 : 150;
     const taskLabel = testMode === 'task_2' ? 'Task 2' : testMode === 'task_1_general' ? 'Task 1 Letter' : effectivePart === 1 ? 'Task 1 Academic' : 'Task 2';
     const pillText = testMode === 'task_1_general' ? '📄 Task 1 Letter Prompt' : effectivePart === 1 ? '📄 Task 1 Prompt' : '📄 Task 2 Prompt';
 
-    const showChart = testMode !== 'task_1_general';
+    const showChart = testMode !== 'task_1_general' && moduleType !== 'general';
 
     if (isLoading) {
         return (
@@ -250,10 +254,10 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
     const updatePart = (value: string) => {
         if (effectivePart === 1) {
             setEssayPart1(value);
-            writeDraft(DRAFT_KEY_P1, value);
+            writeDraft(draftKeyP1, value);
         } else {
             setEssayPart2(value);
-            writeDraft(DRAFT_KEY_P2, value);
+            writeDraft(draftKeyP2, value);
         }
     };
 
@@ -280,7 +284,17 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
         const t2WordCount = t2Text ? t2Text.split(/\s+/).length : 0;
         const showT1 = showTaskSwitcher || effectivePart === 1;
         const showT2 = showTaskSwitcher || effectivePart === 2;
-        const count = (t1WordCount + t2WordCount) || 1;
+
+        // ── Minimum word count guard ──
+        const totalWords = t1WordCount + t2WordCount;
+        if (totalWords === 0) {
+            toast.error('You must write at least something before submitting.');
+            setIsSubmitting(false);
+            setTestState('active');
+            return;
+        }
+
+        const count = totalWords || 1;
         const timeSpent = Math.max(1, Math.round((timeLimit - seconds) / 60));
 
         try {
@@ -288,6 +302,34 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
 
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
+
+            // ── Insert submission row ──
+            const { data: submission, error: subError } = await supabase
+                .from('writing_submissions')
+                .insert({
+                    user_id: session?.user?.id ?? null,
+                    user_email: candidateEmail ?? session?.user?.email ?? null,
+                    source_type: sourceType,
+                    book_or_set_number: bookNumber,
+                    test_number: testNumber,
+                    module_type: moduleType,
+                    task1_prompt: showT1 ? t1Prompt : null,
+                    task1_response: showT1 ? t1Text || null : null,
+                    task1_word_count: showT1 ? t1WordCount : null,
+                    task2_prompt: showT2 ? t2Prompt : null,
+                    task2_response: showT2 ? t2Text || null : null,
+                    task2_word_count: showT2 ? t2WordCount : null,
+                    overall_band: null,
+                    evaluation: {},
+                })
+                .select('id')
+                .single();
+
+            if (subError) {
+                console.error('Failed to save submission:', subError);
+                throw new Error('Could not save submission');
+            }
+            setSubmissionId(submission.id);
 
             const response = await fetch('/api/ielts/evaluate', {
                 method: 'POST',
@@ -304,6 +346,10 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
                     bookOrSetNumber: bookNumber,
                     testNumber,
                     moduleType,
+                    taskType: showT1 && showT2 ? 'full_mock' : showT1 ? 'task_1' : 'task_2',
+                    task1MinWords: 150,
+                    task2MinWords: 250,
+                    submissionId: submission.id,
                 }),
             });
 
@@ -430,6 +476,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
         setShowExitModal(false);
         setShowSubmitModal(false);
         setIsSubmitting(false);
+        setSubmissionId(null);
     };
 
     const handleExit = () => {
