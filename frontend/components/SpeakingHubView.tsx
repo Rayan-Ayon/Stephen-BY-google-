@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
-import NewSpeakingExamRunner from './NewSpeakingExamRunner';
+import LexiSpeakStudio from './enterprise/ielts/LexiSpeakStudio';
+import { useAuth } from '../authContext';
 import ModuleHistorySection from './enterprise/history/ModuleHistorySection';
 
 // ── Data Constants ──────────────────────────────────────────────────────────
@@ -180,6 +181,9 @@ export default function SpeakingHubView({ userEmail }: SpeakingHubViewProps) {
   const [showExam, setShowExam] = useState<boolean>(false);
   const customGradingRef = useRef<HTMLDivElement>(null);
 
+  const { session } = useAuth();
+  const sessionToken = session?.access_token || '';
+
   const handleSubTestClick = (seriesId: string, testIndex: number) => {
     sessionStorage.setItem('speaking_exam_series', seriesId);
     sessionStorage.setItem('speaking_exam_index', String(testIndex));
@@ -204,12 +208,20 @@ export default function SpeakingHubView({ userEmail }: SpeakingHubViewProps) {
   // ── Exam Mode ────────────────────────────────────────────────────────────
   if (showExam) {
     return (
-      <div className="h-[calc(100vh-32px)] bg-[#0B0C0E] flex flex-col overflow-hidden">
-        <NewSpeakingExamRunner
-          userEmail={userEmail}
-          testTitle={sessionStorage.getItem('speaking_exam_series') || 'Speaking Studio'}
-          onExit={() => setShowExam(false)}
+      <div className="h-[calc(100vh-32px)] bg-[#FAFCFF] flex flex-col overflow-hidden">
+        <LexiSpeakStudio
+          sessionToken={sessionToken}
+          onTimer={() => {}}
+          onActiveChange={() => {}}
         />
+        {/* Floating exit button since LexiSpeakStudio has no built-in exit */}
+        <button
+          onClick={() => setShowExam(false)}
+          className="fixed top-4 left-4 z-50 px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 text-[13px] font-medium shadow-md hover:bg-slate-50 transition-all flex items-center gap-2"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
+          Back to Hub
+        </button>
       </div>
     );
   }

@@ -45,8 +45,8 @@
     "semantic_hash": ""
   },
   "backend/app/core/config.py": {
-    "mtime": 1789117432.5256274,
-    "ast_hash": "f4f584b95ac5618622cb33ac4dd46e7a",
+    "mtime": 1789589427.0982647,
+    "ast_hash": "4d8ac01caf00711fc2c799bc68c2d3d9",
     "semantic_hash": ""
   },
   "backend/app/core/security.py": {
@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "backend/app/main.py": {
-    "mtime": 1789298327.2245066,
-    "ast_hash": "d18f3c97569ec50165c1d5c8ef1486d8",
+    "mtime": 1789561050.7005541,
+    "ast_hash": "b502c34013ed1c8efa0ba53f5c553ce8",
     "semantic_hash": ""
   },
   "backend/app/prompts/ai_prompts.py": {
@@ -120,8 +120,8 @@
     "semantic_hash": ""
   },
   "backend/app/services/llm_service.py": {
-    "mtime": 1789397721.4523582,
-    "ast_hash": "46833b93636e51609bde37d090b44fcb",
+    "mtime": 1789845985.641264,
+    "ast_hash": "827b0a13df97182f8a019c783073f02f",
     "semantic_hash": ""
   },
   "backend/app/services/rag_agent_service.py": {
@@ -2235,8 +2235,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Dashboard.tsx": {
-    "mtime": 1789152045.2827191,
-    "ast_hash": "61c30a0faf85dab0bfec3b28ee6ac36e",
+    "mtime": 1789593552.3853416,
+    "ast_hash": "99d92635b2cc0d87703cbd1963975946",
     "semantic_hash": ""
   },
   "frontend/components/DebateView.tsx": {
@@ -2400,8 +2400,8 @@
     "semantic_hash": ""
   },
   "frontend/vite.config.ts": {
-    "mtime": 1781293605.816646,
-    "ast_hash": "76461cb02a701f24a8b44012930003b3",
+    "mtime": 1789589663.1495125,
+    "ast_hash": "77cb20c1a162a815fe821a52baa7733e",
     "semantic_hash": ""
   },
   "test_connection.py": {
@@ -2645,7 +2645,7 @@
     "semantic_hash": ""
   },
   "frontend/supabaseClient.ts": {
-    "mtime": 1789359178.0000718,
+    "mtime": 1789557135.3572268,
     "ast_hash": "4ce52f2e6e23bfd3e14e4de2b937f1a7",
     "semantic_hash": ""
   },
@@ -2830,17 +2830,17 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSSpeakingExam.tsx": {
-    "mtime": 1789115004.009109,
-    "ast_hash": "2bcd2c0cb596d3c6584860a26190ebcc",
+    "mtime": 1789590709.4032502,
+    "ast_hash": "63220475ae2bdeff77b38f34c9fadb9f",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSWritingExam.tsx": {
-    "mtime": 1789397903.9566722,
-    "ast_hash": "e7143b2f3c10b0faaff90cdd500f837f",
+    "mtime": 1789557135.3552258,
+    "ast_hash": "ccae14cea9af8b3f39aaa5c584bacd46",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/ieltsShared.ts": {
-    "mtime": 1789293243.312405,
+    "mtime": 1789557135.3562257,
     "ast_hash": "891bcd56ea8fb66d2dd3d155c5eaa70e",
     "semantic_hash": ""
   },
@@ -2915,8 +2915,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/LexiSpeakStudio.tsx": {
-    "mtime": 1789115004.0111372,
-    "ast_hash": "f119f9516975fe757963523aafd7b2eb",
+    "mtime": 1789842542.3618374,
+    "ast_hash": "bd28ed3c15b6922ead4e1cca5ee9bf5e",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/WritingDashboard.tsx": {
@@ -2930,8 +2930,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/GrammarEvaluationCard.tsx": {
-    "mtime": 1789115004.0001497,
-    "ast_hash": "72f942c468ccfea44b788eea33bd80aa",
+    "mtime": 1789584794.0431263,
+    "ast_hash": "62bff0b17b1cb414cb21b12916658c87",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/curriculum/AICoPilotTestAuthor.tsx": {
@@ -2970,8 +2970,8 @@
     "semantic_hash": ""
   },
   "frontend/components/AISpeakingPartnerView.tsx": {
-    "mtime": 1789115003.9109113,
-    "ast_hash": "4cdd13422a0ab3486907f47ad63e9c4d",
+    "mtime": 1789842520.6119535,
+    "ast_hash": "c56307ae1991125ab8864288e9273c63",
     "semantic_hash": ""
   },
   "frontend/components/AIRewriterView.tsx": {
@@ -3000,7 +3000,7 @@
     "semantic_hash": ""
   },
   "frontend/components/WritingHubView.tsx": {
-    "mtime": 1789329178.7637959,
+    "mtime": 1789557135.3542254,
     "ast_hash": "ff139199772def3f274290f15377b64d",
     "semantic_hash": ""
   },
@@ -3020,13 +3020,13 @@
     "semantic_hash": ""
   },
   "frontend/components/SpeakingHubView.tsx": {
-    "mtime": 1789115003.969968,
-    "ast_hash": "0715b2df162a53e2484d3e077cdb6353",
+    "mtime": 1789593461.0795562,
+    "ast_hash": "8d157090098e92157f08de55a515de26",
     "semantic_hash": ""
   },
   "frontend/components/NewSpeakingExamRunner.tsx": {
-    "mtime": 1789115003.9486048,
-    "ast_hash": "7672c3093ace97549df7ad4544bbe5dc",
+    "mtime": 1789806484.4675057,
+    "ast_hash": "0e7ad9507f06fa0d8c163fbc71a43a52",
     "semantic_hash": ""
   },
   "frontend/components/SpeakUIRestore.tsx": {
@@ -3050,8 +3050,8 @@
     "semantic_hash": ""
   },
   "backend/app/core/auth.py": {
-    "mtime": 1789117416.9489086,
-    "ast_hash": "0484ba9bd9c292cd9c50a6646ff60a77",
+    "mtime": 1789845872.4661455,
+    "ast_hash": "ee4aae6fe618e2d86123652248125fa1",
     "semantic_hash": ""
   },
   "frontend/authContext.tsx": {
@@ -3115,23 +3115,63 @@
     "semantic_hash": ""
   },
   "backend/app/api/routes/ielts.py": {
-    "mtime": 1789397730.6150925,
-    "ast_hash": "2634ecc902ad93c1e4caa3e7b31ecc62",
+    "mtime": 1789560946.2674947,
+    "ast_hash": "46386d2bc0e3a80449ae94b252694bcf",
     "semantic_hash": ""
   },
   "backend/app/schemas/ielts.py": {
-    "mtime": 1789360675.8455021,
-    "ast_hash": "7aa3da7af8c90d5ad2e25a70b151761a",
+    "mtime": 1789557135.330613,
+    "ast_hash": "afa60daac0b7918bc4323895007d73eb",
     "semantic_hash": ""
   },
   "frontend/types/supabase.ts": {
-    "mtime": 1789397684.3381407,
-    "ast_hash": "d6a44ec13ad7e30df2d91cebc0cf1a80",
+    "mtime": 1789557135.3592286,
+    "ast_hash": "2c016789b1985df9250daffa1fb6691b",
     "semantic_hash": ""
   },
   "supabase/functions/evaluate-essay/index.ts": {
-    "mtime": 1789360591.7519968,
+    "mtime": 1789557135.44354,
     "ast_hash": "0f10f324d924697b34b1f514a63faf49",
+    "semantic_hash": ""
+  },
+  "backend/app/api/routes/speaking.py": {
+    "mtime": 1789845993.894838,
+    "ast_hash": "b62221e3f5a0ec2faca92d092bf38113",
+    "semantic_hash": ""
+  },
+  "backend/app/schemas/speaking.py": {
+    "mtime": 1789560986.989352,
+    "ast_hash": "32a3f7323b34ee9ecce2c655f45ca2a7",
+    "semantic_hash": ""
+  },
+  "backend/app/services/supabase_service.py": {
+    "mtime": 1789557135.3493316,
+    "ast_hash": "ffd14202e6645cb07859c135d39dac80",
+    "semantic_hash": ""
+  },
+  "frontend/components/pcm-processor.js": {
+    "mtime": 1789589405.060397,
+    "ast_hash": "79c981b808ab3bf6b6398d6efc80e9f8",
+    "semantic_hash": ""
+  },
+  "frontend/public/components/pcm-processor.js": {
+    "mtime": 1789842497.1629312,
+    "ast_hash": "c4ec42c28c482a5b603144928455daa5",
+    "semantic_hash": ""
+  },
+  "frontend/public/worklets/pcm-processor.js": {
+    "mtime": 1789842485.162747,
+    "ast_hash": "c4ec42c28c482a5b603144928455daa5",
+    "semantic_hash": ""
+  },
+  "scratch/test_ws_connection.py": {
+    "mtime": 1789845157.7431657,
+    "ast_hash": "685910565b8c077d5be2fa4dd5468f4c",
+    "semantic_hash": ""
+  },
+  "backend/debug_gemini_audio.wav": {
+    "mtime": 1789845807.0532703,
+    "ast_hash": "60044c26ad0be93daed05d2f7e0c4a30",
     "semantic_hash": ""
   }
 }

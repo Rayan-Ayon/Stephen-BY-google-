@@ -40,7 +40,7 @@ import IELTSEvaluationHub from './enterprise/IELTSEvaluationHub';
 import ReadingHubView from './ReadingHubView';
 import WritingHubView from './WritingHubView';
 import ListeningHubView from './ListeningHubView';
-import SpeakingHubView from './SpeakingHubView';
+import IELTSSpeakingExam from './enterprise/ielts/IELTSSpeakingExam';
 import FullMockTestHub from './FullMockTestHub';
 import PartPracticeHub from './PartPracticeHub';
 import SpeakUIRestore from './SpeakUIRestore';
@@ -381,7 +381,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                 )
                 : <WorkspaceOverview userEmail={userEmail} onNavigate={handleNavigate} />;
             case 'ielts_dashboard': return <IELTSEvaluationHub key="ielts_dashboard" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="dashboard" hideInternalNav />;
-            case 'speaking_studio': return <SpeakingHubView userEmail={userEmail} />;
+            case 'speaking_studio': return <IELTSSpeakingExam candidateEmail={userEmail} onActiveChange={setIsExamActive} exitPulse={exitPulse} />;
             case 'listening_engine': return <ListeningHubView userEmail={userEmail} />;
             case 'reading_hub': return <ReadingHubView userEmail={userEmail} />;
             case 'writing_lab':

@@ -1,10 +1,11 @@
 fastapi
 uvicorn
+uvicorn[standard]
+websockets
 youtube-transcript-api
 openai
 pydantic
 python-dotenv
-uvicorn[standard]
 google-genai
 sqlalchemy
 aiosqlite

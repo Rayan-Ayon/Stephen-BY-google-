@@ -191,7 +191,7 @@ async def evaluate_writing(
                     "raw_json_feedback": data,
                 }).execute()
 
-                db.table("writing_submissions").update({
+                db.table("user_submissions").update({
                     "overall_band": response.overallBand,
                     "evaluation": data,
                 }).eq("id", request.submissionId).execute()

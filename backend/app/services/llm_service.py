@@ -29,39 +29,49 @@ async def generate(
 ) -> dict:
     start_time = time.time()
 
-    try:
-        config = types.GenerateContentConfig(
-            response_mime_type=response_mime_type,
-            system_instruction=system_instruction,
-        )
+    fallback_models = [GEMINI_MODEL, "gemini-3.5-flash", "gemini-3.1-flash-lite"]
+    last_error = None
 
-        response = await get_client().aio.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=prompt,
-            config=config,
-        )
-
-        duration = time.time() - start_time
-        text = response.text
-
-        logger.info(f"Generated content in {duration:.2f}s | model={GEMINI_MODEL}")
-        logger.info(f"Raw response: {text[:200]}...")
-
+    for model_name in fallback_models:
         try:
-            result = json.loads(text)
-        except json.JSONDecodeError:
-            result = text
+            config = types.GenerateContentConfig(
+                response_mime_type=response_mime_type,
+                system_instruction=system_instruction,
+            )
 
-        return {
-            "data": result,
-            "model": GEMINI_MODEL,
-            "duration": duration,
-        }
+            response = await get_client().aio.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=config,
+            )
 
-    except Exception as e:
-        duration = time.time() - start_time
-        logger.error(f"LLM generation failed after {duration:.2f}s: {e}", exc_info=True)
-        raise
+            duration = time.time() - start_time
+            text = response.text
+
+            logger.info(f"Generated content in {duration:.2f}s | model={model_name}")
+            logger.info(f"Raw response: {text[:200]}...")
+
+            try:
+                result = json.loads(text)
+            except json.JSONDecodeError:
+                result = text
+
+            return {
+                "data": result,
+                "model": model_name,
+                "duration": duration,
+            }
+
+        except Exception as e:
+            last_error = e
+            logger.warning(f"Model {model_name} failed: {e}. Trying fallback...")
+            continue
+
+    duration = time.time() - start_time
+    logger.error(f"LLM generation failed for all fallback models after {duration:.2f}s: {last_error}", exc_info=True)
+    if last_error:
+        raise last_error
+    raise RuntimeError("No models succeeded")
 
 
 async def generate_json(

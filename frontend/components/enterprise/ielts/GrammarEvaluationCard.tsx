@@ -64,12 +64,16 @@ interface GrammarEvaluationCardProps {
     rangeScore?: number;
     accuracyScore?: number;
     overallScore?: number;
+    sentenceComplexity?: string[];
+    errors?: string[];
 }
 
 const GrammarEvaluationCard: React.FC<GrammarEvaluationCardProps> = ({
     rangeScore = 7.0,
     accuracyScore = 6.0,
     overallScore = 7.0,
+    sentenceComplexity = [],
+    errors = [],
 }) => {
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [isRangeProofOpen, setIsRangeProofOpen] = useState(false);
@@ -78,7 +82,25 @@ const GrammarEvaluationCard: React.FC<GrammarEvaluationCardProps> = ({
     const [selectedStructureFilter, setSelectedStructureFilter] = useState('All');
     const [showMoreRangeCount, setShowMoreRangeCount] = useState(0);
 
-    const filteredProofs = SENTENCE_PROOFS.filter((p) => {
+    const dynamicProofs: SentenceProof[] = sentenceComplexity.length > 0
+        ? sentenceComplexity.map((text, i) => ({
+            id: `s${i + 1}`,
+            type: (text.toLowerCase().includes('complex') ? 'Complex' : text.toLowerCase().includes('compound') ? 'Compound' : 'Simple') as 'Complex' | 'Compound' | 'Simple',
+            structure: 'None' as const,
+            text,
+        }))
+        : SENTENCE_PROOFS;
+
+    const dynamicErrors: AccuracyError[] = errors.length > 0
+        ? errors.map((text, i) => ({
+            id: `e${i + 1}`,
+            original: text,
+            corrected: text,
+            fullSentence: { before: '', erroneous: text, replacement: text, after: '' },
+        }))
+        : ACCURACY_ERRORS;
+
+    const filteredProofs = dynamicProofs.filter((p) => {
         const typeMatch = selectedTypeFilter === 'All' || p.type === selectedTypeFilter;
         const structMatch = selectedStructureFilter === 'All' || p.structure === selectedStructureFilter;
         return typeMatch && structMatch;
@@ -86,18 +108,18 @@ const GrammarEvaluationCard: React.FC<GrammarEvaluationCardProps> = ({
     const visibleProofs = filteredProofs.slice(0, 2 + showMoreRangeCount);
 
     const typeCounts = {
-        All: SENTENCE_PROOFS.length,
-        Complex: SENTENCE_PROOFS.filter((p) => p.type === 'Complex').length,
-        Compound: SENTENCE_PROOFS.filter((p) => p.type === 'Compound').length,
-        Simple: SENTENCE_PROOFS.filter((p) => p.type === 'Simple').length,
+        All: dynamicProofs.length,
+        Complex: dynamicProofs.filter((p) => p.type === 'Complex').length,
+        Compound: dynamicProofs.filter((p) => p.type === 'Compound').length,
+        Simple: dynamicProofs.filter((p) => p.type === 'Simple').length,
     };
 
     const structureCounts = {
-        All: SENTENCE_PROOFS.length,
-        'Relative clause': SENTENCE_PROOFS.filter((p) => p.structure === 'Relative clause').length,
-        'Contrast clause': SENTENCE_PROOFS.filter((p) => p.structure === 'Contrast clause').length,
-        'Reason clause': SENTENCE_PROOFS.filter((p) => p.structure === 'Reason clause').length,
-        None: SENTENCE_PROOFS.filter((p) => p.structure === 'None').length,
+        All: dynamicProofs.length,
+        'Relative clause': dynamicProofs.filter((p) => p.structure === 'Relative clause').length,
+        'Contrast clause': dynamicProofs.filter((p) => p.structure === 'Contrast clause').length,
+        'Reason clause': dynamicProofs.filter((p) => p.structure === 'Reason clause').length,
+        None: dynamicProofs.filter((p) => p.structure === 'None').length,
     };
 
     return (
@@ -253,7 +275,7 @@ const GrammarEvaluationCard: React.FC<GrammarEvaluationCardProps> = ({
                                     <div className="border border-slate-200 rounded-lg p-4 bg-white space-y-2">
                                         <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Suggested Fix</span>
                                         <div className="text-sm text-slate-700 leading-relaxed">
-                                            {ACCURACY_ERRORS.map((err) => (
+                                            {dynamicErrors.map((err) => (
                                                 <span key={err.id}>
                                                     {err.fullSentence.before}
                                                     <span className="bg-red-100 text-red-600 line-through px-1.5 py-0.5 rounded text-xs font-medium mx-0.5">{err.fullSentence.erroneous}</span>

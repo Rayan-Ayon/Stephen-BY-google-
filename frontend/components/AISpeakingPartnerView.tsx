@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useAuth } from '../authContext';
 
 // ── Types ──
 
@@ -88,77 +89,10 @@ const LANGUAGE_LABELS: Record<Language, string> = {
     en: 'English',
 };
 
-// ── Mock AI Responses (Bengali+English for Mohona, English for others) ──
+// ── WebSocket helpers ──
+// (MOCK_RESPONSES removed — AI responses now come from Gemini Live via WebSocket)
 
-const MOCK_RESPONSES: Record<string, string[]> = {
-    Mohona: [
-        'ভাই আমার ২ইই গ্রেট, থ্যাংকস! তুমি কেমন আছো? চলো, আজকে আমরা আমাদের স্পিকিং প্র্যাকটিসটা শুরু করি।',
-        'ওহ, খুব ভালো উত্তর দিচ্ছো! তুমি কি আরো বিস্তারিত বলতে পারো? Like, can you give me an example from your life?',
-        'Very good! তোমার pronunciation টা অনেক ভালো হচ্ছে। But let\'s work on your fluency a bit more, ঠিক আছে?',
-        'Hmm, একটু ভেবে বলো। Don\'t rush! Take your time and structure your answer properly.',
-        'Wow, তুমি তো অসাধারণ! Your vocabulary is improving day by day. চলো এবার একটু harder topic নেই।',
-        'Nice try! But I think you can do better. Try to use more connecting words like "furthermore", "however" — এরকম শব্দ ব্যবহার করো।',
-        'Bahut accha! তুমি খুব দ্রুত শিখছো। Now tell me about a memorable journey you\'ve taken. বাংলায় বা English যেকোনো ভাষায় বলো।',
-        'Excellent! তোমার response টা অনেক structured। Keep it up! Let me ask you something about the environment next.',
-    ],
-    James: [
-        'Good morning. I\'d like to begin by asking you some questions about your hometown. Please describe it in detail.',
-        'That\'s a reasonable response. However, I need you to elaborate further. Can you provide specific examples?',
-        'Your grammar is acceptable, but your vocabulary range could be broader. Try using more academic terms.',
-        'I see. Now let\'s move on to a more abstract topic. How do you think technology has changed education?',
-        'Well articulated. Your coherence is improving. Let me challenge you with a Part 3 question now.',
-        'Not bad, but watch your tense usage. You shifted from past to present inconsistently. Try again.',
-        'Your fluency is commendable. Now, let\'s discuss something related to the environment. What role should governments play?',
-        'Good effort. Remember, in the real exam, you have very limited time to think. Practice being more spontaneous.',
-    ],
-    Priya: [
-        'Hey! Kaise ho? I\'m so excited to practice with you today! Don\'t worry, we\'ll go at your pace, theek hai?',
-        'That was really good! You\'re doing amazing. Let me ask you something fun — what\'s your favourite hobby?',
-        'Don\'t stress about mistakes, yaar! That\'s how we learn. Just relax and speak naturally.',
-        'Oh wow, I love that answer! Can you tell me more? I\'m genuinely curious about your experience.',
-        'You\'re getting better every time! Let\'s try a role-play now. Imagine you\'re at a restaurant. What would you order?',
-        'Arrey, that\'s perfect! See, I told you — you\'re much better than you think. Let\'s keep going!',
-        'Hmm, nice try! But let me correct you slightly — it\'s "I have been" not "I has been." Practice this form, theek hai?',
-        'Superb! Your confidence is growing. Let me ask you about your future plans now. Take your time!',
-    ],
-    Alex: [
-        'Alright, let\'s GO! Time to push your Band 7+ skills. First question — what makes a good leader?',
-        'YES! That\'s the energy I need! But let\'s sharpen that vocabulary. Instead of "good," try "effective" or "inspiring."',
-        'Quick fire round! Name three advantages of learning a second language. Go!',
-        'Solid answer! Now flip it — what are the disadvantages? You have 30 seconds. Go!',
-        'Love the confidence! Now let\'s work on your Part 2. I\'ll give you a cue card topic in 5 seconds...',
-        'Boom! That was clean. Your fluency is on point today. Let me throw a Part 3 curveball at you.',
-        'Almost perfect! Just watch your article usage — "the" vs "a" matters in the exam. Keep grinding!',
-        'Incredible progress! You\'re definitely on track for Band 7+. One more question — what\'s your biggest weakness in English?',
-    ],
-    Sofia: [
-        'Hello! Let\'s focus on precision today. I want you to speak in full, grammatically correct sentences. Ready?',
-        'Good start, but I noticed a subject-verb agreement error. "He go" should be "He goes." Let\'s fix these.',
-        'Your pronunciation of "thorough" needs work. It\'s /ˈθʌrə/, not /ˈtʊrə/. Practice this sound.',
-        'Excellent sentence structure! Now, let me ask you to describe a process. Use sequence words like "firstly," "subsequently."',
-        'I like your effort, but your tense consistency needs improvement. You switched from past to present mid-sentence.',
-        'That\'s much better! Your conditional sentences are improving. "If I had known" — perfect form!',
-        'One more thing — watch your preposition usage. It\'s "interested in," not "interested about." Small details matter!',
-        'Well done today! Your grammar has noticeably improved. Keep practicing those complex sentence structures.',
-    ],
-    Noah: [
-        'Salaam! Let\'s work on your extended discourse today. I want you to speak for a full 2 minutes on any topic.',
-        'That\'s a good start, but try to develop your ideas more. Give reasons, examples, and personal experiences.',
-        'Remember, Part 2 is about structure. Start with a direct answer, then expand with details. Let\'s try again.',
-        'Your fluency is improving! Now let\'s move to Part 3. I want you to express and justify your opinion on this...',
-        'Good point! But can you develop that idea further? In the exam, Examiners want to see depth of thinking.',
-        'Nice! Your extended response is getting better. Let me ask a follow-up question to push you further.',
-        'Almost there! Try to avoid long pauses. If you need thinking time, use fillers like "That\'s an interesting question..."',
-        'Excellent session today! Your ability to sustain longer responses has improved significantly. Keep it up!',
-    ],
-};
-
-const getMockResponse = (partnerName: string): string => {
-    const responses = MOCK_RESPONSES[partnerName] || MOCK_RESPONSES['Mohona'];
-    return responses[Math.floor(Math.random() * responses.length)];
-};
-
-// ── Pre-populated Mock Recordings ──
+// ── Pre-populated Recordings (Clean Sample History) ──
 
 const MOCK_RECORDINGS: RecordingSession[] = [
     {
@@ -170,93 +104,34 @@ const MOCK_RECORDINGS: RecordingSession[] = [
         duration: '2:26',
         elapsed: 146,
         messages: [
-            { id: 1, sender: 'ai', text: 'Hi there! I\'m Mohona. Friendly tutor. Let\'s begin our speaking practice. How are you today?', timestamp: '7:22:05 AM' },
-            { id: 2, sender: 'user', text: 'I\'m doing well, thank you! I\'d like to practice my speaking today.', timestamp: '7:22:15 AM' },
-            { id: 3, sender: 'ai', text: 'ভালো! চলো শুরু করি। Tell me about your hometown. What do you like most about it?', timestamp: '7:22:20 AM' },
-            { id: 4, sender: 'user', text: 'I come from a small town called Jamalpur. It\'s known for its beautiful rivers and green landscapes.', timestamp: '7:22:35 AM' },
-            { id: 5, sender: 'ai', text: 'ওহ, খুব সুন্দর! That sounds wonderful. Can you tell me more about the Jamalpur region? What makes it special?', timestamp: '7:22:42 AM' },
-            { id: 6, sender: 'user', text: 'And I like about the Jamalpur region is that it has a very peaceful rural atmosphere. People are friendly.', timestamp: '7:22:55 AM' },
-            { id: 7, sender: 'ai', text: 'Very good! তোমার pronunciation টা অনেক ভালো হচ্ছে। But let\'s work on your fluency a bit more, ঠিক আছে?', timestamp: '7:23:05 AM' },
-            { id: 8, sender: 'user', text: 'Yes, definitely. I want to improve my fluency and also learn more vocabulary.', timestamp: '7:23:15 AM' },
-        ],
-    },
-    {
-        id: 'rec_2',
-        partnerName: 'James',
-        partnerInitials: 'JA',
-        partnerColor: 'bg-blue-500',
-        date: 'May 21, 2026',
-        duration: '5:12',
-        elapsed: 312,
-        messages: [
-            { id: 1, sender: 'ai', text: 'Good morning. I\'d like to begin by asking you some questions about your hometown. Please describe it in detail.', timestamp: '10:05:12 AM' },
-            { id: 2, sender: 'user', text: 'I come from Dhaka, the capital of Bangladesh. It\'s a vibrant city with millions of people.', timestamp: '10:05:25 AM' },
-            { id: 3, sender: 'ai', text: 'That\'s a reasonable response. However, I need you to elaborate further. Can you provide specific examples?', timestamp: '10:05:35 AM' },
-        ],
-    },
-    {
-        id: 'rec_3',
-        partnerName: 'Priya',
-        partnerInitials: 'PR',
-        partnerColor: 'bg-violet-500',
-        date: 'May 15, 2026',
-        duration: '3:45',
-        elapsed: 225,
-        messages: [
-            { id: 1, sender: 'ai', text: 'Hey! Kaise ho? I\'m so excited to practice with you today! Don\'t worry, we\'ll go at your pace, theek hai?', timestamp: '4:30:10 PM' },
-            { id: 2, sender: 'user', text: 'Hi Priya! I\'m a bit nervous but excited to practice.', timestamp: '4:30:20 PM' },
-            { id: 3, sender: 'ai', text: 'Don\'t stress about mistakes, yaar! That\'s how we learn. Just relax and speak naturally.', timestamp: '4:30:28 PM' },
-        ],
-    },
-    {
-        id: 'rec_4',
-        partnerName: 'Alex',
-        partnerInitials: 'AL',
-        partnerColor: 'bg-orange-500',
-        date: 'May 10, 2026',
-        duration: '4:08',
-        elapsed: 248,
-        messages: [
-            { id: 1, sender: 'ai', text: 'Alright, let\'s GO! Time to push your Band 7+ skills. First question — what makes a good leader?', timestamp: '2:15:05 PM' },
-            { id: 2, sender: 'user', text: 'A good leader should be decisive, empathetic, and able to inspire their team.', timestamp: '2:15:18 PM' },
-            { id: 3, sender: 'ai', text: 'YES! That\'s the energy I need! But let\'s sharpen that vocabulary. Instead of "good," try "effective" or "inspiring."', timestamp: '2:15:25 PM' },
+            { id: 1, sender: 'ai', text: 'Hi there! I\'m Mohona. Let\'s begin our IELTS Speaking practice. How are you today?', timestamp: '7:22:05 AM' },
+            { id: 2, sender: 'user', text: 'I\'m doing well, thank you! I\'d like to practice Part 1 today.', timestamp: '7:22:15 AM' },
         ],
     },
 ];
 
-// ── Mock AI Evaluation ──
-
-const MOCK_EVALUATION: Evaluation = {
-    overallBand: 6.5,
-    fluency: 6.5,
-    lexical: 6.5,
-    grammar: 6.0,
-    pronunciation: 6.5,
-    feedback: 'You demonstrated good fluency and natural transitions throughout the conversation. Your tone was confident and you maintained a steady rhythm. With a few refinements in grammar and vocabulary range, you could easily reach Band 7.0.',
-    strengths: [
-        'Used a wide range of vocabulary naturally, including idiomatic expressions',
-        'Employed natural fillers like "you know" and "I mean" effectively',
-        'Good use of adverbs to modify sentences and add nuance',
-    ],
-    improvements: [
-        'Watch your pronoun usage — ensure subject-verb agreement in longer sentences',
-        'Practice using infinitives correctly after certain verbs (e.g., "plan to stay" not "plan of staying")',
-        'Work on wrapping up conversations smoothly with summary phrases',
-    ],
-    corrections: [
-        { said: 'and I like about the Jamalpur region is that...', try: 'and what I like most about the Jamalpur region is that...' },
-        { said: "I don't have a permanent plan of staying there...", try: "I don't have any permanent plans to stay there..." },
-    ],
-    pronunciationTips: [
-        'Practice linking words together smoothly: "want_to" → "wanna", "going_to" → "gonna"',
-        'Pay attention to word stress in multi-syllable words like "beautiful" and "important"',
-        'Use contrastive stress to emphasize key points: "I said RED, not BLUE"',
-    ],
-    vocabularySuggestions: [
-        { word: 'rural atmosphere', alternatives: ['rustic charm', 'tranquil countryside setting'] },
-        { word: 'nice place', alternatives: ['charming destination', 'delightful location'] },
-    ],
-};
+// ── Downsample Float32Array audio to 16,000 Hz ──
+function downsampleTo16kHz(input: Float32Array, inputSampleRate: number): Float32Array {
+    if (!input || inputSampleRate === 16000) return input;
+    const ratio = inputSampleRate / 16000;
+    const newLength = Math.floor(input.length / ratio);
+    const result = new Float32Array(newLength);
+    let offsetResult = 0;
+    let offsetInput = 0;
+    while (offsetResult < newLength) {
+        const nextOffsetInput = Math.round((offsetResult + 1) * ratio);
+        let accum = 0;
+        let count = 0;
+        for (let i = offsetInput; i < nextOffsetInput && i < input.length; i++) {
+            accum += input[i];
+            count++;
+        }
+        result[offsetResult] = count > 0 ? accum / count : 0;
+        offsetResult++;
+        offsetInput = nextOffsetInput;
+    }
+    return result;
+}
 
 // ── Inline SVG Icons ──
 
@@ -378,6 +253,7 @@ const TOTAL_SESSION_MINUTES = 120;
 interface AIScoringAccordionProps {
     evalState: EvalState;
     evaluation: Evaluation | null;
+    evalError: string | null;
     onEvaluate: () => void;
 }
 
@@ -434,19 +310,32 @@ const SCORING_CRITERIA: ScoringCriterion[] = [
     },
 ];
 
-const MOCK_PROOF_QUESTIONS = [
-    { q: 'Tell me about your hometown.', a: 'I come from Jamalpur, which is in the Mymensingh division. It\'s a small town near the Brahmaputra River.', rating: 5 },
-    { q: 'What do you like most about living there?', a: 'I like about the Jamalpur region is that it has a very peaceful environment and people are really friendly with each other.', rating: 4 },
-    { q: 'Do you plan to live there in the future?', a: 'I don\'t have a permanent plan of staying there because I want to explore other cities for better opportunities.', rating: 5 },
-];
-
-function AIScoringAccordion({ evalState, evaluation, onEvaluate }: AIScoringAccordionProps) {
+function AIScoringAccordion({ evalState, evaluation, evalError, onEvaluate }: AIScoringAccordionProps) {
     const [expandedCriterion, setExpandedCriterion] = useState<string | null>(null);
     const [expandedSubCriterion, setExpandedSubCriterion] = useState<string | null>(null);
     const [expandedProof, setExpandedProof] = useState<string | null>(null);
-    const [proofFilter, setProofFilter] = useState<'ALL' | 'EXCELLENT' | 'STRONG' | 'Clear'>('ALL');
 
-    if (evalState === 'idle') {
+    if (evalError) {
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center my-4">
+                <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <p className="text-sm font-semibold text-red-800 mb-1">Evaluation Unavailable</p>
+                <p className="text-xs text-red-600 mb-4">{evalError}</p>
+                <button
+                    onClick={onEvaluate}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition-colors shadow-sm"
+                >
+                    Retry Evaluation
+                </button>
+            </div>
+        );
+    }
+
+    if (evalState === 'idle' && !evaluation) {
         return (
             <div className="text-center py-12">
                 <ChartBarIcon className="w-12 h-12 text-indigo-400 mx-auto mb-4" />
@@ -470,13 +359,6 @@ function AIScoringAccordion({ evalState, evaluation, onEvaluate }: AIScoringAcco
     }
 
     if (!evaluation) return null;
-
-    const filteredProofs = MOCK_PROOF_QUESTIONS.filter(q => {
-        if (proofFilter === 'ALL') return true;
-        if (proofFilter === 'EXCELLENT') return q.rating === 5;
-        if (proofFilter === 'STRONG') return q.rating === 4;
-        return q.rating <= 3;
-    });
 
     return (
         <div className="space-y-5">
@@ -554,39 +436,17 @@ function AIScoringAccordion({ evalState, evaluation, onEvaluate }: AIScoringAcco
                                                     </button>
 
                                                     {expandedProof === subKey && (
-                                                        <div className="mt-3 space-y-3">
-                                                            <div className="flex items-center gap-3 text-[11px]">
-                                                                <span className="font-semibold text-gray-700">Avg Rating: <span className="text-indigo-600">4.7/5</span></span>
-                                                                <span className="text-gray-400">•</span>
-                                                                <span className="font-semibold text-gray-700">Questions: <span className="text-indigo-600">{MOCK_PROOF_QUESTIONS.length}</span></span>
-                                                            </div>
-                                                            <div className="flex gap-1.5">
-                                                                {(['ALL', 'EXCELLENT', 'STRONG', 'Clear'] as const).map(f => (
-                                                                    <button
-                                                                        key={f}
-                                                                        onClick={() => setProofFilter(f)}
-                                                                        className={`px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all ${
-                                                                            proofFilter === f
-                                                                                ? 'bg-indigo-500 text-white'
-                                                                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                                                                        }`}
-                                                                    >
-                                                                        {f} ({f === 'ALL' ? MOCK_PROOF_QUESTIONS.length : MOCK_PROOF_QUESTIONS.filter(q => f === 'EXCELLENT' ? q.rating === 5 : f === 'STRONG' ? q.rating === 4 : q.rating <= 3).length})
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                            <div className="space-y-2">
-                                                                {filteredProofs.map((pq, i) => (
-                                                                    <div key={i} className="bg-white border border-gray-100 rounded-xl p-3 space-y-1.5">
-                                                                        <div className="flex items-center gap-2">
-                                                                            <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Q{i + 1}</span>
-                                                                            <span className="text-[10px] text-gray-400">Rating: {pq.rating}/5</span>
-                                                                        </div>
-                                                                        <p className="text-[11px] text-gray-500 italic">Q: {pq.q}</p>
-                                                                        <p className="text-xs text-gray-700 font-medium">A: {pq.a}</p>
+                                                        <div className="mt-3 space-y-2">
+                                                            {evaluation.corrections && evaluation.corrections.length > 0 ? (
+                                                                evaluation.corrections.map((c, i) => (
+                                                                    <div key={i} className="bg-white border border-gray-100 rounded-xl p-3 space-y-1">
+                                                                        <p className="text-[11px] text-gray-500 line-through">You said: {c.said}</p>
+                                                                        <p className="text-xs text-indigo-700 font-semibold">Suggested: {c.try}</p>
                                                                     </div>
-                                                                ))}
-                                                            </div>
+                                                                ))
+                                                            ) : (
+                                                                <p className="text-xs text-gray-500 italic p-2">No specific proof corrections recorded for this response.</p>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
@@ -604,6 +464,8 @@ function AIScoringAccordion({ evalState, evaluation, onEvaluate }: AIScoringAcco
 }
 
 const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail }) => {
+    const { session } = useAuth();
+
     const [voiceMode, setVoiceMode] = useState<VoiceMode>('realistic');
     const [selectedPartner, setSelectedPartner] = useState<string>('Mohona');
     const [selectedLanguage, setSelectedLanguage] = useState<Language>('bn');
@@ -620,8 +482,23 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
     const [streamingText, setStreamingText] = useState('');
     const [streamingMessageId, setStreamingMessageId] = useState<number | null>(null);
     const [speakerMuted, setSpeakerMuted] = useState(false);
+    const [wsError, setWsError] = useState<string | null>(null);
     const nextMsgId = useRef(1);
     const transcriptEndRef = useRef<HTMLDivElement>(null);
+
+    // WebSocket + Audio pipeline refs
+    const wsRef = useRef<WebSocket | null>(null);
+    const audioCtxRef = useRef<AudioContext | null>(null);
+    const micStreamRef = useRef<MediaStream | null>(null);
+    const workletNodeRef = useRef<AudioWorkletNode | null>(null);
+    const micSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+    const isMicActiveRef = useRef(false);
+    // Playback queue for 24kHz PCM audio from Gemini
+    const playbackQueueRef = useRef<ArrayBuffer[]>([]);
+    const isPlayingAudioRef = useRef(false);
+    const playbackCtxRef = useRef<AudioContext | null>(null);
+    // Accumulate live transcript turns for post-call eval
+    const liveTranscriptTurnsRef = useRef<{ role: string; text: string }[]>([]);
 
     // Recordings & Drawer
     const [recordings, setRecordings] = useState<RecordingSession[]>(MOCK_RECORDINGS);
@@ -637,6 +514,7 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
     // AI Evaluation
     const [evalState, setEvalState] = useState<EvalState>('idle');
     const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
+    const [evalError, setEvalError] = useState<string | null>(null);
 
     // Live Call tab switching (Transcript / AI Feedback / AI Scoring)
     const [liveTab, setLiveTab] = useState<'transcript' | 'feedback' | 'scoring'>('transcript');
@@ -657,28 +535,21 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
         transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [transcript]);
 
-    // ── Typewriter Streaming Effect ─────────────────────────────────────
+    // ── Cleanup WS + audio on unmount ──────────────────────────────────
     useEffect(() => {
-        if (!isPartnerSpeaking || !streamingText || streamingMessageId === null) return;
-        const words = streamingText.split(' ');
-        let currentIndex = 0;
-        const interval = window.setInterval(() => {
-            currentIndex++;
-            setTranscript(prev => prev.map(msg =>
-                msg.id === streamingMessageId
-                    ? { ...msg, text: words.slice(0, currentIndex).join(' ') }
-                    : msg
-            ));
-            if (currentIndex >= words.length) {
-                window.clearInterval(interval);
-                setIsPartnerSpeaking(false);
-                setTranscript(prev => prev.map(msg =>
-                    msg.id === streamingMessageId ? { ...msg, isStreaming: false } : msg
-                ));
+        return () => { _teardownAudio(); };
+    }, []);
+
+    // ── Sync speaker mute to playback context ──────────────────────────
+    useEffect(() => {
+        if (playbackCtxRef.current) {
+            if (speakerMuted) {
+                playbackCtxRef.current.suspend();
+            } else {
+                playbackCtxRef.current.resume();
             }
-        }, 60);
-        return () => window.clearInterval(interval);
-    }, [isPartnerSpeaking, streamingText, streamingMessageId]);
+        }
+    }, [speakerMuted]);
 
     // ── Playback Timer ──────────────────────────────────────────────────
     useEffect(() => {
@@ -716,8 +587,238 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
         });
     };
 
+    // ── Audio Teardown ───────────────────────────────────────────────────
+    const _teardownAudio = () => {
+        isMicActiveRef.current = false;
+        workletNodeRef.current?.disconnect();
+        workletNodeRef.current = null;
+        micSourceRef.current?.disconnect();
+        micSourceRef.current = null;
+        micStreamRef.current?.getTracks().forEach(t => t.stop());
+        micStreamRef.current = null;
+        if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+            audioCtxRef.current.close();
+        }
+        audioCtxRef.current = null;
+        if (playbackCtxRef.current && playbackCtxRef.current.state !== 'closed') {
+            playbackCtxRef.current.close();
+        }
+        playbackCtxRef.current = null;
+        playbackQueueRef.current = [];
+        isPlayingAudioRef.current = false;
+    };
+
+    // ── Schedule the next 24kHz PCM chunk for playback ──────────────────
+    const _scheduleNextAudioChunk = useCallback((startAt: number): number => {
+        const ctx = playbackCtxRef.current;
+        if (!ctx || playbackQueueRef.current.length === 0) {
+            isPlayingAudioRef.current = false;
+            return startAt;
+        }
+        const raw = playbackQueueRef.current.shift()!;
+        const pcm16 = new Int16Array(raw);
+        const float32 = new Float32Array(pcm16.length);
+        for (let i = 0; i < pcm16.length; i++) {
+            float32[i] = pcm16[i] / 32768.0;
+        }
+        const buffer = ctx.createBuffer(1, float32.length, 24000);
+        buffer.getChannelData(0).set(float32);
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        const playAt = Math.max(startAt, ctx.currentTime);
+        source.start(playAt);
+        const nextStart = playAt + buffer.duration;
+        source.onended = () => {
+            if (playbackQueueRef.current.length > 0) {
+                _scheduleNextAudioChunk(nextStart);
+            } else {
+                isPlayingAudioRef.current = false;
+                setIsPartnerSpeaking(false);
+            }
+        };
+        return nextStart;
+    }, []);
+
+    // ── Enqueue audio chunk received from backend ───────────────────────
+    const _enqueueAudioChunk = useCallback((data: ArrayBuffer) => {
+        if (!playbackCtxRef.current) {
+            playbackCtxRef.current = new AudioContext({ sampleRate: 24000 });
+        }
+        playbackQueueRef.current.push(data);
+        setIsPartnerSpeaking(true);
+        if (!isPlayingAudioRef.current) {
+            isPlayingAudioRef.current = true;
+            _scheduleNextAudioChunk(playbackCtxRef.current.currentTime);
+        }
+    }, [_scheduleNextAudioChunk]);
+
+    // ── Open WebSocket session ───────────────────────────────────────────
+    const _openWebSocket = useCallback(async () => {
+        const token = session?.access_token;
+        if (!token) {
+            setWsError('Not authenticated. Please sign in and try again.');
+            return;
+        }
+
+        const part = 1; // IELTS Part 1 — can be wired to a selector later
+        const wsUrl = `ws://localhost:8000/api/ielts/ws/speaking-session?token=${encodeURIComponent(token)}&part=${part}`;
+        console.log('[STEPHEN][WS] Connecting to', wsUrl);
+
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
+        ws.binaryType = 'arraybuffer';
+
+        ws.onopen = () => {
+            console.log('[STEPHEN][WS] Connected');
+            setWsError(null);
+            ws.send(JSON.stringify({ type: 'start' }));
+        };
+
+        ws.onmessage = (evt) => {
+            // Binary frame = audio PCM from Gemini
+            if (evt.data instanceof ArrayBuffer) {
+                _enqueueAudioChunk(evt.data);
+                return;
+            }
+            // Text frame = JSON control message
+            try {
+                const msg = JSON.parse(evt.data as string);
+                console.log('[STEPHEN][WS] ←', msg.type, msg);
+
+                if (msg.type === 'ping') {
+                    ws.send(JSON.stringify({ type: 'pong' }));
+                    return;
+                }
+
+                if (msg.type === 'user_transcript' && msg.text) {
+                    const id = nextMsgId.current++;
+                    liveTranscriptTurnsRef.current.push({ role: 'user', text: msg.text });
+                    setTranscript(prev => [...prev, {
+                        id,
+                        sender: 'user',
+                        text: msg.text,
+                        timestamp: formatTimestamp(),
+                    }]);
+                    return;
+                }
+
+                if (msg.type === 'gemini_transcript' && msg.text) {
+                    liveTranscriptTurnsRef.current.push({ role: 'gemini', text: msg.text });
+                    // Append to or update the current AI streaming bubble
+                    setTranscript(prev => {
+                        const last = prev[prev.length - 1];
+                        if (last && last.sender === 'ai' && last.isStreaming) {
+                            return prev.map(m => m.id === last.id
+                                ? { ...m, text: m.text + (m.text ? ' ' : '') + msg.text }
+                                : m
+                            );
+                        }
+                        const id = nextMsgId.current++;
+                        return [...prev, {
+                            id,
+                            sender: 'ai',
+                            text: msg.text,
+                            timestamp: formatTimestamp(),
+                            isStreaming: true,
+                        }];
+                    });
+                    return;
+                }
+
+                if (msg.type === 'turn_complete') {
+                    // Seal the last AI bubble — stop cursor animation
+                    setTranscript(prev => prev.map((m, i) =>
+                        i === prev.length - 1 && m.sender === 'ai'
+                            ? { ...m, isStreaming: false }
+                            : m
+                    ));
+                    setIsPartnerSpeaking(false);
+                    return;
+                }
+
+                if (msg.type === 'interrupted') {
+                    // Gemini barge-in — seal current AI bubble
+                    setTranscript(prev => prev.map(m =>
+                        m.isStreaming ? { ...m, isStreaming: false } : m
+                    ));
+                    return;
+                }
+
+                if (msg.type === 'session_ended') {
+                    console.log('[STEPHEN][WS] Session ended by server:', msg.reason);
+                    return;
+                }
+
+                if (msg.type === 'error') {
+                    console.error('[STEPHEN][WS] Server error:', msg.error);
+                    setWsError(msg.error || 'Connection error from server');
+                }
+            } catch (e) {
+                console.warn('[STEPHEN][WS] Failed to parse message', e);
+            }
+        };
+
+        ws.onerror = (e) => {
+            console.error('[STEPHEN][WS] Error', e);
+            setWsError('WebSocket connection failed. Is the backend running on localhost:8000?');
+        };
+
+        ws.onclose = (e) => {
+            console.log('[STEPHEN][WS] Closed', e.code, e.reason);
+            wsRef.current = null;
+        };
+    }, [session, _enqueueAudioChunk]);
+
+    // ── Start microphone → AudioWorklet → WebSocket pipeline ───────────
+    const _startMicPipeline = useCallback(async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    channelCount: 1,
+                    sampleRate: 16000,
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                },
+            });
+            micStreamRef.current = stream;
+
+            const ctx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
+            console.log('Actual context sample rate:', ctx.sampleRate);
+            audioCtxRef.current = ctx;
+
+            // Load the PCM processor worklet (resampling, clamping, Little-Endian Int16 PCM)
+            await ctx.audioWorklet.addModule('/worklets/pcm-processor.js');
+
+            const workletNode = new AudioWorkletNode(ctx, 'pcm-processor');
+            workletNodeRef.current = workletNode;
+
+            workletNode.port.onmessage = (e: MessageEvent<ArrayBuffer>) => {
+                if (!isMicActiveRef.current) return;
+                const ws = wsRef.current;
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
+                    console.log("Socket is NOT open. Audio chunk dropped.");
+                    return;
+                }
+                console.log("SENDING CHUNK TO BACKEND. Size:", e.data.byteLength);
+                ws.send(e.data);
+            };
+
+            const source = ctx.createMediaStreamSource(stream);
+            micSourceRef.current = source;
+            source.connect(workletNode);
+            isMicActiveRef.current = true;
+            setCallState('recording');
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            console.error('[STEPHEN][MIC] Failed to start mic:', msg);
+            setWsError(`Microphone access denied: ${msg}`);
+        }
+    }, []);
+
     // ── Call Handlers ───────────────────────────────────────────────────
-    const handleStartSession = () => {
+    const handleStartSession = async () => {
         setSessionActive(true);
         setCallEnded(false);
         setIsAnalyzing(false);
@@ -727,62 +828,37 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
         setSessionElapsed(0);
         setTranscript([]);
         setCallState('idle');
+        setWsError(null);
         nextMsgId.current = 1;
+        liveTranscriptTurnsRef.current = [];
+        playbackQueueRef.current = [];
+        isPlayingAudioRef.current = false;
 
-        setTimeout(() => {
-            const greeting = `Hi there! I'm ${activePartner.name}. ${activePartner.tagline.split('·')[0].trim()}. Let's begin our speaking practice. How are you today?`;
-            const aiMsgId = nextMsgId.current++;
-            const aiMsg: ChatMessage = {
-                id: aiMsgId,
-                sender: 'ai',
-                text: '',
-                timestamp: formatTimestamp(),
-                isStreaming: true,
-            };
-            setTranscript([aiMsg]);
-            setIsPartnerSpeaking(true);
-            setStreamingText(greeting);
-            setStreamingMessageId(aiMsgId);
-        }, 1200);
+        // Open WS first, then start mic once WS is ready
+        await _openWebSocket();
+        // Small delay to let WS handshake complete
+        setTimeout(() => _startMicPipeline(), 800);
     };
 
+    // ── Microphone state during session (continuous PCM streaming) ──
     const handleTapToSpeak = () => {
-        if (callState === 'idle') {
-            setCallState('recording');
-        } else if (callState === 'recording') {
-            setCallState('processing');
-            setTimeout(() => {
-                const userMsg: ChatMessage = {
-                    id: nextMsgId.current++,
-                    sender: 'user',
-                    text: 'I would like to practice my speaking skills today. Can we start with a topic?',
-                    timestamp: formatTimestamp(),
-                };
-                setTranscript(prev => [...prev, userMsg]);
-                setCallState('idle');
-
-                setTimeout(() => {
-                    const aiText = getMockResponse(activePartner.name);
-                    const aiMsgId = nextMsgId.current++;
-                    const aiMsg: ChatMessage = {
-                        id: aiMsgId,
-                        sender: 'ai',
-                        text: '',
-                        timestamp: formatTimestamp(),
-                        isStreaming: true,
-                    };
-                    setTranscript(prev => [...prev, aiMsg]);
-                    setIsPartnerSpeaking(true);
-                    setStreamingText(aiText);
-                    setStreamingMessageId(aiMsgId);
-                }, 800);
-            }, 1500);
+        // Microphone is continuously active during live session.
+        // Rely entirely on Gemini Live native barge-in capabilities.
+        if (!sessionActive) {
+            handleStartSession();
         }
     };
 
     const handleDisconnect = () => {
+        // Close WS gracefully
+        if (wsRef.current) {
+            wsRef.current.close(1000, 'User disconnected');
+            wsRef.current = null;
+        }
+        _teardownAudio();
+
         if (transcript.length > 0) {
-            const session: RecordingSession = {
+            const rec: RecordingSession = {
                 id: `rec_${Date.now()}`,
                 partnerName: activePartner.name,
                 partnerInitials: activePartner.initials,
@@ -792,7 +868,7 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
                 elapsed: sessionElapsed,
                 messages: transcript,
             };
-            setRecordings(prev => [session, ...prev]);
+            setRecordings(prev => [rec, ...prev]);
         }
         setSessionActive(false);
         setCallEnded(false);
@@ -804,14 +880,87 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
         setStreamingText('');
         setStreamingMessageId(null);
         setSpeakerMuted(false);
+        setWsError(null);
     };
 
-    const handleEvaluate = () => {
+    // ── Real post-call evaluation via FastAPI ───────────────────────────
+    const _runEvaluation = useCallback(async (turns: { role: string; text: string }[]) => {
         setEvalState('loading');
-        setTimeout(() => {
-            setEvaluation(MOCK_EVALUATION);
+        setEvalError(null);
+        try {
+            const fullTranscript = turns
+                .map(t => `${t.role === 'gemini' ? 'Examiner' : 'Candidate'}: ${t.text}`)
+                .join('\n');
+
+            const formData = new FormData();
+            formData.append('transcript', fullTranscript);
+            formData.append('part', '1');
+            formData.append('topic', 'General speaking practice');
+
+            const token = session?.access_token ?? '';
+            const resp = await fetch('http://localhost:8000/api/ielts/evaluate-speaking', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData,
+            });
+
+            if (!resp.ok) {
+                const errText = await resp.text();
+                let detailMsg = errText;
+                try {
+                    const parsed = JSON.parse(errText);
+                    if (parsed.detail) detailMsg = parsed.detail;
+                } catch (_) {}
+                throw new Error(detailMsg);
+            }
+
+            const data = await resp.json();
+            console.log('[STEPHEN][EVAL] Response:', data);
+
+            const mapped: Evaluation = {
+                overallBand: data.overallBand ?? 0,
+                fluency: data.fluency?.score ?? 0,
+                lexical: data.lexical?.score ?? 0,
+                grammar: data.grammar?.score ?? 0,
+                pronunciation: data.pronunciation?.score ?? 0,
+                feedback: data.feedback ?? '',
+                strengths: data.strengths ?? [],
+                improvements: data.improvements ?? [],
+                corrections: (data.corrections ?? []).map((c: { said?: string; try?: string }) => ({
+                    said: c.said ?? '',
+                    try: c.try ?? '',
+                })),
+                pronunciationTips: data.pronunciationTips ?? [],
+                vocabularySuggestions: (data.vocabularySuggestions ?? []).map(
+                    (v: { word?: string; alternatives?: string[] }) => ({
+                        word: v.word ?? '',
+                        alternatives: v.alternatives ?? [],
+                    })
+                ),
+            };
+
+            setEvaluation(mapped);
             setEvalState('complete');
-        }, 2500);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            console.error('[STEPHEN][EVAL] Failed:', msg);
+            setEvalState('idle');
+            const isDemandError = msg.includes('503') || msg.toLowerCase().includes('demand') || msg.toLowerCase().includes('unavailable');
+            const cleanError = isDemandError
+                ? 'Evaluation failed due to high AI server demand. Please try again later.'
+                : `Evaluation failed: ${msg}`;
+            setEvalError(cleanError);
+        }
+    }, [session]);
+
+    const handleEvaluate = () => {
+        const turns = liveTranscriptTurnsRef.current;
+        if (turns.length === 0) {
+            // No real turns yet — nothing to evaluate
+            setWsError('No conversation to evaluate. Complete a session first.');
+            return;
+        }
+        _runEvaluation(turns);
     };
 
     const openPlayback = (rec: RecordingSession) => {
@@ -835,19 +984,22 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
             setShowEndCallModal(true);
         } else {
             setLiveTab(targetTab);
-            if (evalState === 'idle') {
-                setEvalState('loading');
-                setTimeout(() => {
-                    setEvaluation(MOCK_EVALUATION);
-                    setEvalState('complete');
-                }, 1000);
+            if (evalState === 'idle' && !evaluation && liveTranscriptTurnsRef.current.length > 0) {
+                _runEvaluation(liveTranscriptTurnsRef.current);
             }
         }
     };
 
     const handleEndCallForTab = () => {
+        // Close WS + audio
+        if (wsRef.current) {
+            wsRef.current.close(1000, 'User ended call');
+            wsRef.current = null;
+        }
+        _teardownAudio();
+
         if (transcript.length > 0) {
-            const session: RecordingSession = {
+            const rec: RecordingSession = {
                 id: `rec_${Date.now()}`,
                 partnerName: activePartner.name,
                 partnerInitials: activePartner.initials,
@@ -857,7 +1009,7 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
                 elapsed: sessionElapsed,
                 messages: transcript,
             };
-            setRecordings(prev => [session, ...prev]);
+            setRecordings(prev => [rec, ...prev]);
         }
         // Freeze call — keep sessionActive true so Live Call view stays mounted
         setCallEnded(true);
@@ -871,17 +1023,14 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
         const target = pendingTab;
         setPendingTab(null);
 
-        // Show analyzing loader, then switch tab
+        // Show analyzing loader, then kick off real evaluation
         setIsAnalyzing(true);
         setLiveTab(target || 'feedback');
+        const turns = liveTranscriptTurnsRef.current;
         setTimeout(() => {
             setIsAnalyzing(false);
-            setEvalState('loading');
-            setTimeout(() => {
-                setEvaluation(MOCK_EVALUATION);
-                setEvalState('complete');
-            }, 1200);
-        }, 2000);
+            _runEvaluation(turns);
+        }, 1500);
     };
 
     // ── Recordings Drawer (rendered on top of any view) ────────────────
@@ -1141,8 +1290,27 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
 
                             {playbackTab === 'feedback' && (
                                 <div className="space-y-6">
+                                    {/* State 0: Error State */}
+                                    {evalError && (
+                                        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center my-4">
+                                            <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                            </div>
+                                            <p className="text-sm font-semibold text-red-800 mb-1">Evaluation Unavailable</p>
+                                            <p className="text-xs text-red-600 mb-4">{evalError}</p>
+                                            <button
+                                                onClick={handleEvaluate}
+                                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition-colors shadow-sm"
+                                            >
+                                                Retry Evaluation
+                                            </button>
+                                        </div>
+                                    )}
+
                                     {/* State 1: Pre-Evaluation */}
-                                    {evalState === 'idle' && (
+                                    {!evalError && evalState === 'idle' && (
                                         <div className="text-center py-12">
                                             <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4">
                                                 <SparklesIcon className="w-8 h-8 text-rose-400" />
@@ -1286,6 +1454,14 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
             <div className="bg-gray-50 min-h-screen flex flex-col max-w-full">
                 {renderDrawer()}
                 {renderEndCallModal()}
+
+                {/* WS / Mic Error Banner */}
+                {wsError && (
+                    <div className="mx-4 mt-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium px-4 py-2.5 rounded-xl flex items-center justify-between">
+                        <span>⚠ {wsError}</span>
+                        <button onClick={() => setWsError(null)} className="ml-3 text-rose-400 hover:text-rose-600 font-bold">✕</button>
+                    </div>
+                )}
 
                 {/* ═══ CALL HEADER ═══ */}
                 <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shrink-0">
@@ -1528,7 +1704,7 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
                                         <p className="text-sm font-semibold text-gray-700">Get AI Feedback on Your Session</p>
                                         <p className="text-xs text-gray-400 mt-1 mb-5">Our AI will analyze your conversation and provide detailed feedback.</p>
                                         <button
-                                            onClick={() => { setEvalState('loading'); setTimeout(() => { setEvaluation(MOCK_EVALUATION); setEvalState('complete'); }, 2500); }}
+                                            onClick={handleEvaluate}
                                             className="bg-amber-500 text-white font-medium px-5 py-2.5 rounded-xl text-sm hover:bg-amber-600 transition-colors"
                                         >
                                             Evaluate with AI
@@ -1624,7 +1800,7 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
 
                         {!isAnalyzing && liveTab === 'scoring' && (
                             <div className="flex-1 overflow-y-auto p-6">
-                                <AIScoringAccordion evalState={evalState} evaluation={evaluation} onEvaluate={() => { setEvalState('loading'); setTimeout(() => { setEvaluation(MOCK_EVALUATION); setEvalState('complete'); }, 2500); }} />
+                                <AIScoringAccordion evalState={evalState} evaluation={evaluation} evalError={wsError} onEvaluate={handleEvaluate} />
                             </div>
                         )}
                     </div>

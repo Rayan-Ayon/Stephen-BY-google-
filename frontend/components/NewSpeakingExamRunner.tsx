@@ -4,6 +4,17 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 type RecordingState = 'idle' | 'listening' | 'ready' | 'recording' | 'recorded';
 
+interface SpeakingEvaluation {
+    overallBand: number;
+    fluency: { score: number; relevance: any[]; logical_sequencing: any[]; topic_development: any[] };
+    lexical: { score: number; diversity_and_advanced_words: string[]; accuracy: string[] };
+    grammar: { score: number; sentence_complexity: string[]; errors: string[] };
+    pronunciation: { score: number; individual_sounds: string[]; word_stress: string[]; rhythm_intonation: string[] };
+    transcript: string;
+    what_you_did_well: string[];
+    areas_to_improve: string[];
+}
+
 interface Part1Topic {
     id: string;
     label: string;
@@ -123,6 +134,11 @@ const NewSpeakingExamRunner: React.FC<NewSpeakingExamRunnerProps> = ({
     const [playbackDuration, setPlaybackDuration] = useState(0);
     const playbackIntervalRef = useRef<number | null>(null);
 
+    // ── AI Evaluation ─────────────────────────────────────────────────────
+    const [isEvaluating, setIsEvaluating] = useState(false);
+    const [evaluationResult, setEvaluationResult] = useState<SpeakingEvaluation | null>(null);
+    const [evalError, setEvalError] = useState<string | null>(null);
+
     // ── Timer Effect ──────────────────────────────────────────────────────
     useEffect(() => {
         timerRef.current = window.setInterval(() => setElapsed(e => e + 1), 1000);
@@ -138,6 +154,8 @@ const NewSpeakingExamRunner: React.FC<NewSpeakingExamRunnerProps> = ({
         setIsPlaying(false);
         setPlaybackTime(0);
         setPlaybackDuration(0);
+        setEvaluationResult(null);
+        setEvalError(null);
         const timer = window.setTimeout(() => {
             setTtsDelayComplete(true);
             setRecordingState('ready');
@@ -160,7 +178,7 @@ const NewSpeakingExamRunner: React.FC<NewSpeakingExamRunnerProps> = ({
     // ── Recording Functions ───────────────────────────────────────────────
     const startRecording = useCallback(async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
             streamRef.current = stream;
             const recorder = new MediaRecorder(stream);
             const chunks: BlobPart[] = [];
@@ -198,6 +216,8 @@ const NewSpeakingExamRunner: React.FC<NewSpeakingExamRunnerProps> = ({
         setAudioBlob(null);
         setAudioUrl(null);
         setRecordingState('ready');
+        setEvaluationResult(null);
+        setEvalError(null);
     }, [audioUrl]);
 
     // ── Audio Playback Controls ───────────────────────────────────────────
@@ -279,6 +299,38 @@ const NewSpeakingExamRunner: React.FC<NewSpeakingExamRunnerProps> = ({
 
     const questionText = getQuestionText();
     const questionCount = getQuestionCount();
+
+    // ── AI Evaluation Submission ─────────────────────────────────────────
+    const submitForEvaluation = useCallback(async () => {
+        if (!audioBlob || isEvaluating) return;
+        setIsEvaluating(true);
+        setEvalError(null);
+        setEvaluationResult(null);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', audioBlob, `recording-${currentPart}-q${questionIndex}.webm`);
+            formData.append('question_prompt', questionText);
+
+            const response = await fetch('/api/ielts/evaluate-speaking', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.detail || `API returned ${response.status}`);
+            }
+
+            const result: SpeakingEvaluation = await response.json();
+            setEvaluationResult(result);
+        } catch (err: any) {
+            console.error('Speaking evaluation failed:', err);
+            setEvalError(err.message || 'Evaluation failed. Please try again.');
+        } finally {
+            setIsEvaluating(false);
+        }
+    }, [audioBlob, isEvaluating, currentPart, questionIndex, questionText]);
 
     // ── Recording Flow (Shared) ───────────────────────────────────────────
     const renderRecordingFlow = () => (
@@ -376,6 +428,91 @@ const NewSpeakingExamRunner: React.FC<NewSpeakingExamRunnerProps> = ({
                             🔄 Re-record
                         </button>
                     </div>
+
+                    {/* AI Evaluation Button */}
+                    {!evaluationResult && (
+                        <div className="flex justify-center pt-2">
+                            <button
+                                onClick={submitForEvaluation}
+                                disabled={isEvaluating}
+                                className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                                    isEvaluating
+                                        ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
+                                        : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg'
+                                }`}
+                            >
+                                {isEvaluating ? (
+                                    <span className="flex items-center gap-2">
+                                        <span className="w-4 h-4 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
+                                        Evaluating...
+                                    </span>
+                                ) : (
+                                    '✨ Get AI Evaluation'
+                                )}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Evaluation Error */}
+                    {evalError && (
+                        <div className="mt-3 bg-red-950/50 border border-red-800/50 rounded-xl p-3 text-center">
+                            <p className="text-red-400 text-sm">{evalError}</p>
+                        </div>
+                    )}
+
+                    {/* Evaluation Results */}
+                    {evaluationResult && (
+                        <div className="mt-4 space-y-3">
+                            {/* Overall Band */}
+                            <div className="bg-[#18112C] border border-purple-900/40 rounded-2xl p-4 text-center">
+                                <p className="text-purple-400 text-xs font-bold tracking-wider uppercase">Overall Band</p>
+                                <p className="text-4xl font-black text-white mt-1">{evaluationResult.overallBand.toFixed(1)}</p>
+                            </div>
+
+                            {/* Criteria Scores */}
+                            <div className="grid grid-cols-2 gap-2">
+                                {[
+                                    { label: 'Fluency', score: evaluationResult.fluency.score, color: 'purple' },
+                                    { label: 'Lexical', score: evaluationResult.lexical.score, color: 'blue' },
+                                    { label: 'Grammar', score: evaluationResult.grammar.score, color: 'amber' },
+                                    { label: 'Pronunciation', score: evaluationResult.pronunciation.score, color: 'emerald' },
+                                ].map(c => (
+                                    <div key={c.label} className="bg-[#0F0F12] border border-zinc-800 rounded-xl p-3">
+                                        <p className="text-zinc-500 text-xs font-semibold">{c.label}</p>
+                                        <p className="text-white text-xl font-bold">{c.score.toFixed(1)}</p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Strengths & Improvements */}
+                            <div className="grid grid-cols-1 gap-2">
+                                <div className="bg-emerald-950/30 border border-emerald-800/30 rounded-xl p-3">
+                                    <p className="text-emerald-400 text-xs font-bold mb-1">What You Did Well</p>
+                                    <ul className="text-zinc-300 text-xs space-y-1">
+                                        {evaluationResult.what_you_did_well.map((s, i) => (
+                                            <li key={i}>• {s}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <div className="bg-amber-950/30 border border-amber-800/30 rounded-xl p-3">
+                                    <p className="text-amber-400 text-xs font-bold mb-1">Areas to Improve</p>
+                                    <ul className="text-zinc-300 text-xs space-y-1">
+                                        {evaluationResult.areas_to_improve.map((s, i) => (
+                                            <li key={i}>• {s}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+
+                            {/* Transcript */}
+                            {evaluationResult.transcript && (
+                                <div className="bg-[#0F0F12] border border-zinc-800 rounded-xl p-3">
+                                    <p className="text-zinc-500 text-xs font-bold mb-1">Transcript</p>
+                                    <p className="text-zinc-300 text-xs leading-relaxed">{evaluationResult.transcript}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
         </div>
