@@ -14,16 +14,27 @@ interface TestSeries {
   group: 'mock' | 'cambridge';
 }
 
-const MOCK_SERIES: TestSeries[] = [
+// Academic Series
+const ACADEMIC_MOCK_SERIES: TestSeries[] = [
   { id: 'mock-1', label: 'IELTSly Mock Series 1', setLabel: 'SET 1', testCount: 4, group: 'mock' },
   { id: 'mock-2', label: 'IELTSly Mock Series 2', setLabel: 'SET 2', testCount: 4, group: 'mock' },
   { id: 'mock-3', label: 'IELTSly Mock Series 3', setLabel: 'SET 3', testCount: 4, group: 'mock' },
   { id: 'mock-4', label: 'IELTSly Mock Series 4', setLabel: 'SET 4', testCount: 4, badge: 'LATEST', group: 'mock' },
 ];
 
-const CAMBRIDGE_SERIES: TestSeries[] = Array.from({ length: 15 }, (_, i) => ({
+// Allowed Books: ONLY Cambridge Books 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 (length: 14)
+const ACADEMIC_CAMBRIDGE_SERIES: TestSeries[] = Array.from({ length: 14 }, (_, i) => ({
   id: `cambridge-${i + 7}`,
   label: `Cambridge IELTS ${i + 7}`,
+  setLabel: `BOOK ${i + 7}`,
+  testCount: 4,
+  group: 'cambridge' as const,
+}));
+
+// General Training Series: Zero Mock Series, Zero Cambridge 21, ONLY Books 7-20
+const GT_CAMBRIDGE_SERIES: TestSeries[] = Array.from({ length: 14 }, (_, i) => ({
+  id: `gt-cambridge-${i + 7}`,
+  label: `Cambridge IELTS ${i + 7} (GT)`,
   setLabel: `BOOK ${i + 7}`,
   testCount: 4,
   group: 'cambridge' as const,
@@ -183,19 +194,39 @@ const AccordionCard: React.FC<AccordionCardProps> = ({ series, isExpanded, onTog
 
 interface ReadingHubViewProps {
   userEmail?: string;
+  onExamStateChange?: (active: boolean) => void;
 }
 
-export default function ReadingHubView({ userEmail }: ReadingHubViewProps) {
+export default function ReadingHubView({ userEmail, onExamStateChange }: ReadingHubViewProps) {
   const [viewMode, setViewMode] = useState<'hub' | 'history'>('hub');
   const [activeTab, setActiveTab] = useState<'academic' | 'general'>('academic');
   const [expandedSeriesId, setExpandedSeriesId] = useState<string | null>(null);
   const [showExam, setShowExam] = useState<boolean>(false);
+  const [examSourceType, setExamSourceType] = useState<'cambridge' | 'mock_series'>('cambridge');
+  const [examBookNumber, setExamBookNumber] = useState<number>(18);
+  const [examTestNumber, setExamTestNumber] = useState<number>(1);
+  const [examCategory, setExamCategory] = useState<'academic' | 'general'>('academic');
   const customGradingRef = useRef<HTMLDivElement>(null);
 
   const handleSubTestClick = (seriesId: string, testIndex: number) => {
     sessionStorage.setItem('reading_exam_series', seriesId);
     sessionStorage.setItem('reading_exam_index', String(testIndex));
+    const isCambridge = seriesId.startsWith('cambridge-') || seriesId.startsWith('gt-cambridge-');
+    const parts = seriesId.split('-');
+    const bookNum = parseInt(parts[parts.length - 1]) || 18;
+    const isGT = activeTab === 'general' || seriesId.startsWith('gt-');
+
+    setExamCategory(isGT ? 'general' : 'academic');
+    setExamSourceType(isCambridge ? 'cambridge' : 'mock_series');
+    setExamBookNumber(bookNum);
+    setExamTestNumber(testIndex + 1);
     setShowExam(true);
+    onExamStateChange?.(true);
+  };
+
+  const handleExitExam = () => {
+    setShowExam(false);
+    onExamStateChange?.(false);
   };
 
   const handleToggleAccordion = (id: string) => {
@@ -209,27 +240,17 @@ export default function ReadingHubView({ userEmail }: ReadingHubViewProps) {
   // ── Exam Mode ────────────────────────────────────────────────────────────
   if (showExam) {
     return (
-      <div className="h-[calc(100vh-32px)] bg-[#F2F2F2] flex flex-col overflow-hidden">
-        <div className="bg-white border-b border-zinc-200 px-6 py-3 flex items-center gap-4 flex-shrink-0">
-          <button
-            onClick={() => setShowExam(false)}
-            className="flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
-          >
-            <ArrowLeftIcon className="w-4 h-4" />
-            Back to Reading Hub
-          </button>
-          <div className="h-4 w-px bg-zinc-200" />
-          <span className="text-sm text-zinc-400">
-            {sessionStorage.getItem('reading_exam_series') || 'Reading Exam'}
-          </span>
-        </div>
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          <IELTSReadingExam
-            candidateEmail={userEmail}
-            onActiveChange={() => {}}
-            exitPulse={false}
-          />
-        </div>
+      <div className="flex-1 h-full bg-[#FFFFFF] overflow-hidden">
+        <IELTSReadingExam
+          candidateEmail={userEmail}
+          sourceType={examSourceType}
+          category={examCategory}
+          bookNumber={examBookNumber}
+          testNumber={examTestNumber}
+          onActiveChange={(active) => onExamStateChange?.(active)}
+          onExit={handleExitExam}
+          exitPulse={false}
+        />
       </div>
     );
   }
@@ -256,6 +277,9 @@ export default function ReadingHubView({ userEmail }: ReadingHubViewProps) {
     );
   }
 
+  // Current active books for the selected tab
+  const activeCambridgeSeries = activeTab === 'academic' ? ACADEMIC_CAMBRIDGE_SERIES : GT_CAMBRIDGE_SERIES;
+
   // ── Hub Mode (Main View) ─────────────────────────────────────────────────
   return (
     <div className="h-[calc(100vh-32px)] bg-[#0B0C0E] text-zinc-100 overflow-y-auto">
@@ -266,7 +290,10 @@ export default function ReadingHubView({ userEmail }: ReadingHubViewProps) {
           {/* Segmented Tab Selector */}
           <div className="bg-zinc-900/90 border border-zinc-800 p-1 rounded-full flex gap-1">
             <button
-              onClick={() => setActiveTab('academic')}
+              onClick={() => {
+                setActiveTab('academic');
+                setExpandedSeriesId(null);
+              }}
               className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
                 activeTab === 'academic'
                   ? 'bg-zinc-800 text-white shadow-sm'
@@ -276,7 +303,10 @@ export default function ReadingHubView({ userEmail }: ReadingHubViewProps) {
               Academic
             </button>
             <button
-              onClick={() => setActiveTab('general')}
+              onClick={() => {
+                setActiveTab('general');
+                setExpandedSeriesId(null);
+              }}
               className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
                 activeTab === 'general'
                   ? 'bg-zinc-800 text-white shadow-sm'
@@ -306,68 +336,57 @@ export default function ReadingHubView({ userEmail }: ReadingHubViewProps) {
           </div>
         </div>
 
-        {/* ── General Training Empty State ───────────────────────────────── */}
-        {activeTab === 'general' && (
-          <div className="bg-[#141519] border border-zinc-800/80 rounded-2xl p-12 flex flex-col items-center justify-center text-center">
-            <div className="bg-zinc-800/50 p-4 rounded-2xl mb-4">
-              <ClockIcon className="w-8 h-8 text-zinc-500" />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2">General Training Tests Coming Soon</h3>
-            <p className="text-sm text-zinc-400 max-w-md">
-              Academic IELTS tests are currently available. General Training reading passages and question sets are under active development.
-            </p>
-          </div>
-        )}
+        {/* ── Content (Academic & General Training) ────────────────────────── */}
+        <div className="space-y-8">
+          {/* ── Hero Banner ───────────────────────────────────────────── */}
+          <div className="bg-gradient-to-r from-[#171A21] via-[#13151B] to-[#121622] border border-zinc-800/80 rounded-3xl p-6 md:p-8 flex justify-between items-center relative overflow-hidden shadow-xl">
+            {/* Subtle gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent pointer-events-none" />
 
-        {/* ── Academic Content ───────────────────────────────────────────── */}
-        {activeTab === 'academic' && (
-          <>
-            {/* ── Hero Banner ───────────────────────────────────────────── */}
-            <div className="bg-gradient-to-r from-[#171A21] via-[#13151B] to-[#121622] border border-zinc-800/80 rounded-3xl p-6 md:p-8 flex justify-between items-center relative overflow-hidden shadow-xl">
-              {/* Subtle gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent pointer-events-none" />
-
-              <div className="relative z-10 max-w-xl">
-                <span className="text-[11px] font-bold text-blue-400 uppercase tracking-widest">
-                  Cambridge IELTS Academic
+            <div className="relative z-10 max-w-xl">
+              <span className="text-[11px] font-bold text-blue-400 uppercase tracking-widest">
+                {activeTab === 'academic' ? 'Cambridge IELTS Academic' : 'Cambridge IELTS General Training'}
+              </span>
+              <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight mt-2">
+                {activeTab === 'academic' ? 'Academic Reading Practice' : 'General Training Reading Practice'}
+              </h1>
+              <p className="text-sm text-zinc-400 mt-3 leading-relaxed">
+                {activeTab === 'academic'
+                  ? 'Sharpen comprehension with authentic Cambridge passages. 3 texts, 40 questions, timed to real exam conditions.'
+                  : 'Practice real General Training reading passages with workplace and everyday life contexts. 3 sections, 40 questions.'}
+              </p>
+              <div className="flex flex-wrap items-center gap-2 mt-4">
+                <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-semibold px-3 py-1 rounded-full">
+                  {activeCambridgeSeries.length} Cambridge Books
                 </span>
-                <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight mt-2">
-                  Reading Practice
-                </h1>
-                <p className="text-sm text-zinc-400 mt-3 leading-relaxed">
-                  Sharpen comprehension with authentic Cambridge passages. 3 texts, 40 questions, timed to real exam conditions.
-                </p>
-                <div className="flex flex-wrap items-center gap-2 mt-4">
-                  <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-semibold px-3 py-1 rounded-full">
-                    19 Cambridge Books
-                  </span>
-                  <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-semibold px-3 py-1 rounded-full">
-                    60 min per test
-                  </span>
-                  <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-semibold px-3 py-1 rounded-full">
-                    Auto scored
-                  </span>
-                </div>
-              </div>
-
-              {/* Right Icon */}
-              <div className="hidden md:flex bg-blue-600/20 border border-blue-500/30 p-5 rounded-2xl shadow-lg shadow-blue-500/10 relative z-10 flex-shrink-0 ml-8">
-                <BookIcon className="w-10 h-10 text-white" />
+                <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-semibold px-3 py-1 rounded-full">
+                  60 min per test
+                </span>
+                <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-semibold px-3 py-1 rounded-full">
+                  Auto scored
+                </span>
               </div>
             </div>
 
-            {/* ── IELTSLY MOCK TESTS ────────────────────────────────────── */}
+            {/* Right Icon */}
+            <div className="hidden md:flex bg-blue-600/20 border border-blue-500/30 p-5 rounded-2xl shadow-lg shadow-blue-500/10 relative z-10 flex-shrink-0 ml-8">
+              <BookIcon className="w-10 h-10 text-white" />
+            </div>
+          </div>
+
+          {/* ── IELTSLY MOCK TESTS (Academic ONLY - Zero Mock Series for GT) ────────────────────────────────────── */}
+          {activeTab === 'academic' && (
             <section>
               <div className="flex items-center gap-3 mb-4">
                 <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">
                   IELTSLY Mock Tests
                 </h2>
                 <span className="bg-zinc-800 text-zinc-300 text-[10px] font-bold px-2 py-0.5 rounded-md">
-                  {MOCK_SERIES.length}
+                  {ACADEMIC_MOCK_SERIES.length}
                 </span>
               </div>
               <div className="space-y-3">
-                {MOCK_SERIES.map((series) => (
+                {ACADEMIC_MOCK_SERIES.map((series) => (
                   <AccordionCard
                     key={series.id}
                     series={series}
@@ -378,29 +397,30 @@ export default function ReadingHubView({ userEmail }: ReadingHubViewProps) {
                 ))}
               </div>
             </section>
+          )}
 
-            {/* ── CAMBRIDGE TESTS ───────────────────────────────────────── */}
-            <section>
-              <div className="flex items-center gap-3 mb-4">
-                <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">
-                  Cambridge Tests
-                </h2>
-                <span className="bg-zinc-800 text-zinc-300 text-[10px] font-bold px-2 py-0.5 rounded-md">
-                  {CAMBRIDGE_SERIES.length}
-                </span>
-              </div>
-              <div className="space-y-3">
-                {CAMBRIDGE_SERIES.map((series) => (
-                  <AccordionCard
-                    key={series.id}
-                    series={series}
-                    isExpanded={expandedSeriesId === series.id}
-                    onToggle={() => handleToggleAccordion(series.id)}
-                    onSubTestClick={handleSubTestClick}
-                  />
-                ))}
-              </div>
-            </section>
+          {/* ── CAMBRIDGE TESTS (Books 7-20) ───────────────────────────────────────── */}
+          <section>
+            <div className="flex items-center gap-3 mb-4">
+              <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">
+                Cambridge Tests
+              </h2>
+              <span className="bg-zinc-800 text-zinc-300 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                {activeCambridgeSeries.length}
+              </span>
+            </div>
+            <div className="space-y-3">
+              {activeCambridgeSeries.map((series) => (
+                <AccordionCard
+                  key={series.id}
+                  series={series}
+                  isExpanded={expandedSeriesId === series.id}
+                  onToggle={() => handleToggleAccordion(series.id)}
+                  onSubTestClick={handleSubTestClick}
+                />
+              ))}
+            </div>
+          </section>
 
             {/* ── Custom Question Grading ───────────────────────────────── */}
             <section ref={customGradingRef} id="custom-grading-section" className="mt-8">
@@ -444,8 +464,7 @@ export default function ReadingHubView({ userEmail }: ReadingHubViewProps) {
                 </div>
               </div>
             </section>
-          </>
-        )}
+        </div>
       </div>
     </div>
   );

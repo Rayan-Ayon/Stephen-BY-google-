@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import IELTSWritingExam from './enterprise/ielts/IELTSWritingExam';
 import WritingHistoryMatrix from './enterprise/writing/WritingHistoryMatrix';
@@ -20,14 +20,6 @@ const MOCK_SERIES: TestSeries[] = [
   { id: 'mock-3', label: 'IELTSly Mock Series 3', setLabel: 'SET 3', testCount: 4, group: 'mock' },
   { id: 'mock-4', label: 'IELTSly Mock Series 4', setLabel: 'SET 4', testCount: 4, badge: 'LATEST', group: 'mock' },
 ];
-
-const CAMBRIDGE_SERIES: TestSeries[] = Array.from({ length: 15 }, (_, i) => ({
-  id: `cambridge-${i + 7}`,
-  label: `Cambridge IELTS ${i + 7}`,
-  setLabel: `BOOK ${i + 7}`,
-  testCount: (i + 7) <= 10 ? 2 : 4,
-  group: 'cambridge' as const,
-}));
 
 type WritingMode = 'full_mock' | 'task_2' | 'task_1_academic' | 'task_1_general';
 
@@ -198,6 +190,21 @@ export default function WritingHubView({ userEmail, onExamStateChange }: Writing
   const [activeTab, setActiveTab] = useState<'academic' | 'general'>('academic');
   const [writingMode, setWritingMode] = useState<WritingMode>('full_mock');
   const [expandedSeriesId, setExpandedSeriesId] = useState<string | null>(null);
+
+  const cambridgeSeries = useMemo<TestSeries[]>(() => {
+    return Array.from({ length: 15 }, (_, i) => {
+      const bookNum = i + 7;
+      // General Training has 2 tests for Cambridge 7-10. Academic Training has 4 tests for all Cambridge volumes (7-10 included).
+      const testCount = activeTab === 'general' && bookNum <= 10 ? 2 : 4;
+      return {
+        id: `cambridge-${bookNum}`,
+        label: `Cambridge IELTS ${bookNum}`,
+        setLabel: `BOOK ${bookNum}`,
+        testCount,
+        group: 'cambridge' as const,
+      };
+    });
+  }, [activeTab]);
   const [showExam, setShowExam] = useState<boolean>(false);
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const [examSourceType, setExamSourceType] = useState<'cambridge' | 'mock_series'>('cambridge');
@@ -450,11 +457,11 @@ export default function WritingHubView({ userEmail, onExamStateChange }: Writing
               Cambridge Tests
             </h2>
             <span className="bg-zinc-800 text-zinc-300 text-[10px] font-bold px-2 py-0.5 rounded-md">
-              {CAMBRIDGE_SERIES.length}
+              {cambridgeSeries.length}
             </span>
           </div>
           <div className="space-y-3">
-            {CAMBRIDGE_SERIES.map((series) => (
+            {cambridgeSeries.map((series) => (
               <AccordionCard
                 key={series.id}
                 series={series}

@@ -383,7 +383,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             case 'ielts_dashboard': return <IELTSEvaluationHub key="ielts_dashboard" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="dashboard" hideInternalNav />;
             case 'speaking_studio': return <IELTSSpeakingExam candidateEmail={userEmail} onActiveChange={setIsExamActive} exitPulse={exitPulse} />;
             case 'listening_engine': return <ListeningHubView userEmail={userEmail} />;
-            case 'reading_hub': return <ReadingHubView userEmail={userEmail} />;
+            case 'reading_hub': return <ReadingHubView userEmail={userEmail} onExamStateChange={setIsExamActive} />;
             case 'writing_lab':
             case 'task2_checker':
             case 'task1_academic':
@@ -524,7 +524,7 @@ return (
                 {/* Content Area */}
                 <div className={`flex-1 flex min-h-0 overflow-hidden ${isExamActive ? 'w-full' : ''}`}>
                     {/* Left Column (~68%) */}
-                    <div className={`${isExamActive ? 'flex-1 min-w-0 overflow-y-auto' : 'flex-[7] min-w-0 overflow-y-auto'}`}>
+                    <div className={`${isExamActive ? 'flex-1 min-w-0 overflow-hidden' : 'flex-[7] min-w-0 overflow-y-auto'}`}>
                         {renderContent()}
                     </div>
 
