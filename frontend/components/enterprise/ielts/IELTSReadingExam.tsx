@@ -4,6 +4,7 @@ import IELTSLobbyCard from './IELTSLobbyCard';
 import IELTSExitModal from './IELTSExitModal';
 import IeltsExamOptionsModal from '../../exam/IeltsExamOptionsModal';
 import { supabase } from '../../../supabaseClient';
+import DynamicRightPanel, { type DynamicQuestion } from './DynamicRightPanel';
 
 // ── Icons ──
 const Check = ({ size = 24, strokeWidth = 3, className = '' }: any) => (
@@ -262,6 +263,613 @@ const STATIC_ANSWERS_KEY: Record<number, string> = {
     40: 'unspectacular',
 };
 
+// ── Cambridge 7 Test 2 Static Question Schema ──
+export const CAMBRIDGE_7_TEST_2_RIGHT_PANEL = {
+    part1: {
+        title: "Secrets of Pagoda Stability",
+        subtitle: "13 questions • medium",
+        module1: {
+            title: "Questions 1-4",
+            badge: "YES-NO/NOT GIVEN",
+            instructions: "Choose YES if the statement agrees with the information given in the text, choose NO if the statement contradicts the information, or choose NOT GIVEN if there is no information on this.",
+            questions: [
+                { num: 1, text: "Only two Japanese pagodas have collapsed in 1400 years.", options: ["NO", "NOT GIVEN", "YES"] },
+                { num: 2, text: "The Hanshin earthquake of 1995 destroyed the pagoda at the Toji temple.", options: ["NO", "NOT GIVEN", "YES"] },
+                { num: 3, text: "The other buildings near the Toji pagoda had been built in the last 30 years.", options: ["NO", "NOT GIVEN", "YES"] },
+                { num: 4, text: "The builders of pagodas knew how to absorb some of the power produced by severe weather conditions.", options: ["NOT GIVEN", "YES", "NO"] },
+            ],
+        },
+        module2: {
+            title: "Questions 5-10",
+            badge: "MATCHING FEATURES",
+            instructions: "Choose the correct answer for each item. You may choose any answer more than once.",
+            choices: [
+                "only Chinese pagodas",
+                "only Japanese pagodas",
+                "both Chinese and Japanese pagodas",
+            ],
+            questions: [
+                { num: 5, text: "easy interior access to top" },
+                { num: 6, text: "tiles on eaves" },
+                { num: 7, text: "use as observation post" },
+                { num: 8, text: "size of eaves up to half the width of the building" },
+                { num: 9, text: "original religious purpose" },
+                { num: 10, text: "floors fitting loosely over each other" },
+            ],
+        },
+        module3: {
+            title: "Questions 11-13",
+            badge: "MULTIPLE CHOICE",
+            instructions: "Choose the correct answer.",
+            questions: [
+                {
+                    num: 11,
+                    text: "In a Japanese pagoda, the shinbashira",
+                    options: [
+                        "bends under pressure like a tree",
+                        "connects the floors with the foundations",
+                        "stops the floors moving too far",
+                        "bears the full weight of the building",
+                    ],
+                },
+                {
+                    num: 12,
+                    text: "Shuzo Ishida performs experiments in order to",
+                    options: [
+                        "understand ancient mathematics",
+                        "improve skyscraper design",
+                        "be able to build new pagodas",
+                        "learn about the dynamics of pagodas",
+                    ],
+                },
+                {
+                    num: 13,
+                    text: "The storeys of a Japanese pagoda are",
+                    options: [
+                        "fitted loosely on top of each other",
+                        "joined by special weights",
+                        "linked only by wood",
+                        "fastened only to the central pillar",
+                    ],
+                },
+            ],
+        },
+    },
+    part2: {
+        title: "True Cost of Food",
+        subtitle: "13 questions • medium",
+        module1: {
+            title: "Questions 14-17",
+            badge: "MATCHING INFORMATION",
+            instructions: "The text has seven sections A-G. Which section contains the following information? Choose the correct sections A-G. You may choose any answer more than once.",
+            choices: ["A", "B", "C", "D", "E", "F", "G"],
+            questions: [
+                { num: 14, text: "a cost involved in purifying domestic water" },
+                { num: 15, text: "the stages in the development of the farming industry" },
+                { num: 16, text: "the term used to describe hidden costs" },
+                { num: 17, text: "one effect of chemicals on water sources" },
+            ],
+        },
+        module2: {
+            title: "Questions 18-21",
+            badge: "YES-NO/NOT GIVEN",
+            instructions: "Choose YES if the statement agrees with the information given in the text, choose NO if the statement contradicts the information, or choose NOT GIVEN if there is no information on this.",
+            questions: [
+                { num: 18, text: "Several species of wildlife in the British countryside are declining.", options: ["NOT GIVEN", "YES", "NO"] },
+                { num: 19, text: "The taste of food has deteriorated in recent years.", options: ["NO", "NOT GIVEN", "YES"] },
+                { num: 20, text: "The financial costs of environmental damage are widely recognised.", options: ["NOT GIVEN", "YES", "NO"] },
+                { num: 21, text: "One of the costs calculated by Professor Pretty was illness caused by food.", options: ["NO", "NOT GIVEN", "YES"] },
+            ],
+        },
+        module3: {
+            title: "Questions 22-26",
+            badge: "SUMMARY COMPLETION WOC",
+            instructions: "Complete the summary. Write NO MORE THAN THREE WORDS from the text for each answer.",
+        },
+    },
+    part3: {
+        title: "Integrated Transport in Makete",
+        subtitle: "14 questions • medium",
+        module1: {
+            title: "Questions 27-30",
+            badge: "MATCHING HEADING",
+            instructions: "The text has six sections. Choose the correct heading for each section and move it into the gap.",
+            choices: [
+                "Co-operation of district officials",
+                "Role of wheelbarrows and donkeys",
+                "Transport improvements in the northern part of the district",
+                "Preference for motorised vehicles",
+                "Effects of initial MIRTP measures",
+                "MIRTP as a future model",
+                "Identifying the main transport problems",
+                "Initial improvements in mobility and transport modes",
+                "Improvements in the rail network",
+            ],
+            questions: [
+                { num: 27, label: "Section B" },
+                { num: 28, label: "Section C" },
+                { num: 29, label: "Section E" },
+                { num: 30, label: "Section F" },
+            ],
+        },
+        module2: {
+            title: "Questions 31-35",
+            badge: "YES-NO/NOT GIVEN",
+            instructions: "Choose YES if the statement agrees with the information given in the text, choose NO if the statement contradicts the information, or choose NOT GIVEN if there is no information on this.",
+            questions: [
+                { num: 31, text: "MIRTP was divided into five phases.", options: ["NO", "NOT GIVEN", "YES"] },
+                { num: 32, text: "Prior to the start of the MIRTP the Makete district was almost inaccessible during the rainy season.", options: ["NO", "NOT GIVEN", "YES"] },
+                { num: 33, text: "Phase I of MIRTP consisted of a survey of household expenditure on transport.", options: ["NOT GIVEN", "YES", "NO"] },
+                { num: 34, text: "The survey concluded that one-fifth or 20% of the household transport requirement was outside the local area.", options: ["NOT GIVEN", "YES", "NO"] },
+                { num: 35, text: "MIRTP hopes to improve the movements of goods from Makete district to the country’s capital.", options: ["NOT GIVEN", "YES", "NO"] },
+            ],
+        },
+        module3: {
+            title: "Questions 36-39",
+            badge: "MATCHING SENTENCE ENDINGS",
+            instructions: "Complete each sentence with the correct ending. Choose the correct answer and move it into the gap.",
+            choices: [
+                "cost less than locally made wheelbarrows.",
+                "provided the people of Makete with experience in running bus and truck services.",
+                "was thought to be the most important objective of Phase III.",
+                "was done only at the request of local people who were willing to lend a hand.",
+                "hindered attempts to make the existing transport services more efficient.",
+                "was at first considered by MIRTP to be affordable for the people of the district.",
+                "improved paths used for transport up and down hillsides.",
+                "was especially successful in the northern part of the district.",
+                "was no longer a problem once the roads had been improved.",
+                "differed from earlier phases in that the community became less actively involved.",
+            ],
+            questions: [
+                { num: 36, text: "Construction of footbridges, steps and handrails" },
+                { num: 37, text: "Frequent breakdown of buses and trucks in Makete" },
+                { num: 38, text: "The improvement of secondary roads and paths" },
+                { num: 39, text: "The isolation of Makete for part of the year" },
+            ],
+        },
+        module4: {
+            title: "Question 40",
+            badge: "MULTIPLE CHOICE",
+            instructions: "Choose the correct answer.",
+            question: {
+                num: 40,
+                text: "Which of the following phrases best describes the main aim of Reading Passage 3?",
+                options: [
+                    "to warn that projects such as MIRTP are likely to have serious problems",
+                    "to examine how MIRTP promoted the use of donkeys",
+                    "to describe how MIRTP was implemented and how successful it was",
+                    "to suggest that projects such as MIRTP are needed in other countries",
+                ],
+            },
+        },
+    },
+};
+
+// ── Static Answers Key (Cambridge 7 Test 2) ──
+export const CAMBRIDGE_7_TEST_2_ANSWERS_KEY: Record<number, string> = {
+    1: 'YES',
+    2: 'NO',
+    3: 'NOT GIVEN',
+    4: 'YES',
+    5: 'only Chinese pagodas',
+    6: 'both Chinese and Japanese pagodas',
+    7: 'only Chinese pagodas',
+    8: 'only Japanese pagodas',
+    9: 'both Chinese and Japanese pagodas',
+    10: 'only Japanese pagodas',
+    11: 'stops the floors moving too far',
+    12: 'learn about the dynamics of pagodas',
+    13: 'fitted loosely on top of each other',
+    14: 'E',
+    15: 'F',
+    16: 'B',
+    17: 'C',
+    18: 'YES',
+    19: 'NOT GIVEN',
+    20: 'NO',
+    21: 'YES',
+    22: 'food bills',
+    23: 'intensive farming',
+    24: 'organic farming',
+    25: 'Greener Food Standard',
+    26: 'farmers and consumers',
+    27: 'Identifying the main transport problems',
+    28: 'Initial improvements in mobility and transport modes',
+    29: 'Effects of initial MIRTP measures',
+    30: 'MIRTP as a future model',
+    31: 'NO',
+    32: 'YES',
+    33: 'NOT GIVEN',
+    34: 'NO',
+    35: 'NOT GIVEN',
+    36: 'was done only at the request of local people who were willing to lend a hand.',
+    37: 'hindered attempts to make the existing transport services more efficient.',
+    38: 'improved paths used for transport up and down hillsides.',
+    40: 'to describe how MIRTP was implemented and how successful it was',
+};
+
+// ── Cambridge 7 Test 3 Static Question Schema ──
+export const CAMBRIDGE_7_TEST_3_RIGHT_PANEL = {
+    part1: {
+        title: "Ant Intelligence",
+        subtitle: "13 questions • easy",
+        module1: {
+            title: "Questions 1-6",
+            badge: "TRUE-FALSE/NOT GIVEN",
+            instructions: "Choose TRUE if the statement agrees with the information given in the text, choose FALSE if the statement contradicts the information, or choose NOT GIVEN if there is no information on this.",
+            questions: [
+                { num: 1, text: "Ants use the same channels of communication as humans do.", options: ["NOT GIVEN", "TRUE", "FALSE"] },
+                { num: 2, text: "City life is one factor that encourages the development of intelligence.", options: ["FALSE", "NOT GIVEN", "TRUE"] },
+                { num: 3, text: "Ants can build large cities more quickly than humans do.", options: ["NOT GIVEN", "TRUE", "FALSE"] },
+                { num: 4, text: "Some ants can find their way by making calculations based on distance and position.", options: ["FALSE", "NOT GIVEN", "TRUE"] },
+                { num: 5, text: "In one experiment, foraging teams were able to use their sense of smell to find food.", options: ["NOT GIVEN", "TRUE", "FALSE"] },
+                { num: 6, text: "The essay 'In the company of ants' explores ant communication.", options: ["FALSE", "NOT GIVEN", "TRUE"] },
+            ],
+        },
+        module2: {
+            title: "Questions 7-13",
+            badge: "SUMMARY COMPLETION WC",
+            instructions: "Complete the summary using the list of words. Choose the correct answer and move it into the gap.",
+            headerBox: "Ants as farmers",
+            choices: [
+                "growing", "energy", "aphids", "other species", "cellulose",
+                "secretions", "fungi", "fertilizers", "interbreeding", "environment",
+                "exchanging", "food", "agricultural", "sustainable", "natural",
+            ],
+        },
+    },
+    part2: {
+        title: "Population Migration and Genes",
+        subtitle: "13 questions • easy",
+        module1: {
+            title: "Questions 14-19",
+            badge: "MATCHING HEADING",
+            instructions: "The text has seven sections. Choose the correct heading for each section and move it into the gap.",
+            choices: [
+                "How analysis of blood-variants measures the closeness of the relationship between different populations",
+                "Developments in the methods used to study early population movements",
+                "Long-standing questions about prehistoric migration to America",
+                "Further genetic evidence relating to the three-wave theory",
+                "Indian migration from Canada to the U.S.A.",
+                "The results of the research into blood-variants",
+                "Dental evidence",
+                "Questions about the causes of prehistoric migration to America",
+                "Greenberg’s analysis of the dental and linguistic evidence",
+            ],
+            questions: [
+                { num: 14, label: "Passage A" },
+                { num: 15, label: "Passage B" },
+                { num: 16, label: "Passage C" },
+                { num: 17, label: "Passage D" },
+                { num: 18, label: "Passage E" },
+                { num: 19, label: "Passage F" },
+            ],
+            example: "Ex: Section G : Conflicting views of the three-wave theory, based on non-genetic Evidence",
+        },
+        module2: {
+            title: "Questions 20-21",
+            badge: "MATCHING FEATURES",
+            instructions: "Choose the correct answer for each item. The discussion of Williams’s research indicates the periods at which early people are thought to have migrated along certain routes. There are six routes, A-F, marked on the map below.",
+            choices: ["A", "B", "C", "D", "E", "F"],
+            questions: [
+                { num: 20, text: "15,000 or more" },
+                { num: 21, text: "600 to 700" },
+            ],
+        },
+        module3: {
+            title: "Questions 22-25",
+            badge: "MATCHING FEATURES",
+            instructions: "Choose the correct answer for each item. You may choose any answer more than once.",
+            choices: ["the first wave", "the second wave", "the third wave"],
+            questions: [
+                { num: 22, text: "Inuit" },
+                { num: 23, text: "Apache" },
+                { num: 24, text: "Pima-Papago" },
+                { num: 25, text: "Ticuna" },
+            ],
+        },
+        module4: {
+            title: "Question 26",
+            badge: "MULTIPLE CHOICE",
+            instructions: "Choose the correct answer.",
+            question: {
+                num: 26,
+                text: "Christy Turner’s research involved the examination of",
+                options: [
+                    "dental specimens from the majority of prehistoric American",
+                    "the eating habits of American and Asian populations",
+                    "teeth from both prehistoric and modern Americans and Asians",
+                    "thousands of people who live in either the New of the Old World",
+                ],
+            },
+        },
+    },
+    part3: {
+        title: "Protecting Europe’s Forests",
+        subtitle: "14 questions • easy",
+        module1: {
+            title: "Questions 27-33",
+            badge: "TRUE-FALSE/NOT GIVEN",
+            instructions: "Choose TRUE if the statement agrees with the information given in the text, choose FALSE if the statement contradicts the information, or choose NOT GIVEN if there is no information on this.",
+            questions: [
+                { num: 27, text: "Forest problems of Mediterranean countries are to be discussed at the next meeting of experts.", options: ["NOT GIVEN", "TRUE", "FALSE"] },
+                { num: 28, text: "Problems in Nordic countries were excluded because they are outside the European Economic Community.", options: ["FALSE", "NOT GIVEN", "TRUE"] },
+                { num: 29, text: "Forests are a renewable source of raw material.", options: ["FALSE", "NOT GIVEN", "TRUE"] },
+                { num: 30, text: "The biological functions of forests were recognised only in the twentieth century.", options: ["NOT GIVEN", "TRUE", "FALSE"] },
+                { num: 31, text: "Natural forests still exist in parts of Europe.", options: ["FALSE", "NOT GIVEN", "TRUE"] },
+                { num: 32, text: "Forest policy should be limited by national boundaries.", options: ["NOT GIVEN", "TRUE", "FALSE"] },
+                { num: 33, text: "The Strasbourg conference decided that a forest policy must allow for the possibility of change.", options: ["FALSE", "NOT GIVEN", "TRUE"] },
+            ],
+        },
+        module2: {
+            title: "Questions 34-39",
+            badge: "MATCHING FEATURES",
+            instructions: "Choose the correct answer for each item.",
+            choices: [
+                "The surviving natural forests of Europe do not need priority treatment.",
+                "Soil imbalances such as acidification should be treated with compounds of nitrogen and sulphur.",
+                "Skiing should be encouraged in thinly populated areas.",
+                "Information is to be systematically gathered on any decline in the condition of forests.",
+                "All kinds of species of trees should be preserved.",
+                "Information on forest fires should be collected and shared.",
+                "Resources should be allocated to research into tree diseases",
+                "Research is to be better co-ordinate throughout Europe.",
+                "Loss Of leaves from trees should be more extensively and carefully monitored.",
+                "Fragile mountain forests should be given priority in research programs.",
+            ],
+            questions: [
+                { num: 34, label: "Resolution 1" },
+                { num: 35, label: "Resolution 2" },
+                { num: 36, label: "Resolution 3" },
+                { num: 37, label: "Resolution 4" },
+                { num: 38, label: "Resolution 5" },
+                { num: 39, label: "Resolution 6" },
+            ],
+        },
+        module3: {
+            title: "Question 40",
+            badge: "MULTIPLE CHOICE",
+            instructions: "Choose the correct answer.",
+            question: {
+                num: 40,
+                text: "What is the best title for Reading Passage?",
+                options: [
+                    "Proposals for a world-wide policy on forest management",
+                    "The biological, economic and recreational role of forests",
+                    "Plans to protect the forests of Europe",
+                    "The priority of European research into ecosystems",
+                ],
+            },
+        },
+    },
+};
+
+// ── Static Answers Key (Cambridge 7 Test 3) ──
+export const CAMBRIDGE_7_TEST_3_ANSWERS_KEY: Record<number, string> = {
+    1: 'FALSE',
+    2: 'TRUE',
+    3: 'NOT GIVEN',
+    4: 'TRUE',
+    5: 'NOT GIVEN',
+    6: 'TRUE',
+    7: 'cellulose',
+    8: 'secretions',
+    9: 'fertilizers',
+    10: 'exchanging',
+    11: 'sustainable',
+    12: 'environment',
+    13: 'energy',
+    14: 'Further genetic evidence relating to the three-wave theory',
+    15: 'Dental evidence',
+    16: 'Developments in the methods used to study early population movements',
+    17: 'Greenberg’s analysis of the dental and linguistic evidence',
+    18: 'How analysis of blood-variants measures the closeness of the relationship between different populations',
+    19: 'The results of the research into blood-variants',
+    20: 'E',
+    21: 'D',
+    22: 'the second wave',
+    23: 'the third wave',
+    24: 'the first wave',
+    25: 'the first wave',
+    26: 'teeth from both prehistoric and modern Americans and Asians',
+    27: 'NOT GIVEN',
+    28: 'FALSE',
+    29: 'TRUE',
+    30: 'FALSE',
+    31: 'TRUE',
+    32: 'FALSE',
+    33: 'TRUE',
+    34: 'Information is to be systematically gathered on any decline in the condition of forests.',
+    35: 'Research is to be better co-ordinate throughout Europe.',
+    36: 'Information on forest fires should be collected and shared.',
+    37: 'Fragile mountain forests should be given priority in research programs.',
+    38: 'All kinds of species of trees should be preserved.',
+    39: 'Soil imbalances such as acidification should be treated with compounds of nitrogen and sulphur.',
+    40: 'Plans to protect the forests of Europe',
+};
+
+// ── Cambridge 7 Test 4 Static Question Schema ──
+export const CAMBRIDGE_7_TEST_4_RIGHT_PANEL = {
+    part1: {
+        title: "Wind-Powered Pyramid Building",
+        subtitle: "13 questions • easy",
+        module1: {
+            title: "Questions 1-7",
+            badge: "TRUE-FALSE/NOT GIVEN",
+            instructions: "Choose TRUE if the statement agrees with the information given in the text, choose FALSE if the statement contradicts the information, or choose NOT GIVEN if there is no information on this.",
+            questions: [
+                { num: 1, text: "It is generally believed that large numbers of people were needed to build the pyramids.", options: ["NOT GIVEN", "TRUE", "FALSE"] },
+                { num: 2, text: "Clemmons found a strange hieroglyph on the wall of an Egyptian monument.", options: ["FALSE", "NOT GIVEN", "TRUE"] },
+                { num: 3, text: "Gharib had previously done experiments on bird flight.", options: ["FALSE", "NOT GIVEN", "TRUE"] },
+                { num: 4, text: "Gharib and Graff tested their theory before applying it.", options: ["FALSE", "NOT GIVEN", "TRUE"] },
+                { num: 5, text: "The success of the actual experiment was due to the high speed of the wind.", options: ["FALSE", "NOT GIVEN", "TRUE"] },
+                { num: 6, text: "They found that, as the kite flew higher, the wind force got stronger.", options: ["NOT GIVEN", "TRUE", "FALSE"] },
+                { num: 7, text: "The team decided that it was possible to use kites to raise very heavy stones.", options: ["FALSE", "NOT GIVEN", "TRUE"] },
+            ],
+        },
+        module2: {
+            title: "Questions 8-13",
+            badge: "SUMMARY COMPLETION WOC",
+            instructions: "Complete the summary. Write NO MORE THAN TWO WORDS from the text for each answer.",
+            headerBox: "Addition evidence for theory of kite lifting",
+        },
+    },
+    part2: {
+        title: "Endless Harvest",
+        subtitle: "13 questions • easy",
+        module1: {
+            title: "Questions 14-20",
+            badge: "TRUE-FALSE/NOT GIVEN",
+            instructions: "Choose TRUE if the statement agrees with the information given in the text, choose FALSE if the statement contradicts the information, or choose NOT GIVEN if there is no information on this.",
+            questions: [
+                { num: 14, text: "The inhabitants of the Aleutian islands renamed their islands Aleyska", options: ["FALSE", "NOT GIVEN", "TRUE"] },
+                { num: 15, text: "Alaska’s fisheries are owned by some of the world’s largest companies.", options: ["FALSE", "NOT GIVEN", "TRUE"] },
+                { num: 16, text: "Life in Alaska is dependent on salmon.", options: ["FALSE", "NOT GIVEN", "TRUE"] },
+                { num: 17, text: "Ninety per cent of all Pacific salmon caught are sockeye or pink salmon.", options: ["NOT GIVEN", "TRUE", "FALSE"] },
+                { num: 18, text: "More than 320,000 tonnes of salmon were caught in Alaska in 2000.", options: ["FALSE", "NOT GIVEN", "TRUE"] },
+                { num: 19, text: "Between 1940 and 1959, there was a sharp decrease in Alaska’s salmon population.", options: ["NOT GIVEN", "TRUE", "FALSE"] },
+                { num: 20, text: "During the 1990s, the average number of salmon caught each year was 100 million.", options: ["FALSE", "NOT GIVEN", "TRUE"] },
+            ],
+        },
+        module2: {
+            title: "Questions 21-26",
+            badge: "MATCHING SENTENCE ENDINGS",
+            instructions: "Complete each sentence with the correct ending. Choose the correct answer and move it into the gap.",
+            choices: [
+                "to stop fish from spawning",
+                "to label their products using the MSC logo.",
+                "to freeze a huge number of salmon eggs.",
+                "to deny certification to the Alaska fisheries.",
+                "to be successful.",
+                "to recognise fisheries that care for the environment.",
+                "to stop people fishing for sport.",
+                "to assist the subsistence communities in the region.",
+                "to ensure that fish numbers are sufficient to permit fishing.",
+                "to close down all fisheries.",
+                "to set up environmental protection laws.",
+            ],
+            questions: [
+                { num: 21, text: "In Alaska, biologists keep a check on adult fish" },
+                { num: 22, text: "Biologists have the authority" },
+                { num: 23, text: "In-Season Abundance-Based Management has allowed the Alaska salmon fisheries" },
+                { num: 24, text: "The Marine Stewardship Council (MSC) was established" },
+                { num: 25, text: "As a result of the collapse of the salmon runs in 1999, the state decided" },
+                { num: 26, text: "In September 2000, the MSC allowed seven Alaska salmon companies" },
+            ],
+        },
+    },
+    part3: {
+        title: "Effects of Noise",
+        subtitle: "14 questions • easy",
+        module1: {
+            title: "Questions 27-29",
+            badge: "MULTIPLE CHOICE",
+            instructions: "Choose the correct answer.",
+            questions: [
+                {
+                    num: 27,
+                    text: "The writer suggests that people may have difficulty sleeping in the mountains because",
+                    options: [
+                        "they may be exposed to short bursts of very strange sounds.",
+                        "humans prefer to hear a certain amount of noise while they sleep.",
+                        "they may have adapted to a higher noise level in the city.",
+                        "humans do not prefer peace and quiet to noise.",
+                    ],
+                },
+                {
+                    num: 28,
+                    text: "In noise experiments, Glass and Singer found that",
+                    options: [
+                        "physiological arousal prevents the ability to work.",
+                        "bursts of noise do not seriously disrupt problem-solving in the long term.",
+                        "the physiological arousal of control subjects declined quickly.",
+                        "problem-solving is much easier under quiet conditions.",
+                    ],
+                },
+                {
+                    num: 29,
+                    text: "Researchers discovered that high noise levels are not likely to interfere with the",
+                    options: [
+                        "tasks of pilots or air traffic controllers.",
+                        "ability to repeal numbers while tracking moving lines.",
+                        "ability to monitor three dials at once.",
+                        "successful performance of a single task.",
+                    ],
+                },
+            ],
+        },
+        module2: {
+            title: "Questions 30-34",
+            badge: "SUMMARY COMPLETION WC",
+            instructions: "Complete the summary using the list of words. Choose the correct answer and move it into the gap. You may use any words more than once.",
+            choices: [
+                "intense", "different types of", "unexpected", "the same amount of",
+                "performed at about the same level as", "made more mistakes than",
+                "no control over", "performed better than", "no", "showed more irritation than",
+            ],
+        },
+        module3: {
+            title: "Questions 35-40",
+            badge: "MATCHING FEATURES",
+            instructions: "Choose the correct answer for each item. You may choose any answer more than once.",
+            choices: [
+                "Glass and Singer", "None of the above", "Broadbent", "Finkelman and Glass", "Cohen et al.",
+            ],
+            questions: [
+                { num: 35, text: "Subjects exposed to noise find it difficult at first to concentrate on problem-solving tasks" },
+                { num: 36, text: "Long-term exposure to noise can produce changes in behavior which can still be observed a year later." },
+                { num: 37, text: "The problems associated with exposure to noise do not arise if the subject knows they can make it stop." },
+                { num: 38, text: "Exposure to high-pitched noise results in more errors than exposure to low-pitched noise" },
+                { num: 39, text: "Subjects find it difficult to perform three tasks at the same time when exposed to noise" },
+                { num: 40, text: "Noise affects a subject’s capacity to repeat numbers while carrying out another task." },
+            ],
+        },
+    },
+};
+
+export const CAMBRIDGE_7_TEST_4_ANSWERS_KEY: Record<number, string> = {
+    1: 'TRUE',
+    2: 'FALSE',
+    3: 'NOT GIVEN',
+    4: 'TRUE',
+    5: 'FALSE',
+    6: 'NOT GIVEN',
+    7: 'TRUE',
+    8: 'wooden pulleys',
+    9: 'stone',
+    10: 'accomplished sailors',
+    11: 'modern glider',
+    12: 'flight',
+    13: 'messages',
+    14: 'TRUE',
+    15: 'FALSE',
+    16: 'TRUE',
+    17: 'NOT GIVEN',
+    18: 'FALSE',
+    19: 'TRUE',
+    20: 'FALSE',
+    21: 'to ensure that fish numbers are sufficient to permit fishing.',
+    22: 'to close down all fisheries.',
+    23: 'to be successful.',
+    24: 'to recognise fisheries that care for the environment.',
+    25: 'to assist the subsistence communities in the region.',
+    26: 'to label their products using the MSC logo.',
+    27: 'they may have adapted to a higher noise level in the city.',
+    28: 'bursts of noise do not seriously disrupt problem-solving in the long term.',
+    29: 'successful performance of a single task.',
+    30: 'unexpected',
+    31: 'the same amount of',
+    32: 'performed at about the same level as',
+    33: 'made more mistakes than',
+    34: 'unexpected',
+    35: 'Glass and Singer',
+    36: 'Cohen et al.',
+    37: 'Glass and Singer',
+    38: 'None of the above',
+    39: 'Broadbent',
+    40: 'Finkelman and Glass',
+};
+
 // ── Data Interfaces ──
 export interface SupabaseQuestionItem {
     id: string;
@@ -322,11 +930,26 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
     const [elapsed, setElapsed] = useState(0);
     const [score, setScore] = useState<number | null>(null);
 
+    const isCambridge7Test1 = Number(bookNumber) === 7 && Number(testNumber) === 1;
+    const isCambridge7Test2 = Number(bookNumber) === 7 && Number(testNumber) === 2;
+    const isCambridge7Test3 = Number(bookNumber) === 7 && Number(testNumber) === 3;
+    const isCambridge7Test4 = Number(bookNumber) === 7 && Number(testNumber) === 4;
+    const testDifficulty = Number(testNumber) === 1 ? 'easy' : Number(testNumber) === 4 ? 'hard' : 'medium';
+
     // Supabase Data Fetching State
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [examId, setExamId] = useState<string | null>(null);
     const [passages, setPassages] = useState<any[]>([]);
     const [questions, setQuestions] = useState<SupabaseQuestionItem[]>([]);
-    const [answersKey, setAnswersKey] = useState<Record<number, string>>(STATIC_ANSWERS_KEY);
+    const [answersKey, setAnswersKey] = useState<Record<number, string>>(
+        isCambridge7Test4
+            ? CAMBRIDGE_7_TEST_4_ANSWERS_KEY
+            : isCambridge7Test3
+            ? CAMBRIDGE_7_TEST_3_ANSWERS_KEY
+            : isCambridge7Test2
+            ? CAMBRIDGE_7_TEST_2_ANSWERS_KEY
+            : STATIC_ANSWERS_KEY
+    );
 
     // Question Refs for scrolling
     const questionRefs = useRef<Record<number, HTMLDivElement | null>>({});
@@ -335,6 +958,18 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
     const locked = testState !== 'active';
     const remaining = Math.max(0, timeLimit - elapsed);
     const lowTime = remaining <= 300;
+
+    useEffect(() => {
+        setAnswersKey(
+            isCambridge7Test4
+                ? CAMBRIDGE_7_TEST_4_ANSWERS_KEY
+                : isCambridge7Test3
+                ? CAMBRIDGE_7_TEST_3_ANSWERS_KEY
+                : isCambridge7Test2
+                ? CAMBRIDGE_7_TEST_2_ANSWERS_KEY
+                : STATIC_ANSWERS_KEY
+        );
+    }, [isCambridge7Test2, isCambridge7Test3, isCambridge7Test4]);
 
     // Fetch dynamic exam, passages, and questions from Supabase in background
     useEffect(() => {
@@ -350,7 +985,12 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                     .maybeSingle();
 
                 if (examErr || !examData) {
+                    if (isMounted) setExamId(null);
                     return;
+                }
+
+                if (isMounted) {
+                    setExamId((examData as any).id);
                 }
 
                 // 2. Fetch Passages
@@ -380,7 +1020,15 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                     if (passageData && passageData.length > 0) setPassages(passageData);
                     if (questionData && questionData.length > 0) setQuestions(questionData);
 
-                    const keyMap: Record<number, string> = { ...STATIC_ANSWERS_KEY };
+                    const keyMap: Record<number, string> = {
+                        ...(isCambridge7Test4
+                            ? CAMBRIDGE_7_TEST_4_ANSWERS_KEY
+                            : isCambridge7Test3
+                            ? CAMBRIDGE_7_TEST_3_ANSWERS_KEY
+                            : isCambridge7Test2
+                            ? CAMBRIDGE_7_TEST_2_ANSWERS_KEY
+                            : STATIC_ANSWERS_KEY),
+                    };
                     (questionData || []).forEach((q: any) => {
                         if (q.question_number && q.correct_answer) {
                             keyMap[q.question_number] = q.correct_answer;
@@ -397,7 +1045,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
         return () => {
             isMounted = false;
         };
-    }, [bookNumber, testNumber]);
+    }, [bookNumber, testNumber, isCambridge7Test2, isCambridge7Test3, isCambridge7Test4]);
 
     useEffect(() => {
         if (testState !== 'active') return;
@@ -450,9 +1098,67 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
             let correct = 0;
             for (let id = 1; id <= 40; id++) {
                 const userAns = normalize(answers[id] || '');
-                const expected = normalize(answersKey[id] || STATIC_ANSWERS_KEY[id] || '');
-                if (userAns && expected && userAns === expected) {
+                const expected = normalize(
+                    answersKey[id] ||
+                    (isCambridge7Test4
+                        ? CAMBRIDGE_7_TEST_4_ANSWERS_KEY[id]
+                        : isCambridge7Test3
+                        ? CAMBRIDGE_7_TEST_3_ANSWERS_KEY[id]
+                        : isCambridge7Test2
+                        ? CAMBRIDGE_7_TEST_2_ANSWERS_KEY[id]
+                        : STATIC_ANSWERS_KEY[id]) || ''
+                );
+                if (!userAns || !expected) continue;
+
+                if (userAns === expected) {
                     correct++;
+                    continue;
+                }
+
+                if (isCambridge7Test2) {
+                    if (id === 11 && (userAns === 'c' || userAns.startsWith('c.'))) correct++;
+                    else if (id === 12 && (userAns === 'd' || userAns.startsWith('d.'))) correct++;
+                    else if (id === 13 && (userAns === 'a' || userAns.startsWith('a.'))) correct++;
+                    else if (id === 40 && (userAns === 'c' || userAns.startsWith('c.'))) correct++;
+                    else if (id === 22 && (userAns === 'food bills' || userAns === 'costs' || userAns === 'food costs')) correct++;
+                    else if (id === 23 && (userAns === 'intensive farming' || userAns === 'modern intensive farming')) correct++;
+                    else if (id === 24 && userAns === 'organic farming') correct++;
+                    else if (id === 25 && userAns === 'greener food standard') correct++;
+                    else if (id === 26 && (userAns === 'farmers and consumers' || userAns === 'consumers and farmers')) correct++;
+                    else if (id === 27 && (userAns === 'vii' || userAns === '7')) correct++;
+                    else if (id === 28 && (userAns === 'viii' || userAns === '8')) correct++;
+                    else if (id === 29 && (userAns === 'v' || userAns === '5')) correct++;
+                    else if (id === 30 && (userAns === 'vi' || userAns === '6')) correct++;
+                    else if (id === 36 && (userAns === 'd' || userAns.startsWith('d.'))) correct++;
+                    else if (id === 37 && (userAns === 'e' || userAns.startsWith('e.'))) correct++;
+                    else if (id === 38 && (userAns === 'g' || userAns.startsWith('g.'))) correct++;
+                    else if (id === 39 && (userAns === 'i' || userAns.startsWith('i.'))) correct++;
+                } else if (isCambridge7Test3) {
+                    if (id === 26 && (userAns === 'c' || userAns.startsWith('c.'))) correct++;
+                    else if (id === 40 && (userAns === 'c' || userAns.startsWith('c.'))) correct++;
+                    else if (id === 14 && (userAns === 'iv' || userAns === '4')) correct++;
+                    else if (id === 15 && (userAns === 'vii' || userAns === '7')) correct++;
+                    else if (id === 16 && (userAns === 'ii' || userAns === '2')) correct++;
+                    else if (id === 17 && (userAns === 'ix' || userAns === '9')) correct++;
+                    else if (id === 18 && (userAns === 'i' || userAns === '1')) correct++;
+                    else if (id === 19 && (userAns === 'vi' || userAns === '6')) correct++;
+                    else if (id === 34 && (userAns === '4' || userAns.startsWith('4.'))) correct++;
+                    else if (id === 35 && (userAns === '8' || userAns.startsWith('8.'))) correct++;
+                    else if (id === 36 && (userAns === '6' || userAns.startsWith('6.'))) correct++;
+                    else if (id === 37 && (userAns === '10' || userAns.startsWith('10.'))) correct++;
+                    else if (id === 38 && (userAns === '5' || userAns.startsWith('5.'))) correct++;
+                    else if (id === 39 && (userAns === '2' || userAns.startsWith('2.'))) correct++;
+                } else if (isCambridge7Test4) {
+                    if (id === 8 && (userAns === 'wooden pulleys' || userAns === 'pulleys')) correct++;
+                    else if (id === 9 && userAns === 'stone') correct++;
+                    else if (id === 10 && (userAns === 'accomplished sailors' || userAns === 'sailors')) correct++;
+                    else if (id === 11 && (userAns === 'modern glider' || userAns === 'glider')) correct++;
+                    else if (id === 12 && userAns === 'flight') correct++;
+                    else if (id === 13 && userAns === 'messages') correct++;
+                    else if (id === 27 && (userAns === 'c' || userAns.startsWith('c.'))) correct++;
+                    else if (id === 28 && (userAns === 'b' || userAns.startsWith('b.'))) correct++;
+                    else if (id === 29 && (userAns === 'd' || userAns.startsWith('d.'))) correct++;
+                    else if (id === 34 && (userAns === 'unexpected' || userAns === 'intense')) correct++;
                 }
             }
             const timeSpent = Math.max(1, Math.round(elapsed / 60));
@@ -475,15 +1181,33 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
         }, 900);
     };
 
-    // 1. Passage matching logic by active part (with robust static fallback for Cambridge 7 Test 1)
+    // 1. Passage matching logic by active part (with robust static fallback)
     const dynamicPassage = passages.find(
         (p) => Number(p.part_number) === Number(activePart)
     );
 
     const activePassage = {
-        title: dynamicPassage?.title || STATIC_PASSAGES[activePart]?.title || "Let's Go Bats",
-        subtitle: dynamicPassage?.subtitle || STATIC_PASSAGES[activePart]?.subtitle || `${activePart === 1 ? 13 : activePart === 2 ? 13 : 14} questions • easy`,
-        content_html: dynamicPassage?.content_html || STATIC_PASSAGES[activePart]?.content_html || '',
+        title: isCambridge7Test1
+            ? (STATIC_PASSAGES[activePart]?.title || `Cambridge 7 Test 1 - Part ${activePart}`)
+            : isCambridge7Test2
+            ? (dynamicPassage?.title || CAMBRIDGE_7_TEST_2_RIGHT_PANEL[`part${activePart}`]?.title || `Cambridge 7 Test 2 - Part ${activePart}`)
+            : isCambridge7Test3
+            ? (dynamicPassage?.title || CAMBRIDGE_7_TEST_3_RIGHT_PANEL[`part${activePart}`]?.title || `Cambridge 7 Test 3 - Part ${activePart}`)
+            : isCambridge7Test4
+            ? (dynamicPassage?.title || CAMBRIDGE_7_TEST_4_RIGHT_PANEL[`part${activePart}`]?.title || `Cambridge 7 Test 4 - Part ${activePart}`)
+            : (dynamicPassage?.title || (sourceType === 'cambridge' ? `Cambridge ${bookNumber} Test ${testNumber} - Part ${activePart}` : `Mock Series ${bookNumber} Test ${testNumber} - Part ${activePart}`)),
+        subtitle: isCambridge7Test2
+            ? (CAMBRIDGE_7_TEST_2_RIGHT_PANEL[`part${activePart}`]?.subtitle || `${activePart === 3 ? 14 : 13} questions • medium`)
+            : isCambridge7Test3
+            ? (CAMBRIDGE_7_TEST_3_RIGHT_PANEL[`part${activePart}`]?.subtitle || `${activePart === 3 ? 14 : 13} questions • easy`)
+            : isCambridge7Test4
+            ? (CAMBRIDGE_7_TEST_4_RIGHT_PANEL[`part${activePart}`]?.subtitle || `${activePart === 3 ? 14 : 13} questions • easy`)
+            : isCambridge7Test1
+            ? (STATIC_PASSAGES[activePart]?.subtitle || `${activePart === 3 ? 14 : 13} questions • easy`)
+            : `${activePart === 3 ? 14 : 13} questions • ${testDifficulty}`,
+        content_html: isCambridge7Test1
+            ? (STATIC_PASSAGES[activePart]?.content_html || '')
+            : (dynamicPassage?.content_html || ''),
     };
 
     const activeQuestions = questions.filter(
@@ -676,8 +1400,6 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
         );
     }
 
-    const isCambridge7Test1 = Number(bookNumber) === 7 && Number(testNumber) === 1;
-
     return (
         <div className="flex flex-col h-full w-full relative bg-[#FFFFFF] text-black font-sans min-w-0 overflow-hidden" style={{ flex: 1 }}>
             {/* ── Global Header (Dark Sticky Header Bar) ── */}
@@ -762,12 +1484,34 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                         </div>
                     )}
 
-                    {/* Passage Content */}
+                    {/* Passage Content or Fallback Notice */}
                     <div className="space-y-4" onClick={handleTextClick}>
-                        <div 
-                            className="prose max-w-none text-[15px] leading-[1.8] text-gray-800"
-                            dangerouslySetInnerHTML={{ __html: activePassage.content_html }}
-                        />
+                        {activePassage.content_html ? (
+                            <div 
+                                className="prose max-w-none text-[15px] leading-[1.8] text-gray-800"
+                                dangerouslySetInnerHTML={{ __html: activePassage.content_html }}
+                            />
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-gray-50/70 rounded-2xl border border-dashed border-gray-300">
+                                <div className="w-14 h-14 rounded-2xl bg-blue-50 text-[#0072CE] flex items-center justify-center mb-4 shadow-2xs">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <polyline points="14 2 14 8 20 8"/>
+                                        <line x1="16" y1="13" x2="8" y2="13"/>
+                                        <line x1="16" y1="17" x2="8" y2="17"/>
+                                        <polyline points="10 9 9 9 8 9"/>
+                                    </svg>
+                                </div>
+                                <h3 className="text-base font-bold text-gray-900 mb-1.5">Reading Passage Pending</h3>
+                                <p className="text-sm text-gray-500 max-w-md leading-relaxed mb-4">
+                                    Passage text pending Supabase synchronization for Cambridge {bookNumber} Test {testNumber} Part {activePart}.
+                                </p>
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-200 rounded-full text-xs font-medium text-gray-600 shadow-2xs">
+                                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                                    Awaiting Database Sync
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -794,8 +1538,1762 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                         <p className="text-sm font-normal text-gray-500 mt-1">{activePassage.subtitle}</p>
                     </div>
 
-                    {/* ════ PART 1 MODULES (Questions 1–13) ════ */}
-                    {isCambridge7Test1 && activePart === 1 ? (
+                    <DynamicRightPanel
+                        examId={examId}
+                        partNumber={activePart}
+                        answers={answers}
+                        onAnswer={setAnswer}
+                        activeId={activeId}
+                        setActiveId={setActiveId}
+                        questionRefs={questionRefs}
+                        locked={locked}
+                        onDynamicLoaded={(hasGroups, dynamicQs) => {
+                            if (hasGroups && dynamicQs.length > 0) {
+                                setAnswersKey((prev) => {
+                                    const nextKey = { ...prev };
+                                    dynamicQs.forEach((q) => {
+                                        if (q.question_number && q.correct_answer) {
+                                            nextKey[q.question_number] = q.correct_answer;
+                                        }
+                                    });
+                                    return nextKey;
+                                });
+                            }
+                        }}
+                        fallback={
+                            <>
+                                {/* ════ CAMBRIDGE 7 TEST 2 CUSTOM MODULES ════ */}
+                                {isCambridge7Test2 && activePart === 1 ? (
+                        <div className="space-y-10">
+                            {/* Module 1: Questions 1-4 (YES-NO/NOT GIVEN) */}
+                            <div>
+                                <div className="flex items-baseline gap-2 mb-2">
+                                    <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part1.module1.title}</h3>
+                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part1.module1.badge}</span>
+                                </div>
+                                <p className="text-sm text-gray-700 mb-6 leading-relaxed">
+                                    Choose <span className="font-bold">YES</span> if the statement agrees with the information given in the text, choose <span className="font-bold">NO</span> if the statement contradicts the information, or choose <span className="font-bold">NOT GIVEN</span> if there is no information on this.
+                                </p>
+
+                                <div className="space-y-6">
+                                    {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part1.module1.questions.map((q) => (
+                                        <div 
+                                            key={q.num}
+                                            ref={(el) => { questionRefs.current[q.num] = el; }}
+                                            className="space-y-3"
+                                            onClick={() => setActiveId(q.num)}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <span className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-700 shrink-0 mt-0.5">
+                                                    {q.num}
+                                                </span>
+                                                <span className="text-sm text-gray-800 leading-relaxed font-normal">
+                                                    {q.text}
+                                                </span>
+                                            </div>
+
+                                            {/* Stacked Option Cards */}
+                                            <div className="space-y-2 pt-1 pl-9">
+                                                {q.options.map((opt) => {
+                                                    const isSelected = answers[q.num] === opt;
+                                                    return (
+                                                        <label
+                                                            key={opt}
+                                                            className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${
+                                                                isSelected 
+                                                                    ? 'border-blue-500 bg-blue-50/20 shadow-2xs' 
+                                                                    : 'border-gray-100 hover:border-gray-200 bg-white shadow-2xs'
+                                                            }`}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setAnswer(q.num, opt);
+                                                            }}
+                                                        >
+                                                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-blue-600 bg-blue-600' : 'border-gray-300 bg-white'}`}>
+                                                                {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                            </div>
+                                                            <span className={`text-xs font-medium ${isSelected ? 'text-gray-900 font-semibold' : 'text-gray-700'}`}>
+                                                                {opt}
+                                                            </span>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Module 2: Questions 5-10 (MATCHING FEATURES) */}
+                            <div className="pt-6 border-t border-gray-100">
+                                <div className="flex items-baseline gap-2 mb-2">
+                                    <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part1.module2.title}</h3>
+                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part1.module2.badge}</span>
+                                </div>
+                                <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+                                    {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part1.module2.instructions}
+                                </p>
+
+                                {/* CHOICES Container Box */}
+                                <div className="bg-[#F9FAFB] border border-gray-200 rounded-2xl p-4 mb-6 shadow-2xs">
+                                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">CHOICES</div>
+                                    <div className="h-px bg-gray-200 my-2" />
+                                    <p className="text-xs text-gray-400 mb-3">Each answer can be used once. Select it again to move it.</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part1.module2.choices.map((choice, cIdx) => (
+                                            <span 
+                                                key={cIdx}
+                                                className="inline-block bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 shadow-2xs font-medium cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors"
+                                            >
+                                                {choice}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Question Items with Dashed Dropdown Triggers */}
+                                <div className="space-y-4">
+                                    {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part1.module2.questions.map((q) => (
+                                        <div 
+                                            key={q.num}
+                                            ref={(el) => { questionRefs.current[q.num] = el; }}
+                                            className="flex flex-wrap items-baseline justify-between gap-4 py-1"
+                                            onClick={() => setActiveId(q.num)}
+                                        >
+                                            <span className="text-sm text-gray-800 leading-relaxed max-w-md">{q.text}</span>
+                                            <select
+                                                value={answers[q.num] || ''}
+                                                onChange={(e) => setAnswer(q.num, e.target.value)}
+                                                onFocus={() => setActiveId(q.num)}
+                                                className="border border-dashed border-gray-400 rounded-md bg-white px-2.5 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium shrink-0"
+                                            >
+                                                <option value="">{q.num} — Choose ˅</option>
+                                                {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part1.module2.choices.map((opt) => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Module 3: Questions 11-13 (MULTIPLE CHOICE) */}
+                            <div className="pt-6 border-t border-gray-100">
+                                <div className="flex items-baseline gap-2 mb-2">
+                                    <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part1.module3.title}</h3>
+                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part1.module3.badge}</span>
+                                </div>
+                                <p className="text-sm text-gray-700 mb-6 leading-relaxed">
+                                    {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part1.module3.instructions}
+                                </p>
+
+                                <div className="space-y-6">
+                                    {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part1.module3.questions.map((q) => (
+                                        <div 
+                                            key={q.num}
+                                            ref={(el) => { questionRefs.current[q.num] = el; }}
+                                            className="space-y-3"
+                                            onClick={() => setActiveId(q.num)}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <span className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-700 shrink-0 mt-0.5">
+                                                    {q.num}
+                                                </span>
+                                                <span className="text-sm text-gray-800 leading-relaxed font-normal">
+                                                    {q.text}
+                                                </span>
+                                            </div>
+
+                                            {/* Stacked Option Cards */}
+                                            <div className="space-y-2 pt-1 pl-9">
+                                                {q.options.map((opt, optIdx) => {
+                                                    const letter = String.fromCharCode(65 + optIdx);
+                                                    const isSelected = answers[q.num] === opt || answers[q.num] === letter;
+                                                    return (
+                                                        <label
+                                                            key={opt}
+                                                            className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${
+                                                                isSelected 
+                                                                    ? 'border-blue-500 bg-blue-50/20 shadow-2xs' 
+                                                                    : 'border-gray-100 hover:border-gray-200 bg-white shadow-2xs'
+                                                            }`}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setAnswer(q.num, opt);
+                                                            }}
+                                                        >
+                                                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-blue-600 bg-blue-600' : 'border-gray-300 bg-white'}`}>
+                                                                {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                            </div>
+                                                            <span className={`text-xs font-medium ${isSelected ? 'text-gray-900 font-semibold' : 'text-gray-700'}`}>
+                                                                <strong className="mr-1">{letter}.</strong> {opt}
+                                                            </span>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    ) : isCambridge7Test2 && activePart === 2 ? (
+                        <div className="space-y-10">
+                            {/* Module 1: Questions 14-17 (MATCHING INFORMATION) */}
+                            <div>
+                                <div className="flex items-baseline gap-2 mb-2">
+                                    <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part2.module1.title}</h3>
+                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part2.module1.badge}</span>
+                                </div>
+                                <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+                                    The text has seven sections <span className="font-bold">A-G</span>. Which section contains the following information? Choose the correct sections <span className="font-bold">A-G</span>. You may choose any answer more than once.
+                                </p>
+
+                                {/* CHOICES Container Box */}
+                                <div className="border border-gray-200 rounded-2xl p-4 mb-6 bg-white shadow-2xs">
+                                    <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">CHOICES</div>
+                                    <div className="h-px bg-gray-100 my-2" />
+                                    <p className="text-xs text-gray-400 mb-3">Each answer can be used once. Select it again to move it.</p>
+                                    <div className="flex items-center gap-2">
+                                        {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part2.module1.choices.map((choice, cIdx) => (
+                                            <div 
+                                                key={cIdx}
+                                                className="w-8 h-8 rounded-lg border border-gray-200 bg-white flex items-center justify-center text-xs font-bold text-gray-700 shadow-2xs cursor-pointer hover:border-blue-500 hover:text-blue-600 transition-colors"
+                                            >
+                                                {choice}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Question Items with Dashed Dropdown Triggers */}
+                                <div className="space-y-4">
+                                    {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part2.module1.questions.map((q) => (
+                                        <div 
+                                            key={q.num}
+                                            ref={(el) => { questionRefs.current[q.num] = el; }}
+                                            className="flex flex-wrap items-baseline justify-between gap-4 py-1"
+                                            onClick={() => setActiveId(q.num)}
+                                        >
+                                            <span className="text-sm text-gray-800 leading-relaxed max-w-md">{q.text}</span>
+                                            <select
+                                                value={answers[q.num] || ''}
+                                                onChange={(e) => setAnswer(q.num, e.target.value)}
+                                                onFocus={() => setActiveId(q.num)}
+                                                className="border border-dashed border-gray-400 rounded-md bg-white px-2.5 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium shrink-0"
+                                            >
+                                                <option value="">{q.num} — Choose ˅</option>
+                                                {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part2.module1.choices.map((opt) => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Module 2: Questions 18-21 (YES-NO/NOT GIVEN) */}
+                            <div className="pt-6 border-t border-gray-100">
+                                <div className="flex items-baseline gap-2 mb-2">
+                                    <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part2.module2.title}</h3>
+                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part2.module2.badge}</span>
+                                </div>
+                                <p className="text-sm text-gray-700 mb-6 leading-relaxed">
+                                    Choose <span className="font-bold">YES</span> if the statement agrees with the information given in the text, choose <span className="font-bold">NO</span> if the statement contradicts the information, or choose <span className="font-bold">NOT GIVEN</span> if there is no information on this.
+                                </p>
+
+                                <div className="space-y-6">
+                                    {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part2.module2.questions.map((q) => (
+                                        <div 
+                                            key={q.num}
+                                            ref={(el) => { questionRefs.current[q.num] = el; }}
+                                            className="space-y-3"
+                                            onClick={() => setActiveId(q.num)}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <span className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-700 shrink-0 mt-0.5">
+                                                    {q.num}
+                                                </span>
+                                                <span className="text-sm text-gray-800 leading-relaxed font-normal">
+                                                    {q.text}
+                                                </span>
+                                            </div>
+
+                                            {/* Stacked Option Cards */}
+                                            <div className="space-y-2 pt-1 pl-9">
+                                                {q.options.map((opt) => {
+                                                    const isSelected = answers[q.num] === opt;
+                                                    return (
+                                                        <label
+                                                            key={opt}
+                                                            className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${
+                                                                isSelected 
+                                                                    ? 'border-blue-500 bg-blue-50/20 shadow-2xs' 
+                                                                    : 'border-gray-100 hover:border-gray-200 bg-white shadow-2xs'
+                                                            }`}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setAnswer(q.num, opt);
+                                                            }}
+                                                        >
+                                                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-blue-600 bg-blue-600' : 'border-gray-300 bg-white'}`}>
+                                                                {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                            </div>
+                                                            <span className={`text-xs font-medium ${isSelected ? 'text-gray-900 font-semibold' : 'text-gray-700'}`}>
+                                                                {opt}
+                                                            </span>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Module 3: Questions 22-26 (SUMMARY COMPLETION WOC) */}
+                            <div className="pt-6 border-t border-gray-100">
+                                <div className="flex items-baseline gap-2 mb-2">
+                                    <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part2.module3.title}</h3>
+                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part2.module3.badge}</span>
+                                </div>
+                                <p className="text-sm text-gray-700 mb-6 leading-relaxed">
+                                    {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part2.module3.instructions}
+                                </p>
+
+                                {/* Styled Narrative Paragraph Box */}
+                                <div className="bg-[#F9FAFB] border border-gray-200 rounded-2xl p-6 shadow-2xs space-y-4">
+                                    <p className="text-sm leading-[2.6] text-gray-800">
+                                        Professor Pretty concludes that our{' '}
+                                        <input
+                                            id="q22"
+                                            ref={(el) => { questionRefs.current[22] = el as any; }}
+                                            type="text"
+                                            placeholder="22"
+                                            value={answers[22] || ''}
+                                            onChange={(e) => setAnswer(22, e.target.value)}
+                                            onFocus={() => setActiveId(22)}
+                                            className="inline-block align-middle w-36 h-7 mx-1 px-2.5 border border-gray-300 rounded-md text-center font-mono text-xs text-gray-800 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-gray-400 placeholder:font-mono bg-white"
+                                        />{' '}
+                                        are higher than most people realise, because we make three different types of payment. He feels it is realistic to suggest that Britain should reduce its reliance on{' '}
+                                        <input
+                                            id="q23"
+                                            ref={(el) => { questionRefs.current[23] = el as any; }}
+                                            type="text"
+                                            placeholder="23"
+                                            value={answers[23] || ''}
+                                            onChange={(e) => setAnswer(23, e.target.value)}
+                                            onFocus={() => setActiveId(23)}
+                                            className="inline-block align-middle w-36 h-7 mx-1 px-2.5 border border-gray-300 rounded-md text-center font-mono text-xs text-gray-800 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-gray-400 placeholder:font-mono bg-white"
+                                        />{' '}
+                                        .
+                                    </p>
+
+                                    <p className="text-sm leading-[2.6] text-gray-800">
+                                        Although most farmers would be unable to adapt to{' '}
+                                        <input
+                                            id="q24"
+                                            ref={(el) => { questionRefs.current[24] = el as any; }}
+                                            type="text"
+                                            placeholder="24"
+                                            value={answers[24] || ''}
+                                            onChange={(e) => setAnswer(24, e.target.value)}
+                                            onFocus={() => setActiveId(24)}
+                                            className="inline-block align-middle w-36 h-7 mx-1 px-2.5 border border-gray-300 rounded-md text-center font-mono text-xs text-gray-800 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-gray-400 placeholder:font-mono bg-white"
+                                        />{' '}
+                                        , Professor Pretty wants the government to initiate change by establishing what he refers to as a{' '}
+                                        <input
+                                            id="q25"
+                                            ref={(el) => { questionRefs.current[25] = el as any; }}
+                                            type="text"
+                                            placeholder="25"
+                                            value={answers[25] || ''}
+                                            onChange={(e) => setAnswer(25, e.target.value)}
+                                            onFocus={() => setActiveId(25)}
+                                            className="inline-block align-middle w-36 h-7 mx-1 px-2.5 border border-gray-300 rounded-md text-center font-mono text-xs text-gray-800 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-gray-400 placeholder:font-mono bg-white"
+                                        />{' '}
+                                        . He feels this would help to change the attitudes of both{' '}
+                                        <input
+                                            id="q26"
+                                            ref={(el) => { questionRefs.current[26] = el as any; }}
+                                            type="text"
+                                            placeholder="26"
+                                            value={answers[26] || ''}
+                                            onChange={(e) => setAnswer(26, e.target.value)}
+                                            onFocus={() => setActiveId(26)}
+                                            className="inline-block align-middle w-36 h-7 mx-1 px-2.5 border border-gray-300 rounded-md text-center font-mono text-xs text-gray-800 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-gray-400 placeholder:font-mono bg-white"
+                                        />{' '}
+                                        .
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    ) : isCambridge7Test2 && activePart === 3 ? (
+                        <div className="space-y-10">
+                            {/* Module 1: Questions 27-30 (MATCHING HEADING) */}
+                            <div>
+                                <div className="flex items-baseline gap-2 mb-2">
+                                    <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module1.title}</h3>
+                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module1.badge}</span>
+                                </div>
+                                <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+                                    {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module1.instructions}
+                                </p>
+
+                                {/* CHOICES Container Box */}
+                                <div className="bg-[#F9FAFB] border border-gray-200 rounded-2xl p-4 mb-6 shadow-2xs">
+                                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">CHOICES</div>
+                                    <div className="h-px bg-gray-200 my-2" />
+                                    <p className="text-xs text-gray-400 mb-3">Each answer can be used once. Select it again to move it.</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module1.choices.map((choice, cIdx) => (
+                                            <span 
+                                                key={cIdx}
+                                                className="inline-block bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 shadow-2xs font-medium cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors"
+                                            >
+                                                {choice}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Question List with Examples */}
+                                <div className="space-y-4">
+                                    {/* Callout Example Section A */}
+                                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800">
+                                        Example: Section A : Request for improved transport in Makete
+                                    </div>
+
+                                    {/* Q27: Section B */}
+                                    <div 
+                                        ref={(el) => { questionRefs.current[27] = el; }}
+                                        className="flex flex-wrap items-baseline gap-4 py-1"
+                                        onClick={() => setActiveId(27)}
+                                    >
+                                        <span className="text-sm text-gray-800 leading-relaxed min-w-[100px] font-medium">Section B</span>
+                                        <select
+                                            value={answers[27] || ''}
+                                            onChange={(e) => setAnswer(27, e.target.value)}
+                                            onFocus={() => setActiveId(27)}
+                                            className="border border-dashed border-gray-400 rounded-md bg-white px-2.5 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium"
+                                        >
+                                            <option value="">27 — Choose ˅</option>
+                                            {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module1.choices.map((opt) => (
+                                                <option key={opt} value={opt}>{opt}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Q28: Section C */}
+                                    <div 
+                                        ref={(el) => { questionRefs.current[28] = el; }}
+                                        className="flex flex-wrap items-baseline gap-4 py-1"
+                                        onClick={() => setActiveId(28)}
+                                    >
+                                        <span className="text-sm text-gray-800 leading-relaxed min-w-[100px] font-medium">Section C</span>
+                                        <select
+                                            value={answers[28] || ''}
+                                            onChange={(e) => setAnswer(28, e.target.value)}
+                                            onFocus={() => setActiveId(28)}
+                                            className="border border-dashed border-gray-400 rounded-md bg-white px-2.5 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium"
+                                        >
+                                            <option value="">28 — Choose ˅</option>
+                                            {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module1.choices.map((opt) => (
+                                                <option key={opt} value={opt}>{opt}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Callout Example Section D */}
+                                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800">
+                                        Example: Section D : Government authorities’ instructions
+                                    </div>
+
+                                    {/* Q29: Section E */}
+                                    <div 
+                                        ref={(el) => { questionRefs.current[29] = el; }}
+                                        className="flex flex-wrap items-baseline gap-4 py-1"
+                                        onClick={() => setActiveId(29)}
+                                    >
+                                        <span className="text-sm text-gray-800 leading-relaxed min-w-[100px] font-medium">Section E</span>
+                                        <select
+                                            value={answers[29] || ''}
+                                            onChange={(e) => setAnswer(29, e.target.value)}
+                                            onFocus={() => setActiveId(29)}
+                                            className="border border-dashed border-gray-400 rounded-md bg-white px-2.5 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium"
+                                        >
+                                            <option value="">29 — Choose ˅</option>
+                                            {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module1.choices.map((opt) => (
+                                                <option key={opt} value={opt}>{opt}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Q30: Section F */}
+                                    <div 
+                                        ref={(el) => { questionRefs.current[30] = el; }}
+                                        className="flex flex-wrap items-baseline gap-4 py-1"
+                                        onClick={() => setActiveId(30)}
+                                    >
+                                        <span className="text-sm text-gray-800 leading-relaxed min-w-[100px] font-medium">Section F</span>
+                                        <select
+                                            value={answers[30] || ''}
+                                            onChange={(e) => setAnswer(30, e.target.value)}
+                                            onFocus={() => setActiveId(30)}
+                                            className="border border-dashed border-gray-400 rounded-md bg-white px-2.5 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium"
+                                        >
+                                            <option value="">30 — Choose ˅</option>
+                                            {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module1.choices.map((opt) => (
+                                                <option key={opt} value={opt}>{opt}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Module 2: Questions 31-35 (YES-NO/NOT GIVEN) */}
+                            <div className="pt-6 border-t border-gray-100">
+                                <div className="flex items-baseline gap-2 mb-2">
+                                    <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module2.title}</h3>
+                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module2.badge}</span>
+                                </div>
+                                <p className="text-sm text-gray-700 mb-6 leading-relaxed">
+                                    Choose <span className="font-bold">YES</span> if the statement agrees with the information given in the text, choose <span className="font-bold">NO</span> if the statement contradicts the information, or choose <span className="font-bold">NOT GIVEN</span> if there is no information on this.
+                                </p>
+
+                                <div className="space-y-6">
+                                    {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module2.questions.map((q) => (
+                                        <div 
+                                            key={q.num}
+                                            ref={(el) => { questionRefs.current[q.num] = el; }}
+                                            className="space-y-3"
+                                            onClick={() => setActiveId(q.num)}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <span className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-700 shrink-0 mt-0.5">
+                                                    {q.num}
+                                                </span>
+                                                <span className="text-sm text-gray-800 leading-relaxed font-normal">
+                                                    {q.text}
+                                                </span>
+                                            </div>
+
+                                            {/* Stacked Option Cards */}
+                                            <div className="space-y-2 pt-1 pl-9">
+                                                {q.options.map((opt) => {
+                                                    const isSelected = answers[q.num] === opt;
+                                                    return (
+                                                        <label
+                                                            key={opt}
+                                                            className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${
+                                                                isSelected 
+                                                                    ? 'border-blue-500 bg-blue-50/20 shadow-2xs' 
+                                                                    : 'border-gray-100 hover:border-gray-200 bg-white shadow-2xs'
+                                                            }`}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setAnswer(q.num, opt);
+                                                            }}
+                                                        >
+                                                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-blue-600 bg-blue-600' : 'border-gray-300 bg-white'}`}>
+                                                                {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                            </div>
+                                                            <span className={`text-xs font-medium ${isSelected ? 'text-gray-900 font-semibold' : 'text-gray-700'}`}>
+                                                                {opt}
+                                                            </span>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Module 3: Questions 36-39 (MATCHING SENTENCE ENDINGS) */}
+                            <div className="pt-6 border-t border-gray-100">
+                                <div className="flex items-baseline gap-2 mb-2">
+                                    <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module3.title}</h3>
+                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module3.badge}</span>
+                                </div>
+                                <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+                                    {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module3.instructions}
+                                </p>
+
+                                {/* CHOICES Container Box */}
+                                <div className="bg-[#F9FAFB] border border-gray-200 rounded-2xl p-4 mb-6 shadow-2xs">
+                                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">CHOICES</div>
+                                    <div className="h-px bg-gray-200 my-2" />
+                                    <p className="text-xs text-gray-400 mb-3">Each answer can be used once. Select it again to move it.</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module3.choices.map((choice, cIdx) => (
+                                            <span 
+                                                key={cIdx}
+                                                className="inline-block bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 shadow-2xs font-medium cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors"
+                                            >
+                                                <strong className="mr-1">{String.fromCharCode(65 + cIdx)}.</strong> {choice}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Question Items with Dashed Dropdown Triggers */}
+                                <div className="space-y-4">
+                                    {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module3.questions.map((q) => (
+                                        <div 
+                                            key={q.num}
+                                            ref={(el) => { questionRefs.current[q.num] = el; }}
+                                            className="flex flex-wrap items-baseline justify-between gap-4 py-1"
+                                            onClick={() => setActiveId(q.num)}
+                                        >
+                                            <span className="text-sm text-gray-800 leading-relaxed max-w-md">{q.text}</span>
+                                            <select
+                                                value={answers[q.num] || ''}
+                                                onChange={(e) => setAnswer(q.num, e.target.value)}
+                                                onFocus={() => setActiveId(q.num)}
+                                                className="border border-dashed border-gray-400 rounded-md bg-white px-2.5 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium shrink-0 max-w-xs"
+                                            >
+                                                <option value="">{q.num} — Choose ˅</option>
+                                                {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module3.choices.map((opt, optIdx) => {
+                                                    const letter = String.fromCharCode(65 + optIdx);
+                                                    return (
+                                                        <option key={opt} value={opt}>
+                                                            {letter}. {opt}
+                                                        </option>
+                                                    );
+                                                })}
+                                            </select>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Module 4: Question 40 (MULTIPLE CHOICE) */}
+                            <div className="pt-6 border-t border-gray-100">
+                                <div className="flex items-baseline gap-2 mb-2">
+                                    <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module4.title}</h3>
+                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module4.badge}</span>
+                                </div>
+                                <p className="text-sm text-gray-700 mb-6 leading-relaxed">
+                                    {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module4.instructions}
+                                </p>
+
+                                <div 
+                                    ref={(el) => { questionRefs.current[40] = el; }}
+                                    className="space-y-3"
+                                    onClick={() => setActiveId(40)}
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <span className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-700 shrink-0 mt-0.5">
+                                            40
+                                        </span>
+                                        <span className="text-sm text-gray-800 leading-relaxed font-normal">
+                                            {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module4.question.text}
+                                        </span>
+                                    </div>
+
+                                    {/* Stacked Option Cards */}
+                                    <div className="space-y-2 pt-1 pl-9">
+                                        {CAMBRIDGE_7_TEST_2_RIGHT_PANEL.part3.module4.question.options.map((opt, optIdx) => {
+                                            const letter = String.fromCharCode(65 + optIdx);
+                                            const isSelected = answers[40] === opt || answers[40] === letter;
+                                            return (
+                                                <label
+                                                    key={opt}
+                                                    className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${
+                                                        isSelected 
+                                                            ? 'border-blue-500 bg-blue-50/20 shadow-2xs' 
+                                                            : 'border-gray-100 hover:border-gray-200 bg-white shadow-2xs'
+                                                    }`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setAnswer(40, opt);
+                                                    }}
+                                                >
+                                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-blue-600 bg-blue-600' : 'border-gray-300 bg-white'}`}>
+                                                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                    </div>
+                                                    <span className={`text-xs font-medium ${isSelected ? 'text-gray-900 font-semibold' : 'text-gray-700'}`}>
+                                                        <strong className="mr-1">{letter}.</strong> {opt}
+                                                    </span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : isCambridge7Test3 ? (
+                        /* ════ CAMBRIDGE 7 TEST 3 CUSTOM MODULES ════ */
+                        activePart === 1 ? (
+                            <div className="space-y-10">
+                                {/* Module 1: Questions 1-6 (TRUE-FALSE/NOT GIVEN) */}
+                                <div>
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part1.module1.title}</h3>
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part1.module1.badge}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mb-6 leading-relaxed">
+                                        {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part1.module1.instructions}
+                                    </p>
+
+                                    <div className="space-y-6">
+                                        {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part1.module1.questions.map((q) => (
+                                            <div 
+                                                key={q.num}
+                                                ref={(el) => { questionRefs.current[q.num] = el; }}
+                                                className="space-y-3"
+                                                onClick={() => setActiveId(q.num)}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <span className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-700 shrink-0 mt-0.5">
+                                                        {q.num}
+                                                    </span>
+                                                    <span className="text-sm text-gray-800 leading-relaxed font-normal">
+                                                        {q.text}
+                                                    </span>
+                                                </div>
+
+                                                <div className="space-y-2 pt-1 pl-9">
+                                                    {q.options.map((opt) => {
+                                                        const isSelected = answers[q.num] === opt;
+                                                        return (
+                                                            <label
+                                                                key={opt}
+                                                                className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${
+                                                                    isSelected 
+                                                                        ? 'border-blue-500 bg-blue-50/20 shadow-2xs' 
+                                                                        : 'border-gray-100 hover:border-gray-200 bg-white shadow-2xs'
+                                                                }`}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setAnswer(q.num, opt);
+                                                                }}
+                                                            >
+                                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-blue-600 bg-blue-600' : 'border-gray-300 bg-white'}`}>
+                                                                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                                </div>
+                                                                <span className={`text-xs font-medium ${isSelected ? 'text-gray-900 font-semibold' : 'text-gray-700'}`}>
+                                                                    {opt}
+                                                                </span>
+                                                            </label>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Module 2: Questions 7-13 (SUMMARY COMPLETION WC) */}
+                                <div className="pt-6 border-t border-gray-100">
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part1.module2.title}</h3>
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part1.module2.badge}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+                                        {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part1.module2.instructions}
+                                    </p>
+
+                                    {/* Section Header Box */}
+                                    <div className="text-sm font-bold text-gray-900 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 mb-4">
+                                        {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part1.module2.headerBox}
+                                    </div>
+
+                                    {/* CHOICES Container Box */}
+                                    <div className="bg-[#F9FAFB] border border-gray-200 rounded-2xl p-4 mb-6 shadow-2xs">
+                                        <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">CHOICES</div>
+                                        <div className="h-px bg-gray-200 my-2" />
+                                        <p className="text-xs text-gray-400 mb-3">Each answer can be used once. Select it again to move it.</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part1.module2.choices.map((choice, cIdx) => (
+                                                <span 
+                                                    key={cIdx}
+                                                    className="inline-block bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 shadow-2xs font-medium cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors"
+                                                >
+                                                    {choice}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Narrative Card with Embedded Dropdowns */}
+                                    <div className="bg-[#F9FAFB] border border-gray-200 rounded-2xl p-6 shadow-2xs space-y-4">
+                                        <p className="text-sm leading-[2.6] text-gray-800">
+                                            Ants have sophisticated methods of farming, including herding livestock and growing crops, which are in many ways similar to those used in human agriculture. The ants cultivate a large number of different species of edible fungi which convert{' '}
+                                            <select
+                                                ref={(el) => { questionRefs.current[7] = el as any; }}
+                                                value={answers[7] || ''}
+                                                onChange={(e) => setAnswer(7, e.target.value)}
+                                                onFocus={() => setActiveId(7)}
+                                                className="border border-dashed border-gray-400 rounded-md bg-white px-2 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium inline-block align-middle mx-1"
+                                            >
+                                                <option value="">7 — Choose ˅</option>
+                                                {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part1.module2.choices.map((opt) => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>{' '}
+                                            into a form which they can digest. They use their own natural{' '}
+                                            <select
+                                                ref={(el) => { questionRefs.current[8] = el as any; }}
+                                                value={answers[8] || ''}
+                                                onChange={(e) => setAnswer(8, e.target.value)}
+                                                onFocus={() => setActiveId(8)}
+                                                className="border border-dashed border-gray-400 rounded-md bg-white px-2 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium inline-block align-middle mx-1"
+                                            >
+                                                <option value="">8 — Choose ˅</option>
+                                                {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part1.module2.choices.map((opt) => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>{' '}
+                                            as weed-killers and also use unwanted materials as{' '}
+                                            <select
+                                                ref={(el) => { questionRefs.current[9] = el as any; }}
+                                                value={answers[9] || ''}
+                                                onChange={(e) => setAnswer(9, e.target.value)}
+                                                onFocus={() => setActiveId(9)}
+                                                className="border border-dashed border-gray-400 rounded-md bg-white px-2 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium inline-block align-middle mx-1"
+                                            >
+                                                <option value="">9 — Choose ˅</option>
+                                                {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part1.module2.choices.map((opt) => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>{' '}
+                                            . Genetic analysis shows they constantly upgrade these fungi by developing new species and by{' '}
+                                            <select
+                                                ref={(el) => { questionRefs.current[10] = el as any; }}
+                                                value={answers[10] || ''}
+                                                onChange={(e) => setAnswer(10, e.target.value)}
+                                                onFocus={() => setActiveId(10)}
+                                                className="border border-dashed border-gray-400 rounded-md bg-white px-2 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium inline-block align-middle mx-1"
+                                            >
+                                                <option value="">10 — Choose ˅</option>
+                                                {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part1.module2.choices.map((opt) => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>{' '}
+                                            species with neighboring ant colonies. In fact, the farming methods of ants could be said to be more advanced than human agribusiness, since they use{' '}
+                                            <select
+                                                ref={(el) => { questionRefs.current[11] = el as any; }}
+                                                value={answers[11] || ''}
+                                                onChange={(e) => setAnswer(11, e.target.value)}
+                                                onFocus={() => setActiveId(11)}
+                                                className="border border-dashed border-gray-400 rounded-md bg-white px-2 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium inline-block align-middle mx-1"
+                                            >
+                                                <option value="">11 — Choose ˅</option>
+                                                {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part1.module2.choices.map((opt) => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>{' '}
+                                            methods, they do not affect the{' '}
+                                            <select
+                                                ref={(el) => { questionRefs.current[12] = el as any; }}
+                                                value={answers[12] || ''}
+                                                onChange={(e) => setAnswer(12, e.target.value)}
+                                                onFocus={() => setActiveId(12)}
+                                                className="border border-dashed border-gray-400 rounded-md bg-white px-2 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium inline-block align-middle mx-1"
+                                            >
+                                                <option value="">12 — Choose ˅</option>
+                                                {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part1.module2.choices.map((opt) => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>{' '}
+                                            and do not waste{' '}
+                                            <select
+                                                ref={(el) => { questionRefs.current[13] = el as any; }}
+                                                value={answers[13] || ''}
+                                                onChange={(e) => setAnswer(13, e.target.value)}
+                                                onFocus={() => setActiveId(13)}
+                                                className="border border-dashed border-gray-400 rounded-md bg-white px-2 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium inline-block align-middle mx-1"
+                                            >
+                                                <option value="">13 — Choose ˅</option>
+                                                {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part1.module2.choices.map((opt) => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>{' '}
+                                            .
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : activePart === 2 ? (
+                            <div className="space-y-10">
+                                {/* Module 1: Questions 14-19 (MATCHING HEADING) */}
+                                <div>
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module1.title}</h3>
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module1.badge}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+                                        {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module1.instructions}
+                                    </p>
+
+                                    {/* CHOICES Container Box */}
+                                    <div className="bg-[#F9FAFB] border border-gray-200 rounded-2xl p-4 mb-6 shadow-2xs">
+                                        <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">CHOICES</div>
+                                        <div className="h-px bg-gray-200 my-2" />
+                                        <p className="text-xs text-gray-400 mb-3">Each answer can be used once. Select it again to move it.</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module1.choices.map((choice, cIdx) => (
+                                                <span 
+                                                    key={cIdx}
+                                                    className="inline-block bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 shadow-2xs font-medium cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors"
+                                                >
+                                                    {choice}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Questions 14-19 Items with Example */}
+                                    <div className="space-y-4">
+                                        {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module1.questions.map((q) => (
+                                            <div 
+                                                key={q.num}
+                                                ref={(el) => { questionRefs.current[q.num] = el; }}
+                                                className="flex flex-wrap items-baseline gap-4 py-1"
+                                                onClick={() => setActiveId(q.num)}
+                                            >
+                                                <span className="text-sm text-gray-800 leading-relaxed min-w-[100px] font-medium">{q.label}</span>
+                                                <select
+                                                    value={answers[q.num] || ''}
+                                                    onChange={(e) => setAnswer(q.num, e.target.value)}
+                                                    onFocus={() => setActiveId(q.num)}
+                                                    className="border border-dashed border-gray-400 rounded-md bg-white px-2.5 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium"
+                                                >
+                                                    <option value="">{q.num} — Choose ˅</option>
+                                                    {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module1.choices.map((opt) => (
+                                                        <option key={opt} value={opt}>{opt}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        ))}
+
+                                        {/* Example Callout */}
+                                        <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800">
+                                            {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module1.example}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Module 2: Questions 20-21 (MATCHING FEATURES WITH MEDIA PLACEHOLDER) */}
+                                <div className="pt-6 border-t border-gray-100">
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module2.title}</h3>
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module2.badge}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+                                        {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module2.instructions}
+                                    </p>
+
+                                    {/* Dynamic Map Media Placeholder Card */}
+                                    <div className="border-2 border-dashed border-blue-200 bg-blue-50/50 rounded-lg p-6 text-center text-blue-700 my-4 shadow-2xs">
+                                        <div className="text-sm font-bold">[ Route Map Diagram Placeholder ]</div>
+                                        <p className="text-xs text-blue-600 mt-1">Map illustration showing Routes A-F will load dynamically from Supabase storage.</p>
+                                    </div>
+
+                                    {/* CHOICES Container Box */}
+                                    <div className="border border-gray-200 rounded-2xl p-4 mb-6 bg-white shadow-2xs">
+                                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">CHOICES</div>
+                                        <div className="h-px bg-gray-100 my-2" />
+                                        <p className="text-xs text-gray-400 mb-3">Each answer can be used once. Select it again to move it.</p>
+                                        <div className="flex items-center gap-2">
+                                            {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module2.choices.map((choice, cIdx) => (
+                                                <div 
+                                                    key={cIdx}
+                                                    className="w-8 h-8 rounded-lg border border-gray-200 bg-white flex items-center justify-center text-xs font-bold text-gray-700 shadow-2xs cursor-pointer hover:border-blue-500 hover:text-blue-600 transition-colors"
+                                                >
+                                                    {choice}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Questions 20-21 Items */}
+                                    <div className="space-y-4">
+                                        {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module2.questions.map((q) => (
+                                            <div 
+                                                key={q.num}
+                                                ref={(el) => { questionRefs.current[q.num] = el; }}
+                                                className="flex flex-wrap items-baseline justify-between gap-4 py-1"
+                                                onClick={() => setActiveId(q.num)}
+                                            >
+                                                <span className="text-sm text-gray-800 leading-relaxed max-w-md">{q.text}</span>
+                                                <select
+                                                    value={answers[q.num] || ''}
+                                                    onChange={(e) => setAnswer(q.num, e.target.value)}
+                                                    onFocus={() => setActiveId(q.num)}
+                                                    className="border border-dashed border-gray-400 rounded-md bg-white px-2.5 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium shrink-0"
+                                                >
+                                                    <option value="">{q.num} — Choose ˅</option>
+                                                    {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module2.choices.map((opt) => (
+                                                        <option key={opt} value={opt}>{opt}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Module 3: Questions 22-25 (MATCHING FEATURES) */}
+                                <div className="pt-6 border-t border-gray-100">
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module3.title}</h3>
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module3.badge}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+                                        {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module3.instructions}
+                                    </p>
+
+                                    {/* CHOICES Container Box */}
+                                    <div className="bg-[#F9FAFB] border border-gray-200 rounded-2xl p-4 mb-6 shadow-2xs">
+                                        <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">CHOICES</div>
+                                        <div className="h-px bg-gray-200 my-2" />
+                                        <p className="text-xs text-gray-400 mb-3">Each answer can be used once. Select it again to move it.</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module3.choices.map((choice, cIdx) => (
+                                                <span 
+                                                    key={cIdx}
+                                                    className="inline-block bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 shadow-2xs font-medium cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors"
+                                                >
+                                                    {choice}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Questions 22-25 Items */}
+                                    <div className="space-y-4">
+                                        {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module3.questions.map((q) => (
+                                            <div 
+                                                key={q.num}
+                                                ref={(el) => { questionRefs.current[q.num] = el; }}
+                                                className="flex flex-wrap items-baseline justify-between gap-4 py-1"
+                                                onClick={() => setActiveId(q.num)}
+                                            >
+                                                <span className="text-sm text-gray-800 leading-relaxed max-w-md">{q.text}</span>
+                                                <select
+                                                    value={answers[q.num] || ''}
+                                                    onChange={(e) => setAnswer(q.num, e.target.value)}
+                                                    onFocus={() => setActiveId(q.num)}
+                                                    className="border border-dashed border-gray-400 rounded-md bg-white px-2.5 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium shrink-0"
+                                                >
+                                                    <option value="">{q.num} — Choose ˅</option>
+                                                    {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module3.choices.map((opt) => (
+                                                        <option key={opt} value={opt}>{opt}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Module 4: Question 26 (MULTIPLE CHOICE) */}
+                                <div className="pt-6 border-t border-gray-100">
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module4.title}</h3>
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module4.badge}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mb-6 leading-relaxed">
+                                        {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module4.instructions}
+                                    </p>
+
+                                    <div 
+                                        ref={(el) => { questionRefs.current[26] = el; }}
+                                        className="space-y-3"
+                                        onClick={() => setActiveId(26)}
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <span className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-700 shrink-0 mt-0.5">
+                                                26
+                                            </span>
+                                            <span className="text-sm text-gray-800 leading-relaxed font-normal">
+                                                {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module4.question.text}
+                                            </span>
+                                        </div>
+
+                                        <div className="space-y-2 pt-1 pl-9">
+                                            {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part2.module4.question.options.map((opt, optIdx) => {
+                                                const letter = String.fromCharCode(65 + optIdx);
+                                                const isSelected = answers[26] === opt || answers[26] === letter;
+                                                return (
+                                                    <label
+                                                        key={opt}
+                                                        className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${
+                                                            isSelected 
+                                                                ? 'border-blue-500 bg-blue-50/20 shadow-2xs' 
+                                                                : 'border-gray-100 hover:border-gray-200 bg-white shadow-2xs'
+                                                        }`}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setAnswer(26, opt);
+                                                        }}
+                                                    >
+                                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-blue-600 bg-blue-600' : 'border-gray-300 bg-white'}`}>
+                                                            {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                        </div>
+                                                        <span className={`text-xs font-medium ${isSelected ? 'text-gray-900 font-semibold' : 'text-gray-700'}`}>
+                                                            <strong className="mr-1">{letter}.</strong> {opt}
+                                                        </span>
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-10">
+                                {/* Module 1: Questions 27-33 (TRUE-FALSE/NOT GIVEN) */}
+                                <div>
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part3.module1.title}</h3>
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part3.module1.badge}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mb-6 leading-relaxed">
+                                        {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part3.module1.instructions}
+                                    </p>
+
+                                    <div className="space-y-6">
+                                        {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part3.module1.questions.map((q) => (
+                                            <div 
+                                                key={q.num}
+                                                ref={(el) => { questionRefs.current[q.num] = el; }}
+                                                className="space-y-3"
+                                                onClick={() => setActiveId(q.num)}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <span className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-700 shrink-0 mt-0.5">
+                                                        {q.num}
+                                                    </span>
+                                                    <span className="text-sm text-gray-800 leading-relaxed font-normal">
+                                                        {q.text}
+                                                    </span>
+                                                </div>
+
+                                                <div className="space-y-2 pt-1 pl-9">
+                                                    {q.options.map((opt) => {
+                                                        const isSelected = answers[q.num] === opt;
+                                                        return (
+                                                            <label
+                                                                key={opt}
+                                                                className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${
+                                                                    isSelected 
+                                                                        ? 'border-blue-500 bg-blue-50/20 shadow-2xs' 
+                                                                        : 'border-gray-100 hover:border-gray-200 bg-white shadow-2xs'
+                                                                }`}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setAnswer(q.num, opt);
+                                                                }}
+                                                            >
+                                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-blue-600 bg-blue-600' : 'border-gray-300 bg-white'}`}>
+                                                                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                                </div>
+                                                                <span className={`text-xs font-medium ${isSelected ? 'text-gray-900 font-semibold' : 'text-gray-700'}`}>
+                                                                    {opt}
+                                                                </span>
+                                                            </label>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Module 2: Questions 34-39 (MATCHING FEATURES) */}
+                                <div className="pt-6 border-t border-gray-100">
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part3.module2.title}</h3>
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part3.module2.badge}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+                                        {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part3.module2.instructions}
+                                    </p>
+
+                                    {/* CHOICES Container Box */}
+                                    <div className="bg-[#F9FAFB] border border-gray-200 rounded-2xl p-4 mb-6 shadow-2xs">
+                                        <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">CHOICES</div>
+                                        <div className="h-px bg-gray-200 my-2" />
+                                        <p className="text-xs text-gray-400 mb-3">Each answer can be used once. Select it again to move it.</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part3.module2.choices.map((choice, cIdx) => (
+                                                <span 
+                                                    key={cIdx}
+                                                    className="inline-block bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 shadow-2xs font-medium cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors"
+                                                >
+                                                    <strong className="mr-1">{cIdx + 1}.</strong> {choice}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Questions 34-39 Items */}
+                                    <div className="space-y-4">
+                                        {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part3.module2.questions.map((q) => (
+                                            <div 
+                                                key={q.num}
+                                                ref={(el) => { questionRefs.current[q.num] = el; }}
+                                                className="flex flex-wrap items-baseline justify-between gap-4 py-1"
+                                                onClick={() => setActiveId(q.num)}
+                                            >
+                                                <span className="text-sm text-gray-800 leading-relaxed font-medium">{q.label}</span>
+                                                <select
+                                                    value={answers[q.num] || ''}
+                                                    onChange={(e) => setAnswer(q.num, e.target.value)}
+                                                    onFocus={() => setActiveId(q.num)}
+                                                    className="border border-dashed border-gray-400 rounded-md bg-white px-2.5 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium shrink-0 max-w-sm"
+                                                >
+                                                    <option value="">{q.num} — Choose ˅</option>
+                                                    {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part3.module2.choices.map((opt, optIdx) => (
+                                                        <option key={opt} value={opt}>
+                                                            {optIdx + 1}. {opt}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Module 3: Question 40 (MULTIPLE CHOICE) */}
+                                <div className="pt-6 border-t border-gray-100">
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part3.module3.title}</h3>
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part3.module3.badge}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mb-6 leading-relaxed">
+                                        {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part3.module3.instructions}
+                                    </p>
+
+                                    <div 
+                                        ref={(el) => { questionRefs.current[40] = el; }}
+                                        className="space-y-3"
+                                        onClick={() => setActiveId(40)}
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <span className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-700 shrink-0 mt-0.5">
+                                                40
+                                            </span>
+                                            <span className="text-sm text-gray-800 leading-relaxed font-normal">
+                                                {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part3.module3.question.text}
+                                            </span>
+                                        </div>
+
+                                        <div className="space-y-2 pt-1 pl-9">
+                                            {CAMBRIDGE_7_TEST_3_RIGHT_PANEL.part3.module3.question.options.map((opt, optIdx) => {
+                                                const letter = String.fromCharCode(65 + optIdx);
+                                                const isSelected = answers[40] === opt || answers[40] === letter;
+                                                return (
+                                                    <label
+                                                        key={opt}
+                                                        className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${
+                                                            isSelected 
+                                                                ? 'border-blue-500 bg-blue-50/20 shadow-2xs' 
+                                                                : 'border-gray-100 hover:border-gray-200 bg-white shadow-2xs'
+                                                        }`}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setAnswer(40, opt);
+                                                        }}
+                                                    >
+                                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-blue-600 bg-blue-600' : 'border-gray-300 bg-white'}`}>
+                                                            {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                        </div>
+                                                        <span className={`text-xs font-medium ${isSelected ? 'text-gray-900 font-semibold' : 'text-gray-700'}`}>
+                                                            <strong className="mr-1">{letter}.</strong> {opt}
+                                                        </span>
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    ) : isCambridge7Test4 ? (
+                        /* ════ CAMBRIDGE 7 TEST 4 CUSTOM MODULES ════ */
+                        activePart === 1 ? (
+                            <div className="space-y-10">
+                                {/* Module 1: Questions 1-7 (TRUE-FALSE/NOT GIVEN) */}
+                                <div>
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part1.module1.title}</h3>
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part1.module1.badge}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mb-6 leading-relaxed">
+                                        {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part1.module1.instructions}
+                                    </p>
+
+                                    <div className="space-y-6">
+                                        {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part1.module1.questions.map((q) => (
+                                            <div 
+                                                key={q.num}
+                                                ref={(el) => { questionRefs.current[q.num] = el; }}
+                                                className="space-y-3"
+                                                onClick={() => setActiveId(q.num)}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <span className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-700 shrink-0 mt-0.5">
+                                                        {q.num}
+                                                    </span>
+                                                    <span className="text-sm text-gray-800 leading-relaxed font-normal">
+                                                        {q.text}
+                                                    </span>
+                                                </div>
+
+                                                <div className="space-y-2 pt-1 pl-9">
+                                                    {q.options.map((opt) => {
+                                                        const isSelected = answers[q.num] === opt;
+                                                        return (
+                                                            <label
+                                                                key={opt}
+                                                                className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${
+                                                                    isSelected 
+                                                                        ? 'border-blue-500 bg-blue-50/20 shadow-2xs' 
+                                                                        : 'border-gray-100 hover:border-gray-200 bg-white shadow-2xs'
+                                                                }`}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setAnswer(q.num, opt);
+                                                                }}
+                                                            >
+                                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-blue-600 bg-blue-600' : 'border-gray-300 bg-white'}`}>
+                                                                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                                </div>
+                                                                <span className={`text-xs font-medium ${isSelected ? 'text-gray-900 font-semibold' : 'text-gray-700'}`}>
+                                                                    {opt}
+                                                                </span>
+                                                            </label>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Module 2: Questions 8-13 (SUMMARY COMPLETION WOC / TEXT INPUT) */}
+                                <div className="pt-6 border-t border-gray-100">
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part1.module2.title}</h3>
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part1.module2.badge}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+                                        {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part1.module2.instructions}
+                                    </p>
+
+                                    {/* Section Header Box */}
+                                    <div className="text-sm font-bold text-gray-900 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 mb-4">
+                                        {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part1.module2.headerBox}
+                                    </div>
+
+                                    {/* Narrative Card with embedded <input /> fields */}
+                                    <div className="bg-[#F9FAFB] border border-gray-200 rounded-2xl p-6 shadow-2xs space-y-4">
+                                        <p className="text-sm leading-[2.6] text-gray-800">
+                                            The Egyptians had{' '}
+                                            <input
+                                                id="q8"
+                                                ref={(el) => { questionRefs.current[8] = el as any; }}
+                                                type="text"
+                                                placeholder="8"
+                                                value={answers[8] || ''}
+                                                onChange={(e) => setAnswer(8, e.target.value)}
+                                                onFocus={() => setActiveId(8)}
+                                                className="inline-block align-middle w-36 h-7 mx-1 px-2.5 border border-gray-300 rounded-md text-center font-mono text-xs text-gray-800 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-gray-400 placeholder:font-mono bg-white"
+                                            />{' '}
+                                            , which could lift large pieces of{' '}
+                                            <input
+                                                id="q9"
+                                                ref={(el) => { questionRefs.current[9] = el as any; }}
+                                                type="text"
+                                                placeholder="9"
+                                                value={answers[9] || ''}
+                                                onChange={(e) => setAnswer(9, e.target.value)}
+                                                onFocus={() => setActiveId(9)}
+                                                className="inline-block align-middle w-36 h-7 mx-1 px-2.5 border border-gray-300 rounded-md text-center font-mono text-xs text-gray-800 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-gray-400 placeholder:font-mono bg-white"
+                                            />{' '}
+                                            , and they knew how to use the energy of the wind from their skill as{' '}
+                                            <input
+                                                id="q10"
+                                                ref={(el) => { questionRefs.current[10] = el as any; }}
+                                                type="text"
+                                                placeholder="10"
+                                                value={answers[10] || ''}
+                                                onChange={(e) => setAnswer(10, e.target.value)}
+                                                onFocus={() => setActiveId(10)}
+                                                className="inline-block align-middle w-36 h-7 mx-1 px-2.5 border border-gray-300 rounded-md text-center font-mono text-xs text-gray-800 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-gray-400 placeholder:font-mono bg-white"
+                                            />{' '}
+                                            . The discovery on one pyramid of an object which resembled a{' '}
+                                            <input
+                                                id="q11"
+                                                ref={(el) => { questionRefs.current[11] = el as any; }}
+                                                type="text"
+                                                placeholder="11"
+                                                value={answers[11] || ''}
+                                                onChange={(e) => setAnswer(11, e.target.value)}
+                                                onFocus={() => setActiveId(11)}
+                                                className="inline-block align-middle w-36 h-7 mx-1 px-2.5 border border-gray-300 rounded-md text-center font-mono text-xs text-gray-800 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-gray-400 placeholder:font-mono bg-white"
+                                            />{' '}
+                                            suggests they may have experimented with{' '}
+                                            <input
+                                                id="q12"
+                                                ref={(el) => { questionRefs.current[12] = el as any; }}
+                                                type="text"
+                                                placeholder="12"
+                                                value={answers[12] || ''}
+                                                onChange={(e) => setAnswer(12, e.target.value)}
+                                                onFocus={() => setActiveId(12)}
+                                                className="inline-block align-middle w-36 h-7 mx-1 px-2.5 border border-gray-300 rounded-md text-center font-mono text-xs text-gray-800 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-gray-400 placeholder:font-mono bg-white"
+                                            />{' '}
+                                            . In addition, over two thousand years ago kites used in china as weapons, as well as for sending{' '}
+                                            <input
+                                                id="q13"
+                                                ref={(el) => { questionRefs.current[13] = el as any; }}
+                                                type="text"
+                                                placeholder="13"
+                                                value={answers[13] || ''}
+                                                onChange={(e) => setAnswer(13, e.target.value)}
+                                                onFocus={() => setActiveId(13)}
+                                                className="inline-block align-middle w-36 h-7 mx-1 px-2.5 border border-gray-300 rounded-md text-center font-mono text-xs text-gray-800 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-gray-400 placeholder:font-mono bg-white"
+                                            />{' '}
+                                            .
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : activePart === 2 ? (
+                            <div className="space-y-10">
+                                {/* Module 1: Questions 14-20 (TRUE-FALSE/NOT GIVEN) */}
+                                <div>
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part2.module1.title}</h3>
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part2.module1.badge}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mb-6 leading-relaxed">
+                                        {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part2.module1.instructions}
+                                    </p>
+
+                                    <div className="space-y-6">
+                                        {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part2.module1.questions.map((q) => (
+                                            <div 
+                                                key={q.num}
+                                                ref={(el) => { questionRefs.current[q.num] = el; }}
+                                                className="space-y-3"
+                                                onClick={() => setActiveId(q.num)}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <span className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-700 shrink-0 mt-0.5">
+                                                        {q.num}
+                                                    </span>
+                                                    <span className="text-sm text-gray-800 leading-relaxed font-normal">
+                                                        {q.text}
+                                                    </span>
+                                                </div>
+
+                                                <div className="space-y-2 pt-1 pl-9">
+                                                    {q.options.map((opt) => {
+                                                        const isSelected = answers[q.num] === opt;
+                                                        return (
+                                                            <label
+                                                                key={opt}
+                                                                className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${
+                                                                    isSelected 
+                                                                        ? 'border-blue-500 bg-blue-50/20 shadow-2xs' 
+                                                                        : 'border-gray-100 hover:border-gray-200 bg-white shadow-2xs'
+                                                                }`}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setAnswer(q.num, opt);
+                                                                }}
+                                                            >
+                                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-blue-600 bg-blue-600' : 'border-gray-300 bg-white'}`}>
+                                                                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                                </div>
+                                                                <span className={`text-xs font-medium ${isSelected ? 'text-gray-900 font-semibold' : 'text-gray-700'}`}>
+                                                                    {opt}
+                                                                </span>
+                                                            </label>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Module 2: Questions 21-26 (MATCHING SENTENCE ENDINGS) */}
+                                <div className="pt-6 border-t border-gray-100">
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part2.module2.title}</h3>
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part2.module2.badge}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+                                        {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part2.module2.instructions}
+                                    </p>
+
+                                    {/* CHOICES Container Box */}
+                                    <div className="bg-[#F9FAFB] border border-gray-200 rounded-2xl p-4 mb-6 shadow-2xs">
+                                        <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">CHOICES</div>
+                                        <div className="h-px bg-gray-200 my-2" />
+                                        <p className="text-xs text-gray-400 mb-3">Each answer can be used once. Select it again to move it.</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part2.module2.choices.map((choice, cIdx) => (
+                                                <span 
+                                                    key={cIdx}
+                                                    className="inline-block bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 shadow-2xs font-medium cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors"
+                                                >
+                                                    <strong className="mr-1">{cIdx + 1}.</strong> {choice}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Questions 21-26 Items */}
+                                    <div className="space-y-4">
+                                        {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part2.module2.questions.map((q) => (
+                                            <div 
+                                                key={q.num}
+                                                ref={(el) => { questionRefs.current[q.num] = el; }}
+                                                className="flex flex-wrap items-baseline justify-between gap-4 py-1"
+                                                onClick={() => setActiveId(q.num)}
+                                            >
+                                                <span className="text-sm text-gray-800 leading-relaxed max-w-md">{q.text}</span>
+                                                <select
+                                                    value={answers[q.num] || ''}
+                                                    onChange={(e) => setAnswer(q.num, e.target.value)}
+                                                    onFocus={() => setActiveId(q.num)}
+                                                    className="border border-dashed border-gray-400 rounded-md bg-white px-2.5 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium shrink-0 max-w-sm"
+                                                >
+                                                    <option value="">{q.num} — Choose ˅</option>
+                                                    {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part2.module2.choices.map((opt, optIdx) => (
+                                                        <option key={opt} value={opt}>
+                                                            {optIdx + 1}. {opt}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-10">
+                                {/* Module 1: Questions 27-29 (MULTIPLE CHOICE) */}
+                                <div>
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module1.title}</h3>
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module1.badge}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mb-6 leading-relaxed">
+                                        {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module1.instructions}
+                                    </p>
+
+                                    <div className="space-y-6">
+                                        {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module1.questions.map((q) => (
+                                            <div 
+                                                key={q.num}
+                                                ref={(el) => { questionRefs.current[q.num] = el; }}
+                                                className="space-y-3"
+                                                onClick={() => setActiveId(q.num)}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <span className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-700 shrink-0 mt-0.5">
+                                                        {q.num}
+                                                    </span>
+                                                    <span className="text-sm text-gray-800 leading-relaxed font-normal">
+                                                        {q.text}
+                                                    </span>
+                                                </div>
+
+                                                <div className="space-y-2 pt-1 pl-9">
+                                                    {q.options.map((opt, optIdx) => {
+                                                        const letter = String.fromCharCode(65 + optIdx);
+                                                        const isSelected = answers[q.num] === opt || answers[q.num] === letter;
+                                                        return (
+                                                            <label
+                                                                key={opt}
+                                                                className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${
+                                                                    isSelected 
+                                                                        ? 'border-blue-500 bg-blue-50/20 shadow-2xs' 
+                                                                        : 'border-gray-100 hover:border-gray-200 bg-white shadow-2xs'
+                                                                }`}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setAnswer(q.num, opt);
+                                                                }}
+                                                            >
+                                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-blue-600 bg-blue-600' : 'border-gray-300 bg-white'}`}>
+                                                                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                                </div>
+                                                                <span className={`text-xs font-medium ${isSelected ? 'text-gray-900 font-semibold' : 'text-gray-700'}`}>
+                                                                    <strong className="mr-1">{letter}.</strong> {opt}
+                                                                </span>
+                                                            </label>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Module 2: Questions 30-34 (SUMMARY COMPLETION WC) */}
+                                <div className="pt-6 border-t border-gray-100">
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module2.title}</h3>
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module2.badge}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+                                        {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module2.instructions}
+                                    </p>
+
+                                    {/* CHOICES Container Box */}
+                                    <div className="bg-[#F9FAFB] border border-gray-200 rounded-2xl p-4 mb-6 shadow-2xs">
+                                        <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">CHOICES</div>
+                                        <div className="h-px bg-gray-200 my-2" />
+                                        <p className="text-xs text-gray-400 mb-3">Each answer can be used once. Select it again to move it.</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module2.choices.map((choice, cIdx) => (
+                                                <span 
+                                                    key={cIdx}
+                                                    className="inline-block bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 shadow-2xs font-medium cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors"
+                                                >
+                                                    {choice}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Narrative Card with Embedded Dropdowns */}
+                                    <div className="bg-[#F9FAFB] border border-gray-200 rounded-2xl p-6 shadow-2xs space-y-4">
+                                        <p className="text-sm leading-[2.6] text-gray-800">
+                                            Glass and Singer (1972) showed that situations in which there is intense noise have less effect on performance than circumstances in which{' '}
+                                            <select
+                                                ref={(el) => { questionRefs.current[30] = el as any; }}
+                                                value={answers[30] || ''}
+                                                onChange={(e) => setAnswer(30, e.target.value)}
+                                                onFocus={() => setActiveId(30)}
+                                                className="border border-dashed border-gray-400 rounded-md bg-white px-2 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium inline-block align-middle mx-1"
+                                            >
+                                                <option value="">30 — Choose ˅</option>
+                                                {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module2.choices.map((opt) => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>{' '}
+                                            noise occurs. Subjects were divided into groups to perform a task. Some heard loud bursts of noise, others soft. For some subjects, the noise was predictable, while for others its occurrence was random. All groups were exposed to{' '}
+                                            <select
+                                                ref={(el) => { questionRefs.current[31] = el as any; }}
+                                                value={answers[31] || ''}
+                                                onChange={(e) => setAnswer(31, e.target.value)}
+                                                onFocus={() => setActiveId(31)}
+                                                className="border border-dashed border-gray-400 rounded-md bg-white px-2 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium inline-block align-middle mx-1"
+                                            >
+                                                <option value="">31 — Choose ˅</option>
+                                                {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module2.choices.map((opt) => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>{' '}
+                                            noise. The predictable noise group{' '}
+                                            <select
+                                                ref={(el) => { questionRefs.current[32] = el as any; }}
+                                                value={answers[32] || ''}
+                                                onChange={(e) => setAnswer(32, e.target.value)}
+                                                onFocus={() => setActiveId(32)}
+                                                className="border border-dashed border-gray-400 rounded-md bg-white px-2 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium inline-block align-middle mx-1"
+                                            >
+                                                <option value="">32 — Choose ˅</option>
+                                                {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module2.choices.map((opt) => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>{' '}
+                                            the unpredictable noise group on this task. In the second part of the experiment, the four groups were given a proofreading task to complete under conditions of no noise. They were required to check written material for errors. The group which had been exposed to unpredictable noise{' '}
+                                            <select
+                                                ref={(el) => { questionRefs.current[33] = el as any; }}
+                                                value={answers[33] || ''}
+                                                onChange={(e) => setAnswer(33, e.target.value)}
+                                                onFocus={() => setActiveId(33)}
+                                                className="border border-dashed border-gray-400 rounded-md bg-white px-2 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium inline-block align-middle mx-1"
+                                            >
+                                                <option value="">33 — Choose ˅</option>
+                                                {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module2.choices.map((opt) => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>{' '}
+                                            the group which had been exposed to predictable noise. The group which had been exposed to loud predictable noise performed better than those who had heard soft, unpredictable bursts. The results suggest that{' '}
+                                            <select
+                                                ref={(el) => { questionRefs.current[34] = el as any; }}
+                                                value={answers[34] || ''}
+                                                onChange={(e) => setAnswer(34, e.target.value)}
+                                                onFocus={() => setActiveId(34)}
+                                                className="border border-dashed border-gray-400 rounded-md bg-white px-2 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium inline-block align-middle mx-1"
+                                            >
+                                                <option value="">34 — Choose ˅</option>
+                                                {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module2.choices.map((opt) => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>{' '}
+                                            noise produces fatigue but that this manifests itself later.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Module 3: Questions 35-40 (MATCHING FEATURES) */}
+                                <div className="pt-6 border-t border-gray-100">
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <h3 className="text-xl font-bold text-gray-900">{CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module3.title}</h3>
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module3.badge}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+                                        {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module3.instructions}
+                                    </p>
+
+                                    {/* CHOICES Container Box */}
+                                    <div className="bg-[#F9FAFB] border border-gray-200 rounded-2xl p-4 mb-6 shadow-2xs">
+                                        <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">CHOICES</div>
+                                        <div className="h-px bg-gray-200 my-2" />
+                                        <p className="text-xs text-gray-400 mb-3">Each answer can be used once. Select it again to move it.</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module3.choices.map((choice, cIdx) => (
+                                                <span 
+                                                    key={cIdx}
+                                                    className="inline-block bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 shadow-2xs font-medium cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors"
+                                                >
+                                                    {choice}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Questions 35-40 Items */}
+                                    <div className="space-y-4">
+                                        {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module3.questions.map((q) => (
+                                            <div 
+                                                key={q.num}
+                                                ref={(el) => { questionRefs.current[q.num] = el; }}
+                                                className="flex flex-wrap items-baseline justify-between gap-4 py-1"
+                                                onClick={() => setActiveId(q.num)}
+                                            >
+                                                <span className="text-sm text-gray-800 leading-relaxed max-w-md">{q.text}</span>
+                                                <select
+                                                    value={answers[q.num] || ''}
+                                                    onChange={(e) => setAnswer(q.num, e.target.value)}
+                                                    onFocus={() => setActiveId(q.num)}
+                                                    className="border border-dashed border-gray-400 rounded-md bg-white px-2.5 py-1 text-xs text-gray-700 cursor-pointer outline-none hover:border-gray-600 focus:border-blue-500 font-medium shrink-0 max-w-xs"
+                                                >
+                                                    <option value="">{q.num} — Choose ˅</option>
+                                                    {CAMBRIDGE_7_TEST_4_RIGHT_PANEL.part3.module3.choices.map((opt) => (
+                                                        <option key={opt} value={opt}>{opt}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    ) : activePart === 1 && (isCambridge7Test1 || sectionBlocks.length === 0) ? (
                         <div className="space-y-10">
                             {/* Module A: Questions 1–5 (Matching Information) */}
                             <div>
@@ -986,7 +3484,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                                 </div>
                             </div>
                         </div>
-                    ) : isCambridge7Test1 && activePart === 2 ? (
+                    ) : activePart === 2 && (isCambridge7Test1 || sectionBlocks.length === 0) ? (
                         /* ════ PART 2 MODULES (Questions 14–26) ════ */
                         <div className="space-y-10">
                             {/* Module 1: Questions 14–20 (MATCHING HEADING) */}
@@ -1134,7 +3632,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                                 </div>
                             </div>
                         </div>
-                    ) : isCambridge7Test1 && activePart === 3 ? (
+                    ) : activePart === 3 && (isCambridge7Test1 || sectionBlocks.length === 0) ? (
                         /* ════ PART 3 MODULES (Questions 27–40) ════ */
                         <div className="space-y-10">
                             {/* Module 1: Questions 27–30 (MULTIPLE CHOICE) */}
@@ -1342,8 +3840,8 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                                 </div>
                             </div>
                         </div>
-                    ) : sectionBlocks.length > 0 ? (
-                        /* Fallback for other generic exams */
+                    ) : (
+                        /* Dynamic exam questions from Supabase */
                         <div className="space-y-10">
                             {sectionBlocks.map((block, bIdx) => (
                                 <div key={bIdx} className="pb-10 border-b border-gray-200 last:border-b-0">
@@ -1421,11 +3919,10 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                                 </div>
                             ))}
                         </div>
-                    ) : (
-                        <div className="bg-white border border-gray-200 rounded-xl p-8 text-center shadow-sm my-6">
-                            <h4 className="text-lg font-bold text-gray-800 mb-1">No questions uploaded for this part yet.</h4>
-                        </div>
                     )}
+                            </>
+                        }
+                    />
                 </div>
             </div>
 

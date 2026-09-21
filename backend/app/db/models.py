@@ -59,3 +59,19 @@ class RecentVideo(Base):
     thumbnail_url = Column(String(1000), default="")
     content_type = Column(String(20), default="video")
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class IELTSAdvisorConversation(Base):
+    __tablename__ = "ielts_advisor_conversations"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    conversation_id = Column(String(64), nullable=False, unique=True, index=True)
+    user_email = Column(String(255), nullable=False, index=True, default="")
+    title = Column(String(255), nullable=False, default="New Conversation")
+    messages_json = Column(Text, nullable=False, default="[]")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        {"mysql_charset": "utf8mb4", "sqlite_autoincrement": True},
+    )

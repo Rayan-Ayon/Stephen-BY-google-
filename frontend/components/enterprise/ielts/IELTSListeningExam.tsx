@@ -1,24 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { addAttempt, rawToBand, formatClock, type SimulationProps } from './ieltsShared';
-import IELTSLobbyCard from './IELTSLobbyCard';
 import IELTSExitModal from './IELTSExitModal';
-import IeltsExamOptionsModal from '../../exam/IeltsExamOptionsModal';
-
-const Wifi = ({ size, strokeWidth, className }: any) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
-);
-const Bell = ({ size, strokeWidth, className }: any) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-);
-const Menu = ({ size, strokeWidth, className }: any) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-);
-const Check = ({ size, strokeWidth, className }: any) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"></polyline></svg>
-);
-const Speaker = ({ size, className }: any) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}><path d="M3 9v6h4l5 5V4L7 9H3z"></path><path d="M16.5 12a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12z"></path></svg>
-);
 
 export const LISTENING_PART1_DATA = {
     title: 'Phone call about second-hand furniture',
@@ -230,25 +212,41 @@ const normalize = (s: string) => s.trim().toLowerCase();
 
 const WAVEBARS = [10, 18, 26, 14, 30, 22, 12, 28, 16, 24, 20, 10, 26, 18, 30, 14, 22, 12, 28, 16];
 
-type TestState = 'lobby' | 'active' | 'evaluating' | 'completed';
+type TestState = 'active' | 'evaluating' | 'completed';
 
 interface IELTSListeningExamProps {
     candidateEmail?: string;
     simulation?: SimulationProps;
     onActiveChange?: (active: boolean) => void;
+    onExit?: () => void;
     exitPulse?: boolean;
+    bookNumber?: number;
+    testNumber?: number;
+    sourceType?: 'cambridge' | 'mock_series';
+    category?: 'academic' | 'general';
 }
 
-const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail, simulation, onActiveChange, exitPulse }) => {
-    const [playing, setPlaying] = useState(false);
+const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
+    candidateEmail,
+    simulation,
+    onActiveChange,
+    onExit,
+    exitPulse,
+    bookNumber = 7,
+    testNumber = 1,
+    sourceType = 'cambridge',
+    category = 'academic',
+}) => {
+    const [playing, setPlaying] = useState(true);
     const [progress, setProgress] = useState(0);
+    const [volume, setVolume] = useState(80);
+    const [isMuted, setIsMuted] = useState(false);
     const [activePart, setActivePart] = useState<1 | 2 | 3 | 4>(1);
     const [activeId, setActiveId] = useState<number>(1);
     const [answers, setAnswers] = useState<Record<number, string>>({});
     const [elapsed, setElapsed] = useState(0);
-    const [testState, setTestState] = useState<TestState>(simulation ? 'active' : 'lobby');
+    const [testState, setTestState] = useState<TestState>('active');
     const [showExitModal, setShowExitModal] = useState(false);
-    const [isOptionsOpen, setIsOptionsOpen] = useState(false);
     const [score, setScore] = useState<number | null>(null);
     const [picked, setPicked] = useState<string | null>(null);
     const scrollRefs = useRef<Record<number, HTMLElement | null>>({});
@@ -256,6 +254,7 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail,
     const TOTAL = 180;
     const timeLimit = simulation ? simulation.timeLimitSeconds : 30 * 60;
     const locked = testState !== 'active';
+    const lowTime = (timeLimit - elapsed) <= 300 && (timeLimit - elapsed) > 0;
     const pct = Math.min(100, (progress / TOTAL) * 100);
 
     useEffect(() => {
@@ -386,11 +385,6 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail,
         onActiveChange?.(testState === 'active' || testState === 'evaluating');
     }, [testState, onActiveChange]);
 
-    const startExam = () => {
-        if (simulation) return;
-        setTestState('active');
-    };
-
     const resetExam = () => {
         setPlaying(false);
         setProgress(0);
@@ -400,35 +394,24 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail,
         setPicked(null);
         setScore(null);
         setElapsed(0);
-        setTestState('lobby');
+        setTestState('active');
         setShowExitModal(false);
     };
 
     const handleExit = () => {
+        setShowExitModal(false);
         if (simulation) {
-            setShowExitModal(false);
             simulation.onExit?.();
         } else {
             resetExam();
+            onExit?.();
         }
     };
-
-    if (testState === 'lobby') {
-        return (
-            <IELTSLobbyCard
-                skill="listening"
-                candidateEmail={candidateEmail || ''}
-                title="Listening Engine"
-                subtitle="Integrated audio simulation with 4-section note-taking practice."
-                onStart={startExam}
-            />
-        );
-    }
 
     if (testState === 'evaluating') {
         return (
             <div className="flex-1 min-h-0 flex items-center justify-center bg-[#F2F2F2]">
-                <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md w-full border border-[#CCCCCC]">
+                <div className="bg-white p-8 rounded-xl shadow-md text-center max-w-md w-full border border-[#CCCCCC]">
                     <h2 className="text-2xl font-bold text-[#0072CE] mb-4">Exam Completed</h2>
                     <p className="text-neutral-600">Evaluating your answers...</p>
                 </div>
@@ -439,16 +422,16 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail,
     if (testState === 'completed') {
         const band = score != null ? rawToBand(score) : null;
         return (
-            <div className="flex-1 min-h-0 flex items-center justify-center bg-[#F2F2F2]">
-                <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md w-full border border-[#CCCCCC]">
+            <div className="fixed inset-0 z-50 w-screen h-screen flex items-center justify-center bg-[#F2F2F2]">
+                <div className="bg-white p-8 rounded-2xl shadow-xl text-center max-w-md w-full border border-gray-200">
                     <h2 className="text-2xl font-bold text-[#0072CE] mb-4">Exam Completed</h2>
                     <p className="text-lg text-neutral-800 mb-2">Score: <strong>{score}</strong> / {ALL_IDS.length}</p>
                     <p className="text-lg text-neutral-800 mb-6">Band: <strong>{band?.toFixed(1)}</strong></p>
                     <button
-                        onClick={() => setTestState('lobby')}
-                        className="px-6 py-2 bg-[#0072CE] text-white rounded hover:bg-blue-700 transition-colors"
+                        onClick={handleExit}
+                        className="px-6 py-2.5 bg-[#0072CE] text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold cursor-pointer shadow-md shadow-blue-500/20"
                     >
-                        Return to Lobby
+                        Back to Listening Hub
                     </button>
                 </div>
             </div>
@@ -518,81 +501,170 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail,
             </span>
         );
 
+    const renderQuestionPill = (id: number) => {
+        const isAnswered = !!(answers[id] && answers[id].trim() !== '');
+        const isActive = activeId === id;
+        let btnClass = 'relative w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-all cursor-pointer select-none ';
+        if (isActive) {
+            btnClass += 'bg-[#0072CE] text-white font-bold ring-2 ring-blue-300 shadow-sm';
+        } else if (isAnswered) {
+            btnClass += 'bg-blue-50 text-[#0072CE] border border-blue-200 font-bold';
+        } else {
+            btnClass += 'border border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50';
+        }
+
+        return (
+            <button
+                key={id}
+                onClick={() => goTo(id)}
+                className={btnClass}
+                title={`Question ${id}`}
+            >
+                {id}
+                {isAnswered && !isActive && (
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#2E7D32]" />
+                )}
+            </button>
+        );
+    };
+
     return (
-        <div className="flex flex-col h-full relative bg-[#FFFFFF] text-black font-sans min-w-0" style={{ flex: 1 }}>
-            {/* Top Navigation Bar */}
-            <header className="shrink-0 h-14 border-b border-[#E5E7EB] bg-[#FFFFFF] flex items-center justify-between px-6">
-                <div className="flex items-center gap-4">
-                    <span className="text-[#D32F2F] text-2xl font-black tracking-tighter" style={{ fontFamily: 'Arial, sans-serif' }}>IELTS<sup className="text-sm">™</sup></span>
-                    <div className="ml-2">
-                        <span className="block text-sm font-semibold text-black tracking-wide">Test taker ID</span>
-                        <span className={`flex items-center gap-1.5 text-[11px] mt-0.5 ${playing ? 'text-[#0072CE]' : 'text-neutral-400'}`}>
-                            <Speaker size={14} className={playing ? 'animate-pulse' : ''} />
-                            {playing ? '🔊 Audio is Playing' : '🔇 Audio Paused'}
+        <div className="flex flex-col h-full w-full relative bg-[#FFFFFF] text-black font-sans min-w-0 overflow-hidden" style={{ flex: 1 }}>
+            {/* Unified Reading-Style Top Header Bar */}
+            <header className="shrink-0 h-14 bg-[#121212] border-b border-neutral-800 flex items-center justify-between px-4 sm:px-6 z-20 select-none">
+                {/* Top Left: Active test title display */}
+                <div className="flex items-center gap-3 sm:gap-4">
+                    <button
+                        onClick={() => setShowExitModal(true)}
+                        className="text-gray-400 hover:text-white transition-colors flex items-center justify-center w-8 h-8 rounded-lg hover:bg-neutral-800 cursor-pointer"
+                        title="Exit Exam"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                    </button>
+
+                    <div>
+                        <span className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider block">
+                            {sourceType === 'cambridge' ? `CAMBRIDGE ${bookNumber}` : `MOCK SERIES ${bookNumber}`}
                         </span>
+                        <h1 className="text-sm sm:text-base font-bold text-white leading-tight">
+                            Listening Test {testNumber}
+                        </h1>
                     </div>
                 </div>
-                <div className="flex items-center gap-5 text-black">
-                    <Wifi size={20} strokeWidth={2.5} className="cursor-pointer" />
-                    <Bell size={20} strokeWidth={2.5} className="cursor-pointer" />
-                    <button onClick={() => setIsOptionsOpen(true)} aria-label="Open options" className="cursor-pointer">
-                        <Menu size={20} strokeWidth={2.5} />
+
+                {/* Top Right Controls: Audio + Timer + Exit + Submit */}
+                <div className="flex items-center gap-2 sm:gap-3.5">
+                    {/* 1. Audio Player Control */}
+                    <div className="flex items-center gap-2 sm:gap-2.5 bg-neutral-900 border border-neutral-800 rounded-xl px-2.5 py-1 sm:px-3 sm:py-1.5 shadow-inner">
+                        <button
+                            onClick={() => setPlaying((p) => !p)}
+                            disabled={locked}
+                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#0072CE] hover:bg-blue-600 text-white flex items-center justify-center text-xs font-bold transition-all shadow-sm shrink-0 cursor-pointer"
+                            title={playing ? 'Pause Audio' : 'Play Audio'}
+                        >
+                            {playing ? (
+                                <svg width="10" height="12" viewBox="0 0 10 12" fill="currentColor">
+                                    <rect width="3" height="12" rx="1"/>
+                                    <rect x="7" width="3" height="12" rx="1"/>
+                                </svg>
+                            ) : (
+                                <svg width="10" height="12" viewBox="0 0 10 12" fill="currentColor" className="ml-0.5">
+                                    <polygon points="0,0 10,6 0,12"/>
+                                </svg>
+                            )}
+                        </button>
+
+                        {/* Scrub bar */}
+                        <div className="flex items-center w-20 sm:w-28 md:w-32">
+                            <input
+                                type="range"
+                                min={0}
+                                max={TOTAL}
+                                value={progress}
+                                onChange={(e) => setProgress(Number(e.target.value))}
+                                disabled={locked}
+                                className="w-full h-1.5 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-[#0072CE] focus:outline-none"
+                                title="Audio Scrubber"
+                            />
+                        </div>
+
+                        {/* Current Track Time */}
+                        <span className="text-[11px] font-mono text-neutral-400 shrink-0 hidden xs:inline">
+                            {Math.floor(progress / 60)}:{String(progress % 60).padStart(2, '0')} / {Math.floor(TOTAL / 60)}:{String(TOTAL % 60).padStart(2, '0')}
+                        </span>
+
+                        {/* Waveform Animation */}
+                        <div className="hidden lg:flex items-end gap-0.5 h-4 shrink-0 px-1">
+                            {WAVEBARS.slice(0, 8).map((h, i) => (
+                                <span
+                                    key={i}
+                                    className={`w-[2px] rounded-full transition-all duration-150 ${playing ? 'bg-[#0072CE]' : 'bg-neutral-600'}`}
+                                    style={{ height: playing ? `${Math.max(3, ((h + (progress + i) % 6)) % 16)}px` : '3px' }}
+                                />
+                            ))}
+                        </div>
+
+                        {/* Volume Control */}
+                        <div className="hidden md:flex items-center gap-1.5 text-neutral-400 pl-1 border-l border-neutral-800">
+                            <button
+                                onClick={() => setIsMuted((m) => !m)}
+                                className="p-1 hover:text-white transition-colors cursor-pointer"
+                                title={isMuted ? "Unmute" : "Mute"}
+                            >
+                                {isMuted || volume === 0 ? (
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+                                ) : volume < 50 ? (
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                                ) : (
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+                                )}
+                            </button>
+                            <input
+                                type="range"
+                                min={0}
+                                max={100}
+                                value={isMuted ? 0 : volume}
+                                onChange={(e) => {
+                                    setVolume(Number(e.target.value));
+                                    if (isMuted) setIsMuted(false);
+                                }}
+                                className="w-14 h-1 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-[#0072CE] focus:outline-none"
+                                title={`Volume: ${isMuted ? 0 : volume}%`}
+                            />
+                        </div>
+                    </div>
+
+                    {/* 2. Timer Display */}
+                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${lowTime ? 'bg-red-500/10 animate-pulse' : 'bg-neutral-800'}`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={lowTime ? '#ef4444' : '#9ca3af'} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span className={`font-mono text-xs sm:text-sm font-semibold ${lowTime ? 'text-red-400' : 'text-white'}`}>{formatClock(Math.max(0, timeLimit - elapsed))}</span>
+                    </div>
+
+                    {/* 3. Exit Exam Button */}
+                    <button
+                        onClick={() => setShowExitModal(true)}
+                        className={`px-3 sm:px-3.5 py-1.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white border border-neutral-700 text-xs font-semibold transition-colors cursor-pointer${exitPulse ? ' ring-2 ring-rose-500/80 animate-pulse' : ''}`}
+                    >
+                        Exit Exam
                     </button>
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#E5E7EB] text-[11px] text-neutral-700 hover:bg-[#D1D5DB] transition-colors">
-                        Notes / Help
+
+                    {/* 4. Submit Exam Button */}
+                    <button
+                        onClick={() => submit(false)}
+                        className="bg-orange-500 hover:bg-orange-600 text-white px-4 sm:px-5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors shadow-lg shadow-orange-500/20 cursor-pointer"
+                    >
+                        Submit
                     </button>
                 </div>
             </header>
 
-            <IeltsExamOptionsModal open={isOptionsOpen} onClose={() => setIsOptionsOpen(false)} />
-
-            {/* Task Context Banner */}
-            <div className="shrink-0 bg-[#F5F5F5] border border-[#E5E7EB] px-6 py-4 mx-4 mt-4 rounded-md">
-                <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                        <h2 className="text-lg font-bold mb-1">Part {activePart}</h2>
-                        <p className="text-sm text-neutral-800">{bannerText}</p>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                        <button
-                            onClick={() => setPlaying((p) => !p)}
-                            disabled={locked}
-                            className="w-9 h-9 rounded-full bg-[#0072CE] text-white flex items-center justify-center text-sm transition-colors hover:bg-blue-700 disabled:opacity-50"
-                        >
-                            {playing ? '❚❚' : '▶'}
-                        </button>
-                            <button
-                                onClick={() => setShowExitModal(true)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-[#CCCCCC] text-[11px] text-neutral-600 hover:text-red-600 hover:border-red-400 transition-all${exitPulse ? ' scale-105 ring-2 ring-rose-500/80 shadow-[0_0_15px_rgba(225,29,72,0.5)] animate-pulse' : ''}`}
-                            >
-                                <span>⬅️</span> Exit Exam
-                            </button>
-                        <div className={`rounded-md border bg-white px-3 py-1.5 text-center ${elapsed >= timeLimit - 300 ? 'border-red-400 animate-pulse' : 'border-[#CCCCCC]'}`}>
-                            <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">Time Remaining</p>
-                            <p className={`font-mono text-sm ${elapsed >= timeLimit - 300 ? 'text-red-600' : 'text-neutral-800'}`}>{formatClock(Math.max(0, timeLimit - elapsed))}</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="mt-3 flex items-center gap-3">
-                    <div className="h-1 rounded bg-[#E5E7EB] overflow-hidden flex-1">
-                        <div className="h-full bg-[#0072CE] transition-all" style={{ width: `${pct}%` }} />
-                    </div>
-                    <span className="text-[11px] font-mono text-neutral-500 shrink-0">track {Math.floor(progress / 60)}:{String(progress % 60).padStart(2, '0')} / 3:00</span>
-                    <span className="hidden lg:flex items-end gap-0.5 h-6 shrink-0">
-                        {WAVEBARS.slice(0, 12).map((h, i) => (
-                            <span
-                                key={i}
-                                className={`w-[3px] rounded-full transition-all duration-150 ${playing ? 'bg-[#0072CE]/70' : 'bg-neutral-300'}`}
-                                style={{ height: playing ? `${Math.max(4, ((h + (progress + i) % 8)) % 28)}px` : '3px' }}
-                            />
-                        ))}
-                    </span>
-                </div>
-            </div>
-
             {/* Question Workspace — Single Scrollable Sheet */}
             {activePart === 1 ? (
-                <div className="flex-1 min-h-0 overflow-y-auto bg-[#FFFFFF] custom-scrollbar">
+                <div className="flex-1 min-h-0 overflow-y-auto pb-24 bg-[#FFFFFF] custom-scrollbar">
                     <div className="max-w-3xl mx-auto px-8 py-6">
                         <h4 className="font-bold text-base mb-1">Questions 1–10</h4>
                         <p className="text-sm text-neutral-700 mb-5">{LISTENING_PART1_DATA.instructions}</p>
@@ -643,7 +715,7 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail,
                     </div>
                 </div>
             ) : activePart === 2 ? (
-                <div className="flex-1 min-h-0 overflow-y-auto bg-[#FFFFFF] custom-scrollbar">
+                <div className="flex-1 min-h-0 overflow-y-auto pb-24 bg-[#FFFFFF] custom-scrollbar">
                     <div className="max-w-4xl mx-auto px-8 py-6 space-y-9">
                         <section>
                             <h4 className="font-bold text-base mb-1">Questions 11–15</h4>
@@ -691,7 +763,7 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail,
                     </div>
                 </div>
             ) : activePart === 3 ? (
-                <div className="flex-1 min-h-0 overflow-y-auto bg-[#FFFFFF] custom-scrollbar">
+                <div className="flex-1 min-h-0 overflow-y-auto pb-24 bg-[#FFFFFF] custom-scrollbar">
                     <div className="max-w-4xl mx-auto px-8 py-6 space-y-9">
                         <section>
                             <h4 className="font-bold text-base mb-1">Questions 21–25</h4>
@@ -751,7 +823,7 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail,
                     </div>
                 </div>
             ) : activePart === 4 ? (
-                <div className="flex-1 min-h-0 overflow-y-auto bg-[#FFFFFF] custom-scrollbar">
+                <div className="flex-1 min-h-0 overflow-y-auto pb-24 bg-[#FFFFFF] custom-scrollbar">
                     <div className="max-w-4xl mx-auto px-8 py-6 space-y-9">
                         <section>
                             <h4 className="font-bold text-base mb-1">Questions 31–32</h4>
@@ -838,7 +910,7 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail,
                     </div>
                 </div>
             ) : (
-                <div className="flex-1 min-h-0 overflow-y-auto bg-[#FFFFFF] custom-scrollbar">
+                <div className="flex-1 min-h-0 overflow-y-auto pb-24 bg-[#FFFFFF] custom-scrollbar">
                     <div className="max-w-3xl mx-auto px-8 py-6">
                         <h4 className="font-bold text-base mb-1">Questions {PART_RANGE[activePart]}</h4>
                         <p className="text-sm text-neutral-700 mb-6">{bannerText}</p>
@@ -851,162 +923,61 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({ candidateEmail,
                 </div>
             )}
 
-            {/* Official Bottom Question Deck (Footer) */}
-            <footer className="shrink-0 h-12 bg-white border-t border-[#E5E7EB] flex items-center justify-between px-2 w-full z-10">
-                <div className="flex items-center gap-5 h-full flex-1 px-4 overflow-x-auto custom-scrollbar">
-                    <div className="flex items-center gap-2 shrink-0">
-                        <button
-                            onClick={() => setActivePart(1)}
-                            className={`text-sm font-bold ${activePart === 1 ? 'text-black' : 'text-neutral-500 hover:text-black'}`}
-                        >
-                            Part 1 <span className="text-xs font-normal text-neutral-400">{p1Count}/10</span>
-                        </button>
-                        {activePart === 1 && (
-                            <div className="flex items-center gap-1">
-                                {PART1_IDS.map((id) => {
-                                    const active = activePart === 1 && activeId === id;
-                                    const done = !!(answers[id] && answers[id].trim() !== '');
-                                    return (
-                                        <button
-                                            key={id}
-                                            onClick={() => goTo(id)}
-                                            title={`Question ${id}`}
-                                            className={`relative w-7 h-8 flex flex-col items-center justify-center text-xs font-mono font-semibold transition-all ${
-                                                active
-                                                    ? 'border-2 border-[#0072CE] bg-[#D0E8FF] text-black'
-                                                    : 'text-neutral-600 hover:bg-neutral-100'
-                                            }`}
-                                        >
-                                            {done && !active && <div className="absolute top-0 left-0 right-0 h-1 bg-[#2E7D32]" />}
-                                            {done && active && <div className="absolute -top-[2px] -left-[2px] -right-[2px] h-[3px] bg-[#2E7D32]" />}
-                                            <span className={done && !active ? 'mt-1' : ''}>{id}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
+            {/* Pinned Bottom Navigation Dock */}
+            <footer className="fixed bottom-0 left-0 right-0 w-full h-[56px] bg-white border-t border-gray-200 flex items-center justify-between px-4 sm:px-6 z-30 select-none shadow-sm">
+                <div className="flex items-center gap-3 sm:gap-6 flex-1 min-w-0 overflow-x-auto no-scrollbar py-1">
+                    {([1, 2, 3, 4] as const).map((partNum) => {
+                        const isCurrentPart = activePart === partNum;
+                        const partIds = ACTIVE_IDS[partNum];
+                        const answeredCount = countAnswered(partIds);
 
-                    <div className="flex items-center gap-2 shrink-0">
-                        <button
-                            onClick={() => setActivePart(2)}
-                            className={`text-sm font-bold ${activePart === 2 ? 'text-black' : 'text-neutral-500 hover:text-black'}`}
-                        >
-                            Part 2 <span className="text-xs font-normal text-neutral-400">{p2Count}/10</span>
-                        </button>
-                        {activePart === 2 && (
-                            <div className="flex items-center gap-1">
-                                {PART2_IDS.map((id) => {
-                                    const active = activePart === 2 && activeId === id;
-                                    const done = !!(answers[id] && answers[id].trim() !== '');
-                                    return (
-                                        <button
-                                            key={id}
-                                            onClick={() => goTo(id)}
-                                            title={`Question ${id}`}
-                                            className={`relative w-7 h-8 flex flex-col items-center justify-center text-xs font-mono font-semibold transition-all ${
-                                                active
-                                                    ? 'border-2 border-[#0072CE] bg-[#D0E8FF] text-black'
-                                                    : 'text-neutral-600 hover:bg-neutral-100'
-                                            }`}
-                                        >
-                                            {done && !active && <div className="absolute top-0 left-0 right-0 h-1 bg-[#2E7D32]" />}
-                                            {done && active && <div className="absolute -top-[2px] -left-[2px] -right-[2px] h-[3px] bg-[#2E7D32]" />}
-                                            <span className={done && !active ? 'mt-1' : ''}>{id}</span>
-                                        </button>
-                                    );
-                                })}
+                        return (
+                            <div key={partNum} className="flex items-center gap-2 shrink-0">
+                                {isCurrentPart ? (
+                                    <div className="flex items-center gap-2 sm:gap-2.5">
+                                        <span className="font-bold text-sm text-gray-900 shrink-0">Part {partNum}</span>
+                                        <div className="flex items-center gap-1 sm:gap-1.5">
+                                            {partIds.map((id) => renderQuestionPill(id))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => {
+                                            setActivePart(partNum);
+                                            goTo(partIds[0]);
+                                        }}
+                                        className="text-left group cursor-pointer py-1 px-2 rounded-lg hover:bg-gray-100 transition-colors shrink-0"
+                                    >
+                                        <div className="text-xs font-bold text-gray-700 group-hover:text-[#0072CE] transition-colors">
+                                            Part {partNum}
+                                        </div>
+                                        <div className="text-[11px] text-gray-400">
+                                            {answeredCount} of 10
+                                        </div>
+                                    </button>
+                                )}
                             </div>
-                        )}
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                        <button
-                            onClick={() => setActivePart(3)}
-                            className={`text-sm font-bold ${activePart === 3 ? 'text-black' : 'text-neutral-500 hover:text-black'}`}
-                        >
-                            Part 3 <span className="text-xs font-normal text-neutral-400">{p3Count}/10</span>
-                        </button>
-                        {activePart === 3 && (
-                            <div className="flex items-center gap-1">
-                                {PART3_IDS.map((id) => {
-                                    const active = activePart === 3 && activeId === id;
-                                    const done = !!(answers[id] && answers[id].trim() !== '');
-                                    return (
-                                        <button
-                                            key={id}
-                                            onClick={() => goTo(id)}
-                                            title={`Question ${id}`}
-                                            className={`relative w-7 h-8 flex flex-col items-center justify-center text-xs font-mono font-semibold transition-all ${
-                                                active
-                                                    ? 'border-2 border-[#0072CE] bg-[#D0E8FF] text-black'
-                                                    : 'text-neutral-600 hover:bg-neutral-100'
-                                            }`}
-                                        >
-                                            {done && !active && <div className="absolute top-0 left-0 right-0 h-1 bg-[#2E7D32]" />}
-                                            {done && active && <div className="absolute -top-[2px] -left-[2px] -right-[2px] h-[3px] bg-[#2E7D32]" />}
-                                            <span className={done && !active ? 'mt-1' : ''}>{id}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                        <button
-                            onClick={() => setActivePart(4)}
-                            className={`text-sm font-bold ${activePart === 4 ? 'text-black' : 'text-neutral-500 hover:text-black'}`}
-                        >
-                            Part 4 <span className="text-xs font-normal text-neutral-400">{p4Count}/10</span>
-                        </button>
-                        {activePart === 4 && (
-                            <div className="flex items-center gap-1">
-                                {PART4_IDS.map((id) => {
-                                    const active = activePart === 4 && activeId === id;
-                                    const done = !!(answers[id] && answers[id].trim() !== '');
-                                    return (
-                                        <button
-                                            key={id}
-                                            onClick={() => goTo(id)}
-                                            title={`Question ${id}`}
-                                            className={`relative w-7 h-8 flex flex-col items-center justify-center text-xs font-mono font-semibold transition-all ${
-                                                active
-                                                    ? 'border-2 border-[#0072CE] bg-[#D0E8FF] text-black'
-                                                    : 'text-neutral-600 hover:bg-neutral-100'
-                                            }`}
-                                        >
-                                            {done && !active && <div className="absolute top-0 left-0 right-0 h-1 bg-[#2E7D32]" />}
-                                            {done && active && <div className="absolute -top-[2px] -left-[2px] -right-[2px] h-[3px] bg-[#2E7D32]" />}
-                                            <span className={done && !active ? 'mt-1' : ''}>{id}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
+                        );
+                    })}
                 </div>
 
-                <div className="shrink-0 flex items-center h-full border-l border-[#E5E7EB] pl-2">
+                {/* Fixed Pagination Controls */}
+                <div className="flex items-center gap-1.5 shrink-0 pl-3 sm:pl-4 border-l border-gray-100">
                     <button
                         onClick={() => navigatePart(-1)}
                         disabled={activePart === 1}
-                        className="bg-[#E5E7EB] hover:bg-[#D0D0D0] text-black w-12 h-10 flex items-center justify-center transition-colors disabled:opacity-40"
+                        className="w-8 h-8 rounded-md bg-[#333333] hover:bg-black text-white flex items-center justify-center text-sm font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                        title="Previous Part"
                     >
-                        ◄
+                        &lt;
                     </button>
                     <button
                         onClick={() => navigatePart(1)}
                         disabled={activePart === 4}
-                        className="bg-black hover:bg-neutral-800 text-white w-12 h-10 flex items-center justify-center transition-colors disabled:opacity-40"
+                        className="w-8 h-8 rounded-md bg-[#222222] hover:bg-black text-white flex items-center justify-center text-sm font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                        title="Next Part"
                     >
-                        ►
-                    </button>
-                    <button
-                        onClick={() => submit(false)}
-                        className="w-[60px] h-full bg-[#E0E0E0] hover:bg-[#D0D0D0] flex items-center justify-center transition-colors text-black"
-                    >
-                        <Check size={24} strokeWidth={3} />
+                        &gt;
                     </button>
                 </div>
             </footer>

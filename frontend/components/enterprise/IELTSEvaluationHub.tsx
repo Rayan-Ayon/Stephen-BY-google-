@@ -57,9 +57,10 @@ interface IELTSEvaluationHubProps {
     initialView?: IeltsView;
     initialWritingSubView?: WritingSubView;
     hideInternalNav?: boolean;
+    onNavigate?: (view: any) => void;
 }
 
-const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onExamStateChange, exitPulse, onLockedNavigationAttempt, initialView = 'dashboard', initialWritingSubView = 'dashboard', hideInternalNav = false }) => {
+const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onExamStateChange, exitPulse, onLockedNavigationAttempt, initialView = 'dashboard', initialWritingSubView = 'dashboard', hideInternalNav = false, onNavigate }) => {
     const { activeWorkspace, workspaces, setActiveWorkspace } = useWorkspace();
     const [view, setView] = useState<IeltsView>(initialView);
     const [isCollapsed, setIsCollapsed] = useState<boolean>(readRail);
@@ -171,7 +172,7 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onEx
     );
 
     return (
-        <div className={`flex h-full w-full ${view === 'speaking' ? 'p-0 gap-0' : 'p-8 gap-8'} overflow-hidden`}>
+        <div className={`flex h-full w-full ${(view === 'speaking' || (view === 'dashboard' && hideInternalNav)) ? 'p-0 gap-0' : 'p-8 gap-8'} overflow-hidden`}>
             <style>{`@keyframes lock-shake {0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}`}</style>
             {!hideInternalNav && <aside className={`shrink-0 flex flex-col overflow-hidden transition-[width] duration-300 ${isCollapsed ? 'w-16' : 'w-60'}`}>
                 <div className={`${isCollapsed ? 'flex items-center justify-center mb-3 pb-3 border-b border-zinc-800' : 'flex flex-col gap-1.5 mb-3 pb-3 border-b border-zinc-800'}`}>
@@ -313,7 +314,7 @@ const IELTSEvaluationHub: React.FC<IELTSEvaluationHubProps> = ({ userEmail, onEx
                         )}
                     </>
                 ) : view === 'dashboard' ? (
-                    <IELTSDashboard />
+                    <IELTSDashboard onNavigate={onNavigate} />
                 ) : (
                     <>
                         {view === 'writing' && writingSubView === 'dashboard' && (

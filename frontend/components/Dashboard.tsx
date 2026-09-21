@@ -28,8 +28,9 @@ import ResearchLabView from './ResearchLabView';
 import LearningMethods1View from './LearningMethods1View';
 import LeaderboardView from './LeaderboardView';
 import StreaksView from './StreaksView';
-import AISpeakingPartnerView from './AISpeakingPartnerView';
+import AISpeakingPartnerView from './ai-speaking-partner/AISpeakingPartnerView';
 import AIIELTSChatbotView from './AIIELTSChatbotView';
+import IELTSAdvisorDrawer from './IELTSAdvisorDrawer';
 import AIRewriterView from './AIRewriterView';
 import FreeContentLibraryView from './FreeContentLibraryView';
 import StudyPlanView from './StudyPlanView';
@@ -40,6 +41,7 @@ import IELTSEvaluationHub from './enterprise/IELTSEvaluationHub';
 import ReadingHubView from './ReadingHubView';
 import WritingHubView from './WritingHubView';
 import ListeningHubView from './ListeningHubView';
+import SpeakingHubView from './mock-tests/speaking/SpeakingHubView';
 import IELTSSpeakingExam from './enterprise/ielts/IELTSSpeakingExam';
 import FullMockTestHub from './FullMockTestHub';
 import PartPracticeHub from './PartPracticeHub';
@@ -127,6 +129,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
     const [isQuickGuideOpen, setIsQuickGuideOpen] = useState(false);
     const [isContactUsOpen, setIsContactUsOpen] = useState(false);
+    const [isAdvisorDrawerOpen, setIsAdvisorDrawerOpen] = useState(false);
 
     // Exam navigation lock state
     const [isExamActive, setIsExamActive] = useState(false);
@@ -380,9 +383,9 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                     </div>
                 )
                 : <WorkspaceOverview userEmail={userEmail} onNavigate={handleNavigate} />;
-            case 'ielts_dashboard': return <IELTSEvaluationHub key="ielts_dashboard" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="dashboard" hideInternalNav />;
-            case 'speaking_studio': return <IELTSSpeakingExam candidateEmail={userEmail} onActiveChange={setIsExamActive} exitPulse={exitPulse} />;
-            case 'listening_engine': return <ListeningHubView userEmail={userEmail} />;
+            case 'ielts_dashboard': return <IELTSEvaluationHub key="ielts_dashboard" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="dashboard" hideInternalNav onNavigate={handleNavigate} />;
+            case 'speaking_studio': return <SpeakingHubView userEmail={userEmail} onExamStateChange={setIsExamActive} />;
+            case 'listening_engine': return <ListeningHubView userEmail={userEmail} onExamStateChange={setIsExamActive} />;
             case 'reading_hub': return <ReadingHubView userEmail={userEmail} onExamStateChange={setIsExamActive} />;
             case 'writing_lab':
             case 'task2_checker':
@@ -396,8 +399,8 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                 return <FullMockTestHub userEmail={userEmail} onNavigate={(viewKey) => setCurrentView(viewKey)} />;
             case 'part_practice': return <PartPracticeHub userEmail={userEmail} />;
             case 'speak_ui_restore': return <SpeakUIRestore userEmail={userEmail} />;
-            case 'ielts_evaluation': return <IELTSEvaluationHub userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} />;
-            case 'my_reports': return <IELTSEvaluationHub key="my_reports" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="dashboard" hideInternalNav />;
+            case 'ielts_evaluation': return <IELTSEvaluationHub userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} onNavigate={handleNavigate} />;
+            case 'my_reports': return <IELTSEvaluationHub key="my_reports" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="dashboard" hideInternalNav onNavigate={handleNavigate} />;
             case 'leaderboard': return <LeaderboardView userEmail={userEmail} />;
             case 'streaks': return <StreaksView userEmail={userEmail} />;
             case 'ai_speaking_partner': return <AISpeakingPartnerView userEmail={userEmail} />;
@@ -514,10 +517,18 @@ return (
             
             <main className={`flex-1 flex flex-col min-w-0 overflow-hidden ${isExamActive ? 'w-full' : ''}`}>
                 {/* Header with WorkspaceDropdown */}
-                {!isExamActive && (
+                {!isExamActive && currentView !== 'my_reports' && currentView !== 'ielts_dashboard' && (
                     <div className="h-16 shrink-0 border-b border-border bg-canvas flex items-center px-6 gap-4">
                         <WorkspaceDropdown theme={theme} isExpanded={true} />
                         <div className="flex-1" />
+                        <button
+                            onClick={() => setIsAdvisorDrawerOpen(true)}
+                            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/60 transition shadow-sm cursor-pointer"
+                            title="Open IELTS & Study Abroad AI Advisor"
+                        >
+                            <span>🎓</span>
+                            <span>IELTS & Study Abroad Advisor</span>
+                        </button>
                     </div>
                 )}
 
@@ -543,6 +554,15 @@ return (
             {isFeedbackOpen && <FeedbackModal onClose={() => setIsFeedbackOpen(false)} />}
             {isQuickGuideOpen && <QuickGuideModal onClose={() => setIsQuickGuideOpen(false)} />}
             {isContactUsOpen && <ContactUsSlide onClose={() => setIsContactUsOpen(false)} />}
+            <IELTSAdvisorDrawer
+                isOpen={isAdvisorDrawerOpen}
+                onClose={() => setIsAdvisorDrawerOpen(false)}
+                userEmail={userEmail}
+                onOpenFullView={() => {
+                    setIsAdvisorDrawerOpen(false);
+                    handleNavigate('ai_ielts_chatbot');
+                }}
+            />
             
             {deleteSpaceId && (
                 <DeleteSpaceModal 

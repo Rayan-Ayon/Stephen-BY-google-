@@ -22,8 +22,8 @@ const ACADEMIC_MOCK_SERIES: TestSeries[] = [
   { id: 'mock-4', label: 'IELTSly Mock Series 4', setLabel: 'SET 4', testCount: 4, badge: 'LATEST', group: 'mock' },
 ];
 
-// Allowed Books: ONLY Cambridge Books 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 (length: 14)
-const ACADEMIC_CAMBRIDGE_SERIES: TestSeries[] = Array.from({ length: 14 }, (_, i) => ({
+// Academic Series: Cambridge Books 7–21 (length: 15)
+const ACADEMIC_CAMBRIDGE_SERIES: TestSeries[] = Array.from({ length: 15 }, (_, i) => ({
   id: `cambridge-${i + 7}`,
   label: `Cambridge IELTS ${i + 7}`,
   setLabel: `BOOK ${i + 7}`,
@@ -31,7 +31,7 @@ const ACADEMIC_CAMBRIDGE_SERIES: TestSeries[] = Array.from({ length: 14 }, (_, i
   group: 'cambridge' as const,
 }));
 
-// General Training Series: Zero Mock Series, Zero Cambridge 21, ONLY Books 7-20
+// General Training Series: Zero Mock Series, Zero Cambridge 21, ONLY Books 7–20 (length: 14)
 const GT_CAMBRIDGE_SERIES: TestSeries[] = Array.from({ length: 14 }, (_, i) => ({
   id: `gt-cambridge-${i + 7}`,
   label: `Cambridge IELTS ${i + 7} (GT)`,
@@ -44,7 +44,7 @@ const DIFFICULTY_MAP: Record<number, { label: string; className: string }> = {
   0: { label: 'Easy', className: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
   1: { label: 'Medium', className: 'bg-amber-500/10 text-amber-400 border border-amber-500/20' },
   2: { label: 'Medium', className: 'bg-amber-500/10 text-amber-400 border border-amber-500/20' },
-  3: { label: 'Medium', className: 'bg-amber-500/10 text-amber-400 border border-amber-500/20' },
+  3: { label: 'Hard', className: 'bg-rose-500/10 text-rose-400 border border-rose-500/20' },
 };
 
 // ── Icon Components ─────────────────────────────────────────────────────────

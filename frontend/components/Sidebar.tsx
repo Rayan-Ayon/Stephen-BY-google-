@@ -277,7 +277,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                             }`}
                                         >
                                             <MicIcon className="w-4 h-4 shrink-0" />
-                                            <span>Speaking Tutorial</span>
+                                            <span>Speaking Studio</span>
                                         </button>
 
                                         <button

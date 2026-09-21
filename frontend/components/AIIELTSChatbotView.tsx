@@ -1,4 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import {
+    ChatMessage,
+    sendChatMessage,
+    fetchConversations,
+    fetchConversationDetails,
+    deleteConversation,
+} from '../services/chatbotService';
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 
@@ -144,6 +151,22 @@ const AIIELTSChatbotView: React.FC<AIIELTSChatbotViewProps> = ({ userEmail: _use
     const activeChat = conversations.find(c => c.id === activeChatId) ?? null;
     const hasMessages = activeChat && activeChat.messages.length > 0;
 
+    /* ── Load conversation history from backend on mount ── */
+    useEffect(() => {
+        fetchConversations(_userEmail)
+            .then(list => {
+                if (list && list.length > 0) {
+                    setConversations(list.map(c => ({
+                        id: c.conversation_id,
+                        title: c.title,
+                        timestamp: formatDate(new Date(c.updated_at || c.created_at || Date.now())),
+                        messages: [],
+                    })));
+                }
+            })
+            .catch(err => console.warn('Could not load backend conversations:', err));
+    }, [_userEmail]);
+
     /* ── Auto-scroll to bottom ── */
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -154,9 +177,9 @@ const AIIELTSChatbotView: React.FC<AIIELTSChatbotViewProps> = ({ userEmail: _use
         inputRef.current?.focus();
     }, [activeChatId]);
 
-    /* ── Send message logic ── */
-    const sendMessage = useCallback((text: string) => {
-        if (!text.trim()) return;
+    /* ── Send message logic with real backend AI advisor ── */
+    const sendMessage = useCallback(async (text: string) => {
+        if (!text.trim() || isTyping) return;
 
         const now = new Date();
         const userMsg: Message = {
@@ -195,7 +218,46 @@ const AIIELTSChatbotView: React.FC<AIIELTSChatbotViewProps> = ({ userEmail: _use
         setInputText('');
         setIsTyping(true);
 
-        setTimeout(() => {
+        try {
+            const currentMsgs = activeChat ? [...activeChat.messages, userMsg] : [userMsg];
+            const historyPayload: ChatMessage[] = currentMsgs.map(m => ({
+                id: m.id,
+                role: m.sender === 'user' ? 'user' : 'model',
+                content: m.text,
+            }));
+
+            const isBackendId = targetChatId && targetChatId.startsWith('conv_');
+            const res = await sendChatMessage(
+                text.trim(),
+                isBackendId ? targetChatId : undefined,
+                historyPayload,
+                _userEmail
+            );
+
+            const mihuMsg: Message = {
+                id: `msg-${Date.now()}-mihu`,
+                sender: 'mihu',
+                text: res.response,
+                time: formatTime(new Date(res.timestamp || Date.now())),
+            };
+
+            const finalId = res.conversation_id || targetChatId!;
+
+            setConversations(prev =>
+                prev.map(c =>
+                    c.id === targetChatId
+                        ? {
+                            ...c,
+                            id: finalId,
+                            title: res.title || c.title,
+                            messages: [...c.messages, mihuMsg],
+                          }
+                        : c
+                )
+            );
+            setActiveChatId(finalId);
+        } catch (err) {
+            console.error('Chat error, using fallback:', err);
             const mihuMsg: Message = {
                 id: `msg-${Date.now()}-mihu`,
                 sender: 'mihu',
@@ -209,9 +271,10 @@ const AIIELTSChatbotView: React.FC<AIIELTSChatbotViewProps> = ({ userEmail: _use
                         : c
                 )
             );
+        } finally {
             setIsTyping(false);
-        }, 800);
-    }, [activeChatId]);
+        }
+    }, [activeChatId, activeChat, isTyping, _userEmail]);
 
     const handleSend = useCallback(() => {
         sendMessage(inputText);
@@ -233,10 +296,39 @@ const AIIELTSChatbotView: React.FC<AIIELTSChatbotViewProps> = ({ userEmail: _use
         setIsHistoryOpen(false);
     }, []);
 
-    const handleSelectChat = useCallback((chatId: string) => {
+    const handleSelectChat = useCallback(async (chatId: string) => {
         setActiveChatId(chatId);
         setIsHistoryOpen(false);
+        try {
+            const detail = await fetchConversationDetails(chatId);
+            if (detail && detail.messages) {
+                const loadedMessages: Message[] = detail.messages.map((m, idx) => ({
+                    id: m.id || `msg-${idx}`,
+                    sender: m.role === 'user' ? 'user' : 'mihu',
+                    text: m.content,
+                    time: m.timestamp ? formatTime(new Date(m.timestamp)) : '',
+                }));
+                setConversations(prev =>
+                    prev.map(c => c.id === chatId ? { ...c, messages: loadedMessages } : c)
+                );
+            }
+        } catch (e) {
+            console.warn('Could not load conversation details from server:', e);
+        }
     }, []);
+
+    const handleDeleteChat = useCallback(async (e: React.MouseEvent, chatId: string) => {
+        e.stopPropagation();
+        try {
+            await deleteConversation(chatId);
+        } catch (err) {
+            console.warn('Failed to delete on server:', err);
+        }
+        setConversations(prev => prev.filter(c => c.id !== chatId));
+        if (activeChatId === chatId) {
+            setActiveChatId(null);
+        }
+    }, [activeChatId]);
 
     const filteredConversations = conversations.filter(c =>
         c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -416,18 +508,29 @@ const AIIELTSChatbotView: React.FC<AIIELTSChatbotViewProps> = ({ userEmail: _use
 
                     {/* Populated History */}
                     {filteredConversations.map(chat => (
-                        <button
+                        <div
                             key={chat.id}
                             onClick={() => handleSelectChat(chat.id)}
-                            className={`w-full text-left p-3 rounded-xl mb-2 transition-all ${
+                            className={`group flex items-center justify-between w-full text-left p-3 rounded-xl mb-2 transition-all cursor-pointer ${
                                 activeChatId === chat.id
                                     ? 'bg-red-50 border border-red-200'
                                     : 'hover:bg-gray-50 border border-transparent'
                             }`}
                         >
-                            <p className="text-sm font-medium text-gray-800 truncate">{chat.title}</p>
-                            <p className="text-[11px] text-gray-400 mt-1">{chat.timestamp}</p>
-                        </button>
+                            <div className="truncate flex-1 pr-2">
+                                <p className="text-sm font-medium text-gray-800 truncate">{chat.title}</p>
+                                <p className="text-[11px] text-gray-400 mt-1">{chat.timestamp}</p>
+                            </div>
+                            <button
+                                onClick={(e) => handleDeleteChat(e, chat.id)}
+                                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1 rounded transition-opacity"
+                                title="Delete conversation"
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
                     ))}
                 </div>
             </div>

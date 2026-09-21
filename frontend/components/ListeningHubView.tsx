@@ -175,19 +175,35 @@ const AccordionCard: React.FC<AccordionCardProps> = ({ series, isExpanded, onTog
 
 interface ListeningHubViewProps {
   userEmail?: string;
+  onExamStateChange?: (active: boolean) => void;
 }
 
-export default function ListeningHubView({ userEmail }: ListeningHubViewProps) {
+export default function ListeningHubView({ userEmail, onExamStateChange }: ListeningHubViewProps) {
   const [viewMode, setViewMode] = useState<'hub' | 'history'>('hub');
   const [activeTab, setActiveTab] = useState<'academic' | 'general'>('academic');
   const [expandedSeriesId, setExpandedSeriesId] = useState<string | null>(null);
   const [showExam, setShowExam] = useState<boolean>(false);
+  const [examSourceType, setExamSourceType] = useState<'cambridge' | 'mock_series'>('cambridge');
+  const [examBookNumber, setExamBookNumber] = useState<number>(7);
+  const [examTestNumber, setExamTestNumber] = useState<number>(1);
   const customAudioRef = useRef<HTMLDivElement>(null);
 
   const handleSubTestClick = (seriesId: string, testIndex: number) => {
     sessionStorage.setItem('listening_exam_series', seriesId);
     sessionStorage.setItem('listening_exam_index', String(testIndex));
+    const isCambridge = seriesId.startsWith('cambridge-');
+    const parts = seriesId.split('-');
+    const bookNum = parseInt(parts[parts.length - 1]) || 7;
+    setExamSourceType(isCambridge ? 'cambridge' : 'mock_series');
+    setExamBookNumber(bookNum);
+    setExamTestNumber(testIndex + 1);
     setShowExam(true);
+    onExamStateChange?.(true);
+  };
+
+  const handleExitExam = () => {
+    setShowExam(false);
+    onExamStateChange?.(false);
   };
 
   const handleToggleAccordion = (id: string) => {
@@ -201,27 +217,17 @@ export default function ListeningHubView({ userEmail }: ListeningHubViewProps) {
   // ── Exam Mode ────────────────────────────────────────────────────────────
   if (showExam) {
     return (
-      <div className="h-[calc(100vh-32px)] bg-[#F2F2F2] flex flex-col overflow-hidden">
-        <div className="bg-white border-b border-zinc-200 px-6 py-3 flex items-center gap-4 flex-shrink-0">
-          <button
-            onClick={() => setShowExam(false)}
-            className="flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
-          >
-            <ArrowLeftIcon className="w-4 h-4" />
-            Back to Listening Hub
-          </button>
-          <div className="h-4 w-px bg-zinc-200" />
-          <span className="text-sm text-zinc-400">
-            {sessionStorage.getItem('listening_exam_series') || 'Listening Exam'}
-          </span>
-        </div>
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          <IELTSListeningExam
-            candidateEmail={userEmail}
-            onActiveChange={() => {}}
-            exitPulse={false}
-          />
-        </div>
+      <div className="fixed inset-0 z-50 w-screen h-screen bg-white flex flex-col overflow-hidden">
+        <IELTSListeningExam
+          candidateEmail={userEmail}
+          sourceType={examSourceType}
+          category={activeTab}
+          bookNumber={examBookNumber}
+          testNumber={examTestNumber}
+          onActiveChange={(active) => onExamStateChange?.(active)}
+          onExit={handleExitExam}
+          exitPulse={false}
+        />
       </div>
     );
   }
