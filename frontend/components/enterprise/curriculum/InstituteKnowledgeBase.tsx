@@ -393,109 +393,7 @@ const InstituteKnowledgeBase: React.FC = () => {
             <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.docx,.json" onChange={handleFileInput} />
 
             {/* ════════════════════════════════════════════════════════════
-                SECTION A: HERO HEADER & SYSTEM TELEMETRY STRIP
-            ════════════════════════════════════════════════════════════ */}
-            <div className="bg-zinc-900/80 border border-zinc-800 backdrop-blur-xl rounded-2xl p-6 shadow-[0_8px_32px_rgba(0,0,0,0.37)]">
-                <div className="flex items-center gap-3 mb-2">
-                    <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        KNOWLEDGE BASE INFRASTRUCTURE
-                    </span>
-                    <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">CUSTOM CURRICULUM &amp; QUESTION STORES</span>
-                </div>
-                <p className="text-sm text-zinc-400 leading-relaxed max-w-2xl">
-                    Upload proprietary coaching books and PDF guides to ground AI Evaluator feedback in your exact curriculum.
-                </p>
-
-                <div className="grid grid-cols-4 gap-4 mt-5">
-                    {/* Active Context Injection */}
-                    <div className="bg-zinc-950/70 border border-zinc-800 rounded-xl p-4">
-                        <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-1">Active Context Injection</p>
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-emerald-400">ENABLED</span>
-                            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                        </div>
-                    </div>
-                    {/* Embedded Books */}
-                    <div className="bg-zinc-950/70 border border-zinc-800 rounded-xl p-4">
-                        <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-1">Embedded Books</p>
-                        <p className="text-sm font-bold text-white">{activeBooks} Active / {vectorizingBooks} Indexing</p>
-                    </div>
-                    {/* Total Vector Chunks */}
-                    <div className="bg-zinc-950/70 border border-zinc-800 rounded-xl p-4">
-                        <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-1">Total Vector Chunks</p>
-                        <p className="text-sm font-bold text-white">{totalChunks.toLocaleString()} Chunks</p>
-                    </div>
-                    {/* RAG Engine Version */}
-                    <div className="bg-zinc-950/70 border border-zinc-800 rounded-xl p-4">
-                        <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-1">RAG Engine Version</p>
-                        <p className="text-sm font-bold text-white font-mono">IELTS-Eval-v4 <span className="text-zinc-500 text-xs">(Local Node)</span></p>
-                    </div>
-                </div>
-            </div>
-
-            {/* ════════════════════════════════════════════════════════════
-                SECTION B: DRAG & DROP BOOK INGESTION ZONE
-            ════════════════════════════════════════════════════════════ */}
-            <div
-                className={`bg-zinc-900/80 backdrop-blur-xl rounded-2xl p-8 border-2 border-dashed transition-all duration-300 cursor-pointer ${
-                    isDragging
-                        ? 'border-emerald-500 bg-emerald-500/5 shadow-[0_0_40px_rgba(16,185,129,0.15)]'
-                        : 'border-zinc-700/60 hover:border-zinc-600'
-                }`}
-                onDragEnter={handleDragEnter}
-                onDragLeave={handleDragLeave}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                onClick={handleBrowseClick}
-            >
-                <div className="flex flex-col items-center text-center">
-                    <div className={`mb-4 transition-transform duration-300 ${isDragging ? 'scale-110' : ''}`}>
-                        <UploadTrayIcon className={`w-12 h-12 ${isDragging ? 'text-emerald-400 animate-pulse' : 'text-zinc-500'}`} />
-                    </div>
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">
-                        DRAG &amp; DROP COACHING BOOKS OR PDF GUIDES HERE TO TRAIN AI
-                    </h3>
-                    <p className="text-xs text-zinc-500 mb-5">
-                        Supported formats: PDF, DOCX, JSON (Max file size: 100MB per book)
-                    </p>
-
-                    <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
-                        <button
-                            onClick={handleBrowseClick}
-                            className="bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-200 border border-zinc-700/60 rounded-lg px-4 py-2 text-xs font-medium transition-all flex items-center gap-2"
-                        >
-                            <FolderIcon className="w-3.5 h-3.5" />
-                            Browse Local Files
-                        </button>
-
-                        <div className="relative">
-                            <select
-                                value={uploadCategory}
-                                onChange={e => setUploadCategory(e.target.value)}
-                                className="bg-zinc-950/70 border border-zinc-700/80 rounded-lg px-3 py-2 text-xs text-zinc-100 appearance-none pr-7 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
-                            >
-                                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
-                            <ChevronDownIcon className="w-3 h-3 text-zinc-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-                        </div>
-
-                        <div className="relative">
-                            <select
-                                value={uploadPriority}
-                                onChange={e => setUploadPriority(e.target.value)}
-                                className="bg-zinc-950/70 border border-zinc-700/80 rounded-lg px-3 py-2 text-xs text-zinc-100 appearance-none pr-7 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
-                            >
-                                {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
-                            </select>
-                            <ChevronDownIcon className="w-3 h-3 text-zinc-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* ════════════════════════════════════════════════════════════
-                SECTION C: PROPRIETARY REPOSITORY & VECTOR PIPELINE TABLE
+                SECTION C: PROPRIETARY REPOSITORY & VECTOR PIPELINE TABLE (MAIN WORKSPACE)
             ════════════════════════════════════════════════════════════ */}
             <div className="bg-zinc-900/80 border border-zinc-800 backdrop-blur-xl rounded-2xl p-6 shadow-[0_8px_32px_rgba(0,0,0,0.37)]">
                 <div className="flex items-center justify-between mb-5">
@@ -687,6 +585,108 @@ const InstituteKnowledgeBase: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* ════════════════════════════════════════════════════════════
+                SECTION A: HERO HEADER & SYSTEM TELEMETRY STRIP
+            ════════════════════════════════════════════════════════════ */}
+            <div className="bg-zinc-900/80 border border-zinc-800 backdrop-blur-xl rounded-2xl p-6 shadow-[0_8px_32px_rgba(0,0,0,0.37)]">
+                <div className="flex items-center gap-3 mb-2">
+                    <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        KNOWLEDGE BASE INFRASTRUCTURE
+                    </span>
+                    <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">CUSTOM CURRICULUM &amp; QUESTION STORES</span>
+                </div>
+                <p className="text-sm text-zinc-400 leading-relaxed max-w-2xl">
+                    Upload proprietary coaching books and PDF guides to ground AI Evaluator feedback in your exact curriculum.
+                </p>
+
+                <div className="grid grid-cols-4 gap-4 mt-5">
+                    {/* Active Context Injection */}
+                    <div className="bg-zinc-950/70 border border-zinc-800 rounded-xl p-4">
+                        <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-1">Active Context Injection</p>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-emerald-400">ENABLED</span>
+                            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                        </div>
+                    </div>
+                    {/* Embedded Books */}
+                    <div className="bg-zinc-950/70 border border-zinc-800 rounded-xl p-4">
+                        <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-1">Embedded Books</p>
+                        <p className="text-sm font-bold text-white">{activeBooks} Active / {vectorizingBooks} Indexing</p>
+                    </div>
+                    {/* Total Vector Chunks */}
+                    <div className="bg-zinc-950/70 border border-zinc-800 rounded-xl p-4">
+                        <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-1">Total Vector Chunks</p>
+                        <p className="text-sm font-bold text-white">{totalChunks.toLocaleString()} Chunks</p>
+                    </div>
+                    {/* RAG Engine Version */}
+                    <div className="bg-zinc-950/70 border border-zinc-800 rounded-xl p-4">
+                        <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-1">RAG Engine Version</p>
+                        <p className="text-sm font-bold text-white font-mono">IELTS-Eval-v4 <span className="text-zinc-500 text-xs">(Local Node)</span></p>
+                    </div>
+                </div>
+            </div>
+
+            {/* ════════════════════════════════════════════════════════════
+                SECTION B: DRAG & DROP BOOK INGESTION ZONE
+            ════════════════════════════════════════════════════════════ */}
+            <div
+                className={`bg-zinc-900/80 backdrop-blur-xl rounded-2xl p-8 border-2 border-dashed transition-all duration-300 cursor-pointer ${
+                    isDragging
+                        ? 'border-emerald-500 bg-emerald-500/5 shadow-[0_0_40px_rgba(16,185,129,0.15)]'
+                        : 'border-zinc-700/60 hover:border-zinc-600'
+                }`}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onClick={handleBrowseClick}
+            >
+                <div className="flex flex-col items-center text-center">
+                    <div className={`mb-4 transition-transform duration-300 ${isDragging ? 'scale-110' : ''}`}>
+                        <UploadTrayIcon className={`w-12 h-12 ${isDragging ? 'text-emerald-400 animate-pulse' : 'text-zinc-500'}`} />
+                    </div>
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">
+                        DRAG &amp; DROP COACHING BOOKS OR PDF GUIDES HERE TO TRAIN AI
+                    </h3>
+                    <p className="text-xs text-zinc-500 mb-5">
+                        Supported formats: PDF, DOCX, JSON (Max file size: 100MB per book)
+                    </p>
+
+                    <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={handleBrowseClick}
+                            className="bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-200 border border-zinc-700/60 rounded-lg px-4 py-2 text-xs font-medium transition-all flex items-center gap-2"
+                        >
+                            <FolderIcon className="w-3.5 h-3.5" />
+                            Browse Local Files
+                        </button>
+
+                        <div className="relative">
+                            <select
+                                value={uploadCategory}
+                                onChange={e => setUploadCategory(e.target.value)}
+                                className="bg-zinc-950/70 border border-zinc-700/80 rounded-lg px-3 py-2 text-xs text-zinc-100 appearance-none pr-7 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                            >
+                                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                            <ChevronDownIcon className="w-3 h-3 text-zinc-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        </div>
+
+                        <div className="relative">
+                            <select
+                                value={uploadPriority}
+                                onChange={e => setUploadPriority(e.target.value)}
+                                className="bg-zinc-950/70 border border-zinc-700/80 rounded-lg px-3 py-2 text-xs text-zinc-100 appearance-none pr-7 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                            >
+                                {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
+                            </select>
+                            <ChevronDownIcon className="w-3 h-3 text-zinc-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             {/* ════════════════════════════════════════════════════════════
                 SECTION E: GLOBAL SYNC & CONFIGURATION BAR

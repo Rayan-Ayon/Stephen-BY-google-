@@ -107,21 +107,6 @@ export default function BillingLicenses() {
         </h1>
       </header>
 
-      <section className="grid grid-cols-4 gap-4 mb-8">
-        {metrics.map((m) => (
-          <div
-            key={m.label}
-            className="rounded-xl border border-[#1E2026] bg-[#121316] p-5"
-          >
-            <div className="flex items-center gap-2 text-[#8E95A3] text-sm mb-2">
-              <span>{m.icon}</span>
-              <span>{m.label}</span>
-            </div>
-            <div className="text-2xl font-bold text-[#F3F4F6]">{m.value}</div>
-          </div>
-        ))}
-      </section>
-
       <div className="flex gap-6 mb-10">
         <div className="flex-[2] rounded-xl border border-[#1E2026] bg-[#121316] overflow-hidden">
           <div className="px-6 py-4 border-b border-[#1E2026]">
@@ -230,6 +215,21 @@ export default function BillingLicenses() {
           </div>
         </div>
       </div>
+
+      <section className="grid grid-cols-4 gap-4 mb-8">
+        {metrics.map((m) => (
+          <div
+            key={m.label}
+            className="rounded-xl border border-[#1E2026] bg-[#121316] p-5"
+          >
+            <div className="flex items-center gap-2 text-[#8E95A3] text-sm mb-2">
+              <span>{m.icon}</span>
+              <span>{m.label}</span>
+            </div>
+            <div className="text-2xl font-bold text-[#F3F4F6]">{m.value}</div>
+          </div>
+        ))}
+      </section>
 
       <section>
         <h2 className="text-base font-semibold text-[#F3F4F6] mb-4">

@@ -98,59 +98,7 @@ export default function SpeakingAudits() {
         EVALUATION STUDIO // SPEAKING AUDIO AUDITS &amp; TRANSCRIPTS
       </h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {metrics.map((m) => (
-          <div
-            key={m.label}
-            className="bg-[#121316] border border-[#1E2026] rounded-xl p-5 flex items-center gap-4"
-          >
-            <span className="text-2xl">{m.icon}</span>
-            <div>
-              <p className="text-xs text-[#565E6D] uppercase tracking-wider mb-1">
-                {m.label}
-              </p>
-              <p className="text-xl font-bold text-[#F3F4F6]">{m.value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3 mb-6">
-        <input
-          type="text"
-          placeholder="Search candidates or batches..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="bg-[#121316] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] placeholder-[#565E6D] focus:outline-none focus:border-[#FF4D4D] w-64"
-        />
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as Status)}
-          className="bg-[#121316] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] focus:outline-none focus:border-[#FF4D4D] cursor-pointer"
-        >
-          {statusOptions.map((s) => (
-            <option key={s} value={s}>
-              Status: {s}
-            </option>
-          ))}
-        </select>
-        <select
-          value={partFilter}
-          onChange={(e) => setPartFilter(e.target.value as Part)}
-          className="bg-[#121316] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] focus:outline-none focus:border-[#FF4D4D] cursor-pointer"
-        >
-          {partOptions.map((p) => (
-            <option key={p} value={p}>
-              Part: {p}
-            </option>
-          ))}
-        </select>
-        <button className="ml-auto bg-[#F04438] hover:bg-[#FF4D4D] text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors">
-          {"\u{1F3A7}"} Start Audit Session
-        </button>
-      </div>
-
-      <div className="bg-[#121316] border border-[#1E2026] rounded-xl overflow-hidden">
+      <div className="bg-[#121316] border border-[#1E2026] rounded-xl overflow-hidden mb-8">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -248,6 +196,58 @@ export default function SpeakingAudits() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {metrics.map((m) => (
+          <div
+            key={m.label}
+            className="bg-[#121316] border border-[#1E2026] rounded-xl p-5 flex items-center gap-4"
+          >
+            <span className="text-2xl">{m.icon}</span>
+            <div>
+              <p className="text-xs text-[#565E6D] uppercase tracking-wider mb-1">
+                {m.label}
+              </p>
+              <p className="text-xl font-bold text-[#F3F4F6]">{m.value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          type="text"
+          placeholder="Search candidates or batches..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="bg-[#121316] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] placeholder-[#565E6D] focus:outline-none focus:border-[#FF4D4D] w-64"
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as Status)}
+          className="bg-[#121316] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] focus:outline-none focus:border-[#FF4D4D] cursor-pointer"
+        >
+          {statusOptions.map((s) => (
+            <option key={s} value={s}>
+              Status: {s}
+            </option>
+          ))}
+        </select>
+        <select
+          value={partFilter}
+          onChange={(e) => setPartFilter(e.target.value as Part)}
+          className="bg-[#121316] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] focus:outline-none focus:border-[#FF4D4D] cursor-pointer"
+        >
+          {partOptions.map((p) => (
+            <option key={p} value={p}>
+              Part: {p}
+            </option>
+          ))}
+        </select>
+        <button className="ml-auto bg-[#F04438] hover:bg-[#FF4D4D] text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors">
+          {"\u{1F3A7}"} Start Audit Session
+        </button>
       </div>
     </div>
   );

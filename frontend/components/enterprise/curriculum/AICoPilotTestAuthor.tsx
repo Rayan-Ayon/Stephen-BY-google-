@@ -249,100 +249,11 @@ const AICoPilotTestAuthor: React.FC = () => {
                 </p>
             </div>
 
-            {/* ── Natural Language Prompt Builder ── */}
-            <div className="backdrop-blur-xl bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.37)] mb-6 relative overflow-hidden">
-                <div className="flex items-center gap-2 mb-4">
-                    <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
-                    </svg>
-                    <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Natural Language Query Builder</span>
-                </div>
-
-                <div className="flex gap-3 mb-4">
-                    <textarea
-                        value={naturalLanguageQuery}
-                        onChange={(e) => setNaturalLanguageQuery(e.target.value)}
-                        placeholder='e.g. "Generate 3 TFNG questions about environmental science at Band 7.0 from Cambridge series"'
-                        rows={2}
-                        className="flex-1 bg-zinc-950/70 border border-zinc-700/80 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-inner resize-none"
-                    />
-                    <button
-                        onClick={handleGenerate}
-                        disabled={isGenerating || !naturalLanguageQuery.trim()}
-                        className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold px-5 py-2.5 rounded-lg text-sm shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all flex items-center gap-2 shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {isGenerating ? (
-                            <>
-                                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                                    <circle cx="12" cy="12" r="10" strokeOpacity="0.3" /><path d="M12 2a10 10 0 019.95 9" />
-                                </svg>
-                                Generating…
-                            </>
-                        ) : (
-                            <>⚡ Generate Curated Drill</>
-                        )}
-                    </button>
-                </div>
-
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                    <FilterSelect label="Exam" value={filters.exam} options={EXAM_OPTIONS} onChange={(v) => setFilters((f) => ({ ...f, exam: v }))} />
-                    <FilterSelect label="Module" value={filters.module} options={MODULE_OPTIONS} onChange={(v) => setFilters((f) => ({ ...f, module: v }))} />
-                    <FilterSelect label="Target Band" value={filters.targetBand} options={BAND_OPTIONS} onChange={(v) => setFilters((f) => ({ ...f, targetBand: v }))} />
-                    <FilterSelect label="Repository" value={filters.repository} options={REPO_OPTIONS} onChange={(v) => setFilters((f) => ({ ...f, repository: v }))} />
-                </div>
-            </div>
-
-            {/* ── Skill Balance & Analytics Bar ── */}
-            <div className="backdrop-blur-xl bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.37)] mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <svg className="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M18 20V10" /><path d="M12 20V4" /><path d="M6 20v-6" />
-                    </svg>
-                    <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Skill Balance & Analytics</span>
-                </div>
-
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                    <div className="bg-zinc-950/60 rounded-xl p-3 border border-zinc-800/60">
-                        <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">Total Items</p>
-                        <p className="text-xl font-bold text-white">{questions.length}</p>
-                    </div>
-                    <div className="bg-zinc-950/60 rounded-xl p-3 border border-zinc-800/60">
-                        <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">Estimated Average Band</p>
-                        <p className="text-xl font-bold text-emerald-400">Band {avgBand}</p>
-                    </div>
-                    <div className="bg-zinc-950/60 rounded-xl p-3 border border-zinc-800/60">
-                        <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">Est. Completion Time</p>
-                        <p className="text-xl font-bold text-white">{questions.length * 4} Mins</p>
-                    </div>
-                    <div className="bg-zinc-950/60 rounded-xl p-3 border border-zinc-800/60">
-                        <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">Skill Distribution</p>
-                        <div className="flex gap-0.5 h-5 rounded-full overflow-hidden mt-1.5">
-                            {Object.entries(typeDistribution).map(([type, count]) => (
-                                <div
-                                    key={type}
-                                    className={`${TYPE_DISTRIBUTION_COLORS[type] || 'bg-zinc-600'} rounded-full transition-all duration-300`}
-                                    style={{ width: `${(count / questions.length) * 100}%` }}
-                                    title={`${type}: ${count}`}
-                                />
-                            ))}
-                        </div>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                            {Object.entries(typeDistribution).map(([type, count]) => (
-                                <span key={type} className="text-[9px] text-zinc-500 flex items-center gap-1">
-                                    <span className={`w-1.5 h-1.5 rounded-full ${TYPE_DISTRIBUTION_COLORS[type] || 'bg-zinc-600'}`} />
-                                    {type} {Math.round((count / questions.length) * 100)}%
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* ── Interactive Question Canvas ── */}
+            {/* ── Interactive Question Canvas (Main Authoring Panel) ── */}
             <div className="mb-6">
                 <div className="flex items-center gap-2 mb-4">
                     <svg className="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+                        <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 012-2V5a2 2 0 012-2h11" />
                     </svg>
                     <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Question Canvas</span>
                     <span className="text-[10px] text-zinc-500 ml-auto">{questions.length} items loaded</span>
@@ -350,7 +261,7 @@ const AICoPilotTestAuthor: React.FC = () => {
 
                 {questions.length === 0 && (
                     <div className="backdrop-blur-xl bg-zinc-900/60 border border-zinc-800 rounded-2xl p-10 text-center">
-                        <p className="text-zinc-500 text-sm">No questions yet. Use the Natural Language Query Builder above to generate items.</p>
+                        <p className="text-zinc-500 text-sm">No questions yet. Use the Natural Language Query Builder below to generate items.</p>
                     </div>
                 )}
 
@@ -491,6 +402,95 @@ const AICoPilotTestAuthor: React.FC = () => {
                             )}
                         </div>
                     ))}
+                </div>
+            </div>
+
+            {/* ── Natural Language Prompt Builder ── */}
+            <div className="backdrop-blur-xl bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.37)] mb-6 relative overflow-hidden">
+                <div className="flex items-center gap-2 mb-4">
+                    <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+                    </svg>
+                    <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Natural Language Query Builder</span>
+                </div>
+
+                <div className="flex gap-3 mb-4">
+                    <textarea
+                        value={naturalLanguageQuery}
+                        onChange={(e) => setNaturalLanguageQuery(e.target.value)}
+                        placeholder='e.g. "Generate 3 TFNG questions about environmental science at Band 7.0 from Cambridge series"'
+                        rows={2}
+                        className="flex-1 bg-zinc-950/70 border border-zinc-700/80 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-inner resize-none"
+                    />
+                    <button
+                        onClick={handleGenerate}
+                        disabled={isGenerating || !naturalLanguageQuery.trim()}
+                        className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold px-5 py-2.5 rounded-lg text-sm shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all flex items-center gap-2 shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isGenerating ? (
+                            <>
+                                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                                    <circle cx="12" cy="12" r="10" strokeOpacity="0.3" /><path d="M12 2a10 10 0 019.95 9" />
+                                </svg>
+                                Generating…
+                            </>
+                        ) : (
+                            <>⚡ Generate Curated Drill</>
+                        )}
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <FilterSelect label="Exam" value={filters.exam} options={EXAM_OPTIONS} onChange={(v) => setFilters((f) => ({ ...f, exam: v }))} />
+                    <FilterSelect label="Module" value={filters.module} options={MODULE_OPTIONS} onChange={(v) => setFilters((f) => ({ ...f, module: v }))} />
+                    <FilterSelect label="Target Band" value={filters.targetBand} options={BAND_OPTIONS} onChange={(v) => setFilters((f) => ({ ...f, targetBand: v }))} />
+                    <FilterSelect label="Repository" value={filters.repository} options={REPO_OPTIONS} onChange={(v) => setFilters((f) => ({ ...f, repository: v }))} />
+                </div>
+            </div>
+
+            {/* ── Skill Balance & Analytics Bar ── */}
+            <div className="backdrop-blur-xl bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.37)] mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                    <svg className="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 20V10" /><path d="M12 20V4" /><path d="M6 20v-6" />
+                    </svg>
+                    <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Skill Balance & Analytics</span>
+                </div>
+
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div className="bg-zinc-950/60 rounded-xl p-3 border border-zinc-800/60">
+                        <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">Total Items</p>
+                        <p className="text-xl font-bold text-white">{questions.length}</p>
+                    </div>
+                    <div className="bg-zinc-950/60 rounded-xl p-3 border border-zinc-800/60">
+                        <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">Estimated Average Band</p>
+                        <p className="text-xl font-bold text-emerald-400">Band {avgBand}</p>
+                    </div>
+                    <div className="bg-zinc-950/60 rounded-xl p-3 border border-zinc-800/60">
+                        <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">Est. Completion Time</p>
+                        <p className="text-xl font-bold text-white">{questions.length * 4} Mins</p>
+                    </div>
+                    <div className="bg-zinc-950/60 rounded-xl p-3 border border-zinc-800/60">
+                        <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">Skill Distribution</p>
+                        <div className="flex gap-0.5 h-5 rounded-full overflow-hidden mt-1.5">
+                            {Object.entries(typeDistribution).map(([type, count]) => (
+                                <div
+                                    key={type}
+                                    className={`${TYPE_DISTRIBUTION_COLORS[type] || 'bg-zinc-600'} rounded-full transition-all duration-300`}
+                                    style={{ width: `${(count / questions.length) * 100}%` }}
+                                    title={`${type}: ${count}`}
+                                />
+                            ))}
+                        </div>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            {Object.entries(typeDistribution).map(([type, count]) => (
+                                <span key={type} className="text-[9px] text-zinc-500 flex items-center gap-1">
+                                    <span className={`w-1.5 h-1.5 rounded-full ${TYPE_DISTRIBUTION_COLORS[type] || 'bg-zinc-600'}`} />
+                                    {type} {Math.round((count / questions.length) * 100)}%
+                                </span>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
 

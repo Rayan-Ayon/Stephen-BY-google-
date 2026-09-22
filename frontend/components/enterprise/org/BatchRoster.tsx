@@ -84,66 +84,6 @@ export default function BatchRoster() {
         </h1>
       </header>
 
-      <section className="grid grid-cols-4 gap-4">
-        {[
-          { label: "Total Active Candidates", value: "1,420", icon: "👥" },
-          { label: "Active Batches", value: "12", icon: "📦" },
-          { label: "Avg Target Band", value: "7.0", icon: "🎯" },
-          { label: "Avg AI Coins", value: "450", icon: "⚡" },
-        ].map((m) => (
-          <div
-            key={m.label}
-            className="bg-[#121316] border border-[#1E2026] rounded-xl p-5 flex flex-col gap-1"
-          >
-            <div className="flex items-center gap-2 text-sm text-[#8E95A3]">
-              <span>{m.icon}</span>
-              {m.label}
-            </div>
-            <span className="text-2xl font-bold text-[#F3F4F6]">
-              {m.value}
-            </span>
-          </div>
-        ))}
-      </section>
-
-      <section className="flex items-center gap-3">
-        <input
-          type="text"
-          placeholder="Search by name or student ID..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 bg-[#181A20] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] placeholder-[#565E6D] outline-none focus:border-[#FF4D4D] transition-colors"
-        />
-
-        <select
-          value={selectedBatch}
-          onChange={(e) => setSelectedBatch(e.target.value)}
-          className="bg-[#181A20] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] outline-none focus:border-[#FF4D4D] transition-colors appearance-none cursor-pointer"
-        >
-          {BATCH_OPTIONS.map((b) => (
-            <option key={b} value={b}>
-              {b}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value as Status | "All")}
-          className="bg-[#181A20] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] outline-none focus:border-[#FF4D4D] transition-colors appearance-none cursor-pointer"
-        >
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-
-        <button className="bg-[#F04438] hover:bg-[#FF4D4D] text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2">
-          <span>➕</span> Add Candidate
-        </button>
-      </section>
-
       <section className="bg-[#121316] border border-[#1E2026] rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
@@ -212,6 +152,66 @@ export default function BatchRoster() {
             )}
           </tbody>
         </table>
+      </section>
+
+      <section className="flex items-center gap-3">
+        <input
+          type="text"
+          placeholder="Search by name or student ID..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-1 bg-[#181A20] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] placeholder-[#565E6D] outline-none focus:border-[#FF4D4D] transition-colors"
+        />
+
+        <select
+          value={selectedBatch}
+          onChange={(e) => setSelectedBatch(e.target.value)}
+          className="bg-[#181A20] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] outline-none focus:border-[#FF4D4D] transition-colors appearance-none cursor-pointer"
+        >
+          {BATCH_OPTIONS.map((b) => (
+            <option key={b} value={b}>
+              {b}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={selectedStatus}
+          onChange={(e) => setSelectedStatus(e.target.value as Status | "All")}
+          className="bg-[#181A20] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] outline-none focus:border-[#FF4D4D] transition-colors appearance-none cursor-pointer"
+        >
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+
+        <button className="bg-[#F04438] hover:bg-[#FF4D4D] text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2">
+          <span>➕</span> Add Candidate
+        </button>
+      </section>
+
+      <section className="grid grid-cols-4 gap-4">
+        {[
+          { label: "Total Active Candidates", value: "1,420", icon: "👥" },
+          { label: "Active Batches", value: "12", icon: "📦" },
+          { label: "Avg Target Band", value: "7.0", icon: "🎯" },
+          { label: "Avg AI Coins", value: "450", icon: "⚡" },
+        ].map((m) => (
+          <div
+            key={m.label}
+            className="bg-[#121316] border border-[#1E2026] rounded-xl p-5 flex flex-col gap-1"
+          >
+            <div className="flex items-center gap-2 text-sm text-[#8E95A3]">
+              <span>{m.icon}</span>
+              {m.label}
+            </div>
+            <span className="text-2xl font-bold text-[#F3F4F6]">
+              {m.value}
+            </span>
+          </div>
+        ))}
       </section>
     </div>
   );

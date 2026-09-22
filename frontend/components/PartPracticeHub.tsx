@@ -272,8 +272,8 @@ const PartPracticeHub: React.FC<PartPracticeHubProps> = ({ userEmail }) => {
 
     /* ─── Main Hub View ─── */
     return (
-        <div className="h-screen flex flex-col overflow-hidden bg-[#0B0C0E] p-6">
-            <div className="max-w-6xl mx-auto flex flex-col flex-1 min-h-0">
+        <div className="min-h-screen h-auto overflow-y-auto bg-[#0B0C0E] p-6 pb-24">
+            <div className="max-w-6xl mx-auto flex flex-col">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-6">
                     <div>
@@ -360,9 +360,9 @@ const PartPracticeHub: React.FC<PartPracticeHubProps> = ({ userEmail }) => {
                         })()}
 
                         {/* Split Panel */}
-                        <div className="flex gap-6 min-h-[500px]">
+                        <div className="flex flex-col md:flex-row gap-6">
                             {/* Left Panel — Book Tree */}
-                            <div className="w-[320px] shrink-0">
+                            <div className="w-full md:w-[320px] shrink-0">
                                 {/* Search */}
                                 <div className="relative mb-4">
                                     <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -376,7 +376,7 @@ const PartPracticeHub: React.FC<PartPracticeHubProps> = ({ userEmail }) => {
                                 </div>
 
                                 {/* Book List */}
-                                <div className="space-y-1 max-h-[600px] overflow-y-auto pr-1">
+                                <div className="space-y-1 max-h-[640px] overflow-y-auto pr-1">
                                     {filteredBooks.map(book => {
                                         const isExpanded = expandedBookId === book.bookId;
                                         const hasTestSelected = selectedTest?.bookId === book.bookId;
@@ -419,7 +419,7 @@ const PartPracticeHub: React.FC<PartPracticeHubProps> = ({ userEmail }) => {
                             <div className="flex-1 min-w-0">
                                 {!selectedTest ? (
                                     /* Empty State */
-                                    <div className="border border-dashed border-zinc-800 rounded-2xl bg-[#0F1012] flex flex-col items-center justify-center p-12 text-center h-full">
+                                    <div className="border border-dashed border-zinc-800 rounded-2xl bg-[#0F1012] flex flex-col items-center justify-center p-12 text-center min-h-[440px]">
                                         <div className={`${skillConfig.iconBg} ${skillConfig.iconColor} p-4 rounded-2xl mb-4`}>
                                             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                                         </div>
@@ -495,16 +495,16 @@ const PartPracticeHub: React.FC<PartPracticeHubProps> = ({ userEmail }) => {
                             <p className="text-xs text-zinc-400 mt-1">Choose a Reading, Listening, or Writing question family. Practice with authentic Cambridge context and focused feedback.</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 min-h-0 overflow-hidden">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {/* Reading Drills */}
-                            <div className="flex flex-col h-full min-h-0">
-                                <h3 className="text-sm font-bold text-white flex items-center gap-2 flex-shrink-0 pb-2">
+                            <div className="flex flex-col">
+                                <h3 className="text-sm font-bold text-white flex items-center gap-2 flex-shrink-0 pb-3">
                                     <span className="bg-blue-500/10 border border-blue-500/20 p-1.5 rounded-lg text-blue-400">
                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                                     </span>
                                     Reading
                                 </h3>
-                                <div className="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
+                                <div className="space-y-2 pr-1">
                                     {READING_DRILLS.map(drill => (
                                         <button
                                             key={drill.id}
@@ -525,14 +525,14 @@ const PartPracticeHub: React.FC<PartPracticeHubProps> = ({ userEmail }) => {
                             </div>
 
                             {/* Listening Drills */}
-                            <div className="flex flex-col h-full min-h-0">
-                                <h3 className="text-sm font-bold text-white flex items-center gap-2 flex-shrink-0 pb-2">
+                            <div className="flex flex-col">
+                                <h3 className="text-sm font-bold text-white flex items-center gap-2 flex-shrink-0 pb-3">
                                     <span className="bg-emerald-500/10 border border-emerald-500/20 p-1.5 rounded-lg text-emerald-400">
                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M9 10a1 1 0 011-1h1a1 1 0 011 1v4a1 1 0 01-1 1h-1a1 1 0 01-1-1v-4z" /></svg>
                                     </span>
                                     Listening
                                 </h3>
-                                <div className="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
+                                <div className="space-y-2 pr-1">
                                     {LISTEN_DRILLS.map(drill => (
                                         <button
                                             key={drill.id}
@@ -553,14 +553,14 @@ const PartPracticeHub: React.FC<PartPracticeHubProps> = ({ userEmail }) => {
                             </div>
 
                             {/* Writing Drills */}
-                            <div className="flex flex-col h-full min-h-0">
-                                <h3 className="text-sm font-bold text-white flex items-center gap-2 flex-shrink-0 pb-2">
+                            <div className="flex flex-col">
+                                <h3 className="text-sm font-bold text-white flex items-center gap-2 flex-shrink-0 pb-3">
                                     <span className="bg-amber-500/10 border border-amber-500/20 p-1.5 rounded-lg text-amber-400">
                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                     </span>
                                     Writing
                                 </h3>
-                                <div className="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
+                                <div className="space-y-2 pr-1">
                                     {WRITING_DRILLS.map(drill => (
                                         <button
                                             key={drill.id}

@@ -79,22 +79,7 @@ export default function MissionBuilder() {
         </h1>
       </header>
 
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        {metrics.map((m) => (
-          <div
-            key={m.label}
-            className="bg-[#121316] border border-[#1E2026] rounded-xl p-4 flex items-center gap-4"
-          >
-            <span className="text-2xl">{m.icon}</span>
-            <div>
-              <p className="text-2xl font-bold text-[#F3F4F6]">{m.value}</p>
-              <p className="text-xs text-[#8E95A3]">{m.label}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex gap-6">
+      <div className="flex gap-6 mb-6">
         <div className="flex-[2]">
           <div className="grid grid-cols-5 gap-3">
             {days.map((day) => (
@@ -231,6 +216,21 @@ export default function MissionBuilder() {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="grid grid-cols-4 gap-4">
+        {metrics.map((m) => (
+          <div
+            key={m.label}
+            className="bg-[#121316] border border-[#1E2026] rounded-xl p-4 flex items-center gap-4"
+          >
+            <span className="text-2xl">{m.icon}</span>
+            <div>
+              <p className="text-2xl font-bold text-[#F3F4F6]">{m.value}</p>
+              <p className="text-xs text-[#8E95A3]">{m.label}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

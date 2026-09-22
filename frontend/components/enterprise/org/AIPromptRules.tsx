@@ -73,7 +73,45 @@ export default function AIPromptRules() {
           </h1>
         </div>
 
-        <div className="flex gap-6 mb-8">
+        <div className="bg-[#121316] border border-[#1E2026] rounded-xl p-6 mb-8">
+          <h2 className="text-sm font-medium text-[#8E95A3] uppercase tracking-wider mb-6">
+            Sandbox Tester
+          </h2>
+
+          <div className="flex gap-4 mb-6">
+            <textarea
+              value={sandboxInput}
+              onChange={(e) => setSandboxInput(e.target.value)}
+              placeholder="Enter test input to simulate AI assessment..."
+              className="flex-1 h-32 px-4 py-3 bg-[#181A20] border border-[#1E2026] rounded-lg text-sm text-[#F3F4F6] placeholder-[#565E6D] resize-none focus:outline-none focus:border-[#FF4D4D] transition-colors"
+            />
+          </div>
+
+          <div className="flex items-center gap-4 mb-6">
+            <button
+              onClick={handleRunSandbox}
+              disabled={testing || !sandboxInput.trim()}
+              className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                testing || !sandboxInput.trim()
+                  ? "bg-[#1E2026] text-[#565E6D] cursor-not-allowed"
+                  : "bg-[#FF4D4D] text-white hover:bg-[#F04438]"
+              }`}
+            >
+              <span>🧪</span>
+              <span>{testing ? "Running Test..." : "Run Sandbox Test"}</span>
+            </button>
+          </div>
+
+          {sandboxResult && (
+            <div className="p-4 bg-[#181A20] border border-[#1E2026] rounded-lg">
+              <pre className="text-sm text-[#8E95A3] whitespace-pre-wrap font-mono leading-relaxed">
+                {sandboxResult}
+              </pre>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-6">
           <div className="flex-1 bg-[#121316] border border-[#1E2026] rounded-xl p-6">
             <h2 className="text-sm font-medium text-[#8E95A3] uppercase tracking-wider mb-6">
               Global AI Settings
@@ -194,44 +232,6 @@ export default function AIPromptRules() {
               ))}
             </div>
           </div>
-        </div>
-
-        <div className="bg-[#121316] border border-[#1E2026] rounded-xl p-6">
-          <h2 className="text-sm font-medium text-[#8E95A3] uppercase tracking-wider mb-6">
-            Sandbox Tester
-          </h2>
-
-          <div className="flex gap-4 mb-6">
-            <textarea
-              value={sandboxInput}
-              onChange={(e) => setSandboxInput(e.target.value)}
-              placeholder="Enter test input to simulate AI assessment..."
-              className="flex-1 h-32 px-4 py-3 bg-[#181A20] border border-[#1E2026] rounded-lg text-sm text-[#F3F4F6] placeholder-[#565E6D] resize-none focus:outline-none focus:border-[#FF4D4D] transition-colors"
-            />
-          </div>
-
-          <div className="flex items-center gap-4 mb-6">
-            <button
-              onClick={handleRunSandbox}
-              disabled={testing || !sandboxInput.trim()}
-              className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                testing || !sandboxInput.trim()
-                  ? "bg-[#1E2026] text-[#565E6D] cursor-not-allowed"
-                  : "bg-[#FF4D4D] text-white hover:bg-[#F04438]"
-              }`}
-            >
-              <span>🧪</span>
-              <span>{testing ? "Running Test..." : "Run Sandbox Test"}</span>
-            </button>
-          </div>
-
-          {sandboxResult && (
-            <div className="p-4 bg-[#181A20] border border-[#1E2026] rounded-lg">
-              <pre className="text-sm text-[#8E95A3] whitespace-pre-wrap font-mono leading-relaxed">
-                {sandboxResult}
-              </pre>
-            </div>
-          )}
         </div>
       </div>
     </div>

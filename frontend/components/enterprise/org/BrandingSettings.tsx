@@ -60,6 +60,46 @@ export default function BrandingSettings() {
 
       {activeTab === "theme" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div>
+            <label className="block text-xs text-[#565E6D] uppercase tracking-wider font-semibold mb-3">
+              Preview
+            </label>
+            <div
+              className="rounded-xl border border-[#1E2026] p-6"
+              style={{ backgroundColor: bgColor }}
+            >
+              <div
+                className="rounded-lg p-5 space-y-4"
+                style={{ backgroundColor: secondaryColor }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-8 h-8 rounded-md"
+                    style={{ backgroundColor: primaryColor }}
+                  />
+                  <p
+                    className="text-sm font-bold"
+                    style={{ fontFamily, color: "#F3F4F6" }}
+                  >
+                    Institute Portal
+                  </p>
+                </div>
+                <p
+                  className="text-xs leading-relaxed"
+                  style={{ fontFamily, color: "#8E95A3" }}
+                >
+                  Your branded learning platform preview.
+                </p>
+                <button
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-white"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  Enroll Now
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-6">
             <div className="bg-[#121316] border border-[#1E2026] rounded-xl p-6 space-y-6">
               <div>
@@ -153,46 +193,6 @@ export default function BrandingSettings() {
                     </button>
                   ))}
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs text-[#565E6D] uppercase tracking-wider font-semibold mb-3">
-              Preview
-            </label>
-            <div
-              className="rounded-xl border border-[#1E2026] p-6"
-              style={{ backgroundColor: bgColor }}
-            >
-              <div
-                className="rounded-lg p-5 space-y-4"
-                style={{ backgroundColor: secondaryColor }}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-8 h-8 rounded-md"
-                    style={{ backgroundColor: primaryColor }}
-                  />
-                  <p
-                    className="text-sm font-bold"
-                    style={{ fontFamily, color: "#F3F4F6" }}
-                  >
-                    Institute Portal
-                  </p>
-                </div>
-                <p
-                  className="text-xs leading-relaxed"
-                  style={{ fontFamily, color: "#8E95A3" }}
-                >
-                  Your branded learning platform preview.
-                </p>
-                <button
-                  className="px-4 py-2 rounded-lg text-xs font-semibold text-white"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  Enroll Now
-                </button>
               </div>
             </div>
           </div>

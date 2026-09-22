@@ -108,72 +108,6 @@ const TeacherOverride: React.FC = () => {
                 </h1>
             </div>
 
-            <div className="grid grid-cols-4 gap-4">
-                {METRICS.map((m) => (
-                    <div
-                        key={m.label}
-                        className="rounded-xl bg-[#121316] border border-[#1E2026] px-5 py-4 flex items-center gap-4"
-                    >
-                        <span className="text-2xl">{m.icon}</span>
-                        <div>
-                            <p className="text-[11px] uppercase tracking-wider text-[#565E6D] font-semibold">
-                                {m.label}
-                            </p>
-                            <p className="text-xl font-bold text-[#F3F4F6] mt-0.5">{m.value}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            <div className="flex items-center gap-3">
-                <div className="relative flex-1">
-                    <input
-                        type="text"
-                        placeholder="Search candidates or batch..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full bg-[#121316] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] placeholder:text-[#565E6D] focus:outline-none focus:border-[#8E95A3] transition-colors"
-                    />
-                    <svg
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#565E6D]"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <circle cx="11" cy="11" r="8" />
-                        <path d="M21 21l-4.35-4.35" />
-                    </svg>
-                </div>
-
-                <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                    className="bg-[#121316] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] focus:outline-none focus:border-[#8E95A3] transition-colors appearance-none cursor-pointer min-w-[140px]"
-                >
-                    <option value="All">All</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Overridden">Overridden</option>
-                </select>
-
-                <select
-                    value={moduleFilter}
-                    onChange={(e) => setModuleFilter(e.target.value as ModuleFilter)}
-                    className="bg-[#121316] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] focus:outline-none focus:border-[#8E95A3] transition-colors appearance-none cursor-pointer min-w-[140px]"
-                >
-                    <option value="All">All</option>
-                    <option value="Writing">Writing</option>
-                    <option value="Speaking">Speaking</option>
-                </select>
-
-                <button className="flex items-center gap-2 bg-[#F04438] hover:bg-[#FF4D4D] text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors whitespace-nowrap">
-                    📋 Review All
-                </button>
-            </div>
-
             <div className="rounded-xl border border-[#1E2026] overflow-hidden">
                 <table className="w-full text-sm">
                     <thead>
@@ -251,6 +185,72 @@ const TeacherOverride: React.FC = () => {
                         No entries match the current filters.
                     </div>
                 )}
+            </div>
+
+            <div className="grid grid-cols-4 gap-4">
+                {METRICS.map((m) => (
+                    <div
+                        key={m.label}
+                        className="rounded-xl bg-[#121316] border border-[#1E2026] px-5 py-4 flex items-center gap-4"
+                    >
+                        <span className="text-2xl">{m.icon}</span>
+                        <div>
+                            <p className="text-[11px] uppercase tracking-wider text-[#565E6D] font-semibold">
+                                {m.label}
+                            </p>
+                            <p className="text-xl font-bold text-[#F3F4F6] mt-0.5">{m.value}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="flex items-center gap-3">
+                <div className="relative flex-1">
+                    <input
+                        type="text"
+                        placeholder="Search candidates or batch..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full bg-[#121316] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] placeholder:text-[#565E6D] focus:outline-none focus:border-[#8E95A3] transition-colors"
+                    />
+                    <svg
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#565E6D]"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    >
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="M21 21l-4.35-4.35" />
+                    </svg>
+                </div>
+
+                <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                    className="bg-[#121316] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] focus:outline-none focus:border-[#8E95A3] transition-colors appearance-none cursor-pointer min-w-[140px]"
+                >
+                    <option value="All">All</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Overridden">Overridden</option>
+                </select>
+
+                <select
+                    value={moduleFilter}
+                    onChange={(e) => setModuleFilter(e.target.value as ModuleFilter)}
+                    className="bg-[#121316] border border-[#1E2026] rounded-lg px-4 py-2.5 text-sm text-[#F3F4F6] focus:outline-none focus:border-[#8E95A3] transition-colors appearance-none cursor-pointer min-w-[140px]"
+                >
+                    <option value="All">All</option>
+                    <option value="Writing">Writing</option>
+                    <option value="Speaking">Speaking</option>
+                </select>
+
+                <button className="flex items-center gap-2 bg-[#F04438] hover:bg-[#FF4D4D] text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors whitespace-nowrap">
+                    📋 Review All
+                </button>
             </div>
         </div>
     );

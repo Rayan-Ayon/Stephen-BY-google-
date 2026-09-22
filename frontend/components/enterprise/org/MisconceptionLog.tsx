@@ -71,72 +71,6 @@ function MisconceptionLog() {
           </h1>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-[#121316] border border-[#1E2026] rounded-lg px-5 py-4">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🧠</span>
-              <div>
-                <p className="text-[#8E95A3] text-sm">Total Misconceptions Logged</p>
-                <p className="text-[#F3F4F6] text-2xl font-semibold">47</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-[#121316] border border-[#1E2026] rounded-lg px-5 py-4">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🔁</span>
-              <div>
-                <p className="text-[#8E95A3] text-sm">Recurring Patterns</p>
-                <p className="text-[#F3F4F6] text-2xl font-semibold">8</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-[#121316] border border-[#1E2026] rounded-lg px-5 py-4">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">📝</span>
-              <div>
-                <p className="text-[#8E95A3] text-sm">Raw Chat Entries Scanned</p>
-                <p className="text-[#F3F4F6] text-2xl font-semibold">1,240</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 mb-6 bg-[#121316] border border-[#1E2026] rounded-lg px-4 py-3">
-          <input
-            type="text"
-            placeholder="Search misconceptions..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="bg-[#0A0B0D] border border-[#1E2026] rounded-md px-3 py-2 text-sm text-[#F3F4F6] placeholder-[#565E6D] focus:outline-none focus:border-[#FF4D4D] transition-colors w-64"
-          />
-          <select
-            value={moduleFilter}
-            onChange={(e) => setModuleFilter(e.target.value)}
-            className="bg-[#0A0B0D] border border-[#1E2026] rounded-md px-3 py-2 text-sm text-[#F3F4F6] focus:outline-none focus:border-[#FF4D4D] transition-colors"
-          >
-            {MODULES.map((m) => (
-              <option key={m} value={m}>
-                {m === "All" ? "All Modules" : m}
-              </option>
-            ))}
-          </select>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-[#0A0B0D] border border-[#1E2026] rounded-md px-3 py-2 text-sm text-[#F3F4F6] focus:outline-none focus:border-[#FF4D4D] transition-colors"
-          >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-          <button className="ml-auto bg-[#F04438] hover:bg-[#FF4D4D] text-white text-sm font-medium px-4 py-2 rounded-md transition-colors flex items-center gap-2">
-            <span>🧠</span>
-            Run AI Audit
-          </button>
-        </div>
-
         <div className="bg-[#121316] border border-[#1E2026] rounded-lg overflow-hidden">
           <table className="w-full">
             <thead>
@@ -231,6 +165,72 @@ function MisconceptionLog() {
               )}
             </tbody>
           </table>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+          <div className="bg-[#121316] border border-[#1E2026] rounded-lg px-5 py-4">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🧠</span>
+              <div>
+                <p className="text-[#8E95A3] text-sm">Total Misconceptions Logged</p>
+                <p className="text-[#F3F4F6] text-2xl font-semibold">47</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-[#121316] border border-[#1E2026] rounded-lg px-5 py-4">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🔁</span>
+              <div>
+                <p className="text-[#8E95A3] text-sm">Recurring Patterns</p>
+                <p className="text-[#F3F4F6] text-2xl font-semibold">8</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-[#121316] border border-[#1E2026] rounded-lg px-5 py-4">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">📝</span>
+              <div>
+                <p className="text-[#8E95A3] text-sm">Raw Chat Entries Scanned</p>
+                <p className="text-[#F3F4F6] text-2xl font-semibold">1,240</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 mb-6 bg-[#121316] border border-[#1E2026] rounded-lg px-4 py-3">
+          <input
+            type="text"
+            placeholder="Search misconceptions..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="bg-[#0A0B0D] border border-[#1E2026] rounded-md px-3 py-2 text-sm text-[#F3F4F6] placeholder-[#565E6D] focus:outline-none focus:border-[#FF4D4D] transition-colors w-64"
+          />
+          <select
+            value={moduleFilter}
+            onChange={(e) => setModuleFilter(e.target.value)}
+            className="bg-[#0A0B0D] border border-[#1E2026] rounded-md px-3 py-2 text-sm text-[#F3F4F6] focus:outline-none focus:border-[#FF4D4D] transition-colors"
+          >
+            {MODULES.map((m) => (
+              <option key={m} value={m}>
+                {m === "All" ? "All Modules" : m}
+              </option>
+            ))}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-[#0A0B0D] border border-[#1E2026] rounded-md px-3 py-2 text-sm text-[#F3F4F6] focus:outline-none focus:border-[#FF4D4D] transition-colors"
+          >
+            {STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+          <button className="ml-auto bg-[#F04438] hover:bg-[#FF4D4D] text-white text-sm font-medium px-4 py-2 rounded-md transition-colors flex items-center gap-2">
+            <span>🧠</span>
+            Run AI Audit
+          </button>
         </div>
       </div>
     </div>

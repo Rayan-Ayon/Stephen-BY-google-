@@ -1101,14 +1101,9 @@ const RoleAccessManager: React.FC<{
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-2xl font-semibold tracking-tight text-white mb-1">Role & Access Manager // Meta Business Suite Delegation</h2>
-                    <p className="text-xs text-neutral-400">Delegate operational control to instructors, operators, and content managers without exposing billing or AI model constants.</p>
-                </div>
-                <button onClick={() => { setInviteOpen(true); setGeneratedLink(null); }} className="text-xs font-medium px-3 py-2 rounded-md bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25 transition-all whitespace-nowrap">
-                    [ + Invite Team Member via Email ]
-                </button>
+            <div>
+                <h2 className="text-2xl font-semibold tracking-tight text-white mb-1">Role & Access Manager // Meta Business Suite Delegation</h2>
+                <p className="text-xs text-neutral-400">Delegate operational control to instructors, operators, and content managers without exposing billing or AI model constants.</p>
             </div>
 
             <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl overflow-hidden">
@@ -1191,6 +1186,16 @@ const RoleAccessManager: React.FC<{
                     </table>
                 </div>
             )}
+
+            <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-5 flex items-center justify-between">
+                <div>
+                    <h3 className="text-sm font-semibold text-white">Team Delegation & Member Onboarding</h3>
+                    <p className="text-xs text-neutral-400 mt-0.5">Invite new instructors, operators, or content managers to your institute team.</p>
+                </div>
+                <button onClick={() => { setInviteOpen(true); setGeneratedLink(null); }} className="text-xs font-medium px-4 py-2.5 rounded-md bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25 transition-all whitespace-nowrap">
+                    [ + Invite Team Member via Email ]
+                </button>
+            </div>
 
             {inviteOpen && (
                 <div className="fixed inset-0 z-[150] bg-black/70 flex items-center justify-center p-4" onClick={() => setInviteOpen(false)}>
@@ -1793,8 +1798,6 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                         </div>
                     );
                 })()}
-
-                <BatchForecastWidget />
 
                 {currentSubView === 'performance_analytics' && (
                     <>

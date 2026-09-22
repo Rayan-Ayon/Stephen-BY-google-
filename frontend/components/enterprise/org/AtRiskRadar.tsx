@@ -166,53 +166,6 @@ const AtRiskRadar: React.FC = () => {
                 </h1>
             </div>
 
-            <div className="grid grid-cols-4 gap-4">
-                <MetricCard icon="🔴" label="Critical Risk" value={`${criticalCount} Candidates`} color="text-red-400" />
-                <MetricCard icon="🟡" label="Watchlist" value={`${watchlistCount} Candidates`} color="text-amber-400" />
-                <MetricCard icon="📊" label="Avg Band Gap" value={avgGap.toFixed(1)} color="text-sky-400" />
-                <MetricCard icon="⏱" label="Avg Inactivity" value={`${avgInactivity.toFixed(1)} Days`} color="text-purple-400" />
-            </div>
-
-            <div className="flex items-center gap-3">
-                <div className="relative flex-1 max-w-xs">
-                    <input
-                        type="text"
-                        placeholder="Search candidates..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full bg-[#121316] border border-[#1E2026] rounded-lg pl-9 pr-3 py-2 text-sm text-[#F3F4F6] placeholder-[#565E6D] focus:outline-none focus:border-[#FF4D4D]/50 transition-colors"
-                    />
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <SearchIcon />
-                    </span>
-                </div>
-
-                <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                    className="bg-[#121316] border border-[#1E2026] rounded-lg px-3 py-2 text-sm text-[#F3F4F6] focus:outline-none focus:border-[#FF4D4D]/50 transition-colors appearance-none cursor-pointer"
-                >
-                    <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                </select>
-
-                <select
-                    value={interventionFilter}
-                    onChange={(e) => setInterventionFilter(e.target.value as InterventionFilter)}
-                    className="bg-[#121316] border border-[#1E2026] rounded-lg px-3 py-2 text-sm text-[#F3F4F6] focus:outline-none focus:border-[#FF4D4D]/50 transition-colors appearance-none cursor-pointer"
-                >
-                    <option value="all">All Intervention</option>
-                    <option value="flagged">Flagged</option>
-                    <option value="assigned">Assigned</option>
-                </select>
-
-                <button className="flex items-center gap-2 bg-[#F04438] hover:bg-[#FF4D4D] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-                    <BellIcon />
-                    Send Alert
-                </button>
-            </div>
-
             <div className="bg-[#121316] border border-[#1E2026] rounded-xl overflow-hidden">
                 <table className="w-full text-sm">
                     <thead>
@@ -294,6 +247,53 @@ const AtRiskRadar: React.FC = () => {
             <p className="text-[#565E6D] text-xs">
                 Showing {filtered.length} of {CANDIDATES.length} at-risk candidates
             </p>
+
+            <div className="grid grid-cols-4 gap-4">
+                <MetricCard icon="🔴" label="Critical Risk" value={`${criticalCount} Candidates`} color="text-red-400" />
+                <MetricCard icon="🟡" label="Watchlist" value={`${watchlistCount} Candidates`} color="text-amber-400" />
+                <MetricCard icon="📊" label="Avg Band Gap" value={avgGap.toFixed(1)} color="text-sky-400" />
+                <MetricCard icon="⏱" label="Avg Inactivity" value={`${avgInactivity.toFixed(1)} Days`} color="text-purple-400" />
+            </div>
+
+            <div className="flex items-center gap-3">
+                <div className="relative flex-1 max-w-xs">
+                    <input
+                        type="text"
+                        placeholder="Search candidates..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full bg-[#121316] border border-[#1E2026] rounded-lg pl-9 pr-3 py-2 text-sm text-[#F3F4F6] placeholder-[#565E6D] focus:outline-none focus:border-[#FF4D4D]/50 transition-colors"
+                    />
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <SearchIcon />
+                    </span>
+                </div>
+
+                <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                    className="bg-[#121316] border border-[#1E2026] rounded-lg px-3 py-2 text-sm text-[#F3F4F6] focus:outline-none focus:border-[#FF4D4D]/50 transition-colors appearance-none cursor-pointer"
+                >
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+
+                <select
+                    value={interventionFilter}
+                    onChange={(e) => setInterventionFilter(e.target.value as InterventionFilter)}
+                    className="bg-[#121316] border border-[#1E2026] rounded-lg px-3 py-2 text-sm text-[#F3F4F6] focus:outline-none focus:border-[#FF4D4D]/50 transition-colors appearance-none cursor-pointer"
+                >
+                    <option value="all">All Intervention</option>
+                    <option value="flagged">Flagged</option>
+                    <option value="assigned">Assigned</option>
+                </select>
+
+                <button className="flex items-center gap-2 bg-[#F04438] hover:bg-[#FF4D4D] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                    <BellIcon />
+                    Send Alert
+                </button>
+            </div>
         </div>
     );
 };
