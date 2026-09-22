@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/workspace",
+      "destination": "https://stephen-workspace.vercel.app/workspace"
+    },
+    {
+      "source": "/workspace/:path*",
+      "destination": "https://stephen-workspace.vercel.app/workspace/:path*"
+    }
+  ]
+}
