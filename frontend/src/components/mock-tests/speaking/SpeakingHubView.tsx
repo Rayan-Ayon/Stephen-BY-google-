@@ -17,10 +17,10 @@ interface TestSeries {
 
 // Academic: Mock Tests 1 through 4
 const ACADEMIC_MOCK_SERIES: TestSeries[] = [
-    { id: 'mock-1', label: 'IELTSly Mock Series 1', setLabel: 'SET 1', testCount: 4, group: 'mock', bookNumber: 1 },
-    { id: 'mock-2', label: 'IELTSly Mock Series 2', setLabel: 'SET 2', testCount: 4, group: 'mock', bookNumber: 2 },
-    { id: 'mock-3', label: 'IELTSly Mock Series 3', setLabel: 'SET 3', testCount: 4, group: 'mock', bookNumber: 3 },
-    { id: 'mock-4', label: 'IELTSly Mock Series 4', setLabel: 'SET 4', testCount: 4, badge: 'LATEST', group: 'mock', bookNumber: 4 },
+    { id: 'mock-1', label: 'IELTS Dynasty Mock Series 1', setLabel: 'SET 1', testCount: 4, group: 'mock', bookNumber: 1 },
+    { id: 'mock-2', label: 'IELTS Dynasty Mock Series 2', setLabel: 'SET 2', testCount: 4, group: 'mock', bookNumber: 2 },
+    { id: 'mock-3', label: 'IELTS Dynasty Mock Series 3', setLabel: 'SET 3', testCount: 4, group: 'mock', bookNumber: 3 },
+    { id: 'mock-4', label: 'IELTS Dynasty Mock Series 4', setLabel: 'SET 4', testCount: 4, badge: 'LATEST', group: 'mock', bookNumber: 4 },
 ];
 
 // Academic: Cambridge Books 7 through 21 (15 books)
@@ -355,7 +355,7 @@ export const SpeakingHubView: React.FC<SpeakingHubViewProps> = ({ userEmail, onE
                         <section>
                             <div className="flex items-center gap-3 mb-4">
                                 <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">
-                                    IELTSly Mock Tests
+                                    IELTS Dynasty Mock Tests
                                 </h2>
                                 <span className="bg-zinc-800 text-zinc-300 text-[10px] font-bold px-2 py-0.5 rounded-md">
                                     {ACADEMIC_MOCK_SERIES.length}

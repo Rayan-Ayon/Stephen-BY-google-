@@ -56,16 +56,42 @@ const IELTSDashboard: React.FC<IELTSDashboardProps> = ({ onNavigate }) => {
     const [moduleFilter, setModuleFilter] = React.useState<'all' | IeltsSkill>('all');
     const [statusFilter, setStatusFilter] = React.useState<'all' | 'approved' | 'developing' | 'at-risk'>('all');
     const [analysis, setAnalysis] = React.useState<{ attemptId?: number; bundleId?: IeltsBundleId } | null>(null);
+    const [showQuickGuide, setShowQuickGuide] = React.useState(false);
+    const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
 
     const newestFirst = [...attempts].sort((a, b) => b.id - a.id);
 
-    const overall = attempts.length > 0
-        ? attempts.reduce((sum, a) => sum + a.band, 0) / attempts.length
-        : 0;
-    const gap = overall - TARGET_BAND;
-    const readiness = attempts.length > 0
-        ? Math.round(Math.min(100, (overall / 9) * 60 + Math.min(attempts.length, 10) * 4))
-        : 0;
+    // KPI Metrics
+    const completedCount = attempts.length;
+    const scoredCount = attempts.filter((a) => a.band >= 0).length;
+    const bestScore = attempts.length > 0 ? Math.max(...attempts.map((a) => a.band)).toFixed(1) : '0.0';
+    const thisWeekCount = attempts.filter((a) => {
+        try {
+            const d = new Date(a.date);
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            return !isNaN(d.getTime()) ? d >= sevenDaysAgo : true;
+        } catch {
+            return true;
+        }
+    }).length;
+
+    // Skills breakdown metrics
+    const readingAttempts = attempts.filter((a) => a.skill === 'reading');
+    const readingCount = readingAttempts.length;
+    const readingAvg = readingCount > 0 ? readingAttempts.reduce((s, a) => s + a.band, 0) / readingCount : 0;
+
+    const listeningAttempts = attempts.filter((a) => a.skill === 'listening');
+    const listeningCount = listeningAttempts.length;
+    const listeningAvg = listeningCount > 0 ? listeningAttempts.reduce((s, a) => s + a.band, 0) / listeningCount : 0;
+
+    const writingAttempts = attempts.filter((a) => a.skill === 'writing');
+    const writingCount = writingAttempts.length;
+    const writingAvg = writingCount > 0 ? writingAttempts.reduce((s, a) => s + a.band, 0) / writingCount : 0;
+
+    const speakingAttempts = attempts.filter((a) => a.skill === 'speaking');
+    const speakingCount = speakingAttempts.length;
+    const speakingAvg = speakingCount > 0 ? speakingAttempts.reduce((s, a) => s + a.band, 0) / speakingCount : 0;
 
     const skillBests = SKILLS.map((skill) => {
         const skillAttempts = attempts.filter((a) => a.skill === skill);
@@ -89,149 +115,417 @@ const IELTSDashboard: React.FC<IELTSDashboardProps> = ({ onNavigate }) => {
         return moduleOk && statusOk;
     });
 
+    const formatShortDate = (dateStr?: string) => {
+        if (!dateStr) return '';
+        try {
+            const d = new Date(dateStr);
+            if (!isNaN(d.getTime())) {
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+        } catch {}
+        const parts = dateStr.split(',');
+        return parts[0].trim();
+    };
+
     const chart = (() => {
         const ordered = [...newestFirst].reverse();
         if (ordered.length === 0) return null;
-        const width = 560;
-        const height = 180;
-        const padX = 36;
-        const padY = 20;
-        const maxBand = 9;
-        const minBand = 4;
+        const width = 640;
+        const height = 210;
+        const padX = 40;
+        const padY = 24;
+        const padBottom = 34;
         const innerW = width - padX * 2;
-        const innerH = height - padY * 2;
-        const stepX = innerW / Math.max(ordered.length - 1, 1);
-        const yFor = (band: number) => padY + innerH - ((band - minBand) / (maxBand - minBand)) * innerH;
-        const points = ordered
-            .map((a, i) => `${(padX + i * stepX).toFixed(1)},${yFor(a.band).toFixed(1)}`)
-            .join(' ');
-        const area = `M ${padX},${padY + innerH} L ${points.replace(/ /g, ' L ')} L ${padX + innerW},${padY + innerH} Z`;
-        const gridLines = [5, 6, 7, 8, 9];
-        return { width, height, padX, padY, innerH, ordered, stepX, yFor, points, area, gridLines };
+        const innerH = height - padY - padBottom;
+        const stepX = ordered.length > 1 ? innerW / (ordered.length - 1) : 0;
+        const yFor = (band: number) => padY + innerH - (Math.max(0, Math.min(9, band)) / 9) * innerH;
+        const gridLines = [9, 7, 5, 3, 0];
+
+        const pointsData = ordered.map((a, i) => {
+            const x = ordered.length > 1 ? padX + i * stepX : padX + innerW / 2;
+            const y = yFor(a.band);
+            return {
+                attempt: a,
+                x,
+                y,
+                shortDate: formatShortDate(a.date),
+            };
+        });
+
+        const polyline = pointsData.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+
+        return {
+            width,
+            height,
+            padX,
+            padY,
+            innerH,
+            ordered,
+            gridLines,
+            yFor,
+            pointsData,
+            polyline,
+        };
     })();
+
+    const activeHoverIndex = hoveredIndex !== null && hoveredIndex < (chart?.pointsData.length ?? 0)
+        ? hoveredIndex
+        : (chart?.pointsData.length ? Math.max(0, chart.pointsData.length - 4) : null);
+    const activeHoverPoint = activeHoverIndex !== null && chart ? chart.pointsData[activeHoverIndex] : null;
 
     return (
         <div className="min-h-full bg-[#121212] text-white p-6 md:p-8 space-y-6">
-            {/* ── 1. Top Header & KPI Summary Cards ── */}
-            <section className="space-y-4">
-                {/* Header & Breadcrumb Bar */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#2A2A2A]">
-                    {/* Breadcrumb Navigation (Top Left) */}
+            {/* ── 1. Page Header Section ── */}
+            <section className="space-y-3">
+                {/* Top Breadcrumb & Quick Guide */}
+                <div className="flex items-center justify-between">
                     <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm font-medium">
                         <button
                             type="button"
                             onClick={() => onNavigate?.('dashboard')}
-                            className="text-[#888888] hover:text-[#AAAAAA] transition-colors cursor-pointer"
+                            className="text-neutral-400 hover:text-neutral-200 transition-colors cursor-pointer"
                         >
                             Overview
                         </button>
-                        <span className="text-[#888888]/60 select-none">&gt;</span>
-                        <span className="text-[#FFFFFF] font-semibold tracking-tight">My Reports</span>
+                        <span className="text-neutral-600 select-none">&gt;</span>
+                        <span className="text-white font-semibold tracking-tight">My Reports</span>
                     </nav>
 
-                    {/* Header Controls (Top Right) */}
+                    <button
+                        type="button"
+                        onClick={() => setShowQuickGuide(true)}
+                        className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-neutral-200 transition-colors cursor-pointer"
+                    >
+                        <svg className="w-4 h-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <circle cx="12" cy="12" r="10" strokeWidth="1.8" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3m.08 4h.01" />
+                        </svg>
+                        <span>Quick guide</span>
+                    </button>
+                </div>
+
+                {/* Title & Right Action Button */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1 pb-1">
+                    <div>
+                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white">My Reports</h1>
+                        <p className="text-sm text-neutral-400 mt-1">Track your progress across all IELTS skills</p>
+                    </div>
+
                     <div className="flex items-center gap-3">
                         <button
-                            onClick={() => setAnalysis({ attemptId: newestFirst[0]?.id })}
-                            disabled={newestFirst.length === 0}
-                            className="px-3.5 py-1.5 rounded-lg bg-amber-400 text-black text-xs font-semibold hover:bg-amber-300 disabled:opacity-40 transition-colors whitespace-nowrap shadow-sm cursor-pointer"
+                            type="button"
+                            onClick={() => onNavigate?.('dashboard')}
+                            className="px-4 py-2 rounded-xl bg-[#1A1A1A] hover:bg-[#242424] border border-neutral-700/60 text-sm font-medium text-neutral-200 flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
                         >
-                            View Last Test Analysis ➔
+                            <svg className="w-4 h-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <circle cx="12" cy="12" r="9" strokeWidth="1.8" />
+                                <circle cx="12" cy="12" r="5" strokeWidth="1.8" />
+                                <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                            </svg>
+                            <span>Dashboard</span>
                         </button>
-                        <div className="flex items-center p-0.5 rounded-lg bg-[#1A1A1A] border border-[#2A2A2A]">
-                            <button
-                                type="button"
-                                onClick={() => setViewMode('dashboard')}
-                                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                                    viewMode === 'dashboard'
-                                        ? 'bg-[#2A2A2A] text-white shadow-sm'
-                                        : 'text-[#888888] hover:text-white'
-                                }`}
-                            >
-                                Dashboard
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setViewMode('command_deck')}
-                                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                                    viewMode === 'command_deck'
-                                        ? 'bg-[#2A2A2A] text-white shadow-sm'
-                                        : 'text-[#888888] hover:text-white'
-                                }`}
-                            >
-                                Command Deck
-                            </button>
-                        </div>
                     </div>
                 </div>
 
-                {/* KPI Summary Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="rounded-2xl border border-[#2A2A2A] bg-[#1A1A1A] p-5 shadow-sm">
-                        <p className="text-[11px] uppercase tracking-wider text-[#888888] font-semibold">Overall Avg Band</p>
-                        <div className="flex items-end gap-2 mt-1">
-                            <p className="text-4xl font-bold tracking-tight text-amber-400">{overall.toFixed(1)}</p>
-                            <p className="text-xs text-[#888888] mb-1.5">/ 9.0</p>
+                {/* ── 2. Top Metric Cards Row (Grid of 4) ── */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+                    {/* Card 1: Completed Reports */}
+                    <div className="rounded-2xl border border-[#262626] bg-[#181818] p-5 shadow-sm flex flex-col justify-between">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <p className="text-[11px] uppercase tracking-wider text-neutral-400 font-semibold">COMPLETED REPORTS</p>
+                                <p className="text-3xl font-bold tracking-tight text-white mt-2">{completedCount}</p>
+                                <p className="text-xs text-neutral-400 mt-1">{completedCount} all reports</p>
+                            </div>
+                            <div className="rounded-xl p-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-400">
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
                         </div>
-                        <p className="text-xs text-[#888888] mt-1">{attempts.length} attempt{attempts.length === 1 ? '' : 's'} recorded</p>
                     </div>
-                    <div className="rounded-2xl border border-[#2A2A2A] bg-[#1A1A1A] p-5 shadow-sm">
-                        <p className="text-[11px] uppercase tracking-wider text-[#888888] font-semibold">Target Gap · {TARGET_BAND.toFixed(1)}</p>
-                        <p className={`text-4xl font-bold tracking-tight mt-1 ${gap >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                            {gap >= 0 ? '+' : '−'}{Math.abs(gap).toFixed(1)}
-                        </p>
-                        <p className="text-xs text-[#888888] mt-1">{gap >= 0 ? 'At or above target' : 'Below target'}</p>
+
+                    {/* Card 2: Scored Reports */}
+                    <div className="rounded-2xl border border-[#262626] bg-[#181818] p-5 shadow-sm flex flex-col justify-between">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <p className="text-[11px] uppercase tracking-wider text-neutral-400 font-semibold">SCORED REPORTS</p>
+                                <p className="text-3xl font-bold tracking-tight text-white mt-2">{scoredCount}</p>
+                                <p className="text-xs text-neutral-400 mt-1">with a result</p>
+                            </div>
+                            <div className="rounded-xl p-2.5 bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
-                    <div className="rounded-2xl border border-[#2A2A2A] bg-[#1A1A1A] p-5 shadow-sm">
-                        <p className="text-[11px] uppercase tracking-wider text-[#888888] font-semibold">Completed Exams</p>
-                        <p className="text-4xl font-bold tracking-tight text-white mt-1">{attempts.length}</p>
-                        <p className="text-xs text-[#888888] mt-1">Across {SKILLS.length} exam modules</p>
+
+                    {/* Card 3: Best Score */}
+                    <div className="rounded-2xl border border-[#262626] bg-[#181818] p-5 shadow-sm flex flex-col justify-between">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <p className="text-[11px] uppercase tracking-wider text-neutral-400 font-semibold">BEST SCORE</p>
+                                <p className="text-3xl font-bold tracking-tight text-rose-400 mt-2">{bestScore}</p>
+                                <p className="text-xs text-neutral-400 mt-1">personal best</p>
+                            </div>
+                            <div className="rounded-xl p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M5 3h14v2c0 3.314-2.686 6-6 6s-6-2.686-6-6V3zm0 2H3c0 2.5 1.5 4.5 4 4.88M19 5h2c0 2.5-1.5 4.5-4 4.88M12 11v5m-4 5h8m-5-5h2" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
-                    <div className="rounded-2xl border border-[#2A2A2A] bg-[#1A1A1A] p-5 shadow-sm">
-                        <p className="text-[11px] uppercase tracking-wider text-[#888888] font-semibold">Diagnostic Readiness</p>
-                        <p className="text-4xl font-bold tracking-tight text-sky-400 mt-1">{readiness}<span className="text-base text-[#888888]">/100</span></p>
-                        <div className="h-1.5 rounded-full bg-[#121212] border border-[#2A2A2A]/40 overflow-hidden mt-3">
-                            <div className="h-full bg-sky-400 transition-all duration-500" style={{ width: `${readiness}%` }} />
+
+                    {/* Card 4: This Week */}
+                    <div className="rounded-2xl border border-[#262626] bg-[#181818] p-5 shadow-sm flex flex-col justify-between">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <p className="text-[11px] uppercase tracking-wider text-neutral-400 font-semibold">THIS WEEK</p>
+                                <p className="text-3xl font-bold tracking-tight text-white mt-2">{thisWeekCount}</p>
+                                <p className="text-xs text-neutral-400 mt-1">tests taken</p>
+                            </div>
+                            <div className="rounded-xl p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="1.8" />
+                                    <path strokeLinecap="round" strokeWidth="1.8" d="M16 2v4M8 2v4M3 10h18" />
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* ── 2. Band Performance Trend Graph ── */}
-            <section className="rounded-2xl bg-[#1A1A1A] border border-[#2A2A2A] p-6 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                    <div>
-                        <p className="text-[11px] uppercase tracking-wider text-[#888888] font-semibold">Band Score Trend</p>
-                        <p className="text-xs text-neutral-400 mt-0.5">Multi-skill band progression over time</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        {SKILLS.map((s) => (
-                            <span key={s} className="flex items-center gap-1.5 text-xs text-neutral-400">
-                                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: SKILL_HEX[s] }} /> {skillLabels[s]}
+            {/* ── 3. PERFORMANCE OVERVIEW Section (Grid Layout) ── */}
+            <section className="space-y-3">
+                <div className="flex items-center gap-2 pt-1 pb-1">
+                    <svg className="w-4 h-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <h2 className="text-[12px] uppercase font-bold tracking-wider text-neutral-400">PERFORMANCE OVERVIEW</h2>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Left Card: Score Progress Graph */}
+                    <div className="rounded-2xl border border-[#262626] bg-[#181818] p-6 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2">
+                                    <svg className="w-4 h-4 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                    </svg>
+                                    <h3 className="text-base font-semibold text-white">Score Progress</h3>
+                                </div>
+                            </div>
+
+                            {/* Chart with Interactive Tooltip */}
+                            <div className="relative w-full">
+                                {chart ? (
+                                    <>
+                                        <svg viewBox={`0 0 ${chart.width} ${chart.height}`} className="w-full h-auto overflow-visible">
+                                            {/* Dotted Grid Lines & Y-axis labels */}
+                                            {chart.gridLines.map((b) => (
+                                                <g key={b}>
+                                                    <line
+                                                        x1={chart.padX}
+                                                        y1={chart.yFor(b)}
+                                                        x2={chart.width - chart.padX}
+                                                        y2={chart.yFor(b)}
+                                                        stroke="rgba(255,255,255,0.06)"
+                                                        strokeDasharray="3 3"
+                                                    />
+                                                    <text
+                                                        x={chart.padX - 10}
+                                                        y={chart.yFor(b) + 3.5}
+                                                        textAnchor="end"
+                                                        fontSize="10"
+                                                        fill="rgba(255,255,255,0.35)"
+                                                        className="font-mono"
+                                                    >
+                                                        {b}
+                                                    </text>
+                                                </g>
+                                            ))}
+
+                                            {/* Active vertical guideline if a point is hovered */}
+                                            {activeHoverPoint && (
+                                                <line
+                                                    x1={activeHoverPoint.x}
+                                                    y1={chart.padY}
+                                                    x2={activeHoverPoint.x}
+                                                    y2={chart.padY + chart.innerH}
+                                                    stroke="rgba(255,255,255,0.7)"
+                                                    strokeWidth="1.5"
+                                                />
+                                            )}
+
+                                            {/* Polyline connecting points */}
+                                            <polyline
+                                                points={chart.polyline}
+                                                fill="none"
+                                                stroke="#60a5fa"
+                                                strokeWidth="2.5"
+                                                strokeLinejoin="round"
+                                                strokeLinecap="round"
+                                            />
+
+                                            {/* Data Points */}
+                                            {chart.pointsData.map((pt, i) => {
+                                                const isListening = pt.attempt.skill === 'listening';
+                                                const isHovered = activeHoverIndex === i;
+                                                return (
+                                                    <g key={pt.attempt.id}>
+                                                        <circle
+                                                            cx={pt.x}
+                                                            cy={pt.y}
+                                                            r={isHovered ? 5.5 : 4}
+                                                            fill={isListening ? '#f59e0b' : '#38bdf8'}
+                                                            stroke="#181818"
+                                                            strokeWidth="2"
+                                                            className="transition-all duration-150"
+                                                        />
+                                                        {/* Transparent hit target for hover */}
+                                                        <circle
+                                                            cx={pt.x}
+                                                            cy={pt.y}
+                                                            r="14"
+                                                            fill="transparent"
+                                                            className="cursor-pointer"
+                                                            onMouseEnter={() => setHoveredIndex(i)}
+                                                            onClick={() => setHoveredIndex(i)}
+                                                        />
+                                                        {/* X-axis date labels */}
+                                                        <text
+                                                            x={pt.x}
+                                                            y={chart.height - 10}
+                                                            textAnchor="middle"
+                                                            fontSize="9"
+                                                            fill={isHovered ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.35)'}
+                                                            className="font-mono select-none"
+                                                        >
+                                                            {pt.shortDate}
+                                                        </text>
+                                                    </g>
+                                                );
+                                            })}
+                                        </svg>
+
+                                        {/* Floating Tooltip HTML Overlay */}
+                                        {activeHoverPoint && (
+                                            <div
+                                                className="absolute pointer-events-none bg-white text-neutral-900 rounded-xl px-3 py-1.5 shadow-2xl text-center z-20 transition-all duration-100 -translate-x-1/2 -translate-y-full mb-3 min-w-[68px]"
+                                                style={{
+                                                    left: `${(activeHoverPoint.x / chart.width) * 100}%`,
+                                                    top: `${(activeHoverPoint.y / chart.height) * 100}%`,
+                                                }}
+                                            >
+                                                <p className="text-[11px] font-medium text-neutral-400 leading-tight">{activeHoverPoint.shortDate}</p>
+                                                <p className="text-xs font-bold font-mono text-neutral-900 leading-tight mt-0.5">: {activeHoverPoint.attempt.band.toFixed(1)} / 9</p>
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <p className="text-sm text-neutral-500 py-12 text-center">No attempts recorded yet.</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Bottom Legend */}
+                        <div className="flex items-center justify-center gap-6 pt-4 border-t border-[#262626]/60 mt-3">
+                            <span className="flex items-center gap-2 text-xs text-neutral-300 font-medium">
+                                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                                Listening
                             </span>
-                        ))}
+                            <span className="flex items-center gap-2 text-xs text-neutral-300 font-medium">
+                                <span className="w-2.5 h-2.5 rounded-full bg-sky-400" />
+                                Reading
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Right Card: Skills Breakdown */}
+                    <div className="rounded-2xl border border-[#262626] bg-[#181818] p-6 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div className="flex items-center justify-between pb-4 border-b border-[#262626]/60 mb-5">
+                                <div className="flex items-center gap-2">
+                                    <svg className="w-4 h-4 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                    </svg>
+                                    <h3 className="text-base font-semibold text-white">Skills Breakdown</h3>
+                                </div>
+                                <span className="text-xs text-neutral-500 font-medium">avg band</span>
+                            </div>
+
+                            <div className="space-y-6">
+                                {/* Reading Row */}
+                                <div>
+                                    <div className="flex items-center justify-between text-sm mb-1.5">
+                                        <span className="font-medium text-neutral-200">Reading</span>
+                                        <span className="text-xs font-mono text-neutral-400">
+                                            {readingAvg.toFixed(1)} / 9 · {readingCount} test{readingCount === 1 ? '' : 's'}
+                                        </span>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-[#262626] rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                                            style={{ width: `${(readingAvg / 9) * 100}%` }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Listening Row */}
+                                <div>
+                                    <div className="flex items-center justify-between text-sm mb-1.5">
+                                        <span className="font-medium text-neutral-200">Listening</span>
+                                        <span className="text-xs font-mono text-neutral-400">
+                                            {listeningAvg.toFixed(1)} / 9 · {listeningCount} test{listeningCount === 1 ? '' : 's'}
+                                        </span>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-[#262626] rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-amber-500 rounded-full transition-all duration-500"
+                                            style={{ width: `${(listeningAvg / 9) * 100}%` }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {writingCount > 0 && (
+                                    <div>
+                                        <div className="flex items-center justify-between text-sm mb-1.5">
+                                            <span className="font-medium text-neutral-200">Writing</span>
+                                            <span className="text-xs font-mono text-neutral-400">
+                                                {writingAvg.toFixed(1)} / 9 · {writingCount} test{writingCount === 1 ? '' : 's'}
+                                            </span>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-[#262626] rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-amber-400 rounded-full transition-all duration-500"
+                                                style={{ width: `${(writingAvg / 9) * 100}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {speakingCount > 0 && (
+                                    <div>
+                                        <div className="flex items-center justify-between text-sm mb-1.5">
+                                            <span className="font-medium text-neutral-200">Speaking</span>
+                                            <span className="text-xs font-mono text-neutral-400">
+                                                {speakingAvg.toFixed(1)} / 9 · {speakingCount} test{speakingCount === 1 ? '' : 's'}
+                                            </span>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-[#262626] rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-purple-400 rounded-full transition-all duration-500"
+                                                style={{ width: `${(speakingAvg / 9) * 100}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
-                {chart ? (
-                    <svg viewBox={`0 0 ${chart.width} ${chart.height}`} className="w-full h-auto">
-                        {chart.gridLines.map((b) => (
-                            <g key={b}>
-                                <line x1={chart.padX} y1={chart.yFor(b)} x2={chart.width - chart.padX} y2={chart.yFor(b)} stroke="rgba(255,255,255,0.06)" strokeDasharray="4 4" />
-                                <text x={chart.padX - 8} y={chart.yFor(b) + 3} textAnchor="end" fontSize="10" fill="rgba(255,255,255,0.35)" className="font-mono">{b.toFixed(1)}</text>
-                            </g>
-                        ))}
-                        <path d={chart.area} fill="rgba(251,191,36,0.06)" />
-                        <polyline points={chart.points} fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinejoin="round" />
-                        {chart.ordered.map((a, i) => (
-                            <g key={a.id}>
-                                <circle cx={chart.padX + i * chart.stepX} cy={chart.yFor(a.band)} r="4" fill="#121212" stroke={SKILL_HEX[a.skill]} strokeWidth="2" />
-                                <title>{`${skillLabels[a.skill]} · ${a.band.toFixed(1)} · ${a.date}`}</title>
-                            </g>
-                        ))}
-                    </svg>
-                ) : (
-                    <p className="text-sm text-neutral-500 py-10 text-center">No attempts recorded yet.</p>
-                )}
             </section>
 
             {/* ── 3. 4-Skill Summary Row ── */}
@@ -476,6 +770,51 @@ const IELTSDashboard: React.FC<IELTSDashboardProps> = ({ onNavigate }) => {
 
             {analysis && (
                 <IELTSAnalysisView attemptId={analysis.attemptId} bundleId={analysis.bundleId} onClose={() => setAnalysis(null)} />
+            )}
+
+            {/* Quick Guide Modal */}
+            {showQuickGuide && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
+                    <div className="relative w-full max-w-lg rounded-2xl bg-[#1A1A1A] border border-[#2A2A2A] p-6 shadow-2xl space-y-4">
+                        <div className="flex items-center justify-between pb-3 border-b border-[#2A2A2A]">
+                            <div className="flex items-center gap-2">
+                                <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <circle cx="12" cy="12" r="10" strokeWidth="1.8" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3m.08 4h.01" />
+                                </svg>
+                                <h3 className="text-lg font-bold text-white">Quick Guide: My Reports</h3>
+                            </div>
+                            <button
+                                onClick={() => setShowQuickGuide(false)}
+                                className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-[#2A2A2A] transition-colors cursor-pointer"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div className="space-y-3 text-sm text-neutral-300">
+                            <p>
+                                <strong className="text-white">KPI Cards:</strong> Track your completed evaluations, scored results, all-time best band, and active tests taken this week.
+                            </p>
+                            <p>
+                                <strong className="text-white">Score Progress:</strong> Interactive timeline showing your IELTS Band scores (0–9 scale) across test dates for Reading and Listening. Hover any point to inspect test scores.
+                            </p>
+                            <p>
+                                <strong className="text-white">Skills Breakdown:</strong> Displays your average band score and total test count per module.
+                            </p>
+                            <p>
+                                <strong className="text-white">Historical Matrix:</strong> Filter and review complete transcripts, sub-criteria diagnostics, and past exam attempts below.
+                            </p>
+                        </div>
+                        <div className="pt-2 flex justify-end">
+                            <button
+                                onClick={() => setShowQuickGuide(false)}
+                                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-black text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+                            >
+                                Got it
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

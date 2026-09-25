@@ -261,7 +261,7 @@ const CAMBRIDGE_SPEAKING_BANK: Record<string, Omit<SpeakingTestData, 'sourceType
 
     // Mock Series
     'mock_series-1-1': {
-        title: 'IELTSly Mock Series 1 Test 1',
+        title: 'IELTS Dynasty Mock Series 1 Test 1',
         part1: {
             title: 'Work, Study & Daily Routine',
             questions: [
@@ -296,7 +296,7 @@ const CAMBRIDGE_SPEAKING_BANK: Record<string, Omit<SpeakingTestData, 'sourceType
 // Generic generator for books that don't have hardcoded bank entries
 function generateFallbackTest(sourceType: 'cambridge' | 'mock_series', bookNumber: number, testNumber: number, category: 'academic' | 'general'): SpeakingTestData {
     const isCambridge = sourceType === 'cambridge';
-    const displaySource = isCambridge ? `Cambridge IELTS ${bookNumber}` : `IELTSly Mock ${bookNumber}`;
+    const displaySource = isCambridge ? `Cambridge IELTS ${bookNumber}` : `IELTS Dynasty Mock ${bookNumber}`;
     const testTitle = `${displaySource} Test ${testNumber}`;
 
     return {

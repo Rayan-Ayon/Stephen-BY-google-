@@ -64,48 +64,112 @@ export const DynamicRightPanel: React.FC<DynamicRightPanelProps> = ({
 
             setIsLoading(true);
             try {
-                // 1. Fetch question groups for the active exam and part
-                const { data: groupsData, error: groupsErr } = await supabase
-                    .from('question_groups')
-                    .select('*')
-                    .eq('exam_id', examId)
+                let resolvedGroups: DynamicQuestionGroup[] = [];
+                let resolvedQuestions: DynamicQuestion[] = [];
+
+                // 1. Relational Query: Find section for this exam and part_number
+                const { data: sectionData, error: secErr } = await (supabase as any)
+                    .from('sections')
+                    .select('id')
+                    .or(`exam_id.eq.${examId},test_id.eq.${examId}`)
                     .eq('part_number', Number(partNumber))
-                    .order('group_order', { ascending: true });
+                    .maybeSingle();
 
-                if (groupsErr) {
-                    console.error('Error fetching question_groups:', groupsErr);
+                if (secErr) {
+                    console.warn('Note on sections query:', secErr.message);
                 }
 
-                if (!groupsData || groupsData.length === 0) {
-                    if (isMounted) {
-                        setGroups([]);
-                        setIsLoading(false);
-                        onDynamicLoaded?.(false, []);
+                const sectionId = (sectionData as any)?.id;
+                if (sectionId) {
+                    // Fetch question groups for this section
+                    const { data: qgData, error: qgErr } = await (supabase as any)
+                        .from('question_groups')
+                        .select('*')
+                        .eq('section_id', sectionId)
+                        .order('start_question', { ascending: true });
+
+                    if (qgErr) {
+                        console.error('Error fetching question_groups via section:', qgErr);
+                    } else if (qgData && qgData.length > 0) {
+                        const groupIds = qgData.map((g: any) => g.id);
+                        const { data: qData, error: qErr } = await (supabase as any)
+                            .from('questions')
+                            .select('*')
+                            .in('group_id', groupIds)
+                            .order('question_number', { ascending: true });
+
+                        if (qErr) {
+                            console.error('Error fetching questions:', qErr);
+                        }
+
+                        const mappedQuestions: DynamicQuestion[] = (qData || []).map((q: any) => ({
+                            id: q.id,
+                            group_id: q.group_id,
+                            question_number: q.question_number,
+                            prompt: q.prompt || q.question_text || '',
+                            options: q.options || [],
+                            correct_answer: q.correct_answer || null,
+                            explanation: q.explanation || null,
+                        }));
+
+                        resolvedQuestions = mappedQuestions;
+                        resolvedGroups = qgData.map((g: any, idx: number) => ({
+                            id: g.id,
+                            exam_id: examId,
+                            part_number: Number(partNumber),
+                            group_order: idx + 1,
+                            title: g.title || `Questions ${g.start_question}–${g.end_question}`,
+                            question_type: g.question_type,
+                            instruction_html: g.instruction_html || g.instructions || '',
+                            shared_options: g.shared_options || g.choices || [],
+                            metadata: g.metadata || {},
+                            questions: mappedQuestions.filter((q) => q.group_id === g.id),
+                        }));
                     }
-                    return;
                 }
 
-                // 2. Fetch questions belonging to these groups
-                const groupIds = groupsData.map((g: any) => g.id);
-                const { data: questionsData, error: questionsErr } = await supabase
-                    .from('questions')
-                    .select('*')
-                    .in('group_id', groupIds)
-                    .order('question_number', { ascending: true });
+                // Fallback attempt: direct exam_id on question_groups if present
+                if (resolvedGroups.length === 0) {
+                    const { data: directGroups } = await (supabase as any)
+                        .from('question_groups')
+                        .select('*')
+                        .eq('exam_id', examId)
+                        .eq('part_number', Number(partNumber))
+                        .order('group_order', { ascending: true });
 
-                if (questionsErr) {
-                    console.error('Error fetching questions:', questionsErr);
+                    if (directGroups && directGroups.length > 0) {
+                        const groupIds = directGroups.map((g: any) => g.id);
+                        const { data: qData } = await (supabase as any)
+                            .from('questions')
+                            .select('*')
+                            .in('group_id', groupIds)
+                            .order('question_number', { ascending: true });
+
+                        const mappedQuestions: DynamicQuestion[] = (qData || []).map((q: any) => ({
+                            id: q.id,
+                            group_id: q.group_id,
+                            question_number: q.question_number,
+                            prompt: q.prompt || q.question_text || '',
+                            options: q.options || [],
+                            correct_answer: q.correct_answer || null,
+                            explanation: q.explanation || null,
+                        }));
+
+                        resolvedQuestions = mappedQuestions;
+                        resolvedGroups = directGroups.map((g: any) => ({
+                            ...g,
+                            title: g.title || `Questions ${g.start_question}–${g.end_question}`,
+                            instruction_html: g.instruction_html || g.instructions || '',
+                            shared_options: g.shared_options || g.choices || [],
+                            questions: mappedQuestions.filter((q) => q.group_id === g.id),
+                        }));
+                    }
                 }
 
                 if (isMounted) {
-                    const combinedGroups: DynamicQuestionGroup[] = groupsData.map((g: any) => ({
-                        ...g,
-                        questions: (questionsData || []).filter((q: any) => q.group_id === g.id),
-                    }));
-
-                    setGroups(combinedGroups);
+                    setGroups(resolvedGroups);
                     setIsLoading(false);
-                    onDynamicLoaded?.(true, (questionsData as DynamicQuestion[]) || []);
+                    onDynamicLoaded?.(resolvedGroups.length > 0, resolvedQuestions);
                 }
             } catch (err) {
                 console.error('Error in DynamicRightPanel loadDynamicData:', err);

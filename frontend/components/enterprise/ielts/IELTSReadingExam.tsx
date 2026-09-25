@@ -1004,16 +1004,34 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                     console.error('Supabase Passages Query Error:', passageErr);
                 }
 
-                // 3. Fetch Questions
-                const passageIds = (passageData as any[])?.map((p: any) => p.id) || [];
-                const { data: questionData, error: questionErr } = await supabase
-                    .from('questions')
-                    .select('*')
-                    .in('passage_id', passageIds)
-                    .order('question_number', { ascending: true });
+                // 3. Fetch Questions dynamically via sections & question_groups
+                const examUuid = (examData as any).id;
+                let questionData: any[] = [];
+                try {
+                    const { data: secData } = await supabase
+                        .from('sections')
+                        .select('id')
+                        .or(`exam_id.eq.${examUuid},test_id.eq.${examUuid}`);
 
-                if (questionErr) {
-                    console.error('Supabase Questions Query Error:', questionErr);
+                    const secIds = (secData || []).map((s: any) => s.id);
+                    if (secIds.length > 0) {
+                        const { data: qgData } = await supabase
+                            .from('question_groups')
+                            .select('id')
+                            .in('section_id', secIds);
+
+                        const groupIds = (qgData || []).map((g: any) => g.id);
+                        if (groupIds.length > 0) {
+                            const { data: qs } = await supabase
+                                .from('questions')
+                                .select('*')
+                                .in('group_id', groupIds)
+                                .order('question_number', { ascending: true });
+                            questionData = qs || [];
+                        }
+                    }
+                } catch (qErr) {
+                    console.warn('Note on relational question prefetch:', qErr);
                 }
 
                 if (isMounted) {
