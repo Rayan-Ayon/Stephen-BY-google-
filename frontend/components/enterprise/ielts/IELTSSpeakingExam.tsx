@@ -31,13 +31,27 @@ interface IELTSSpeakingExamProps {
     simulation?: SimulationProps;
     onActiveChange?: (active: boolean) => void;
     exitPulse?: boolean;
+    mode?: 'full_mock' | 'part-practice';
+    practicePart?: number;
+    onExit?: () => void;
 }
 
-const IELTS_SpeakingExam: React.FC<IELTSSpeakingExamProps> = ({ candidateEmail, simulation, onActiveChange, exitPulse }) => {
+const IELTS_SpeakingExam: React.FC<IELTSSpeakingExamProps> = ({
+    candidateEmail,
+    simulation,
+    onActiveChange,
+    exitPulse,
+    mode = 'full_mock',
+    practicePart = 1,
+    onExit,
+}) => {
+    const isPartPractice = mode === 'part-practice';
     const [isOptionsOpen, setIsOptionsOpen] = useState(false);
     const lexiMode = true;
-    const [testState, setTestState] = useState<TestState>(simulation ? 'active' : 'lobby');
-    const [phase, setPhase] = useState<Phase>('intro');
+    const [testState, setTestState] = useState<TestState>(simulation || isPartPractice ? 'active' : 'lobby');
+    const [phase, setPhase] = useState<Phase>(
+        isPartPractice && practicePart === 2 ? 'cue' : isPartPractice && practicePart === 3 ? 'discussion' : 'intro'
+    );
     const [part1Index, setPart1Index] = useState(0);
     const [elapsed, setElapsed] = useState(0);
     const [lexiElapsed, setLexiElapsed] = useState(0);
@@ -80,15 +94,25 @@ const IELTS_SpeakingExam: React.FC<IELTSSpeakingExamProps> = ({ candidateEmail, 
     };
 
     const handleExit = () => {
+        setShowExitModal(false);
+        if (isPartPractice && onExit) {
+            onExit();
+            return;
+        }
         if (simulation) {
-            setShowExitModal(false);
             simulation.onExit?.();
+        } else if (onExit) {
+            onExit();
         } else {
             resetExam();
         }
     };
 
     if (testState === 'lobby') {
+        if (isPartPractice) {
+            startExam();
+            return null;
+        }
         return (
             <IELTSLobbyCard
                 skill="speaking"

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import IELTSReadingExam from './enterprise/ielts/IELTSReadingExam';
 import IELTSListeningExam from './enterprise/ielts/IELTSListeningExam';
 import IELTSWritingExam from './enterprise/ielts/IELTSWritingExam';
-import IELTSSpeakingExam from './enterprise/ielts/IELTSSpeakingExam';
+import SpeakingExamWorkspace from './mock-tests/speaking/SpeakingExamWorkspace';
 
 /* ─── Types ─── */
 type PracticeTab = 'parts' | 'question_types';
@@ -15,6 +15,9 @@ interface PracticeItem {
     testIndex: number;
     partIndex: number;
     title: string;
+    bookNumber?: number;
+    category?: 'academic' | 'general';
+    sourceType?: 'cambridge' | 'mock_series';
 }
 
 interface QuestionTypeDrill {
@@ -222,12 +225,20 @@ const PartPracticeHub: React.FC<PartPracticeHubProps> = ({ userEmail }) => {
         const titles = getPartTitles();
         const bookTitle = selectedBookData?.bookTitle ?? 'Practice';
         const testLabel = selectedTest ? `Test ${selectedTest.testIndex + 1}` : '';
+        const rawBookNum = selectedBookData?.bookNumber;
+        const bookNumber = typeof rawBookNum === 'number' ? rawBookNum : (parseInt(String(rawBookNum), 10) || 7);
+        const sourceType: 'cambridge' | 'mock_series' = selectedBookData?.category === 'mock_series' ? 'mock_series' : 'cambridge';
+        const category: 'academic' | 'general' = examMode === 'general' ? 'general' : 'academic';
+
         setActiveExam({
             skill: selectedSkill,
             bookId: selectedTest?.bookId ?? '',
             testIndex: selectedTest?.testIndex ?? 0,
             partIndex,
             title: `${bookTitle} ${testLabel} — ${partLabel} ${partIndex + 1}`,
+            bookNumber,
+            category,
+            sourceType,
         });
     };
 
@@ -237,33 +248,77 @@ const PartPracticeHub: React.FC<PartPracticeHubProps> = ({ userEmail }) => {
 
     /* ─── Exam Runner ─── */
     if (activeExam) {
+        const isPracticeItem = 'bookId' in activeExam;
+        const practicePart = isPracticeItem ? (activeExam.partIndex + 1) : 1;
+        const bookNumber = isPracticeItem ? (activeExam.bookNumber ?? 7) : 7;
+        const testNumber = isPracticeItem ? (activeExam.testIndex + 1) : 1;
+        const sourceType: 'cambridge' | 'mock_series' = isPracticeItem ? (activeExam.sourceType ?? 'cambridge') : 'cambridge';
+        const category: 'academic' | 'general' = isPracticeItem ? (activeExam.category ?? (examMode === 'general' ? 'general' : 'academic')) : (examMode === 'general' ? 'general' : 'academic');
+        const handleExitExam = () => setActiveExam(null);
+
         return (
             <div className="h-[calc(100vh-32px)] bg-[#F2F2F2] flex flex-col overflow-hidden">
                 <div className="bg-[#141519] border-b border-zinc-800 px-6 py-3 flex items-center justify-between shrink-0">
                     <button
-                        onClick={() => setActiveExam(null)}
+                        onClick={handleExitExam}
                         className="text-sm font-medium text-zinc-300 hover:text-white flex items-center gap-2 bg-zinc-800/60 px-3 py-1.5 rounded-lg border border-zinc-700/50 transition-all"
                     >
                         ← Back to Part Practice
                     </button>
                     <div className="text-sm font-semibold text-zinc-200">
-                        {'bookId' in activeExam
+                        {isPracticeItem
                             ? activeExam.title
                             : `${activeExam.skill.toUpperCase()} — ${activeExam.title}`}
                     </div>
                 </div>
                 <div className="flex-1 min-h-0 overflow-y-auto">
                     {activeExam.skill === 'reading' && (
-                        <IELTSReadingExam candidateEmail={userEmail} />
+                        <IELTSReadingExam
+                            candidateEmail={userEmail}
+                            mode="part-practice"
+                            practicePart={practicePart}
+                            bookNumber={bookNumber}
+                            testNumber={testNumber}
+                            sourceType={sourceType}
+                            category={category}
+                            onExit={handleExitExam}
+                        />
                     )}
                     {activeExam.skill === 'listening' && (
-                        <IELTSListeningExam candidateEmail={userEmail} />
+                        <IELTSListeningExam
+                            candidateEmail={userEmail}
+                            mode="part-practice"
+                            practicePart={practicePart}
+                            bookNumber={bookNumber}
+                            testNumber={testNumber}
+                            sourceType={sourceType}
+                            category={category}
+                            onExit={handleExitExam}
+                        />
                     )}
                     {activeExam.skill === 'writing' && (
-                        <IELTSWritingExam candidateEmail={userEmail} />
+                        <IELTSWritingExam
+                            candidateEmail={userEmail}
+                            mode="part-practice"
+                            practicePart={practicePart}
+                            bookNumber={bookNumber}
+                            testNumber={testNumber}
+                            sourceType={sourceType}
+                            moduleType={category}
+                            onExit={handleExitExam}
+                        />
                     )}
                     {activeExam.skill === 'speaking' && (
-                        <IELTSSpeakingExam candidateEmail={userEmail} />
+                        <SpeakingExamWorkspace
+                            candidateEmail={userEmail}
+                            mode="part-practice"
+                            practicePart={practicePart}
+                            bookNumber={bookNumber}
+                            testNumber={testNumber}
+                            sourceType={sourceType}
+                            category={category}
+                            onExit={handleExitExam}
+                        />
                     )}
                 </div>
             </div>

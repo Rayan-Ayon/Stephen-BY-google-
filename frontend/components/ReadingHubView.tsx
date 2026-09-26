@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
 import IELTSReadingExam from './enterprise/ielts/IELTSReadingExam';
 import ModuleHistorySection from './enterprise/history/ModuleHistorySection';
+import ExamLauncherFlow from './onboarding/ExamLauncherFlow';
 
 // ── Data Constants ──────────────────────────────────────────────────────────
 
@@ -208,6 +209,13 @@ export default function ReadingHubView({ userEmail, onExamStateChange }: Reading
   const [examCategory, setExamCategory] = useState<'academic' | 'general'>('academic');
   const customGradingRef = useRef<HTMLDivElement>(null);
 
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/reading/results')) {
+      setShowExam(true);
+      onExamStateChange?.(true);
+    }
+  }, [onExamStateChange]);
+
   const handleSubTestClick = (seriesId: string, testIndex: number) => {
     sessionStorage.setItem('reading_exam_series', seriesId);
     sessionStorage.setItem('reading_exam_index', String(testIndex));
@@ -237,21 +245,30 @@ export default function ReadingHubView({ userEmail, onExamStateChange }: Reading
     customGradingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  // ── Exam Mode ────────────────────────────────────────────────────────────
+  // ── Exam Mode with Pre-Exam Onboarding ───────────────────────────────────
   if (showExam) {
     return (
-      <div className="flex-1 h-full bg-[#FFFFFF] overflow-hidden">
-        <IELTSReadingExam
-          candidateEmail={userEmail}
-          sourceType={examSourceType}
-          category={examCategory}
-          bookNumber={examBookNumber}
-          testNumber={examTestNumber}
-          onActiveChange={(active) => onExamStateChange?.(active)}
-          onExit={handleExitExam}
-          exitPulse={false}
-        />
-      </div>
+      <ExamLauncherFlow
+        module="reading"
+        sourceType={examSourceType}
+        category={examCategory}
+        bookNumber={examBookNumber}
+        testNumber={examTestNumber}
+        onExit={handleExitExam}
+      >
+        <div className="flex-1 h-full bg-[#FFFFFF] overflow-hidden">
+          <IELTSReadingExam
+            candidateEmail={userEmail}
+            sourceType={examSourceType}
+            category={examCategory}
+            bookNumber={examBookNumber}
+            testNumber={examTestNumber}
+            onActiveChange={(active) => onExamStateChange?.(active)}
+            onExit={handleExitExam}
+            exitPulse={false}
+          />
+        </div>
+      </ExamLauncherFlow>
     );
   }
 

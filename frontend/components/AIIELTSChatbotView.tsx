@@ -25,7 +25,7 @@ interface Conversation {
 
 /* ─── Mock AI Response Engine ───────────────────────────────────────── */
 
-const MIHU_RESPONSES: Record<string, string> = {
+const RAYAN_RESPONSES: Record<string, string> = {
     default: "Great question! As your IELTS tutor, I'd recommend focusing on structured practice. For Band 7+, you need to demonstrate a wide range of vocabulary and grammatical structures. Let me know which specific skill you'd like to work on — Reading, Writing, Listening, or Speaking — and I'll guide you through targeted exercises.",
     task2: "For Task 2 essays, aim for a clear thesis statement in your introduction. Band 8 essays typically have:\n\n• A clear position throughout\n• Well-developed main ideas with specific examples\n• Cohesive paragraphing with logical progression\n• A mix of complex and simple sentence structures\n\nTry writing a 250+ word essay on a recent topic. I can review it for band score estimation!",
     speaking: "For IELTS Speaking, fluency and coherence are key for Band 7+. Here's what examiners look for:\n\n• Speaking at length without noticeable effort\n• Using discourse markers naturally (however, on the other hand)\n• Pronouncing individual sounds clearly\n• Using intonation to convey meaning\n\nShall we practice a Part 1 topic? Try answering: 'Do you enjoy reading? Why or why not?'",
@@ -34,14 +34,14 @@ const MIHU_RESPONSES: Record<string, string> = {
     band: "Here's a quick band score breakdown:\n\n• Band 9: Expert user with full operational fluency\n• Band 8: Very good user, occasional inaccuracies\n• Band 7: Good user, generally effective communication\n• Band 6: Competent user, some inaccuracies\n• Band 5: Modest user, partial command of language\n\nMost universities require Band 6.5-7.0. Where are you currently scoring?",
 };
 
-function getMihuResponse(userMessage: string): string {
+function getRayanResponse(userMessage: string): string {
     const lower = userMessage.toLowerCase();
-    if (lower.includes('task 2') || lower.includes('essay') || lower.includes('writing')) return MIHU_RESPONSES.task2;
-    if (lower.includes('speaking') || lower.includes('part 1') || lower.includes('part 2') || lower.includes('cue card')) return MIHU_RESPONSES.speaking;
-    if (lower.includes('grammar') || lower.includes('tense') || lower.includes('sentence')) return MIHU_RESPONSES.grammar;
-    if (lower.includes('task 1') || lower.includes('chart') || lower.includes('graph') || lower.includes('diagram')) return MIHU_RESPONSES.task1;
-    if (lower.includes('band') || lower.includes('score') || lower.includes('grade')) return MIHU_RESPONSES.band;
-    return MIHU_RESPONSES.default;
+    if (lower.includes('task 2') || lower.includes('essay') || lower.includes('writing')) return RAYAN_RESPONSES.task2;
+    if (lower.includes('speaking') || lower.includes('part 1') || lower.includes('part 2') || lower.includes('cue card')) return RAYAN_RESPONSES.speaking;
+    if (lower.includes('grammar') || lower.includes('tense') || lower.includes('sentence')) return RAYAN_RESPONSES.grammar;
+    if (lower.includes('task 1') || lower.includes('chart') || lower.includes('graph') || lower.includes('diagram')) return RAYAN_RESPONSES.task1;
+    if (lower.includes('band') || lower.includes('score') || lower.includes('grade')) return RAYAN_RESPONSES.band;
+    return RAYAN_RESPONSES.default;
 }
 
 function formatTime(date: Date): string {
@@ -108,9 +108,9 @@ const SparkleIcon: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
-/* ─── Owl Avatar (Mihu) ─────────────────────────────────────────────── */
+/* ─── Owl Avatar (Rayan) ─────────────────────────────────────────────── */
 
-const MihuAvatar: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }) => {
+const RayanAvatar: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }) => {
     const sizeClasses = {
         sm: 'w-7 h-7 text-sm',
         md: 'w-9 h-9 text-lg',
@@ -261,7 +261,7 @@ const AIIELTSChatbotView: React.FC<AIIELTSChatbotViewProps> = ({ userEmail: _use
             const mihuMsg: Message = {
                 id: `msg-${Date.now()}-mihu`,
                 sender: 'mihu',
-                text: getMihuResponse(text),
+                text: getRayanResponse(text),
                 time: formatTime(new Date()),
             };
             setConversations(prev =>
@@ -346,13 +346,13 @@ const AIIELTSChatbotView: React.FC<AIIELTSChatbotViewProps> = ({ userEmail: _use
                 {!hasMessages && (
                     <div className="flex-1 flex flex-col items-center justify-center">
                         <div className="mb-4">
-                            <MihuAvatar size="lg" />
+                            <RayanAvatar size="lg" />
                         </div>
                         <h1 className="text-[28px] font-bold text-gray-900 mb-3">
                             How can I help you today?
                         </h1>
                         <p className="text-gray-500 max-w-md text-center text-sm mb-8 leading-relaxed">
-                            Hello! I'm Mihu, your personalized IELTS tutor. What would you like to work on today?
+                            Hello! I'm Rayan, your personalized IELTS tutor. What would you like to work on today?
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
                             {QUICK_PROMPTS.map((prompt, i) => (
@@ -376,7 +376,7 @@ const AIIELTSChatbotView: React.FC<AIIELTSChatbotViewProps> = ({ userEmail: _use
                                 key={msg.id}
                                 className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start items-start gap-3'}`}
                             >
-                                {msg.sender === 'mihu' && <MihuAvatar size="sm" />}
+                                {msg.sender === 'mihu' && <RayanAvatar size="sm" />}
                                 <div
                                     className={`${
                                         msg.sender === 'user'
@@ -395,7 +395,7 @@ const AIIELTSChatbotView: React.FC<AIIELTSChatbotViewProps> = ({ userEmail: _use
                         {/* Typing Indicator */}
                         {isTyping && (
                             <div className="flex justify-start items-start gap-3">
-                                <MihuAvatar size="sm" />
+                                <RayanAvatar size="sm" />
                                 <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-none px-5 py-3 shadow-sm">
                                     <div className="flex items-center gap-1.5">
                                         <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -423,7 +423,7 @@ const AIIELTSChatbotView: React.FC<AIIELTSChatbotViewProps> = ({ userEmail: _use
                             value={inputText}
                             onChange={e => setInputText(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            placeholder="Message Mihu AI..."
+                            placeholder="Message Rayan..."
                             className="w-full bg-transparent focus:outline-none text-sm text-gray-800 placeholder-gray-400"
                         />
                         <button
@@ -435,7 +435,7 @@ const AIIELTSChatbotView: React.FC<AIIELTSChatbotViewProps> = ({ userEmail: _use
                         </button>
                     </div>
                     <p className="text-gray-400 text-[11px] text-center mt-2">
-                        Mihu can make mistakes. Verify important information.
+                        Rayan can make mistakes. Verify important information.
                     </p>
                 </div>
             </div>

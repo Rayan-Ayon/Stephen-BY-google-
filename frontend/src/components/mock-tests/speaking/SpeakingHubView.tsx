@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
 import SpeakingExamWorkspace from './SpeakingExamWorkspace';
 import ModuleHistorySection from '@/components/enterprise/history/ModuleHistorySection';
+import ExamLauncherFlow from '@/components/onboarding/ExamLauncherFlow';
 
 // ── Data Constants ──────────────────────────────────────────────────────────
 
@@ -227,20 +228,29 @@ export const SpeakingHubView: React.FC<SpeakingHubViewProps> = ({ userEmail, onE
         customGradingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
-    // ── Active Exam Workspace ────────────────────────────────────────────────
+    // ── Active Exam Workspace with Pre-Exam Onboarding ───────────────────────
     if (showExam) {
         return (
-            <div className="flex-1 h-full w-full bg-[#0B0C0E] overflow-hidden">
-                <SpeakingExamWorkspace
-                    candidateEmail={userEmail}
-                    sourceType={examSourceType}
-                    bookNumber={examBookNumber}
-                    testNumber={examTestNumber}
-                    category={examCategory}
-                    onExit={handleExitExam}
-                    onActiveChange={onExamStateChange}
-                />
-            </div>
+            <ExamLauncherFlow
+                module="speaking"
+                sourceType={examSourceType}
+                category={examCategory}
+                bookNumber={examBookNumber}
+                testNumber={examTestNumber}
+                onExit={handleExitExam}
+            >
+                <div className="flex-1 h-full w-full bg-[#0B0C0E] overflow-hidden">
+                    <SpeakingExamWorkspace
+                        candidateEmail={userEmail}
+                        sourceType={examSourceType}
+                        bookNumber={examBookNumber}
+                        testNumber={examTestNumber}
+                        category={examCategory}
+                        onExit={handleExitExam}
+                        onActiveChange={onExamStateChange}
+                    />
+                </div>
+            </ExamLauncherFlow>
         );
     }
 

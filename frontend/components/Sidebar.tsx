@@ -26,6 +26,17 @@ const RepeatIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
     </svg>
 );
 
+const LifebuoyIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <circle cx="12" cy="12" r="4" />
+        <line x1="4.93" y1="4.93" x2="9.17" y2="9.17" />
+        <line x1="14.83" y1="14.83" x2="19.07" y2="19.07" />
+        <line x1="14.83" y1="9.17" x2="19.07" y2="4.93" />
+        <line x1="4.93" y1="19.07" x2="9.17" y2="14.83" />
+    </svg>
+);
+
 interface SidebarProps {
   toggleTheme: () => void;
   theme: Theme;
@@ -58,6 +69,7 @@ const navConfig = [
     {
         label: 'Help & Tools / Other Settings',
         items: [
+            { name: 'Support', icon: <LifebuoyIcon className="w-5 h-5" />, key: 'support' },
             { name: 'Feedback', icon: <FeedbackIcon className="w-5 h-5" />, key: 'feedback' },
             { name: 'Quick Guide', icon: <GuideIcon className="w-5 h-5" />, key: 'quick_guide' },
             { name: 'Chrome Extension', icon: <ExtensionIcon className="w-5 h-5" />, key: 'chrome_extension' },

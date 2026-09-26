@@ -75,6 +75,9 @@ interface IELTSWritingExamProps {
     bookNumber?: number;
     testNumber?: number;
     moduleType?: 'academic' | 'general';
+    mode?: 'full_mock' | 'part-practice';
+    practicePart?: number;
+    onExit?: () => void;
 }
 
 const ChartSVG: React.FC = () => {
@@ -138,9 +141,22 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
     bookNumber = 18,
     testNumber = 1,
     moduleType = 'academic',
+    mode = 'full_mock',
+    practicePart = 1,
+    onExit,
 }) => {
-    const [testState, setTestState] = useState<TestState>(simulation ? 'active' : 'lobby');
-    const [activePart, setActivePart] = useState<1 | 2>(1);
+    const isPartPractice = mode === 'part-practice';
+    const initialPart: 1 | 2 = (isPartPractice && practicePart === 2) || testMode === 'task_2' ? 2 : 1;
+    const [testState, setTestState] = useState<TestState>(
+        simulation || isPartPractice ? 'active' : 'lobby'
+    );
+    const [activePart, setActivePart] = useState<1 | 2>(initialPart);
+
+    useEffect(() => {
+        if (isPartPractice && practicePart) {
+            setActivePart(practicePart === 2 ? 2 : 1);
+        }
+    }, [isPartPractice, practicePart]);
     const draftKeyP1 = `ielts_writing_${sourceType}_${bookNumber}_${testNumber}_${moduleType}_p1`;
     const draftKeyP2 = `ielts_writing_${sourceType}_${bookNumber}_${testNumber}_${moduleType}_p2`;
     const [essayPart1, setEssayPart1] = useState<string>(() => readDraft(draftKeyP1));
@@ -205,14 +221,14 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
     }, [testState, onActiveChange]);
 
     const timeLimit = simulation ? simulation.timeLimitSeconds : 60 * 60;
-    const showTaskSwitcher = testMode === 'full_mock';
+    const showTaskSwitcher = !isPartPractice && testMode === 'full_mock';
     const isSingleTask = !showTaskSwitcher;
     const locked = testState !== 'active';
     const timerLow = seconds <= 300;
     const isEvaluating = testState === 'evaluating';
 
     const effectivePart: 1 | 2 = isSingleTask
-        ? (testMode === 'task_2' ? 2 : 1)
+        ? ((isPartPractice && practicePart === 2) || testMode === 'task_2' ? 2 : 1)
         : activePart;
 
     const text = effectivePart === 1 ? essayPart1 : essayPart2;
@@ -221,14 +237,14 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
     const wordCount2 = essayPart2.trim() ? essayPart2.trim().split(/\s+/).length : 0;
 
     const t1Prompt = moduleType === 'general'
-        ? (dbTask1?.prompt_text ?? '')
+        ? (dbTask1?.prompt_text || 'You should spend about 20 minutes on this task. Write a letter to a friend or organisation...')
         : (dbTask1?.prompt_text || TASK1_ACADEMIC_TITLE);
     const t1Instruction = moduleType === 'general'
-        ? (dbTask1?.instruction ?? '')
+        ? (dbTask1?.instruction || 'Write at least 150 words. You do NOT need to write any addresses.')
         : (dbTask1?.instruction || TASK1_INSTRUCTION);
     const t1ImageUrl = dbTask1?.image_url || null;
     const t2Prompt = moduleType === 'general'
-        ? (dbTask2?.prompt_text ?? '')
+        ? (dbTask2?.prompt_text || TASK2_PROMPTS[0])
         : (dbTask2?.prompt_text || TASK2_PROMPTS[0]);
 
     const promptForPart = effectivePart === 1 ? t1Prompt : t2Prompt;
@@ -483,8 +499,14 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
         setShowExitModal(false);
         setShowSubmitModal(false);
         onActiveChange?.(false);
+        if (isPartPractice && onExit) {
+            onExit();
+            return;
+        }
         if (simulation?.onExit) {
             simulation.onExit();
+        } else if (onExit) {
+            onExit();
         } else {
             resetExam();
             onActiveChange?.(false);
@@ -492,6 +514,10 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
     };
 
     if (testState === 'lobby') {
+        if (isPartPractice) {
+            startExam();
+            return null;
+        }
         return (
             <IELTSLobbyCard
                 skill="writing"

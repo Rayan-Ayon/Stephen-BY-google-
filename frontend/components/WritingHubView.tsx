@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import IELTSWritingExam from './enterprise/ielts/IELTSWritingExam';
 import WritingHistoryMatrix from './enterprise/writing/WritingHistoryMatrix';
+import ExamLauncherFlow from './onboarding/ExamLauncherFlow';
 
 // ── Data Constants ──────────────────────────────────────────────────────────
 
@@ -262,28 +263,37 @@ export default function WritingHubView({ userEmail, onExamStateChange }: Writing
 
   const modeConfig = WRITING_MODES.find((m) => m.key === writingMode) || WRITING_MODES[0];
 
-  // ── Exam Mode ────────────────────────────────────────────────────────────
+  // ── Exam Mode with Pre-Exam Onboarding ───────────────────────────────────
   if (showExam) {
     return (
-      <div className="flex-1 h-full bg-[#F2F2F2] overflow-hidden">
-        <IELTSWritingExam
-          candidateEmail={userEmail}
-          testMode={writingMode}
-          sourceType={examSourceType}
-          bookNumber={examBookNumber}
-          testNumber={examTestNumber}
-          moduleType={activeTab}
-          simulation={{
-            sectionLabel: modeConfig.sectionLabel,
-            timeLimitSeconds: modeConfig.timeMinutes * 60,
-            testMode: writingMode,
-            onComplete: () => { handleExitExam(); },
-            onExit: () => { handleExitExam(); },
-          }}
-          onActiveChange={(active) => onExamStateChange?.(active)}
-          exitPulse={false}
-        />
-      </div>
+      <ExamLauncherFlow
+        module="writing"
+        sourceType={examSourceType}
+        category={activeTab}
+        bookNumber={examBookNumber}
+        testNumber={examTestNumber}
+        onExit={handleExitExam}
+      >
+        <div className="flex-1 h-full bg-[#F2F2F2] overflow-hidden">
+          <IELTSWritingExam
+            candidateEmail={userEmail}
+            testMode={writingMode}
+            sourceType={examSourceType}
+            bookNumber={examBookNumber}
+            testNumber={examTestNumber}
+            moduleType={activeTab}
+            simulation={{
+              sectionLabel: modeConfig.sectionLabel,
+              timeLimitSeconds: modeConfig.timeMinutes * 60,
+              testMode: writingMode,
+              onComplete: () => { handleExitExam(); },
+              onExit: () => { handleExitExam(); },
+            }}
+            onActiveChange={(active) => onExamStateChange?.(active)}
+            exitPulse={false}
+          />
+        </div>
+      </ExamLauncherFlow>
     );
   }
 

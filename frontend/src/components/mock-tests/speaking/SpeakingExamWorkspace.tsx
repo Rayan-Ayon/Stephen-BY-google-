@@ -15,6 +15,8 @@ interface SpeakingExamWorkspaceProps {
     onExit: () => void;
     onActiveChange?: (active: boolean) => void;
     exitPulse?: boolean;
+    mode?: 'full_mock' | 'part-practice';
+    practicePart?: number;
 }
 
 type RecordingState = 'ready' | 'recording' | 'recorded';
@@ -34,16 +36,31 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
     onExit,
     onActiveChange,
     exitPulse = false,
+    mode = 'full_mock',
+    practicePart = 1,
 }) => {
+    const isPartPractice = mode === 'part-practice';
+    const initialPart: 1 | 2 | 3 = isPartPractice
+        ? (Math.min(3, Math.max(1, Number(practicePart))) as 1 | 2 | 3)
+        : 1;
+
     // ── Exam Data & Loading ────────────────────────────────────────────────
     const [testData, setTestData] = useState<SpeakingTestData | null>(null);
     const [isLoadingData, setIsLoadingData] = useState(true);
 
     // ── Exam Navigation State ──────────────────────────────────────────────
-    const [currentPart, setCurrentPart] = useState<1 | 2 | 3>(1);
+    const [currentPart, setCurrentPart] = useState<1 | 2 | 3>(initialPart);
     const [questionIndex, setQuestionIndex] = useState(0);
     const [completedParts, setCompletedParts] = useState<Set<number>>(new Set());
     const [showExitModal, setShowExitModal] = useState(false);
+
+    useEffect(() => {
+        if (isPartPractice && practicePart) {
+            const p = Math.min(3, Math.max(1, Number(practicePart))) as 1 | 2 | 3;
+            setCurrentPart(p);
+            setQuestionIndex(0);
+        }
+    }, [isPartPractice, practicePart]);
 
     // ── Global Test Timer (11:00 or elapsed) ───────────────────────────────
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -533,13 +550,15 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
                         </h1>
                     </div>
 
-                    {/* Center Tabs: 3 Pill Buttons */}
+                    {/* Center Tabs: Pill Buttons (Single pill in Part Practice mode) */}
                     <div className="flex items-center gap-1.5 bg-[#181920] border border-zinc-800 p-1 rounded-xl">
                         {[
                             { part: 1 as const, label: '1 Interview' },
                             { part: 2 as const, label: '2 Cue Card' },
                             { part: 3 as const, label: '3 Discussion' },
-                        ].map((tab) => {
+                        ]
+                        .filter((tab) => !isPartPractice || tab.part === currentPart)
+                        .map((tab) => {
                             const isActive = currentPart === tab.part;
                             const isCompleted = completedParts.has(tab.part);
                             return (
@@ -1119,5 +1138,4 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
         </div>
     );
 };
-
 export default SpeakingExamWorkspace;

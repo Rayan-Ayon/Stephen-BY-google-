@@ -30,7 +30,7 @@ import LeaderboardView from './LeaderboardView';
 import StreaksView from './StreaksView';
 import AISpeakingPartnerView from './ai-speaking-partner/AISpeakingPartnerView';
 import AIIELTSChatbotView from './AIIELTSChatbotView';
-import IELTSAdvisorDrawer from './IELTSAdvisorDrawer';
+import SupportView from './SupportView';
 import AIRewriterView from './AIRewriterView';
 import FreeContentLibraryView from './FreeContentLibraryView';
 import StudyPlanView from './StudyPlanView';
@@ -52,7 +52,6 @@ import StudentPortal from './enterprise/portal/StudentPortal';
 import { DeleteSpaceModal, ShareSpaceModal } from './modals';
 import { Theme } from '../App';
 import { useWorkspace } from '../workspaceContext';
-import WorkspaceDropdown from './WorkspaceDropdown';
 import {
   initMockDb,
   getSpaces,
@@ -129,7 +128,6 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
     const [isQuickGuideOpen, setIsQuickGuideOpen] = useState(false);
     const [isContactUsOpen, setIsContactUsOpen] = useState(false);
-    const [isAdvisorDrawerOpen, setIsAdvisorDrawerOpen] = useState(false);
 
     // Exam navigation lock state
     const [isExamActive, setIsExamActive] = useState(false);
@@ -408,6 +406,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             case 'ai_ielts_chatbot': return <AIIELTSChatbotView userEmail={userEmail} />;
             case 'free_content_library': return <FreeContentLibraryView userEmail={userEmail} />;
             case 'study_plan': return <StudyPlanView userEmail={userEmail} />;
+            case 'support': return <SupportView userEmail={userEmail} onNavigate={handleNavigate} />;
             case 'spaced_repetition': return <SpacedRepetitionEngine />;
             case 'student_portal': return <StudentPortal />;
             case 'add_content':
@@ -516,22 +515,6 @@ return (
             )}
             
             <main className={`flex-1 flex flex-col min-w-0 overflow-hidden ${isExamActive ? 'w-full' : ''}`}>
-                {/* Header with WorkspaceDropdown */}
-                {!isExamActive && currentView !== 'my_reports' && currentView !== 'ielts_dashboard' && (
-                    <div className="h-16 shrink-0 border-b border-border bg-canvas flex items-center px-6 gap-4">
-                        <WorkspaceDropdown theme={theme} isExpanded={true} />
-                        <div className="flex-1" />
-                        <button
-                            onClick={() => setIsAdvisorDrawerOpen(true)}
-                            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/60 transition shadow-sm cursor-pointer"
-                            title="Open IELTS & Study Abroad AI Advisor"
-                        >
-                            <span>🎓</span>
-                            <span>IELTS & Study Abroad Advisor</span>
-                        </button>
-                    </div>
-                )}
-
                 {/* Content Area */}
                 <div className={`flex-1 flex min-h-0 overflow-hidden ${isExamActive ? 'w-full' : ''}`}>
                     {/* Left Column (~68%) */}
@@ -554,15 +537,6 @@ return (
             {isFeedbackOpen && <FeedbackModal onClose={() => setIsFeedbackOpen(false)} />}
             {isQuickGuideOpen && <QuickGuideModal onClose={() => setIsQuickGuideOpen(false)} />}
             {isContactUsOpen && <ContactUsSlide onClose={() => setIsContactUsOpen(false)} />}
-            <IELTSAdvisorDrawer
-                isOpen={isAdvisorDrawerOpen}
-                onClose={() => setIsAdvisorDrawerOpen(false)}
-                userEmail={userEmail}
-                onOpenFullView={() => {
-                    setIsAdvisorDrawerOpen(false);
-                    handleNavigate('ai_ielts_chatbot');
-                }}
-            />
             
             {deleteSpaceId && (
                 <DeleteSpaceModal 

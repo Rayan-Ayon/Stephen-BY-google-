@@ -289,6 +289,8 @@ export interface IELTSListeningExamProps {
     category?: 'academic' | 'general';
     examId?: string;
     testId?: string;
+    mode?: 'full_mock' | 'part-practice';
+    practicePart?: number;
 }
 
 const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
@@ -303,13 +305,21 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
     category = 'academic',
     examId,
     testId,
+    mode = 'full_mock',
+    practicePart = 1,
 }) => {
+    const isPartPractice = mode === 'part-practice';
+    const initialPart: 1 | 2 | 3 | 4 = isPartPractice
+        ? (Math.min(4, Math.max(1, Number(practicePart))) as 1 | 2 | 3 | 4)
+        : 1;
+    const initialQuestionId = (initialPart - 1) * 10 + 1;
+
     const [playing, setPlaying] = useState(true);
     const [progress, setProgress] = useState(0);
     const [volume, setVolume] = useState(80);
     const [isMuted, setIsMuted] = useState(false);
-    const [activePart, setActivePart] = useState<1 | 2 | 3 | 4>(1);
-    const [activeId, setActiveId] = useState<number>(1);
+    const [activePart, setActivePart] = useState<1 | 2 | 3 | 4>(initialPart);
+    const [activeId, setActiveId] = useState<number>(initialQuestionId);
     const [answers, setAnswers] = useState<Record<number, string>>({});
     const [elapsed, setElapsed] = useState(0);
     const [testState, setTestState] = useState<TestState>('active');
@@ -319,6 +329,15 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
     const scrollRefs = useRef<Record<number, HTMLElement | null>>({});
     const groupRefs = useRef<Record<string, HTMLElement | null>>({});
     const questionViewportRef = useRef<HTMLElement | null>(null);
+
+    useEffect(() => {
+        if (isPartPractice && practicePart) {
+            const p = Math.min(4, Math.max(1, Number(practicePart))) as 1 | 2 | 3 | 4;
+            setActivePart(p);
+            const firstId = (p - 1) * 10 + 1;
+            setActiveId(firstId);
+        }
+    }, [isPartPractice, practicePart]);
 
     const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium');
     const [showHelpModal, setShowHelpModal] = useState(false);
@@ -576,6 +595,9 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
                     setDynamicAnswersKey(keyMap);
                     const hasQuestions = parsedSections.some((s) => s.question_groups.some((g) => g.questions.length > 0));
                     setHasDynamicData(hasQuestions);
+                    if (!hasQuestions) {
+                        setUseMockFallback(true);
+                    }
                     if (hasQuestions) {
                         const firstSec = parsedSections.find((s) => s.part_number === 1) || parsedSections[0];
                         const firstGrp = firstSec?.question_groups?.[0];
@@ -590,6 +612,7 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
                 if (isMounted) {
                     setIsLoadingData(false);
                     setHasDynamicData(false);
+                    setUseMockFallback(true);
                 }
             }
         }
@@ -859,8 +882,16 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
     };
 
     const goTo = (id: number) => {
-        const targetPart = partOf(id);
-        setActivePart(targetPart);
+        if (isPartPractice) {
+            const allowedIds = dynamicPartIds[activePart] || [];
+            if (allowedIds.length > 0 && !allowedIds.includes(id)) {
+                return;
+            }
+        }
+        const targetPart = isPartPractice ? activePart : partOf(id);
+        if (!isPartPractice) {
+            setActivePart(targetPart);
+        }
         setActiveId(id);
 
         const matchedGroup = allGroups.find(
@@ -887,6 +918,7 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
     };
 
     const navigatePart = (dir: 1 | -1) => {
+        if (isPartPractice) return;
         const next = activePart + dir;
         if (next >= 1 && next <= 4) {
             const nextPart = next as 1 | 2 | 3 | 4;
@@ -1022,6 +1054,10 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
 
     const handleExit = () => {
         setShowExitModal(false);
+        if (isPartPractice && onExit) {
+            onExit();
+            return;
+        }
         if (simulation) {
             simulation.onExit?.();
         } else {
@@ -1425,59 +1461,10 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
         );
     }
 
-    // 2. Empty / Fallback State Screen (Card when Supabase has no data)
+    // 2. Empty / Fallback State Screen (Automatically fall back to static mock dataset)
     if (!isLoadingData && !hasDynamicData && !useMockFallback) {
-        return (
-            <div className="flex flex-col h-full w-full bg-white select-none">
-                <header className="shrink-0 h-14 bg-[#121212] border-b border-neutral-800 flex items-center justify-between px-6 z-20">
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={handleExit}
-                            className="text-gray-400 hover:text-white transition-colors flex items-center justify-center w-8 h-8 rounded-lg hover:bg-neutral-800"
-                            title="Exit Exam"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M19 12H5M12 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <div>
-                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                                {sourceType === 'cambridge' ? `CAMBRIDGE ${bookNumber}` : `MOCK SERIES ${bookNumber}`}
-                            </span>
-                            <h1 className="text-base font-bold text-white leading-tight">
-                                Listening Test {testNumber}
-                            </h1>
-                        </div>
-                    </div>
-                </header>
-
-                <div className="flex-1 flex items-center justify-center p-6 bg-[#FAFAFA]">
-                    <div className="bg-white max-w-md w-full rounded-2xl border border-gray-200 shadow-xl p-8 text-center animate-in fade-in zoom-in-95 duration-200">
-                        <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-500 border border-amber-200 flex items-center justify-center mx-auto mb-5 text-2xl shadow-xs">
-                            📋
-                        </div>
-                        <h2 className="text-xl font-bold text-gray-900 mb-2">Test Content Pending</h2>
-                        <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                            Listening content for this test is currently being synchronized with Supabase. Please check back shortly or select another available test.
-                        </p>
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                            <button
-                                onClick={handleExit}
-                                className="w-full sm:w-auto px-5 py-2.5 bg-neutral-900 hover:bg-black text-white rounded-xl text-sm font-semibold transition-colors shadow-xs cursor-pointer"
-                            >
-                                Return to Listening Hub
-                            </button>
-                            <button
-                                onClick={() => setUseMockFallback(true)}
-                                className="w-full sm:w-auto px-4 py-2.5 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-semibold transition-colors cursor-pointer"
-                            >
-                                Practice Demo Test
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
+        setUseMockFallback(true);
+        return null;
     }
 
     if (testState === 'evaluating') {
@@ -1534,7 +1521,7 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
                             {sourceType === 'cambridge' ? `CAMBRIDGE ${bookNumber}` : `MOCK SERIES ${bookNumber}`}
                         </span>
                         <h1 className="text-sm sm:text-base font-bold text-white leading-tight">
-                            Listening Test {testNumber}
+                            {isPartPractice ? `Listening Test ${testNumber} · Part ${activePart}` : `Listening Test ${testNumber}`}
                         </h1>
                     </div>
                 </div>
@@ -1999,9 +1986,9 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
             <footer className="fixed bottom-0 left-0 right-0 w-full h-[56px] bg-white border-t border-gray-200 flex items-center justify-between px-4 sm:px-6 z-30 select-none shadow-sm">
                 {/* Left & Center: Part & Question Palette */}
                 <div className="flex items-center gap-3 sm:gap-6 flex-1 min-w-0 overflow-x-auto no-scrollbar py-1">
-                    {([1, 2, 3, 4] as const).map((partNum) => {
+                    {(isPartPractice ? [activePart] : ([1, 2, 3, 4] as const)).map((partNum) => {
                         const isCurrentPart = activePart === partNum;
-                        const partIds = dynamicPartIds[partNum];
+                        const partIds = dynamicPartIds[partNum] || [];
                         const answeredCount = countAnswered(partIds);
 
                         return (

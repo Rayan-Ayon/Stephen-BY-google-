@@ -64,9 +64,13 @@ const AppContent: React.FC = () => {
     if (path === '/super-admin') {
       setIsSuperAdmin(true);
     }
-    if (path === '/ielts/reading' || path.startsWith('/ielts')) {
+    if (path === '/ielts/reading' || path.startsWith('/ielts') || path.startsWith('/reading')) {
       setShowDashboard(true);
       setInitialView('reading_hub');
+    }
+    if (path === '/support') {
+      setShowDashboard(true);
+      setInitialView('support');
     }
     const orgSession = localStorage.getItem('stephen_active_tenant_session');
     if (path === '/org-space') {

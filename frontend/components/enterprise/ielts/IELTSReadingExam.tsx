@@ -5,6 +5,9 @@ import IELTSExitModal from './IELTSExitModal';
 import IeltsExamOptionsModal from '../../exam/IeltsExamOptionsModal';
 import { supabase } from '../../../supabaseClient';
 import DynamicRightPanel, { type DynamicQuestion } from './DynamicRightPanel';
+import ReadingExamResultsView from './results/ReadingExamResultsView';
+import { generateExamResultsPayload } from './results/readingResultsGenerator';
+import type { ExamResultsPayload } from './results/readingResultsTypes';
 
 // ── Icons ──
 const Check = ({ size = 24, strokeWidth = 3, className = '' }: any) => (
@@ -900,6 +903,8 @@ interface IELTSReadingExamProps {
     category?: 'academic' | 'general';
     bookNumber?: number;
     testNumber?: number;
+    mode?: 'full_mock' | 'part-practice';
+    practicePart?: number;
 }
 
 const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
@@ -911,11 +916,57 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
     category = 'academic',
     bookNumber = 7,
     testNumber = 1,
+    mode = 'full_mock',
+    practicePart = 1,
 }) => {
-    const [testState, setTestState] = useState<'lobby' | 'active' | 'evaluating' | 'completed'>('active');
-    const [activePart, setActivePart] = useState<1 | 2 | 3>(1);
+    const isPartPractice = mode === 'part-practice';
+    const initialPart: 1 | 2 | 3 = isPartPractice
+        ? (Math.min(3, Math.max(1, Number(practicePart))) as 1 | 2 | 3)
+        : 1;
+    const initialQuestionId = initialPart === 1 ? 1 : initialPart === 2 ? 14 : 27;
+
+    const [testState, setTestState] = useState<'lobby' | 'active' | 'evaluating' | 'completed' | 'results'>('active');
+    const [resultsPayload, setResultsPayload] = useState<ExamResultsPayload | null>(null);
+    const [isProcessingSubmission, setIsProcessingSubmission] = useState<boolean>(false);
+    const [activePart, setActivePart] = useState<1 | 2 | 3>(initialPart);
     const [answers, setAnswers] = useState<Record<number, string>>({});
-    const [activeId, setActiveId] = useState<number>(1);
+    const [activeId, setActiveId] = useState<number>(initialQuestionId);
+
+    // Direct route check: /reading/results/[sessionId]
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.location.pathname.startsWith('/reading/results')) {
+            const pathParts = window.location.pathname.split('/reading/results/');
+            const sid = pathParts[1]?.split('/')[0] || '';
+            const stored = (sid ? localStorage.getItem('reading_results_' + sid) : null) || localStorage.getItem('latest_reading_results');
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    setResultsPayload(parsed);
+                    setTestState('results');
+                    return;
+                } catch (e) {
+                    console.error('Error parsing stored reading results', e);
+                }
+            }
+            const fallbackPayload = generateExamResultsPayload(
+                sid || 'session-initial',
+                `Cambridge IELTS ${bookNumber} — Test ${testNumber}`,
+                {},
+                4
+            );
+            setResultsPayload(fallbackPayload);
+            setTestState('results');
+        }
+    }, [bookNumber, testNumber]);
+
+    useEffect(() => {
+        if (isPartPractice && practicePart) {
+            const p = Math.min(3, Math.max(1, Number(practicePart))) as 1 | 2 | 3;
+            setActivePart(p);
+            const firstQ = p === 1 ? 1 : p === 2 ? 14 : 27;
+            setActiveId(firstQ);
+        }
+    }, [isPartPractice, practicePart]);
     
     // Split pane width %
     const [split, setSplit] = useState(50);
@@ -1100,6 +1151,10 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
 
     const handleExit = () => {
         setShowExitModal(false);
+        if (isPartPractice && onExit) {
+            onExit();
+            return;
+        }
         if (simulation?.onExit) {
             simulation.onExit();
         } else if (onExit) {
@@ -1110,93 +1165,63 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
     };
 
     const submit = () => {
-        if (locked) return;
-        setTestState('evaluating');
+        if (locked || isProcessingSubmission) return;
+
+        // Generate session ID
+        const sessionId = 'c' + bookNumber + 't' + testNumber + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 7);
+        const timeSpentSecs = Math.max(elapsed, 4);
+
+        // Generate full exam results payload matching schema
+        const payload = generateExamResultsPayload(
+            sessionId,
+            `Cambridge IELTS ${bookNumber} — Test ${testNumber}`,
+            answers,
+            timeSpentSecs,
+            answersKey
+        );
+
+        // Persist for page refresh & direct navigation
+        try {
+            localStorage.setItem('reading_results_' + sessionId, JSON.stringify(payload));
+            localStorage.setItem('latest_reading_results', JSON.stringify(payload));
+        } catch (err) {
+            console.error('Failed to cache reading results payload', err);
+        }
+
+        // Record attempt in IELTS history
+        if (simulation) {
+            simulation.onComplete({
+                skill: 'reading',
+                band: payload.bandScore,
+                score: payload.correctCount,
+                timeSpent: Math.max(1, Math.round(timeSpentSecs / 60)),
+                criteria: []
+            });
+        } else {
+            setScore(payload.correctCount);
+            addAttempt({
+                id: Date.now(),
+                skill: 'reading',
+                band: payload.bandScore,
+                score: payload.correctCount,
+                timeSpent: Math.max(1, Math.round(timeSpentSecs / 60)),
+                criteria: [],
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            });
+        }
+
+        // 1. Intercept and trigger immediate full-screen transition overlay
+        setIsProcessingSubmission(true);
+
+        // 2. Direct Navigation: Programmatically redirect router directly to /reading/results/[sessionId]
+        window.history.pushState({}, '', `/reading/results/${sessionId}`);
+
+        // 3. Full-screen loader overlay for 1.2 - 2.0s (set to 1.6s)
         window.setTimeout(() => {
-            let correct = 0;
-            for (let id = 1; id <= 40; id++) {
-                const userAns = normalize(answers[id] || '');
-                const expected = normalize(
-                    answersKey[id] ||
-                    (isCambridge7Test4
-                        ? CAMBRIDGE_7_TEST_4_ANSWERS_KEY[id]
-                        : isCambridge7Test3
-                        ? CAMBRIDGE_7_TEST_3_ANSWERS_KEY[id]
-                        : isCambridge7Test2
-                        ? CAMBRIDGE_7_TEST_2_ANSWERS_KEY[id]
-                        : STATIC_ANSWERS_KEY[id]) || ''
-                );
-                if (!userAns || !expected) continue;
-
-                if (userAns === expected) {
-                    correct++;
-                    continue;
-                }
-
-                if (isCambridge7Test2) {
-                    if (id === 11 && (userAns === 'c' || userAns.startsWith('c.'))) correct++;
-                    else if (id === 12 && (userAns === 'd' || userAns.startsWith('d.'))) correct++;
-                    else if (id === 13 && (userAns === 'a' || userAns.startsWith('a.'))) correct++;
-                    else if (id === 40 && (userAns === 'c' || userAns.startsWith('c.'))) correct++;
-                    else if (id === 22 && (userAns === 'food bills' || userAns === 'costs' || userAns === 'food costs')) correct++;
-                    else if (id === 23 && (userAns === 'intensive farming' || userAns === 'modern intensive farming')) correct++;
-                    else if (id === 24 && userAns === 'organic farming') correct++;
-                    else if (id === 25 && userAns === 'greener food standard') correct++;
-                    else if (id === 26 && (userAns === 'farmers and consumers' || userAns === 'consumers and farmers')) correct++;
-                    else if (id === 27 && (userAns === 'vii' || userAns === '7')) correct++;
-                    else if (id === 28 && (userAns === 'viii' || userAns === '8')) correct++;
-                    else if (id === 29 && (userAns === 'v' || userAns === '5')) correct++;
-                    else if (id === 30 && (userAns === 'vi' || userAns === '6')) correct++;
-                    else if (id === 36 && (userAns === 'd' || userAns.startsWith('d.'))) correct++;
-                    else if (id === 37 && (userAns === 'e' || userAns.startsWith('e.'))) correct++;
-                    else if (id === 38 && (userAns === 'g' || userAns.startsWith('g.'))) correct++;
-                    else if (id === 39 && (userAns === 'i' || userAns.startsWith('i.'))) correct++;
-                } else if (isCambridge7Test3) {
-                    if (id === 26 && (userAns === 'c' || userAns.startsWith('c.'))) correct++;
-                    else if (id === 40 && (userAns === 'c' || userAns.startsWith('c.'))) correct++;
-                    else if (id === 14 && (userAns === 'iv' || userAns === '4')) correct++;
-                    else if (id === 15 && (userAns === 'vii' || userAns === '7')) correct++;
-                    else if (id === 16 && (userAns === 'ii' || userAns === '2')) correct++;
-                    else if (id === 17 && (userAns === 'ix' || userAns === '9')) correct++;
-                    else if (id === 18 && (userAns === 'i' || userAns === '1')) correct++;
-                    else if (id === 19 && (userAns === 'vi' || userAns === '6')) correct++;
-                    else if (id === 34 && (userAns === '4' || userAns.startsWith('4.'))) correct++;
-                    else if (id === 35 && (userAns === '8' || userAns.startsWith('8.'))) correct++;
-                    else if (id === 36 && (userAns === '6' || userAns.startsWith('6.'))) correct++;
-                    else if (id === 37 && (userAns === '10' || userAns.startsWith('10.'))) correct++;
-                    else if (id === 38 && (userAns === '5' || userAns.startsWith('5.'))) correct++;
-                    else if (id === 39 && (userAns === '2' || userAns.startsWith('2.'))) correct++;
-                } else if (isCambridge7Test4) {
-                    if (id === 8 && (userAns === 'wooden pulleys' || userAns === 'pulleys')) correct++;
-                    else if (id === 9 && userAns === 'stone') correct++;
-                    else if (id === 10 && (userAns === 'accomplished sailors' || userAns === 'sailors')) correct++;
-                    else if (id === 11 && (userAns === 'modern glider' || userAns === 'glider')) correct++;
-                    else if (id === 12 && userAns === 'flight') correct++;
-                    else if (id === 13 && userAns === 'messages') correct++;
-                    else if (id === 27 && (userAns === 'c' || userAns.startsWith('c.'))) correct++;
-                    else if (id === 28 && (userAns === 'b' || userAns.startsWith('b.'))) correct++;
-                    else if (id === 29 && (userAns === 'd' || userAns.startsWith('d.'))) correct++;
-                    else if (id === 34 && (userAns === 'unexpected' || userAns === 'intense')) correct++;
-                }
-            }
-            const timeSpent = Math.max(1, Math.round(elapsed / 60));
-            const band = rawToBand(correct);
-            if (simulation) {
-                simulation.onComplete({ skill: 'reading', band, score: correct, timeSpent, criteria: [] });
-            } else {
-                setScore(correct);
-                addAttempt({
-                    id: Date.now(),
-                    skill: 'reading',
-                    band,
-                    score: correct,
-                    timeSpent,
-                    criteria: [],
-                    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                });
-            }
-            setTestState('completed');
-        }, 900);
+            setIsProcessingSubmission(false);
+            setResultsPayload(payload);
+            setTestState('results');
+        }, 1600);
     };
 
     // 1. Passage matching logic by active part (with robust static fallback)
@@ -1225,7 +1250,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
             : `${activePart === 3 ? 14 : 13} questions • ${testDifficulty}`,
         content_html: isCambridge7Test1
             ? (STATIC_PASSAGES[activePart]?.content_html || '')
-            : (dynamicPassage?.content_html || ''),
+            : (dynamicPassage?.content_html || STATIC_PASSAGES[activePart]?.content_html || ''),
     };
 
     const activeQuestions = questions.filter(
@@ -1239,6 +1264,14 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
     };
 
     const goTo = (id: number) => {
+        if (isPartPractice) {
+            const minId = activePart === 1 ? 1 : activePart === 2 ? 14 : 27;
+            const maxId = activePart === 1 ? 13 : activePart === 2 ? 26 : 40;
+            const clamped = Math.max(minId, Math.min(maxId, id));
+            setActiveId(clamped);
+            scrollToQuestion(clamped);
+            return;
+        }
         setActiveId(id);
         const targetPart: 1 | 2 | 3 = id <= 13 ? 1 : id <= 26 ? 2 : 3;
         if (targetPart !== activePart) {
@@ -1249,6 +1282,14 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
 
     const navigateQuestion = (dir: 1 | -1) => {
         const nextId = activeId + dir;
+        if (isPartPractice) {
+            const minId = activePart === 1 ? 1 : activePart === 2 ? 14 : 27;
+            const maxId = activePart === 1 ? 13 : activePart === 2 ? 26 : 40;
+            if (nextId >= minId && nextId <= maxId) {
+                goTo(nextId);
+            }
+            return;
+        }
         if (nextId >= 1 && nextId <= 40) {
             goTo(nextId);
         }
@@ -1388,6 +1429,14 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
     };
 
     if (testState === 'lobby') {
+        if (isPartPractice) {
+            if (onExit) {
+                onExit();
+            } else {
+                setTestState('active');
+            }
+            return null;
+        }
         return (
             <IELTSLobbyCard
                 skill="reading"
@@ -1396,6 +1445,27 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                 subtitle="Official split-pane IELTS Academic Reading exam environment."
                 onStart={() => setTestState('active')}
             />
+        );
+    }
+
+    if (testState === 'results' && resultsPayload) {
+        return (
+            <div className="flex-1 h-full w-full overflow-hidden bg-gray-50 flex flex-col">
+                <ReadingExamResultsView
+                    results={resultsPayload}
+                    onBack={() => {
+                        window.history.pushState({}, '', '/ielts/reading');
+                        handleExit();
+                    }}
+                    onRetake={() => {
+                        setAnswers({});
+                        setElapsed(0);
+                        setResultsPayload(null);
+                        setTestState('active');
+                        window.history.pushState({}, '', '/ielts/reading');
+                    }}
+                />
+            </div>
         );
     }
 
@@ -1420,6 +1490,18 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
 
     return (
         <div className="flex flex-col h-full w-full relative bg-[#FFFFFF] text-black font-sans min-w-0 overflow-hidden" style={{ flex: 1 }}>
+            {/* Full-Screen Submission Processing Loader (1.2 - 2.0s) */}
+            {isProcessingSubmission && (
+                <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/85 backdrop-blur-md transition-all duration-300">
+                    <div className="bg-[#18191c] border border-zinc-800 rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl flex flex-col items-center text-center">
+                        <div className="w-14 h-14 relative flex items-center justify-center mb-5">
+                            <div className="w-14 h-14 border-4 border-red-500/20 border-t-red-600 rounded-full animate-spin"></div>
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-2">Calculating Band Score & Processing Analytics...</h3>
+                        <p className="text-xs text-zinc-400">Analyzing your answers, matching passage citations, and preparing your split-screen review panel.</p>
+                    </div>
+                </div>
+            )}
             {/* ── Global Header (Dark Sticky Header Bar) ── */}
             <header className="shrink-0 h-14 bg-[#121212] border-b border-neutral-800 flex items-center justify-between px-6 z-20">
                 {/* Left: Exit button + Test title */}
@@ -1439,7 +1521,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                             {sourceType === 'cambridge' ? `CAMBRIDGE ${bookNumber}${category === 'general' ? ' (GT)' : ''}` : `MOCK SERIES ${bookNumber}`}
                         </span>
                         <h1 className="text-base font-bold text-white leading-tight">
-                            Reading Test {testNumber}
+                            {isPartPractice ? `Reading Test ${testNumber} · Passage ${activePart}` : `Reading Test ${testNumber}`}
                         </h1>
                     </div>
                 </div>
@@ -3947,103 +4029,122 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
             {/* ── FOOTER BAR (Strict IELTS Bottom Navigation Dock) ── */}
             <footer className="shrink-0 h-[56px] bg-white border-t border-gray-200 flex items-center justify-between px-6 w-full z-10 select-none">
                 
-                {/* ── LEFT SECTION ── */}
-                <div className="flex items-center gap-6">
-                    {activePart === 1 ? (
-                        /* Part 1 is Active: Displays Part 1 tab + horizontal list of question buttons 1 through 13 */
-                        <div className="flex items-center gap-3">
-                            <span className="font-bold text-sm text-gray-900">Part 1</span>
-                            <div className="flex items-center gap-1.5">
-                                {Array.from({ length: 13 }, (_, idx) => renderQuestionButton(idx + 1))}
-                            </div>
-                        </div>
-                    ) : activePart === 2 ? (
-                        /* Part 2 is Active: Part 1 becomes a compact status pill on the far left */
-                        <button
-                            onClick={() => { setActivePart(1); goTo(1); }}
-                            className="text-left group cursor-pointer"
-                        >
-                            <div className="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Part 1</div>
-                            <div className="text-[11px] text-gray-400">{getAnsweredCount(1)} of 13</div>
-                        </button>
-                    ) : (
-                        /* Part 3 is Active: Part 1 and Part 2 shift to compact status pills on the left side */
-                        <div className="flex items-center gap-6">
-                            <button
-                                onClick={() => { setActivePart(1); goTo(1); }}
-                                className="text-left group cursor-pointer"
-                            >
-                                <div className="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Part 1</div>
-                                <div className="text-[11px] text-gray-400">{getAnsweredCount(1)} of 13</div>
-                            </button>
-                            <button
-                                onClick={() => { setActivePart(2); goTo(14); }}
-                                className="text-left group cursor-pointer"
-                            >
-                                <div className="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Part 2</div>
-                                <div className="text-[11px] text-gray-400">{getAnsweredCount(2)} of 13</div>
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                {/* ── CENTER SECTION ── */}
-                {activePart === 2 ? (
-                    /* Part 2 is Active: Part 2 expands in place to display question buttons 14 through 26 */
+                {isPartPractice ? (
+                    /* Strict Part Practice Mode: Only display active single part/passage */
                     <div className="flex items-center gap-3">
-                        <span className="font-bold text-sm text-gray-900">Part 2</span>
+                        <span className="font-bold text-sm text-gray-900">Passage {activePart}</span>
                         <div className="flex items-center gap-1.5">
-                            {Array.from({ length: 13 }, (_, idx) => renderQuestionButton(idx + 14))}
+                            {activePart === 1 && Array.from({ length: 13 }, (_, idx) => renderQuestionButton(idx + 1))}
+                            {activePart === 2 && Array.from({ length: 13 }, (_, idx) => renderQuestionButton(idx + 14))}
+                            {activePart === 3 && Array.from({ length: 14 }, (_, idx) => renderQuestionButton(idx + 27))}
                         </div>
                     </div>
                 ) : (
-                    <div />
+                    /* ── Full Mock Exam Navigation ── */
+                    <>
+                        {/* ── LEFT SECTION ── */}
+                        <div className="flex items-center gap-6">
+                            {activePart === 1 ? (
+                                /* Part 1 is Active: Displays Part 1 tab + horizontal list of question buttons 1 through 13 */
+                                <div className="flex items-center gap-3">
+                                    <span className="font-bold text-sm text-gray-900">Part 1</span>
+                                    <div className="flex items-center gap-1.5">
+                                        {Array.from({ length: 13 }, (_, idx) => renderQuestionButton(idx + 1))}
+                                    </div>
+                                </div>
+                            ) : activePart === 2 ? (
+                                /* Part 2 is Active: Part 1 becomes a compact status pill on the far left */
+                                <button
+                                    onClick={() => { setActivePart(1); goTo(1); }}
+                                    className="text-left group cursor-pointer"
+                                >
+                                    <div className="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Part 1</div>
+                                    <div className="text-[11px] text-gray-400">{getAnsweredCount(1)} of 13</div>
+                                </button>
+                            ) : (
+                                /* Part 3 is Active: Part 1 and Part 2 shift to compact status pills on the left side */
+                                <div className="flex items-center gap-6">
+                                    <button
+                                        onClick={() => { setActivePart(1); goTo(1); }}
+                                        className="text-left group cursor-pointer"
+                                    >
+                                        <div className="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Part 1</div>
+                                        <div className="text-[11px] text-gray-400">{getAnsweredCount(1)} of 13</div>
+                                    </button>
+                                    <button
+                                        onClick={() => { setActivePart(2); goTo(14); }}
+                                        className="text-left group cursor-pointer"
+                                    >
+                                        <div className="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Part 2</div>
+                                        <div className="text-[11px] text-gray-400">{getAnsweredCount(2)} of 13</div>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* ── CENTER SECTION ── */}
+                        {activePart === 2 ? (
+                            /* Part 2 is Active: Part 2 expands in place to display question buttons 14 through 26 */
+                            <div className="flex items-center gap-3">
+                                <span className="font-bold text-sm text-gray-900">Part 2</span>
+                                <div className="flex items-center gap-1.5">
+                                    {Array.from({ length: 13 }, (_, idx) => renderQuestionButton(idx + 14))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div />
+                        )}
+                    </>
                 )}
 
                 {/* ── RIGHT SECTION & PAGINATION ── */}
                 <div className="flex items-center gap-6">
-                    {activePart === 1 ? (
-                        /* Part 1 is Active: Part 2 (0 of 13) and Part 3 (0 of 14) remain compact status pills on right side */
-                        <div className="flex items-center gap-6">
-                            <button
-                                onClick={() => { setActivePart(2); goTo(14); }}
-                                className="text-left group cursor-pointer"
-                            >
-                                <div className="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Part 2</div>
-                                <div className="text-[11px] text-gray-400">{getAnsweredCount(2)} of 13</div>
-                            </button>
-                            <button
-                                onClick={() => { setActivePart(3); goTo(27); }}
-                                className="text-left group cursor-pointer"
-                            >
-                                <div className="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Part 3</div>
-                                <div className="text-[11px] text-gray-400">{getAnsweredCount(3)} of 14</div>
-                            </button>
-                        </div>
-                    ) : activePart === 2 ? (
-                        /* Part 2 is Active: Part 3 (0 of 14) remains a compact status pill on the right side */
-                        <button
-                            onClick={() => { setActivePart(3); goTo(27); }}
-                            className="text-left group cursor-pointer"
-                        >
-                            <div className="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Part 3</div>
-                            <div className="text-[11px] text-gray-400">{getAnsweredCount(3)} of 14</div>
-                        </button>
-                    ) : (
-                        /* Part 3 is Active: Part 3 expands to display question buttons 27 through 40 */
-                        <div className="flex items-center gap-3">
-                            <span className="font-bold text-sm text-gray-900">Part 3</span>
-                            <div className="flex items-center gap-1.5">
-                                {Array.from({ length: 14 }, (_, idx) => renderQuestionButton(idx + 27))}
-                            </div>
-                        </div>
+                    {!isPartPractice && (
+                        <>
+                            {activePart === 1 ? (
+                                /* Part 1 is Active: Part 2 (0 of 13) and Part 3 (0 of 14) remain compact status pills on right side */
+                                <div className="flex items-center gap-6">
+                                    <button
+                                        onClick={() => { setActivePart(2); goTo(14); }}
+                                        className="text-left group cursor-pointer"
+                                    >
+                                        <div className="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Part 2</div>
+                                        <div className="text-[11px] text-gray-400">{getAnsweredCount(2)} of 13</div>
+                                    </button>
+                                    <button
+                                        onClick={() => { setActivePart(3); goTo(27); }}
+                                        className="text-left group cursor-pointer"
+                                    >
+                                        <div className="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Part 3</div>
+                                        <div className="text-[11px] text-gray-400">{getAnsweredCount(3)} of 14</div>
+                                    </button>
+                                </div>
+                            ) : activePart === 2 ? (
+                                /* Part 2 is Active: Part 3 (0 of 14) remains a compact status pill on the right side */
+                                <button
+                                    onClick={() => { setActivePart(3); goTo(27); }}
+                                    className="text-left group cursor-pointer"
+                                >
+                                    <div className="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Part 3</div>
+                                    <div className="text-[11px] text-gray-400">{getAnsweredCount(3)} of 14</div>
+                                </button>
+                            ) : (
+                                /* Part 3 is Active: Part 3 expands to display question buttons 27 through 40 */
+                                <div className="flex items-center gap-3">
+                                    <span className="font-bold text-sm text-gray-900">Part 3</span>
+                                    <div className="flex items-center gap-1.5">
+                                        {Array.from({ length: 14 }, (_, idx) => renderQuestionButton(idx + 27))}
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     )}
 
                     {/* Fixed Pagination Arrows */}
                     <div className="flex items-center gap-1.5 shrink-0 pl-3 border-l border-gray-100">
                         <button
                             onClick={() => navigateQuestion(-1)}
-                            disabled={activeId <= 1}
+                            disabled={isPartPractice ? (activePart === 1 ? activeId <= 1 : activePart === 2 ? activeId <= 14 : activeId <= 27) : activeId <= 1}
                             className="w-8 h-8 rounded-md bg-[#333333] hover:bg-black text-white flex items-center justify-center text-sm font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                             title="Previous Question"
                         >
@@ -4051,7 +4152,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                         </button>
                         <button
                             onClick={() => navigateQuestion(1)}
-                            disabled={activeId >= 40}
+                            disabled={isPartPractice ? (activePart === 1 ? activeId >= 13 : activePart === 2 ? activeId >= 26 : activeId >= 40) : activeId >= 40}
                             className="w-8 h-8 rounded-md bg-[#222222] hover:bg-black text-white flex items-center justify-center text-sm font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                             title="Next Question"
                         >

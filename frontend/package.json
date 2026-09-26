@@ -12,6 +12,7 @@
     "@google/genai": "^0.14.0",
     "@supabase/supabase-js": "^2.108.2",
     "framer-motion": "^11.3.12",
+    "lucide-react": "^1.48.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-player": "^3.4.0",
