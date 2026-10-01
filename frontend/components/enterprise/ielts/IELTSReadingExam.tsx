@@ -8,6 +8,7 @@ import DynamicRightPanel, { type DynamicQuestion } from './DynamicRightPanel';
 import ReadingExamResultsView from './results/ReadingExamResultsView';
 import { generateExamResultsPayload } from './results/readingResultsGenerator';
 import type { ExamResultsPayload } from './results/readingResultsTypes';
+import { getSnippetQuestionsForExam, getSnippetAnswersKey } from './data/cambridgeQuestionSnippets';
 
 // ── Icons ──
 const Check = ({ size = 24, strokeWidth = 3, className = '' }: any) => (
@@ -1026,68 +1027,186 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
     useEffect(() => {
         let isMounted = true;
         async function loadSupabaseExamData() {
+            if (isMounted) {
+                setIsLoading(true);
+                setPassages([]);
+                setQuestions([]);
+            }
             try {
-                // 1. Fetch Exam
-                const { data: examData, error: examErr } = await supabase
+                const numBook = Number(bookNumber) || 7;
+                const numTest = Number(testNumber) || 1;
+                const hexPrefix = ('c' + numBook).padEnd(8, '0');
+                const hexSuffix = String(numTest).padStart(12, '0');
+                const deterministicId = `${hexPrefix}-0000-0000-0000-${hexSuffix}`;
+
+                console.log('[Reading Exam Debug] Query Params:', {
+                    book: numBook,
+                    testNum: numTest,
+                    deterministicId,
+                    sourceType,
+                    category,
+                });
+
+                // 1. Fetch Exam record with multi-strategy disambiguation
+                let examData: any = null;
+                let examErr: any = null;
+
+                // Strategy A: Direct deterministic ID (used by Cambridge 7–21 Academic Reading)
+                const resById = await (supabase as any)
                     .from('exams')
                     .select('*')
-                    .ilike('title', `%Cambridge ${bookNumber}%`)
-                    .eq('test_number', Number(testNumber))
+                    .eq('id', deterministicId)
                     .maybeSingle();
 
-                if (examErr || !examData) {
-                    if (isMounted) setExamId(null);
-                    return;
+                if (resById?.data) {
+                    examData = resById.data;
+                } else if (resById?.error) {
+                    examErr = resById.error;
                 }
 
+                // Strategy B: Query by Title excluding Listening to resolve 'multiple rows returned' collision
+                if (!examData) {
+                    const resByTitle = await (supabase as any)
+                        .from('exams')
+                        .select('*')
+                        .ilike('title', `%Cambridge%${numBook}%`)
+                        .not('title', 'ilike', '%Listening%')
+                        .eq('test_number', numTest)
+                        .limit(1);
+
+                    if (resByTitle?.data && resByTitle.data.length > 0) {
+                        examData = resByTitle.data[0];
+                    } else if (resByTitle?.error) {
+                        examErr = resByTitle.error;
+                    }
+                }
+
+                // Strategy C: Check fallback tests table if exams table has no matching row
+                if (!examData) {
+                    const resByTestsTable = await (supabase as any)
+                        .from('tests')
+                        .select('*')
+                        .ilike('title', `%Cambridge%${numBook}%`)
+                        .not('title', 'ilike', '%Listening%')
+                        .eq('test_number', numTest)
+                        .limit(1);
+
+                    if (resByTestsTable?.data && resByTestsTable.data.length > 0) {
+                        examData = resByTestsTable.data[0];
+                    } else if (resByTestsTable?.error) {
+                        examErr = resByTestsTable.error;
+                    }
+                }
+
+                if (examErr) {
+                    console.error('[Reading Exam Debug] Supabase Fetch Error:', examErr.message, examErr.details);
+                }
+                if (!examData) {
+                    console.warn(`[Reading Exam Debug] No exam row found for Cambridge ${numBook} Test ${numTest}, proceeding with deterministic ID: ${deterministicId}`);
+                }
+                console.log('[Reading Exam Debug] Supabase Returned Exam:', examData ? { id: examData.id, title: examData.title } : null);
+
+                const resolvedExamId = examData?.id || deterministicId;
+
                 if (isMounted) {
-                    setExamId((examData as any).id);
+                    setExamId(resolvedExamId);
                 }
 
                 // 2. Fetch Passages
-                const { data: passageData, error: passageErr } = await supabase
+                const { data: passageData, error: passageErr } = await (supabase as any)
                     .from('passages')
                     .select('*')
-                    .eq('exam_id', (examData as any).id)
+                    .eq('exam_id', resolvedExamId)
                     .order('part_number', { ascending: true });
 
                 if (passageErr) {
-                    console.error('Supabase Passages Query Error:', passageErr);
+                    console.error('[Reading Exam Debug] Supabase Passages Fetch Error:', passageErr.message, passageErr.details);
                 }
+                console.log('[Reading Exam Debug] Supabase Returned Passages Rows:', passageData?.length ?? 0, passageData);
 
                 // 3. Fetch Questions dynamically via sections & question_groups
-                const examUuid = (examData as any).id;
                 let questionData: any[] = [];
                 try {
-                    const { data: secData } = await supabase
+                    const { data: secData, error: secErr } = await (supabase as any)
                         .from('sections')
-                        .select('id')
-                        .or(`exam_id.eq.${examUuid},test_id.eq.${examUuid}`);
+                        .select('id, part_number, passage_title, total_questions')
+                        .or(`exam_id.eq.${resolvedExamId},test_id.eq.${resolvedExamId}`)
+                        .order('part_number', { ascending: true });
 
-                    const secIds = (secData || []).map((s: any) => s.id);
+                    if (secErr) {
+                        console.warn('[Reading Exam Debug] Sections Query Note:', secErr.message);
+                    }
+                    console.log('[Reading Exam Debug] Supabase Returned Sections Rows:', secData?.length ?? 0, secData);
+
+                    // Differentiate reading sections from listening sections
+                    const isReadingSection = (sec: any) => {
+                        if (!passageData || passageData.length === 0) return true;
+                        const sTitle = (sec.passage_title || '').toLowerCase().trim();
+                        const matchesPassage = passageData.some((p: any) => {
+                            const pTitle = (p.title || '').toLowerCase().trim();
+                            return pTitle && (sTitle.includes(pTitle) || pTitle.includes(sTitle));
+                        });
+                        return matchesPassage || Number(sec.total_questions) > 10;
+                    };
+                    const readingSecData = (secData || []).filter(isReadingSection);
+
+                    const secIds = readingSecData.map((s: any) => s.id);
+                    const secMap: Record<string, number> = {};
+                    readingSecData.forEach((s: any) => {
+                        secMap[s.id] = Number(s.part_number);
+                    });
+
                     if (secIds.length > 0) {
-                        const { data: qgData } = await supabase
+                        const { data: qgData, error: qgErr } = await (supabase as any)
                             .from('question_groups')
-                            .select('id')
-                            .in('section_id', secIds);
+                            .select('id, section_id, question_type, instructions, start_question, end_question, choices')
+                            .in('section_id', secIds)
+                            .order('start_question', { ascending: true });
+
+                        if (qgErr) {
+                            console.error('[Reading Exam Debug] Question Groups Query Error:', qgErr);
+                        }
+                        console.log('[Reading Exam Debug] Supabase Returned Question Groups Rows:', qgData?.length ?? 0);
+
+                        const qgMap: Record<string, number> = {};
+                        (qgData || []).forEach((g: any) => {
+                            qgMap[g.id] = secMap[g.section_id] || 1;
+                        });
 
                         const groupIds = (qgData || []).map((g: any) => g.id);
                         if (groupIds.length > 0) {
-                            const { data: qs } = await supabase
+                            const { data: qs, error: qsErr } = await (supabase as any)
                                 .from('questions')
                                 .select('*')
                                 .in('group_id', groupIds)
                                 .order('question_number', { ascending: true });
-                            questionData = qs || [];
+
+                            if (qsErr) {
+                                console.error('[Reading Exam Debug] Questions Query Error:', qsErr);
+                            }
+                            console.log('[Reading Exam Debug] Supabase Returned Questions Rows:', qs?.length ?? 0);
+
+                            questionData = (qs || []).map((q: any) => ({
+                                ...q,
+                                part_number: qgMap[q.group_id] || (q.question_number <= 13 ? 1 : q.question_number <= 26 ? 2 : 3),
+                                prompt_text: q.question_text || q.prompt || '',
+                            }));
                         }
                     }
                 } catch (qErr) {
-                    console.warn('Note on relational question prefetch:', qErr);
+                    console.warn('[Reading Exam Debug] Relational question prefetch error:', qErr);
                 }
 
                 if (isMounted) {
-                    if (passageData && passageData.length > 0) setPassages(passageData);
-                    if (questionData && questionData.length > 0) setQuestions(questionData);
+                    // Hybrid Fallback for Cambridge 10-21:
+                    // If questionData is empty and numBook >= 10, load questions & answers from snippets!
+                    if (questionData.length === 0 && numBook >= 10) {
+                        const snippetQuestions = getSnippetQuestionsForExam(numBook, numTest) as any[];
+                        questionData = snippetQuestions;
+                    }
+
+                    setPassages(passageData || []);
+                    setQuestions(questionData || []);
 
                     const keyMap: Record<number, string> = {
                         ...(isCambridge7Test4
@@ -1098,6 +1217,9 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                             ? CAMBRIDGE_7_TEST_2_ANSWERS_KEY
                             : STATIC_ANSWERS_KEY),
                     };
+                    if (numBook >= 10) {
+                        Object.assign(keyMap, getSnippetAnswersKey(numBook, numTest));
+                    }
                     (questionData || []).forEach((q: any) => {
                         if (q.question_number && q.correct_answer) {
                             keyMap[q.question_number] = q.correct_answer;
@@ -1105,8 +1227,12 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                     });
                     setAnswersKey(keyMap);
                 }
-            } catch (err) {
-                console.error('Error fetching Supabase exam data:', err);
+            } catch (err: any) {
+                console.error('[Reading Exam Debug] Unexpected error fetching Supabase exam data:', err);
+            } finally {
+                if (isMounted) {
+                    setIsLoading(false);
+                }
             }
         }
 
@@ -1114,7 +1240,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
         return () => {
             isMounted = false;
         };
-    }, [bookNumber, testNumber, isCambridge7Test2, isCambridge7Test3, isCambridge7Test4]);
+    }, [bookNumber, testNumber, sourceType, category, isCambridge7Test2, isCambridge7Test3, isCambridge7Test4]);
 
     useEffect(() => {
         if (testState !== 'active') return;
@@ -1229,33 +1355,49 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
         (p) => Number(p.part_number) === Number(activePart)
     );
 
+    const dynamicPassageHtml = dynamicPassage
+        ? (dynamicPassage.content_html || (dynamicPassage as any).passage_text || (dynamicPassage as any).content || (dynamicPassage as any).body || '')
+        : '';
+
     const activePassage = {
-        title: isCambridge7Test1
-            ? (STATIC_PASSAGES[activePart]?.title || `Cambridge 7 Test 1 - Part ${activePart}`)
-            : isCambridge7Test2
-            ? (dynamicPassage?.title || CAMBRIDGE_7_TEST_2_RIGHT_PANEL[`part${activePart}`]?.title || `Cambridge 7 Test 2 - Part ${activePart}`)
-            : isCambridge7Test3
-            ? (dynamicPassage?.title || CAMBRIDGE_7_TEST_3_RIGHT_PANEL[`part${activePart}`]?.title || `Cambridge 7 Test 3 - Part ${activePart}`)
-            : isCambridge7Test4
-            ? (dynamicPassage?.title || CAMBRIDGE_7_TEST_4_RIGHT_PANEL[`part${activePart}`]?.title || `Cambridge 7 Test 4 - Part ${activePart}`)
-            : (dynamicPassage?.title || (sourceType === 'cambridge' ? `Cambridge ${bookNumber} Test ${testNumber} - Part ${activePart}` : `Mock Series ${bookNumber} Test ${testNumber} - Part ${activePart}`)),
-        subtitle: isCambridge7Test2
-            ? (CAMBRIDGE_7_TEST_2_RIGHT_PANEL[`part${activePart}`]?.subtitle || `${activePart === 3 ? 14 : 13} questions • medium`)
-            : isCambridge7Test3
-            ? (CAMBRIDGE_7_TEST_3_RIGHT_PANEL[`part${activePart}`]?.subtitle || `${activePart === 3 ? 14 : 13} questions • easy`)
-            : isCambridge7Test4
-            ? (CAMBRIDGE_7_TEST_4_RIGHT_PANEL[`part${activePart}`]?.subtitle || `${activePart === 3 ? 14 : 13} questions • easy`)
-            : isCambridge7Test1
-            ? (STATIC_PASSAGES[activePart]?.subtitle || `${activePart === 3 ? 14 : 13} questions • easy`)
-            : `${activePart === 3 ? 14 : 13} questions • ${testDifficulty}`,
-        content_html: isCambridge7Test1
-            ? (STATIC_PASSAGES[activePart]?.content_html || '')
-            : (dynamicPassage?.content_html || STATIC_PASSAGES[activePart]?.content_html || ''),
+        title: dynamicPassage?.title || (
+            isCambridge7Test1
+                ? (STATIC_PASSAGES[activePart]?.title || `Cambridge 7 Test 1 - Part ${activePart}`)
+                : isCambridge7Test2
+                ? (CAMBRIDGE_7_TEST_2_RIGHT_PANEL[`part${activePart}`]?.title || `Cambridge 7 Test 2 - Part ${activePart}`)
+                : isCambridge7Test3
+                ? (CAMBRIDGE_7_TEST_3_RIGHT_PANEL[`part${activePart}`]?.title || `Cambridge 7 Test 3 - Part ${activePart}`)
+                : isCambridge7Test4
+                ? (CAMBRIDGE_7_TEST_4_RIGHT_PANEL[`part${activePart}`]?.title || `Cambridge 7 Test 4 - Part ${activePart}`)
+                : (sourceType === 'cambridge' ? `Cambridge ${bookNumber} Test ${testNumber} - Part ${activePart}` : `Mock Series ${bookNumber} Test ${testNumber} - Part ${activePart}`)
+        ),
+        subtitle: (dynamicPassage as any)?.subtitle || (
+            isCambridge7Test2
+                ? (CAMBRIDGE_7_TEST_2_RIGHT_PANEL[`part${activePart}`]?.subtitle || `${activePart === 3 ? 14 : 13} questions • medium`)
+                : isCambridge7Test3
+                ? (CAMBRIDGE_7_TEST_3_RIGHT_PANEL[`part${activePart}`]?.subtitle || `${activePart === 3 ? 14 : 13} questions • easy`)
+                : isCambridge7Test4
+                ? (CAMBRIDGE_7_TEST_4_RIGHT_PANEL[`part${activePart}`]?.subtitle || `${activePart === 3 ? 14 : 13} questions • easy`)
+                : isCambridge7Test1
+                ? (STATIC_PASSAGES[activePart]?.subtitle || `${activePart === 3 ? 14 : 13} questions • easy`)
+                : `${activePart === 3 ? 14 : 13} questions • ${testDifficulty}`
+        ),
+        content_html: dynamicPassageHtml || (
+            isCambridge7Test1
+                ? (STATIC_PASSAGES[activePart]?.content_html || '')
+                : ''
+        ),
     };
 
-    const activeQuestions = questions.filter(
-        (q) => q.passage_id === dynamicPassage?.id
-    );
+    const activeQuestions = questions.filter((q: any) => {
+        if (q.part_number) return Number(q.part_number) === Number(activePart);
+        if (dynamicPassage?.id && q.passage_id === dynamicPassage.id) return true;
+        const qNum = Number(q.question_number);
+        if (activePart === 1) return qNum >= 1 && qNum <= 13;
+        if (activePart === 2) return qNum >= 14 && qNum <= 26;
+        if (activePart === 3) return qNum >= 27 && qNum <= 40;
+        return false;
+    });
 
     const scrollToQuestion = (id: number) => {
         window.setTimeout(() => {
@@ -1584,9 +1726,25 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                         </div>
                     )}
 
-                    {/* Passage Content or Fallback Notice */}
+                    {/* Passage Content or Loading or Fallback Notice */}
                     <div className="space-y-4" onClick={handleTextClick}>
-                        {activePassage.content_html ? (
+                        {isLoading ? (
+                            <div className="space-y-6 animate-pulse py-6">
+                                <div className="h-7 bg-gray-200 rounded-lg w-2/5 mb-6" />
+                                <div className="space-y-3">
+                                    <div className="h-4 bg-gray-100 rounded-md w-full" />
+                                    <div className="h-4 bg-gray-100 rounded-md w-11/12" />
+                                    <div className="h-4 bg-gray-100 rounded-md w-full" />
+                                    <div className="h-4 bg-gray-100 rounded-md w-4/5" />
+                                </div>
+                                <div className="pt-4 space-y-3">
+                                    <div className="h-4 bg-gray-100 rounded-md w-full" />
+                                    <div className="h-4 bg-gray-100 rounded-md w-5/6" />
+                                    <div className="h-4 bg-gray-100 rounded-md w-full" />
+                                    <div className="h-4 bg-gray-100 rounded-md w-3/4" />
+                                </div>
+                            </div>
+                        ) : activePassage.content_html ? (
                             <div 
                                 className="prose max-w-none text-[15px] leading-[1.8] text-gray-800"
                                 dangerouslySetInnerHTML={{ __html: activePassage.content_html }}
@@ -1640,7 +1798,10 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
 
                     <DynamicRightPanel
                         examId={examId}
+                        bookNumber={Number(bookNumber) || 7}
+                        testNumber={Number(testNumber) || 1}
                         partNumber={activePart}
+                        passageTitle={activePassage.title}
                         answers={answers}
                         onAnswer={setAnswer}
                         activeId={activeId}
@@ -3940,7 +4101,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                                 </div>
                             </div>
                         </div>
-                    ) : (
+                    ) : sectionBlocks.length > 0 ? (
                         /* Dynamic exam questions from Supabase */
                         <div className="space-y-10">
                             {sectionBlocks.map((block, bIdx) => (
@@ -4018,6 +4179,30 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                                     )}
                                 </div>
                             ))}
+                        </div>
+                    ) : (
+                        /* Fallback when neither Cambridge 7 nor dynamic questions exist in Supabase yet */
+                        <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-gray-50/70 rounded-2xl border border-dashed border-gray-300">
+                            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-[#0072CE] flex items-center justify-center mb-4 shadow-2xs">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                    <line x1="16" y1="13" x2="8" y2="13"/>
+                                    <line x1="16" y1="17" x2="8" y2="17"/>
+                                    <polyline points="10 9 9 9 8 9"/>
+                                </svg>
+                            </div>
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-xs font-semibold text-amber-800 mb-3 shadow-2xs">
+                                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                                Questions In Digitization
+                            </div>
+                            <h3 className="text-base font-bold text-gray-900 mb-1.5">Interactive Questions Coming Soon</h3>
+                            <p className="text-sm text-gray-500 max-w-md leading-relaxed mb-4">
+                                The live reading passage for Cambridge {bookNumber} Test {testNumber} Part {activePart} is loaded on the left. Interactive questions for this test are currently being digitized.
+                            </p>
+                            <p className="text-xs text-gray-400 max-w-sm">
+                                Tip: You can read, highlight, and check vocabulary on the left panel, or switch to Cambridge 7, 8, or 9 for complete interactive question sets.
+                            </p>
                         </div>
                     )}
                             </>

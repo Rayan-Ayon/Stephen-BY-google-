@@ -72,6 +72,10 @@ const AppContent: React.FC = () => {
       setShowDashboard(true);
       setInitialView('support');
     }
+    if (path === '/portal/community' || path === '/community' || path.startsWith('/portal/community')) {
+      setShowDashboard(true);
+      setInitialView('community');
+    }
     const orgSession = localStorage.getItem('stephen_active_tenant_session');
     if (path === '/org-space') {
       setIsOrgManager(true);

@@ -14,16 +14,35 @@ export interface ExamDataResult {
 export async function fetchFromSupabase(testId: string, moduleType: string): Promise<any[] | null> {
     try {
         if (moduleType === 'reading') {
-            // Find exam by title/test_id
-            const { data: examData, error: examErr } = await supabase
-                .from('exams')
-                .select('*')
-                .or(`id.eq.${testId},title.ilike.%${testId}%`)
-                .maybeSingle();
+            // Parse book and test number if formatted as slug e.g. cambridge-7-test-1
+            const bookMatch = testId.match(/cambridge[-_ ]?(\d+)/i) || testId.match(/(\d+)/);
+            const testMatch = testId.match(/test[-_ ]?(\d+)/i);
+            const bookNum = bookMatch ? parseInt(bookMatch[1], 10) : null;
+            const testNum = testMatch ? parseInt(testMatch[1], 10) : 1;
+            const hexPrefix = bookNum ? ('c' + bookNum).padEnd(8, '0') : null;
+            const hexSuffix = String(testNum).padStart(12, '0');
+            const deterministicId = hexPrefix ? `${hexPrefix}-0000-0000-0000-${hexSuffix}` : null;
 
-            if (examErr || !examData) return null;
+            let examData: any = null;
+            if (deterministicId) {
+                const res = await (supabase as any).from('exams').select('*').eq('id', deterministicId).maybeSingle();
+                examData = res?.data;
+            }
 
-            const { data: passages } = await supabase
+            if (!examData) {
+                const query = (supabase as any).from('exams').select('*');
+                if (bookNum) {
+                    query.ilike('title', `%Cambridge ${bookNum}%`).not('title', 'ilike', '%Listening%').eq('test_number', testNum);
+                } else {
+                    query.or(`id.eq.${testId},title.ilike.%${testId}%`).not('title', 'ilike', '%Listening%');
+                }
+                const res = await query.limit(1).maybeSingle();
+                examData = res?.data;
+            }
+
+            if (!examData) return null;
+
+            const { data: passages } = await (supabase as any)
                 .from('passages')
                 .select('*')
                 .eq('exam_id', (examData as any).id)
@@ -33,7 +52,7 @@ export async function fetchFromSupabase(testId: string, moduleType: string): Pro
         }
 
         if (moduleType === 'listening') {
-            const { data: sections } = await supabase
+            const { data: sections } = await (supabase as any)
                 .from('sections')
                 .select('*, question_groups(*, questions(*))')
                 .eq('test_id', testId)

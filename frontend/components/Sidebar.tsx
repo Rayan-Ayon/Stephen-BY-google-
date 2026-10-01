@@ -26,6 +26,15 @@ const RepeatIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
     </svg>
 );
 
+const CommunityIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+);
+
 const LifebuoyIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
@@ -659,6 +668,39 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     </span>
                                 )}
                                 {shakingKey === 'student_portal' && isShaking && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
+                                )}
+                            </button>
+                        )}
+                        
+                        {/* Cohort Community Hub */}
+                        {sectionIndex === 0 && (
+                            <button
+                                onClick={() => guardedNavigate('community')}
+                                className={`relative w-full flex items-center p-3 rounded-lg ${textColor} ${hoverClasses} transition-colors duration-200 ${activeItem === 'community' ? activeClasses : ''}${shakingKey === 'community' && isShaking ? ' ring-2 ring-rose-500/80' : ''}`}
+                            >
+                                <div className={`${activeItem === 'community' ? 'text-current' : iconColor} shrink-0`}>
+                                    <CommunityIcon className="w-5 h-5" />
+                                </div>
+                                {isExpanded && (
+                                    <AnimatePresence>
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.2, delay: 0.05 }}
+                                            className="ml-4 font-medium text-[15px] whitespace-nowrap overflow-hidden"
+                                        >
+                                            Cohort Community
+                                        </motion.span>
+                                    </AnimatePresence>
+                                )}
+                                {!isExpanded && (
+                                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-neutral-800 bg-black px-2.5 py-1.5 text-[11px] text-neutral-200 opacity-0 group-hover:opacity-100 pointer-events-none z-10 shadow-xl">
+                                        Cohort Community
+                                    </span>
+                                )}
+                                {shakingKey === 'community' && isShaking && (
                                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 text-sm">🔒</span>
                                 )}
                             </button>

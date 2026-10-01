@@ -2195,8 +2195,8 @@
     "semantic_hash": ""
   },
   "frontend/App.tsx": {
-    "mtime": 1790451942.788262,
-    "ast_hash": "906170d1b743f06668eb0575aaa9267c",
+    "mtime": 1790794421.2137878,
+    "ast_hash": "e2ddb92482521cf0d163a881f1333af1",
     "semantic_hash": ""
   },
   "frontend/components/AddContentView.tsx": {
@@ -2235,8 +2235,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Dashboard.tsx": {
-    "mtime": 1790452103.406817,
-    "ast_hash": "c185c258024c8543ea9f767ffa91c29b",
+    "mtime": 1790794450.2685678,
+    "ast_hash": "c9ad17e3310b7b008ef0b014b3cb4ebc",
     "semantic_hash": ""
   },
   "frontend/components/DebateView.tsx": {
@@ -2315,8 +2315,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Sidebar.tsx": {
-    "mtime": 1790451897.4642694,
-    "ast_hash": "1328b6663cff741f6fb9237e1e16a4bc",
+    "mtime": 1790794492.4698453,
+    "ast_hash": "5fb2bf9b71b5480eaf34ddb25f369b4c",
     "semantic_hash": ""
   },
   "frontend/components/SpaceView.tsx": {
@@ -2390,8 +2390,8 @@
     "semantic_hash": ""
   },
   "frontend/package.json": {
-    "mtime": 1790450277.0790815,
-    "ast_hash": "6729123d9bfef3f3ec3a3dd331177628",
+    "mtime": 1790794118.2885084,
+    "ast_hash": "b20c14c333269d6aff31aaa5accb9df2",
     "semantic_hash": ""
   },
   "frontend/tsconfig.json": {
@@ -2825,8 +2825,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSReadingExam.tsx": {
-    "mtime": 1790451119.38405,
-    "ast_hash": "65c7d57963f2b4232333e72e8dc08955",
+    "mtime": 1790458063.2606013,
+    "ast_hash": "2bbe9542f197614d8f75d1be886deb7a",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSSpeakingExam.tsx": {
@@ -2995,18 +2995,18 @@
     "semantic_hash": ""
   },
   "frontend/components/ReadingHubView.tsx": {
-    "mtime": 1790450534.2650654,
-    "ast_hash": "0c806528168d64d70e883a418fbb589a",
+    "mtime": 1790454388.9460607,
+    "ast_hash": "8c3041639510c7987dd86dc5f972d979",
     "semantic_hash": ""
   },
   "frontend/components/WritingHubView.tsx": {
-    "mtime": 1790036737.4762733,
-    "ast_hash": "a911d62540990e8f52e8abced7c9dc0d",
+    "mtime": 1790454362.195752,
+    "ast_hash": "f9022d806642bdc4beee6bc54398ac6c",
     "semantic_hash": ""
   },
   "frontend/components/ListeningHubView.tsx": {
-    "mtime": 1790036737.4762733,
-    "ast_hash": "a162b192437d5af24b8fa7192c0b3fdc",
+    "mtime": 1790454342.5838678,
+    "ast_hash": "9ca9541f8ce74f7dcdc484abec65cba2",
     "semantic_hash": ""
   },
   "frontend/components/FullMockTestHub.tsx": {
@@ -3205,8 +3205,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/DynamicRightPanel.tsx": {
-    "mtime": 1790256647.8623974,
-    "ast_hash": "f92c0b614579ad70ed350fc3441b56d6",
+    "mtime": 1790458086.8939443,
+    "ast_hash": "10f7c02348709915b37cd7eb06eee8a7",
     "semantic_hash": ""
   },
   "frontend/components/mock-tests/speaking/SpeakingExamWorkspace.tsx": {
@@ -3250,8 +3250,8 @@
     "semantic_hash": ""
   },
   "frontend/src/components/mock-tests/speaking/SpeakingHubView.tsx": {
-    "mtime": 1790367021.068452,
-    "ast_hash": "1c57f3d2f3c218ad1984869b5f8413dc",
+    "mtime": 1790454407.1287475,
+    "ast_hash": "377ae827e4896943df8070780dc0230d",
     "semantic_hash": ""
   },
   "frontend/src/components/mock-tests/speaking/index.ts": {
@@ -3295,13 +3295,173 @@
     "semantic_hash": ""
   },
   "frontend/utils/examDataDispatcher.ts": {
-    "mtime": 1790450666.4374304,
-    "ast_hash": "f4434d55408f6a4883ae65bad0301a41",
+    "mtime": 1790457222.6774418,
+    "ast_hash": "c7f7460fa7ccf4e582e16d5d68b484fd",
     "semantic_hash": ""
   },
   "frontend/components/SupportView.tsx": {
     "mtime": 1790451879.8752854,
     "ast_hash": "8ecd536304bad0fc88f9e0800a9f94f9",
+    "semantic_hash": ""
+  },
+  "frontend/components/onboarding/DeviceCheckWizard.tsx": {
+    "mtime": 1790454189.3621192,
+    "ast_hash": "32ca55c1075bb057c5089512044269af",
+    "semantic_hash": ""
+  },
+  "frontend/components/onboarding/ExamInstructionsScreen.tsx": {
+    "mtime": 1790454154.8597975,
+    "ast_hash": "42e462ffa4a60a6c9ba7d324edc748e6",
+    "semantic_hash": ""
+  },
+  "frontend/components/onboarding/ExamLauncherFlow.tsx": {
+    "mtime": 1790454320.4821079,
+    "ast_hash": "900ad05a7bd587ac200d42b4f49e8218",
+    "semantic_hash": ""
+  },
+  "frontend/components/onboarding/ExamModeSelectionScreen.tsx": {
+    "mtime": 1790454170.5693624,
+    "ast_hash": "e313afe15f38d5523dbedcd0ec659dc2",
+    "semantic_hash": ""
+  },
+  "frontend/components/onboarding/index.ts": {
+    "mtime": 1790454326.2618403,
+    "ast_hash": "0aa4cefd991f336145fd29cca0df94a1",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/ielts/data/cambridgeQuestionSnippets.ts": {
+    "mtime": 1790457924.7071037,
+    "ast_hash": "61910e88737845e1d570fa820582a597",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/BatchPulseBarometer.tsx": {
+    "mtime": 1790794207.337788,
+    "ast_hash": "d48e8eb230028a361e56c542cb7588ad",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/BenchmarkReviewModal.tsx": {
+    "mtime": 1790794321.333527,
+    "ast_hash": "9dfcb9a1983cc38599fcc8e52b2dddfa",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/CenterFeed.tsx": {
+    "mtime": 1790794225.0424266,
+    "ast_hash": "9d4c05cfc8f63130ff4648e7c4d42dc5",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/CohortCommunityPage.tsx": {
+    "mtime": 1790796079.6896122,
+    "ast_hash": "43310ca5bffa0618ae1fc2e3077aae19",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/CohortTopBanner.tsx": {
+    "mtime": 1790794286.4964566,
+    "ast_hash": "309219dd2f4cae8c70d70a1f38e519ef",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/CohortTransparencyMatrix.tsx": {
+    "mtime": 1790794255.7243629,
+    "ast_hash": "0b451b5997c7b520c854342fa85265ba",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/LeftColumnBridge.tsx": {
+    "mtime": 1790794214.8718338,
+    "ast_hash": "2dd3b9270939951e58e757220e0db325",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/LiveActivityTicker.tsx": {
+    "mtime": 1790794266.137189,
+    "ast_hash": "65964ea62687cb3700d4a14479aa817c",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/LiveCallBridge.tsx": {
+    "mtime": 1790794198.6740801,
+    "ast_hash": "939cb3fcad0fd40261a478e47114979f",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/MemberProfileModal.tsx": {
+    "mtime": 1790794334.261894,
+    "ast_hash": "028bc6bbe0d49788affe14c002570ab3",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/PostDrawerModal.tsx": {
+    "mtime": 1790794305.4666462,
+    "ast_hash": "76945cb0c8826ad5c8cc682fcf488a44",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/RightAccountabilityMatrix.tsx": {
+    "mtime": 1790794272.299992,
+    "ast_hash": "d1b6593bb8676ef0df85bc2f4f05c575",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/centerFeedComponents.tsx": {
+    "mtime": 1790794246.7210217,
+    "ast_hash": "f67b8706dd4b9a86a8f39c5cc489f572",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/index.ts": {
+    "mtime": 1790796086.3643897,
+    "ast_hash": "e99e01008d808055ef7771c334cf1789",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/mockCommunityData.ts": {
+    "mtime": 1790795858.8436985,
+    "ast_hash": "60c2046b9d4fe86860d1463c897900b9",
+    "semantic_hash": ""
+  },
+  "frontend/lib/supabaseClient.ts": {
+    "mtime": 1790794558.7156637,
+    "ast_hash": "38b02bd04d6531d226f74d8627dd8b68",
+    "semantic_hash": ""
+  },
+  "frontend/types/community.ts": {
+    "mtime": 1790795816.3194938,
+    "ast_hash": "79bd371dd22a49b3dac60d71c6cf2065",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20261001_cohort_community.sql": {
+    "mtime": 1790794156.0071642,
+    "ast_hash": "2a298c418baab58937dfc4132a91c9fb",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/AcademicQAForum.tsx": {
+    "mtime": 1790796156.9318523,
+    "ast_hash": "a8455fc99a98272f3e9712cbf5a69007",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/AudioVoiceNotePlayer.tsx": {
+    "mtime": 1790795882.1905653,
+    "ast_hash": "d32146ce07193ef3addc1f55f6b383cc",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/BatchClassroomView.tsx": {
+    "mtime": 1790795943.186506,
+    "ast_hash": "cd7edd5514144a10729d040f9dc4898c",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/CohortBatchChat.tsx": {
+    "mtime": 1790795905.1883178,
+    "ast_hash": "aac44092fe063a3216bff88cd6b53a0b",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/DirectMessagingPanel.tsx": {
+    "mtime": 1790795925.0576308,
+    "ast_hash": "2572c392fd780151e99673012d407c36",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/GlobalUserDiscoveryBar.tsx": {
+    "mtime": 1790795872.5970888,
+    "ast_hash": "b20067bf248700e2b0939014fc5c2f41",
+    "semantic_hash": ""
+  },
+  "frontend/components/community/obsidianTokens.ts": {
+    "mtime": 1790795827.617983,
+    "ast_hash": "a450053e361cde842f9cec708f72e56c",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20261001_cohort_community_v2.sql": {
+    "mtime": 1790795794.8505826,
+    "ast_hash": "06dd6faa4d8ea01221ae93b77fecc3e8",
     "semantic_hash": ""
   }
 }

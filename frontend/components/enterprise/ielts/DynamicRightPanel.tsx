@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabaseClient';
+import { getQuestionSnippet } from './data/cambridgeQuestionSnippets';
 
 export interface DynamicQuestion {
     id: string;
@@ -27,6 +28,9 @@ export interface DynamicQuestionGroup {
 export interface DynamicRightPanelProps {
     examId: string | null;
     partNumber: 1 | 2 | 3 | number;
+    bookNumber?: number;
+    testNumber?: number;
+    passageTitle?: string;
     answers: Record<number, string>;
     onAnswer: (questionNumber: number, value: string) => void;
     activeId: number;
@@ -40,6 +44,9 @@ export interface DynamicRightPanelProps {
 export const DynamicRightPanel: React.FC<DynamicRightPanelProps> = ({
     examId,
     partNumber,
+    bookNumber,
+    testNumber,
+    passageTitle,
     answers,
     onAnswer,
     activeId,
@@ -67,20 +74,34 @@ export const DynamicRightPanel: React.FC<DynamicRightPanelProps> = ({
                 let resolvedGroups: DynamicQuestionGroup[] = [];
                 let resolvedQuestions: DynamicQuestion[] = [];
 
+                console.log('[Reading Exam Debug - Right Panel] Querying Section for examId:', examId, 'partNumber:', partNumber, 'passageTitle:', passageTitle);
                 // 1. Relational Query: Find section for this exam and part_number
                 const { data: sectionData, error: secErr } = await (supabase as any)
                     .from('sections')
-                    .select('id')
+                    .select('id, passage_title, total_questions')
                     .or(`exam_id.eq.${examId},test_id.eq.${examId}`)
                     .eq('part_number', Number(partNumber))
                     .maybeSingle();
 
                 if (secErr) {
-                    console.warn('Note on sections query:', secErr.message);
+                    console.error('[Reading Exam Debug - Right Panel] Supabase Sections Query Error:', secErr.message, secErr.details);
                 }
+                console.log('[Reading Exam Debug - Right Panel] Supabase Section Row:', sectionData?.id || null);
 
                 const sectionId = (sectionData as any)?.id;
-                if (sectionId) {
+                const normPassage = passageTitle ? passageTitle.toLowerCase().trim() : '';
+                const normSecTitle = sectionData?.passage_title ? String(sectionData.passage_title).toLowerCase().trim() : '';
+                const isListeningSection = Boolean(
+                    normPassage &&
+                    normSecTitle &&
+                    !normPassage.includes(normSecTitle) &&
+                    !normSecTitle.includes(normPassage) &&
+                    (sectionData?.total_questions <= 10)
+                );
+
+                if (isListeningSection) {
+                    console.log('[Reading Exam Debug - Right Panel] Section appears to be Listening rather than Reading. Skipping.', { normPassage, normSecTitle });
+                } else if (sectionId) {
                     // Fetch question groups for this section
                     const { data: qgData, error: qgErr } = await (supabase as any)
                         .from('question_groups')
@@ -89,7 +110,7 @@ export const DynamicRightPanel: React.FC<DynamicRightPanelProps> = ({
                         .order('start_question', { ascending: true });
 
                     if (qgErr) {
-                        console.error('Error fetching question_groups via section:', qgErr);
+                        console.error('[Reading Exam Debug - Right Panel] Error fetching question_groups via section:', qgErr);
                     } else if (qgData && qgData.length > 0) {
                         const groupIds = qgData.map((g: any) => g.id);
                         const { data: qData, error: qErr } = await (supabase as any)
@@ -99,15 +120,26 @@ export const DynamicRightPanel: React.FC<DynamicRightPanelProps> = ({
                             .order('question_number', { ascending: true });
 
                         if (qErr) {
-                            console.error('Error fetching questions:', qErr);
+                            console.error('[Reading Exam Debug - Right Panel] Error fetching questions:', qErr);
                         }
+
+                        console.log('[Reading Exam Debug - Right Panel] Supabase Returned Groups:', qgData.length, 'Questions:', qData?.length ?? 0);
+
+                        const parseChoices = (raw: any): string[] => {
+                            if (!raw) return [];
+                            if (Array.isArray(raw)) return raw;
+                            if (typeof raw === 'string') {
+                                try { return JSON.parse(raw); } catch { return [raw]; }
+                            }
+                            return [];
+                        };
 
                         const mappedQuestions: DynamicQuestion[] = (qData || []).map((q: any) => ({
                             id: q.id,
                             group_id: q.group_id,
                             question_number: q.question_number,
                             prompt: q.prompt || q.question_text || '',
-                            options: q.options || [],
+                            options: parseChoices(q.options),
                             correct_answer: q.correct_answer || null,
                             explanation: q.explanation || null,
                         }));
@@ -121,7 +153,7 @@ export const DynamicRightPanel: React.FC<DynamicRightPanelProps> = ({
                             title: g.title || `Questions ${g.start_question}–${g.end_question}`,
                             question_type: g.question_type,
                             instruction_html: g.instruction_html || g.instructions || '',
-                            shared_options: g.shared_options || g.choices || [],
+                            shared_options: parseChoices(g.shared_options || g.choices),
                             metadata: g.metadata || {},
                             questions: mappedQuestions.filter((q) => q.group_id === g.id),
                         }));
@@ -130,39 +162,62 @@ export const DynamicRightPanel: React.FC<DynamicRightPanelProps> = ({
 
                 // Fallback attempt: direct exam_id on question_groups if present
                 if (resolvedGroups.length === 0) {
-                    const { data: directGroups } = await (supabase as any)
-                        .from('question_groups')
-                        .select('*')
-                        .eq('exam_id', examId)
-                        .eq('part_number', Number(partNumber))
-                        .order('group_order', { ascending: true });
-
-                    if (directGroups && directGroups.length > 0) {
-                        const groupIds = directGroups.map((g: any) => g.id);
-                        const { data: qData } = await (supabase as any)
-                            .from('questions')
+                    try {
+                        const { data: directGroups } = await (supabase as any)
+                            .from('question_groups')
                             .select('*')
-                            .in('group_id', groupIds)
-                            .order('question_number', { ascending: true });
+                            .eq('exam_id', examId)
+                            .eq('part_number', Number(partNumber))
+                            .order('start_question', { ascending: true });
 
-                        const mappedQuestions: DynamicQuestion[] = (qData || []).map((q: any) => ({
-                            id: q.id,
-                            group_id: q.group_id,
-                            question_number: q.question_number,
-                            prompt: q.prompt || q.question_text || '',
-                            options: q.options || [],
-                            correct_answer: q.correct_answer || null,
-                            explanation: q.explanation || null,
-                        }));
+                        if (directGroups && directGroups.length > 0) {
+                            const groupIds = directGroups.map((g: any) => g.id);
+                            const { data: qData } = await (supabase as any)
+                                .from('questions')
+                                .select('*')
+                                .in('group_id', groupIds)
+                                .order('question_number', { ascending: true });
 
-                        resolvedQuestions = mappedQuestions;
-                        resolvedGroups = directGroups.map((g: any) => ({
-                            ...g,
-                            title: g.title || `Questions ${g.start_question}–${g.end_question}`,
-                            instruction_html: g.instruction_html || g.instructions || '',
-                            shared_options: g.shared_options || g.choices || [],
-                            questions: mappedQuestions.filter((q) => q.group_id === g.id),
-                        }));
+                            const parseChoices = (raw: any): string[] => {
+                                if (!raw) return [];
+                                if (Array.isArray(raw)) return raw;
+                                if (typeof raw === 'string') {
+                                    try { return JSON.parse(raw); } catch { return [raw]; }
+                                }
+                                return [];
+                            };
+
+                            const mappedQuestions: DynamicQuestion[] = (qData || []).map((q: any) => ({
+                                id: q.id,
+                                group_id: q.group_id,
+                                question_number: q.question_number,
+                                prompt: q.prompt || q.question_text || '',
+                                options: parseChoices(q.options),
+                                correct_answer: q.correct_answer || null,
+                                explanation: q.explanation || null,
+                            }));
+
+                            resolvedQuestions = mappedQuestions;
+                            resolvedGroups = directGroups.map((g: any) => ({
+                                ...g,
+                                title: g.title || `Questions ${g.start_question}–${g.end_question}`,
+                                instruction_html: g.instruction_html || g.instructions || '',
+                                shared_options: parseChoices(g.shared_options || g.choices),
+                                questions: mappedQuestions.filter((q) => q.group_id === g.id),
+                            }));
+                        }
+                    } catch {
+                        // ignore if direct exam_id column is not present
+                    }
+                }
+
+                // Fallback attempt: check question snippet registry for Cambridge tests (e.g. Cambridge 10-21)
+                if (resolvedGroups.length === 0 && bookNumber && bookNumber >= 10) {
+                    const snippetGroups = getQuestionSnippet(bookNumber, testNumber || 1, Number(partNumber));
+                    if (snippetGroups && snippetGroups.length > 0) {
+                        console.log('[Reading Exam Debug - Right Panel] Successfully loaded question snippet for Cambridge ' + bookNumber + ' Test ' + (testNumber || 1) + ' Part ' + partNumber);
+                        resolvedGroups = snippetGroups;
+                        resolvedQuestions = snippetGroups.flatMap((g) => g.questions);
                     }
                 }
 
@@ -171,8 +226,8 @@ export const DynamicRightPanel: React.FC<DynamicRightPanelProps> = ({
                     setIsLoading(false);
                     onDynamicLoaded?.(resolvedGroups.length > 0, resolvedQuestions);
                 }
-            } catch (err) {
-                console.error('Error in DynamicRightPanel loadDynamicData:', err);
+            } catch (err: any) {
+                console.error('[Reading Exam Debug - Right Panel] Error in DynamicRightPanel loadDynamicData:', err);
                 if (isMounted) {
                     setGroups([]);
                     setIsLoading(false);
@@ -186,7 +241,7 @@ export const DynamicRightPanel: React.FC<DynamicRightPanelProps> = ({
         return () => {
             isMounted = false;
         };
-    }, [examId, partNumber]);
+    }, [examId, partNumber, bookNumber, testNumber, passageTitle]);
 
     // Render loading skeleton
     if (isLoading) {
