@@ -14,12 +14,14 @@ import MisconceptionLog from './enterprise/org/MisconceptionLog';
 import HandwrittenQueue from './enterprise/org/HandwrittenQueue';
 import SpeakingAudits from './enterprise/org/SpeakingAudits';
 import TeacherOverride from './enterprise/org/TeacherOverride';
+import UnifiedEvaluationStudio from './enterprise/org/UnifiedEvaluationStudio';
 import MissionBuilder from './enterprise/org/MissionBuilder';
 import MockDeployment from './enterprise/org/MockDeployment';
 import BatchRoster from './enterprise/org/BatchRoster';
 import BrandingSettings from './enterprise/org/BrandingSettings';
 import AIPromptRules from './enterprise/org/AIPromptRules';
 import BillingLicenses from './enterprise/org/BillingLicenses';
+import { useCoachingTelemetry } from '@/hooks/useCoachingTelemetry';
 
 // ── Types ──
 
@@ -89,14 +91,7 @@ const navGroups: NavGroup[] = [
             { label: 'Misconception Log (AI)', key: 'misconception_log' },
         ],
     },
-    {
-        label: 'Evaluation Studio', icon: <MicIcon className="w-4 h-4" />, key: 'evaluation',
-        subItems: [
-            { label: 'Handwritten Essay Queue', key: 'handwritten_queue' },
-            { label: 'Speaking Audio Audits', key: 'speaking_audits' },
-            { label: 'Teacher Review & Override', key: 'teacher_override' },
-        ],
-    },
+    { label: 'Evaluation Studio', icon: <MicIcon className="w-4 h-4" />, key: 'evaluation', isLeaf: true, leafKey: 'evaluation_studio' },
     {
         label: 'Curriculum Assets', icon: <BookOpenIcon className="w-4 h-4" />, key: 'curriculum',
         subItems: [
@@ -1243,9 +1238,11 @@ const RoleAccessManager: React.FC<{
 
 // ── Component ──
 
-const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
-    const [currentSection, setCurrentSection] = useState('overview');
-    const [currentSubView, setCurrentSubView] = useState('overview_main');
+const OrgSpaceView: React.FC<{ onExit: () => void; initialSubView?: string }> = ({ onExit, initialSubView }) => {
+    const telemetry = useCoachingTelemetry();
+    const isEvaluationInit = initialSubView === 'evaluation_studio' || initialSubView === 'handwritten_queue' || initialSubView === 'speaking_audits' || initialSubView === 'teacher_override';
+    const [currentSection, setCurrentSection] = useState(isEvaluationInit ? 'evaluation' : 'overview');
+    const [currentSubView, setCurrentSubView] = useState(initialSubView || 'overview_main');
     const [expandedSection, setExpandedSection] = useState<string | null>(null);
     const [engagementTab, setEngagementTab] = useState('Videos');
     const [hoveredProfileId, setHoveredProfileId] = useState<string | null>(null);
@@ -1273,8 +1270,14 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
     const handleNavClick = (group: NavGroup) => {
         if (group.isLeaf) {
             setCurrentSection(group.key);
-            setCurrentSubView(group.leafKey ?? group.key);
+            const target = group.leafKey ?? group.key;
+            setCurrentSubView(target);
             setExpandedSection(null);
+            if (target === 'evaluation_studio') {
+                window.history.pushState({}, '', '/coaching/evaluations');
+            } else if (window.location.pathname.startsWith('/coaching')) {
+                window.history.pushState({}, '', '/org-space');
+            }
         } else {
             setExpandedSection(prev => (prev === group.key ? null : group.key));
         }
@@ -1283,6 +1286,11 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
     const handleSubClick = (section: string, subKey: string) => {
         setCurrentSection(section);
         setCurrentSubView(subKey);
+        if (subKey === 'evaluation_studio' || subKey === 'handwritten_queue' || subKey === 'speaking_audits' || subKey === 'teacher_override') {
+            window.history.pushState({}, '', '/coaching/evaluations');
+        } else if (window.location.pathname.startsWith('/coaching')) {
+            window.history.pushState({}, '', '/org-space');
+        }
     };
 
     const activeSub = (key: string) =>
@@ -1375,6 +1383,21 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                                                     {sub.key === 'evaluation_queue' && (
                                                         <span className="text-[9px] font-mono font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded">
                                                             {pendingEvaluations.filter(e => e.status === 'pending').length} Pending
+                                                        </span>
+                                                    )}
+                                                    {sub.key === 'handwritten_queue' && (
+                                                        <span className="text-[9px] font-mono font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded">
+                                                            {telemetry?.pendingEssays?.length ?? 0} Pending
+                                                        </span>
+                                                    )}
+                                                    {sub.key === 'speaking_audits' && (
+                                                        <span className="text-[9px] font-mono font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded">
+                                                            {telemetry?.pendingSpeaking?.length ?? 0} Pending
+                                                        </span>
+                                                    )}
+                                                    {sub.key === 'teacher_override' && (
+                                                        <span className="text-[9px] font-mono font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded">
+                                                            {(telemetry?.pendingEssays?.length ?? 0) + (telemetry?.pendingSpeaking?.length ?? 0)} To Review
                                                         </span>
                                                     )}
                                                 </button>
@@ -1559,9 +1582,9 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                         { id: 'STU-2099', name: 'Mim Akter', test: 'SPEAKING PART 2', title: 'Audio Recording - Describe a Place', time: '41 mins ago', band: 7.5, status: 'graded' as const },
                     ];
                     const atRiskStudents = [
-                        { name: 'Tanvir Ahmed', target: 7.0, current: 5.5, issue: 'Writing dropped -1.0 Band', action: 'Send Practice Assignment' },
-                        { name: 'Nusrat Jahan', target: 6.5, current: 5.5, issue: 'Inactive for 5 days', action: 'Ping Student' },
-                        { name: 'Saimon Chowdhury', target: 7.5, current: 6.0, issue: 'Speaking fluency flag', action: 'Schedule 1-on-1' },
+                        { id: 'STU-2201', name: 'Tanvir Ahmed', target: 7.0, current: 5.5, issue: 'Writing dropped -1.0 Band', action: 'Send Practice Assignment' },
+                        { id: 'STU-1903', name: 'Nusrat Jahan', target: 6.5, current: 5.5, issue: 'Inactive for 5 days', action: 'Send Practice Assignment' },
+                        { id: 'STU-1756', name: 'Saimon Chowdhury', target: 7.5, current: 6.0, issue: 'Speaking fluency flag', action: 'Send Practice Assignment' },
                     ];
                     const telemetryLogs = [
                         { time: '13:54:02', tag: 'SYSTEM', msg: 'Synced 12 new submissions from Farmgate Batch' },
@@ -1573,203 +1596,241 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                     ];
 
                     return (
-                        <div className="p-6 space-y-6 bg-[#090A0C] min-h-screen">
+                        <div className="p-6 space-y-6 bg-[#0D0F12] text-slate-100 min-h-screen">
                             {/* ── HEADER BAR ── */}
-                            <div className="flex items-start justify-between">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-white">Workspace Operations & Worksheet Overview</h2>
-                                    <p className="text-sm text-[#8E95A3] mt-1">Real-time cohort telemetry, live AI grading queue, and student worksheet tracking.</p>
+                                    <h2 className="text-2xl font-bold text-white tracking-tight">Workspace Operations &amp; Cohort Overview</h2>
+                                    <p className="text-sm text-slate-400 mt-1">Real-time coaching telemetry, live grading queue, and student intervention tracking.</p>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-2 bg-[#12141A] border border-[#1F232D] rounded-lg px-3 py-2">
-                                        <span className="relative flex h-2.5 w-2.5">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00E699] opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#00E699]"></span>
+                                    <div className="flex items-center gap-2 bg-[#15181E] border border-[#222732] rounded-xl px-3 py-2">
+                                        <span className="relative flex h-2 w-2">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
                                         </span>
-                                        <span className="text-xs font-mono text-[#00E699]">IELTS AI NODE #04 ONLINE (12ms)</span>
+                                        <span className="text-xs font-mono text-emerald-400 font-bold">IELTS AI NODE #04 ONLINE (12ms)</span>
                                     </div>
-                                    <button className="bg-[#00E699] hover:bg-[#00CC8A] text-[#090A0C] text-sm font-semibold px-4 py-2 rounded-lg transition-all">
-                                        + Assign Batch Worksheet
-                                    </button>
-                                    <button className="border border-[#1F232D] hover:border-[#2A2F3A] text-[#8E95A3] hover:text-white text-sm font-medium px-4 py-2 rounded-lg transition-all">
-                                        Export Cohort Analytics
+                                    <button
+                                        onClick={() => handleNavClick({ label: 'Curriculum Assets', icon: null, key: 'curriculum', subItems: [{ label: 'Study Plan & Mission Builder', key: 'mission_builder' }] })}
+                                        className="bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl transition-all shadow-md cursor-pointer"
+                                    >
+                                        + Assign Cambridge Mission
                                     </button>
                                 </div>
                             </div>
 
-                            {/* ── SECTION A: TOP 4 METRIC CARDS ── */}
+                            {/* ── SECTION A: OPERATIONAL KPIS (Strict CSS Grid 4-Cols) ── */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div className="bg-[#12141A] border border-[#1F232D] rounded-xl p-5">
-                                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#565E6D] mb-2">Active Seat Allocation</p>
-                                    <p className="text-2xl font-bold font-mono text-white">184 <span className="text-sm font-normal text-[#565E6D]">/ 200</span></p>
-                                    <div className="w-full h-1.5 bg-[#1A1D26] rounded-full mt-3 mb-2 overflow-hidden">
-                                        <div className="h-full rounded-full bg-gradient-to-r from-[#00E699] to-[#00CC8A]" style={{ width: '92%' }} />
+                                {/* 1. Pending Reviews Today */}
+                                <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-5 hover:border-[#2f3545] transition-colors shadow-sm">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pending Reviews Today</p>
+                                        <div className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center font-bold text-sm">
+                                            ⏳
+                                        </div>
                                     </div>
-                                    <p className="text-[11px] text-[#565E6D]">16 seats remaining in Farmgate Executive Batch</p>
-                                </div>
-                                <div className="bg-[#12141A] border border-[#1F232D] rounded-xl p-5 relative">
-                                    <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-[#FFAB00] animate-pulse" />
-                                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#565E6D] mb-2">Worksheet Submissions Today</p>
-                                    <p className="text-2xl font-bold font-mono text-white">170 <span className="text-sm font-normal text-[#565E6D]">Total</span></p>
-                                    <div className="flex items-center gap-3 mt-2">
-                                        <span className="text-xs font-mono text-[#FFAB00]">42 Pending</span>
-                                        <span className="text-xs text-[#1F232D]">|</span>
-                                        <span className="text-xs font-mono text-[#00E699]">128 Auto-Graded</span>
+                                    <p className="text-2xl font-bold font-mono text-white">5 <span className="text-sm font-medium text-slate-400">submissions</span></p>
+                                    <div className="w-full h-1.5 bg-[#0D0F12] rounded-full mt-3 mb-2 overflow-hidden border border-[#222732]">
+                                        <div className="h-full rounded-full bg-rose-500" style={{ width: '60%' }} />
                                     </div>
-                                    <p className="text-[11px] text-[#565E6D] mt-2">+24% higher engagement vs last week</p>
+                                    <p className="text-[11px] text-slate-400 font-mono">3 Writing Tasks · 2 Speaking Audits</p>
                                 </div>
-                                <div className="bg-[#12141A] border border-[#1F232D] rounded-xl p-5">
-                                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#565E6D] mb-2">Institute Average Band</p>
-                                    <p className="text-2xl font-bold font-mono text-white">6.85 <span className="text-sm font-normal text-[#565E6D]">Band</span></p>
-                                    <div className="flex items-center gap-2 mt-2">
-                                        <span className="text-xs font-mono font-semibold text-[#00E699]">▲ +0.35</span>
-                                        <span className="text-[11px] text-[#565E6D]">Target: 7.00</span>
+
+                                {/* 2. Average Review Time */}
+                                <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-5 hover:border-[#2f3545] transition-colors shadow-sm">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Average Review Time</p>
+                                        <div className="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-400 flex items-center justify-center font-bold text-sm">
+                                            ⏱️
+                                        </div>
                                     </div>
-                                    <p className="text-[11px] text-[#565E6D] mt-1">Based on 1,420 graded worksheets this month</p>
+                                    <p className="text-2xl font-bold font-mono text-white">1m 45s</p>
+                                    <div className="w-full h-1.5 bg-[#0D0F12] rounded-full mt-3 mb-2 overflow-hidden border border-[#222732]">
+                                        <div className="h-full rounded-full bg-sky-500" style={{ width: '85%' }} />
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 font-mono">AI pre-scored with human sign-off</p>
                                 </div>
-                                <div className="bg-[#12141A] border border-[#1F232D] rounded-xl p-5">
-                                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#565E6D] mb-2">AI Evaluation Latency</p>
-                                    <p className="text-2xl font-bold font-mono text-white">1.8s <span className="text-sm font-normal text-[#565E6D]">/ Essay</span></p>
-                                    <p className="text-xs font-mono text-[#00E699] mt-2">100% Accuracy Rate · 0 Queue Backlog</p>
-                                    <p className="text-[11px] text-[#565E6D] mt-1">Auto-Feedback Engine operational</p>
+
+                                {/* 3. Batch Average Band */}
+                                <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-5 hover:border-[#2f3545] transition-colors shadow-sm">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Batch Average Band</p>
+                                        <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center font-bold text-sm">
+                                            🎯
+                                        </div>
+                                    </div>
+                                    <p className="text-2xl font-bold font-mono text-white">Band 6.5</p>
+                                    <div className="flex items-center gap-2 mt-3 mb-2 text-xs font-mono">
+                                        <span className="text-emerald-400 font-semibold">R: 7.2 · L: 7.5</span>
+                                        <span className="text-slate-500">|</span>
+                                        <span className="text-amber-400 font-semibold">W: 6.2 · S: 6.5</span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 font-mono">Target: Band 7.0+ by Exam Date</p>
+                                </div>
+
+                                {/* 4. Active Seats Used */}
+                                <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-5 hover:border-[#2f3545] transition-colors shadow-sm">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Seats Used</p>
+                                        <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold text-sm">
+                                            👥
+                                        </div>
+                                    </div>
+                                    <p className="text-2xl font-bold font-mono text-white">48 <span className="text-sm font-normal text-slate-400">/ 50 Students</span></p>
+                                    <div className="w-full h-1.5 bg-[#0D0F12] rounded-full mt-3 mb-2 overflow-hidden border border-[#222732]">
+                                        <div className="h-full rounded-full bg-emerald-500" style={{ width: '96%' }} />
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 font-mono">2 seats remaining in Farmgate Cohort #08</p>
                                 </div>
                             </div>
 
-                            {/* ── SECTION B: MAIN ASYMMETRIC GRID ── */}
-                            <div className="flex gap-6">
-
-                                {/* LEFT COLUMN (Flex-7) */}
-                                <div className="flex-[7] min-w-0 space-y-6">
-
+                            {/* ── SECTION B: MAIN GRID ── */}
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                                {/* LEFT COLUMN (8 Cols): Recent Worksheet Submissions & Skill Accuracy */}
+                                <div className="lg:col-span-8 space-y-6">
                                     {/* Live Worksheet Assessment Pipeline */}
-                                    <div className="bg-[#12141A] border border-[#1F232D] rounded-xl overflow-hidden">
-                                        <div className="p-5 pb-0">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <h3 className="text-sm font-semibold text-white">Recent Worksheet Submissions</h3>
-                                                <div className="flex items-center gap-2">
-                                                    {['All (170)', 'Writing Task 2', 'Speaking Audios', 'Pending Human Review (42)'].map((f, i) => (
-                                                        <button key={i} className={`text-[10px] font-medium px-2.5 py-1 rounded-full border transition-all ${i === 0 ? 'bg-[#00E699]/10 border-[#00E699]/30 text-[#00E699]' : 'border-[#1F232D] text-[#565E6D] hover:text-white hover:border-[#2A2F3A]'}`}>
-                                                            {f}
-                                                        </button>
-                                                    ))}
-                                                </div>
+                                    <div className="bg-[#15181E] border border-[#222732] rounded-2xl overflow-hidden shadow-sm">
+                                        <div className="p-5 pb-3">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                <h3 className="text-sm font-bold text-white tracking-tight">Recent Submissions Pipeline</h3>
+                                                <button
+                                                    onClick={() => {
+                                                        setCurrentSection('evaluation');
+                                                        setCurrentSubView('evaluation_studio');
+                                                        window.history.pushState({}, '', '/coaching/evaluations');
+                                                    }}
+                                                    className="text-xs font-semibold text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer"
+                                                >
+                                                    <span>Open Evaluation Studio</span>
+                                                    <span>→</span>
+                                                </button>
                                             </div>
                                         </div>
-                                        <table className="w-full text-left text-xs">
-                                            <thead>
-                                                <tr className="border-t border-[#1F232D]">
-                                                    <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-[#565E6D]">Student</th>
-                                                    <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-[#565E6D]">Test / Worksheet</th>
-                                                    <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-[#565E6D]">Submitted</th>
-                                                    <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-[#565E6D]">Band / Status</th>
-                                                    <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-wider text-[#565E6D]">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {submissionsList.map((s) => (
-                                                    <tr key={s.id} className="border-t border-[#1F232D] hover:bg-[#16181D] transition-colors">
-                                                        <td className="px-5 py-3">
-                                                            <div className="flex items-center gap-2.5">
-                                                                <div className="w-7 h-7 rounded-full bg-[#1A1D26] flex items-center justify-center text-[10px] font-bold text-[#8E95A3]">{s.name.charAt(0)}</div>
-                                                                <div>
-                                                                    <p className="text-white font-medium">{s.name}</p>
-                                                                    <p className="text-[10px] text-[#565E6D] font-mono">#{s.id}</p>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-5 py-3">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-[9px] font-bold uppercase tracking-wider bg-[#1A1D26] text-[#8E95A3] px-1.5 py-0.5 rounded">{s.test}</span>
-                                                                <span className="text-[#8E95A3]">{s.title}</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-5 py-3 text-[#565E6D]">{s.time}</td>
-                                                        <td className="px-5 py-3">
-                                                            {s.status === 'graded' && (
-                                                                <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold bg-[#00E699]/10 text-[#00E699] border border-[#00E699]/30 px-2 py-0.5 rounded-full">
-                                                                    Band {s.band.toFixed(1)}
-                                                                </span>
-                                                            )}
-                                                            {s.status === 'processing' && (
-                                                                <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold bg-[#FFAB00]/10 text-[#FFAB00] border border-[#FFAB00]/30 px-2 py-0.5 rounded-full">
-                                                                    <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" /><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
-                                                                    AI Processing...
-                                                                </span>
-                                                            )}
-                                                            {s.status === 'flagged' && (
-                                                                <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold bg-[#FF4D4D]/10 text-[#FF4D4D] border border-[#FF4D4D]/30 px-2 py-0.5 rounded-full">
-                                                                    Review Flagged
-                                                                </span>
-                                                            )}
-                                                        </td>
-                                                        <td className="px-5 py-3">
-                                                            <div className="flex items-center gap-1.5">
-                                                                <button className="text-[10px] font-medium text-[#8E95A3] hover:text-white border border-[#1F232D] hover:border-[#2A2F3A] px-2 py-1 rounded transition-all">Review Essay</button>
-                                                                <button className="text-[10px] font-medium text-[#8E95A3] hover:text-white border border-[#1F232D] hover:border-[#2A2F3A] px-2 py-1 rounded transition-all">Override</button>
-                                                                <button className="text-[10px] font-medium text-[#8E95A3] hover:text-white border border-[#1F232D] hover:border-[#2A2F3A] px-2 py-1 rounded transition-all">Feedback</button>
-                                                            </div>
-                                                        </td>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left text-xs">
+                                                <thead>
+                                                    <tr className="border-t border-[#222732] bg-[#181C24]">
+                                                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Student</th>
+                                                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Test / Module</th>
+                                                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Submitted</th>
+                                                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Band / Status</th>
+                                                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 text-right">Action</th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody className="divide-y divide-[#222732]">
+                                                    {submissionsList.map((s) => (
+                                                        <tr key={s.id} className="hover:bg-[#181C24] transition-colors">
+                                                            <td className="px-5 py-3.5">
+                                                                <div className="flex items-center gap-2.5">
+                                                                    <div className="w-7 h-7 rounded-full bg-[#181C24] border border-[#222732] flex items-center justify-center text-[10px] font-bold text-slate-300">
+                                                                        {s.name.charAt(0)}
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="text-white font-medium">{s.name}</p>
+                                                                        <p className="text-[10px] text-slate-500 font-mono">#{s.id}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-5 py-3.5">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-[9px] font-bold uppercase tracking-wider bg-[#181C24] border border-[#222732] text-slate-300 px-1.5 py-0.5 rounded">
+                                                                        {s.test}
+                                                                    </span>
+                                                                    <span className="text-slate-300 truncate max-w-xs">{s.title}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-5 py-3.5 text-slate-400 font-mono text-[11px]">{s.time}</td>
+                                                            <td className="px-5 py-3.5">
+                                                                {s.status === 'graded' && (
+                                                                    <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold bg-emerald-950/40 text-emerald-400 border border-emerald-800/40 px-2 py-0.5 rounded-full">
+                                                                        Band {s.band.toFixed(1)}
+                                                                    </span>
+                                                                )}
+                                                                {s.status === 'processing' && (
+                                                                    <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold bg-amber-950/40 text-amber-400 border border-amber-800/40 px-2 py-0.5 rounded-full animate-pulse">
+                                                                        AI Processing...
+                                                                    </span>
+                                                                )}
+                                                                {s.status === 'flagged' && (
+                                                                    <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold bg-rose-950/40 text-rose-400 border border-rose-800/40 px-2 py-0.5 rounded-full">
+                                                                        Needs Review
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-5 py-3.5 text-right">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setCurrentSection('evaluation');
+                                                                        setCurrentSubView('evaluation_studio');
+                                                                        window.history.pushState({}, '', '/coaching/evaluations');
+                                                                    }}
+                                                                    className="text-[11px] font-semibold text-slate-300 hover:text-white bg-[#181C24] hover:bg-rose-600 border border-[#222732] px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+                                                                >
+                                                                    Review
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
 
                                     {/* Cohort Skill Accuracy & Band Distribution */}
-                                    <div className="bg-[#12141A] border border-[#1F232D] rounded-xl p-5">
-                                        <h3 className="text-sm font-semibold text-white mb-4">Cohort Skill Accuracy & Band Distribution</h3>
+                                    <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-5 shadow-sm">
+                                        <h3 className="text-sm font-bold text-white mb-4 tracking-tight">Cohort Skill Accuracy &amp; Band Distribution</h3>
                                         <div className="space-y-4">
                                             {[
-                                                { label: 'Reading', avg: 7.2, pct: 81, color: '#00E699' },
-                                                { label: 'Listening', avg: 7.5, pct: 84, color: '#00E699' },
-                                                { label: 'Writing', avg: 6.2, pct: 64, color: '#FFAB00' },
-                                                { label: 'Speaking', avg: 6.5, pct: 68, color: '#00B8D9' },
+                                                { label: 'Reading', avg: 7.2, pct: 81, color: '#10B981' },
+                                                { label: 'Listening', avg: 7.5, pct: 84, color: '#10B981' },
+                                                { label: 'Writing', avg: 6.2, pct: 64, color: '#F59E0B' },
+                                                { label: 'Speaking', avg: 6.5, pct: 68, color: '#0EA5E9' },
                                             ].map((s) => (
                                                 <div key={s.label} className="flex items-center gap-4">
-                                                    <span className="text-xs text-[#8E95A3] w-20 shrink-0">{s.label}</span>
+                                                    <span className="text-xs font-semibold text-slate-300 w-20 shrink-0">{s.label}</span>
                                                     <div className="flex-1">
                                                         <div className="flex items-center justify-between mb-1">
-                                                            <span className="text-[11px] text-[#565E6D]">Avg {s.avg}</span>
-                                                            <span className="text-[11px] font-mono font-semibold" style={{ color: s.color }}>{s.pct}%</span>
+                                                            <span className="text-[11px] text-slate-400">Avg {s.avg}</span>
+                                                            <span className="text-[11px] font-mono font-bold" style={{ color: s.color }}>{s.pct}%</span>
                                                         </div>
-                                                        <div className="w-full h-1.5 bg-[#1A1D26] rounded-full overflow-hidden">
+                                                        <div className="w-full h-1.5 bg-[#0D0F12] border border-[#222732] rounded-full overflow-hidden">
                                                             <div className="h-full rounded-full transition-all" style={{ width: `${s.pct}%`, backgroundColor: s.color }} />
                                                         </div>
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
-                                        <div className="mt-4 pt-4 border-t border-[#1F232D] bg-[#0D0E12] rounded-lg p-3">
-                                            <p className="text-xs text-[#FFAB00]">
-                                                💡 <span className="font-semibold">System Recommendation:</span> Writing Task 2 Lexical Resource is the primary bottleneck for 38% of students in this cohort.
-                                            </p>
-                                        </div>
                                     </div>
                                 </div>
 
-                                {/* RIGHT COLUMN (Flex-3) */}
-                                <div className="flex-[3] min-w-0 space-y-6">
-
-                                    {/* At-Risk Students Monitor */}
-                                    <div className="bg-[#12141A] border border-[#1F232D] rounded-xl p-5">
+                                {/* RIGHT COLUMN (4 Cols): Students Needing Attention & AI Node Logs */}
+                                <div className="lg:col-span-4 space-y-6">
+                                    {/* Students Needing Attention Widget */}
+                                    <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-5 shadow-sm">
                                         <div className="mb-4">
-                                            <h3 className="text-sm font-semibold text-white">Students Needing Attention</h3>
-                                            <p className="text-[11px] text-[#565E6D] mt-0.5">Falling below target band 6.0</p>
+                                            <h3 className="text-sm font-bold text-white tracking-tight">Students Needing Attention</h3>
+                                            <p className="text-[11px] text-slate-400 mt-0.5">High-priority intervention triggers</p>
                                         </div>
                                         <div className="space-y-3">
-                                            {atRiskStudents.map((s, i) => (
-                                                <div key={i} className="bg-[#090A0C] border border-[#1F232D] rounded-lg p-3">
-                                                    <div className="flex items-center justify-between mb-1.5">
-                                                        <span className="text-xs font-semibold text-white">{s.name}</span>
+                                            {atRiskStudents.map((s) => (
+                                                <div key={s.id} className="bg-[#181C24] border border-[#222732] rounded-xl p-3.5 space-y-2">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs font-bold text-white">{s.name}</span>
+                                                        <span className="text-[10px] font-mono text-slate-500">#{s.id}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-2 text-[11px] mb-1.5">
-                                                        <span className="text-[#565E6D]">Target {s.target}</span>
-                                                        <span className="text-[#565E6D]">→</span>
-                                                        <span className="font-mono font-semibold text-[#FF4D4D]">Current {s.current}</span>
+                                                    <div className="flex items-center gap-2 text-xs">
+                                                        <span className="text-slate-400">Target {s.target}</span>
+                                                        <span className="text-slate-600">→</span>
+                                                        <span className="font-mono font-bold text-rose-400">Current {s.current}</span>
                                                     </div>
-                                                    <p className="text-[10px] text-[#FFAB00] mb-2">{s.issue}</p>
-                                                    <button className="w-full text-[10px] font-semibold bg-[#FF4D4D]/10 border border-[#FF4D4D]/30 text-[#FF4D4D] hover:bg-[#FF4D4D]/20 py-1.5 rounded transition-all">
-                                                        {s.action}
+                                                    <p className="text-[11px] text-amber-400 font-medium">⚠️ {s.issue}</p>
+                                                    <button
+                                                        onClick={() => setDispatchModal({ open: true, student: { name: s.name, id: s.id, deficiency: s.issue } })}
+                                                        className="w-full text-xs font-bold bg-rose-600/15 border border-rose-500/40 text-rose-300 hover:bg-rose-600/25 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                                    >
+                                                        <span>⚡</span>
+                                                        <span>[ Send Practice Assignment ]</span>
                                                     </button>
                                                 </div>
                                             ))}
@@ -1777,18 +1838,22 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                                     </div>
 
                                     {/* Real-Time AI Node Logs */}
-                                    <div className="bg-[#12141A] border border-[#1F232D] rounded-xl overflow-hidden">
-                                        <div className="px-5 pt-4 pb-2">
-                                            <h3 className="text-sm font-semibold text-white">Real-Time AI Node Logs</h3>
+                                    <div className="bg-[#15181E] border border-[#222732] rounded-2xl overflow-hidden shadow-sm">
+                                        <div className="px-5 py-3 border-b border-[#222732] flex items-center justify-between">
+                                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">Live AI Telemetry Stream</h3>
+                                            <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                                Active
+                                            </span>
                                         </div>
-                                        <div className="bg-[#0B0C0E] border-t border-[#1A1D26] font-mono text-[11px] p-3 h-48 overflow-y-auto">
+                                        <div className="bg-[#0D0F12] font-mono text-[11px] p-3.5 h-48 overflow-y-auto space-y-1.5">
                                             {telemetryLogs.map((log, i) => (
-                                                <div key={i} className="flex items-start gap-2 mb-1.5">
-                                                    <span className="text-[#565E6D] shrink-0">[{log.time}]</span>
-                                                    <span className={`shrink-0 font-semibold ${log.tag === 'ALERT' ? 'text-[#FF4D4D]' : log.tag === 'AI ENGINE' ? 'text-[#00B8D9]' : log.tag === 'AUDIT' ? 'text-[#FFAB00]' : 'text-[#00E699]'}`}>
+                                                <div key={i} className="flex items-start gap-2">
+                                                    <span className="text-slate-500 shrink-0">[{log.time}]</span>
+                                                    <span className={`shrink-0 font-bold ${log.tag === 'ALERT' ? 'text-rose-400' : log.tag === 'AI ENGINE' ? 'text-sky-400' : log.tag === 'AUDIT' ? 'text-amber-400' : 'text-emerald-400'}`}>
                                                         [{log.tag}]
                                                     </span>
-                                                    <span className="text-[#8E95A3]">{log.msg}</span>
+                                                    <span className="text-slate-300">{log.msg}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -2050,9 +2115,17 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
 
                 {currentSubView === 'at_risk_radar' && <AtRiskRadar />}
                 {currentSubView === 'misconception_log' && <MisconceptionLog />}
-                {currentSubView === 'handwritten_queue' && <HandwrittenQueue />}
-                {currentSubView === 'speaking_audits' && <SpeakingAudits />}
-                {currentSubView === 'teacher_override' && <TeacherOverride />}
+                {(currentSubView === 'evaluation_studio' || currentSubView === 'handwritten_queue' || currentSubView === 'speaking_audits' || currentSubView === 'teacher_override') && (
+                  <UnifiedEvaluationStudio
+                    initialTab={
+                      currentSubView === 'speaking_audits'
+                        ? 'speaking'
+                        : currentSubView === 'handwritten_queue'
+                        ? 'writing'
+                        : 'all'
+                    }
+                  />
+                )}
                 {currentSubView === 'mission_builder' && <MissionBuilder />}
                 {currentSubView === 'mock_deployment' && <MockDeployment />}
                 {currentSubView === 'batch_roster' && <BatchRoster />}
@@ -2066,6 +2139,7 @@ const OrgSpaceView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                     && currentSubView !== 'ai-test-author' && currentSubView !== 'sso_gateways' && currentSubView !== 'node_settings'
                     && currentSubView !== 'evaluation_queue' && currentSubView !== 'role_access_manager'
                     && currentSubView !== 'at_risk_radar' && currentSubView !== 'misconception_log'
+                    && currentSubView !== 'evaluation_studio'
                     && currentSubView !== 'handwritten_queue' && currentSubView !== 'speaking_audits'
                     && currentSubView !== 'teacher_override' && currentSubView !== 'mission_builder'
                     && currentSubView !== 'mock_deployment' && currentSubView !== 'batch_roster'

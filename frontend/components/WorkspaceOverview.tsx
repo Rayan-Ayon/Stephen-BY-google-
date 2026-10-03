@@ -29,10 +29,10 @@ const WorkspaceOverview: React.FC<WorkspaceOverviewProps> = ({ userEmail, onNavi
     ];
 
     const kpis = [
-        { label: 'TOTAL ENROLLED SEATS', value: '1,420 / 2,000', sub: 'Active', bar: 71, barColor: 'bg-[#FF4D4D]' },
+        { label: 'TOTAL ENROLLED SEATS', value: '20 / 20', sub: '100% Enrolled (Farmgate Executive Batch)', bar: 100, barColor: 'bg-[#10B981]' },
         { label: 'BATCH ESTIMATED BAND', value: '6.8 Band', sub: 'Target: 7.5', delta: '-0.7 Gap', deltaColor: 'text-[#F59E0B]' },
         { label: 'EVALUATION QUEUE', value: '18', sub: 'Pending Items', detail: '12 OCR | 6 Audio', detailColor: 'text-[#F59E0B]' },
-        { label: 'CRITICAL AT-RISK RADAR', value: '5', sub: 'Flagged Candidates', badge: 'Requires Action', badgeColor: 'bg-[#EF4444]' },
+        { label: 'CRITICAL AT-RISK RADAR', value: '3', sub: 'Flagged Candidates', badge: 'Requires Action', badgeColor: 'bg-[#EF4444]' },
     ];
 
     const quickActions = [
@@ -132,7 +132,7 @@ const WorkspaceOverview: React.FC<WorkspaceOverviewProps> = ({ userEmail, onNavi
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <span className="text-[#10B981] text-lg">🟢</span>
-                            <p className="text-white text-[13px]"><span className="font-bold">1,180</span> Students completed daily mission today</p>
+                            <p className="text-white text-[13px]"><span className="font-bold">16 of 20</span> Enrolled students completed daily mission today</p>
                         </div>
                         <div className="flex items-center gap-2">
                             <span className="text-[#F59E0B] text-lg">🟡</span>
@@ -210,9 +210,7 @@ const WorkspaceOverview: React.FC<WorkspaceOverviewProps> = ({ userEmail, onNavi
                     <p className="text-[12px] text-[#A0A6B2] mb-4">Running batches across branches</p>
                     <div className="space-y-2">
                         {[
-                            { name: 'EXEC-BATCH-2026', students: 180, band: 7.2 },
-                            { name: 'MORNING-ELITE', students: 95, band: 6.8 },
-                            { name: 'WEEKEND-WARRIORS', students: 140, band: 6.5 },
+                            { name: 'EXEC-BATCH-2026 (Farmgate)', students: 20, band: 7.2 },
                         ].map((batch) => (
                             <div key={batch.name} className="flex items-center justify-between py-2 border-t" style={{ borderColor: '#1E2026' }}>
                                 <span className="text-white text-[12px] font-semibold">{batch.name}</span>

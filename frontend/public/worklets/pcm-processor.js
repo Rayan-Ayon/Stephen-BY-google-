@@ -5,8 +5,10 @@ class PCMProcessor extends AudioWorkletProcessor {
     this.nativeSampleRate = sampleRate; 
     this.needsResample = this.nativeSampleRate !== this.targetSampleRate;
     this.resampleRatio = this.targetSampleRate / this.nativeSampleRate;
-    this.chunkSize = 4096;
+    // 2048 samples @ 16kHz = 128ms per chunk (4096 bytes PCM16)
+    this.chunkSize = 2048;
     this.buffer = [];
+    console.log('[PCM WORKLET] Initialized. nativeSampleRate:', this.nativeSampleRate, 'targetSampleRate:', this.targetSampleRate, 'needsResample:', this.needsResample);
   }
 
   resample(float32Input) {

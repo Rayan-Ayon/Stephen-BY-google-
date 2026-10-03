@@ -5,6 +5,7 @@ import {
     PlayCircleIcon, CalendarIcon, BookOpenIcon, MicIcon,
     HeadphonesIcon, PenIcon, TargetIcon, ClockIcon
 } from './icons';
+import DashboardTopHeader from './DashboardTopHeader';
 
 interface DashboardViewProps {
     userEmail: string;
@@ -30,7 +31,13 @@ const DashboardView: React.FC<DashboardViewProps> = ({ userEmail, onNavigate }) 
     const currentDay = 9;
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 bg-[#0D0F12] text-[#F3F4F6] min-h-screen font-sans">
+
+            {/* ═══════════════════════════════════════════
+                TOP HEADER UTILITY BAR
+                (Community Gateway, Global Search, Notifications, Profile Card)
+            ═══════════════════════════════════════════ */}
+            <DashboardTopHeader userEmail={userEmail} onNavigate={onNavigate} />
 
             {/* ═══════════════════════════════════════════
                 SECTION A: Header Greeting Area
@@ -43,7 +50,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ userEmail, onNavigate }) 
                 </div>
                 <button
                     onClick={() => onNavigate('study_plan')}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surfaceAlt border border-border text-secondary text-sm font-medium hover:text-white hover:border-gray-600 transition-all"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#15181E] border border-[#222732] text-slate-300 text-sm font-medium hover:text-white hover:border-slate-600 transition-all shadow-sm"
                 >
                     <CalendarIcon className="w-4 h-4" />
                     View study plan
@@ -55,7 +62,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ userEmail, onNavigate }) 
             ═══════════════════════════════════════════ */}
             <div className="grid grid-cols-4 gap-3">
                 {/* 1. Overall Band */}
-                <div className="rounded-2xl bg-surface border border-border p-4 relative">
+                <div className="rounded-2xl bg-[#15181E] border border-[#222732] p-4 relative shadow-sm">
                     <div className="absolute top-4 right-4 w-9 h-9 rounded-full bg-[#2C1819] flex items-center justify-center">
                         <TargetIcon className="w-4 h-4 text-brand" />
                     </div>
@@ -65,7 +72,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ userEmail, onNavigate }) 
                 </div>
 
                 {/* 2. Day Streak */}
-                <div className="rounded-2xl bg-surface border border-border p-4 relative">
+                <div className="rounded-2xl bg-[#15181E] border border-[#222732] p-4 relative shadow-sm">
                     <div className="absolute top-4 right-4 w-9 h-9 rounded-full bg-[#261F18] flex items-center justify-center">
                         <FireIcon className="w-4 h-4 text-[#F59E0B]" />
                     </div>
@@ -75,21 +82,21 @@ const DashboardView: React.FC<DashboardViewProps> = ({ userEmail, onNavigate }) 
                 </div>
 
                 {/* 3. Practice Time */}
-                <div className="rounded-2xl bg-surface border border-border p-4 relative">
+                <div className="rounded-2xl bg-[#15181E] border border-[#222732] p-4 relative shadow-sm">
                     <div className="absolute top-4 right-4 w-9 h-9 rounded-full bg-[#142921] flex items-center justify-center">
                         <ClockIcon className="w-4 h-4 text-[#10B981]" />
                     </div>
                     <p className="text-secondary text-[13px] mb-1">Practice time</p>
                     <p className="text-[11px] text-[#10B981] font-medium mb-1">Last 7 days</p>
                     <p className="text-[28px] font-bold text-white leading-none mb-3">6 <span className="text-[14px] font-normal text-secondary">min</span></p>
-                    <div className="border-t border-border pt-2 flex items-center justify-between">
+                    <div className="border-t border-[#222732] pt-2 flex items-center justify-between">
                         <span className="text-muted text-[11px]">Total tracked</span>
                         <span className="text-secondary text-[11px] font-medium">6 min</span>
                     </div>
                 </div>
 
                 {/* 4. Total Experience */}
-                <div className="rounded-2xl bg-surface border border-border p-4 relative">
+                <div className="rounded-2xl bg-[#15181E] border border-[#222732] p-4 relative shadow-sm">
                     <div className="absolute top-4 right-4 w-9 h-9 rounded-full bg-[#21182B] flex items-center justify-center">
                         <LightningIcon className="w-4 h-4 text-[#A855F7]" />
                     </div>
@@ -191,7 +198,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ userEmail, onNavigate }) 
                     ].map((skill) => {
                         const Icon = skill.icon;
                         return (
-                            <div key={skill.key} className="rounded-2xl bg-surface border border-border p-4 flex flex-col">
+                            <div key={skill.key} className="rounded-2xl bg-[#15181E] border border-[#222732] p-4 flex flex-col shadow-sm">
                                 <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ backgroundColor: skill.iconBg }}>
                                     <Icon className="w-5 h-5" style={{ color: skill.iconColor }} />
                                 </div>
@@ -221,13 +228,13 @@ const DashboardView: React.FC<DashboardViewProps> = ({ userEmail, onNavigate }) 
                     <button className="text-brand text-sm font-semibold hover:underline">View plan →</button>
                 </div>
 
-                <div className="rounded-2xl bg-[#16141B] border border-[#251F30] p-4 flex items-center justify-between">
+                <div className="rounded-2xl bg-[#15181E] border border-[#222732] p-4 flex items-center justify-between shadow-sm">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#2C1E3F] flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
                             <MicIcon className="w-5 h-5 text-[#A855F7]" />
                         </div>
                         <div>
-                            <p className="text-[14px] font-semibold text-white">Format এবং Assessment Criteria</p>
+                            <p className="text-[14px] font-semibold text-white">Format and Assessment Criteria</p>
                             <p className="text-[12px] text-secondary flex items-center gap-1.5">
                                 Speaking ·
                                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -237,7 +244,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ userEmail, onNavigate }) 
                             </p>
                         </div>
                     </div>
-                    <button className="bg-[#1D1B26] hover:bg-[#252330] text-white text-[13px] font-semibold px-5 py-2.5 rounded-full transition-all flex items-center gap-2">
+                    <button className="bg-[#1D1B26] hover:bg-[#252330] text-white text-[13px] font-semibold px-5 py-2.5 rounded-full transition-all flex items-center gap-2 border border-[#222732]">
                         Start <span className="text-[#F59E0B]">⚡</span> +20 XP →
                     </button>
                 </div>
@@ -246,9 +253,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({ userEmail, onNavigate }) 
             {/* ═══════════════════════════════════════════
                 SECTION G: Guidance Card
             ═══════════════════════════════════════════ */}
-            <div className="rounded-2xl bg-[#141215] border border-[#22181A] p-5">
+            <div className="rounded-2xl bg-[#15181E] border border-[#222732] p-5 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-[#2C1517] flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-[#2C1517] border border-rose-500/20 flex items-center justify-center shrink-0">
                         <span className="text-lg">🐦</span>
                     </div>
                     <div>
@@ -263,7 +270,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ userEmail, onNavigate }) 
                     <p className="text-[13px] text-secondary">Among the top 19% of learners globally</p>
                 </div>
 
-                <div className="flex items-center justify-between pt-3 border-t border-[#22181A]">
+                <div className="flex items-center justify-between pt-3 border-t border-[#222732]">
                     <p className="text-[11px] text-muted">Insights updated daily based on your performance</p>
                     <button className="text-brand text-[13px] font-semibold hover:underline">Ask Mihu →</button>
                 </div>
@@ -284,7 +291,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ userEmail, onNavigate }) 
                         { text: 'Remove glitches and add an active hotline number', count: 6 },
                         { text: 'Remove bugs and glitches', count: 4 },
                     ].map((f, i) => (
-                        <div key={i} className="flex items-center justify-between bg-[#17181D] rounded-xl px-4 py-3">
+                        <div key={i} className="flex items-center justify-between bg-[#15181E] border border-[#222732] rounded-xl px-4 py-3">
                             <p className="text-[13px] text-secondary flex-1 mr-3">{f.text}</p>
                             <span className="text-[11px] text-muted shrink-0">👥 {f.count} people interested</span>
                         </div>

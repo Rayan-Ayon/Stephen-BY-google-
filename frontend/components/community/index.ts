@@ -1,4 +1,15 @@
 export { CohortCommunityPage, default as CohortCommunityView } from './CohortCommunityPage';
+export { CohortTopHeader } from './CohortTopHeader';
+export { MentorBroadcastHero } from './MentorBroadcastHero';
+export { BenchmarkSpotlightCard } from './BenchmarkSpotlightCard';
+export { AcademicForumCard } from './AcademicForumCard';
+export { LiveClassBridgeCard } from './LiveClassBridgeCard';
+export { CohortTransparencyRoster } from './CohortTransparencyRoster';
+export { RealtimeActivityTicker } from './RealtimeActivityTicker';
+export { CohortChatDrawer } from './CohortChatDrawer';
+export { DirectMessagingModal } from './DirectMessagingModal';
+export { MessagesWorkspaceView } from './MessagesWorkspaceView';
+
 export { GlobalUserDiscoveryBar } from './GlobalUserDiscoveryBar';
 export { CohortBatchChat } from './CohortBatchChat';
 export { DirectMessagingPanel } from './DirectMessagingPanel';

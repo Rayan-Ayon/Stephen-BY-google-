@@ -1,4 +1,8 @@
-import React from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { Flag, Clock, CheckCircle2 } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
+import StudentDisputeButtonAndModal from './StudentDisputeButtonAndModal';
 import {
     readAttempts,
     attemptStatus,
@@ -15,6 +19,7 @@ import {
     buildWriting,
     buildSpeaking,
     type ObjectiveAnalysis,
+    type ObjectiveAnswer,
     type WritingAnalysis,
     type SpeakingAnalysis,
     type BundleAnalysis,
@@ -153,9 +158,12 @@ const ObjectiveView: React.FC<{ data: ObjectiveAnalysis }> = ({ data }) => {
                         <tbody className="divide-y divide-neutral-800/70">
                             {o.answers.map((a) => (
                                 <tr key={a.q}>
-                                    <td className="py-2 pr-4 text-xs font-mono text-neutral-400">{a.q}</td>
-                                    <td className="py-2 pr-4 text-xs text-neutral-300">{a.your}</td>
-                                    <td className="py-2 pr-4 text-xs text-neutral-400">{a.correct}</td>
+                                    <td className="py-2 pr-4 text-xs font-mono text-neutral-400">
+                                        <div className="font-bold">Q{a.q}</div>
+                                        {a.prompt && <div className="text-[10px] text-neutral-500 font-sans truncate max-w-[140px]" title={a.prompt}>{a.prompt}</div>}
+                                    </td>
+                                    <td className="py-2 pr-4 text-xs text-neutral-300 max-w-[160px] truncate" title={a.your}>{a.your}</td>
+                                    <td className="py-2 pr-4 text-xs text-neutral-400 max-w-[160px] truncate" title={a.correct}>{a.correct}</td>
                                     <td className="py-2 pr-4 text-xs text-neutral-500">{a.type}</td>
                                     <td className="py-2 pr-4 text-xs font-mono text-neutral-500">{a.timeSpent}s</td>
                                     <td className="py-2 pr-4">
@@ -168,14 +176,19 @@ const ObjectiveView: React.FC<{ data: ObjectiveAnalysis }> = ({ data }) => {
                                                     : 'text-neutral-500'
                                             }`}
                                         >
-                                            {a.status === 'correct' ? '✅' : a.status === 'incorrect' ? '❌' : '—'}
+                                            {a.status === 'correct' ? '✅ Correct' : a.status === 'incorrect' ? '❌ Missed' : '— Omitted'}
                                         </span>
                                     </td>
                                     <td className="py-2">
                                         <button
-                                            onClick={() => setPassage(o.passageCtx)}
-                                            disabled={a.status === 'unanswered'}
-                                            className="text-[11px] text-sky-400 hover:text-sky-300 disabled:opacity-40 disabled:hover:text-sky-400"
+                                            onClick={() => setPassage({
+                                                heading: `Question ${a.q}: ${a.prompt || a.type}`,
+                                                paragraph: a.tapeScriptExcerpt || o.passageCtx.paragraph,
+                                                highlight: a.correct,
+                                                trick: a.explanation || o.passageCtx.trick
+                                            })}
+                                            disabled={a.status === 'unanswered' && !a.tapeScriptExcerpt}
+                                            className="text-[11px] text-sky-400 hover:text-sky-300 disabled:opacity-40 disabled:hover:text-sky-400 cursor-pointer"
                                         >
                                             View Context ➔
                                         </button>
@@ -490,16 +503,19 @@ const BundleView: React.FC<{ data: BundleAnalysis }> = ({ data }) => {
 /* ───────────────────────── Main Modal ───────────────────────── */
 
 interface IELTSAnalysisViewProps {
-    attemptId?: number;
+    attemptId?: number | string;
     bundleId?: IeltsBundleId;
     onClose: () => void;
 }
 
 const IELTSAnalysisView: React.FC<IELTSAnalysisViewProps> = ({ attemptId, bundleId, onClose }) => {
-    const data = React.useMemo<ResolvedAnalysis>(
-        () => resolveAnalysis({ attemptId, bundleId }, readAttempts()),
+    const rawData = React.useMemo<ResolvedAnalysis>(
+        () => resolveAnalysis({ attemptId: typeof attemptId === 'number' ? attemptId : undefined, bundleId }, readAttempts()),
         [attemptId, bundleId],
     );
+
+    const [realObjective, setRealObjective] = useState<ObjectiveAnalysis | null>(null);
+    const [scoreViewMode, setScoreViewMode] = useState<'ai' | 'teacher'>('ai');
 
     React.useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
@@ -509,8 +525,159 @@ const IELTSAnalysisView: React.FC<IELTSAnalysisViewProps> = ({ attemptId, bundle
         return () => window.removeEventListener('keydown', onKey);
     }, [onClose]);
 
+    // Query Supabase for candidate's actual exam attempt and questions
+    useEffect(() => {
+        let isMounted = true;
+        const fetchRealExamData = async () => {
+            try {
+                let attemptRow: any = null;
+                if (attemptId) {
+                    const isUuid = typeof attemptId === 'string' && attemptId.includes('-');
+                    if (isUuid) {
+                        const { data: att } = await (supabase as any)
+                            .from('exam_attempts')
+                            .select('*')
+                            .eq('id', attemptId)
+                            .maybeSingle();
+                        attemptRow = att;
+                    }
+                }
+                if (!attemptRow && (rawData.skill === 'reading' || rawData.skill === 'listening')) {
+                    const { data: latest } = await (supabase as any)
+                        .from('exam_attempts')
+                        .select('*')
+                        .eq('module', rawData.skill)
+                        .order('created_at', { ascending: false })
+                        .limit(1)
+                        .maybeSingle();
+                    attemptRow = latest;
+                }
+
+                if (!attemptRow) return;
+
+                const userAnswers: Record<string, string> = attemptRow.answers_payload || {};
+                const testId = attemptRow.test_id || '';
+                const module = attemptRow.module;
+
+                let sectionsOrPassages: any[] = [];
+                if (module === 'listening') {
+                    const { data: sec } = await (supabase as any)
+                        .from('sections')
+                        .select('*, question_groups(*, questions(*))')
+                        .or(`test_id.ilike.%${testId}%,exam_id.ilike.%${testId}%`)
+                        .order('part_number', { ascending: true });
+                    sectionsOrPassages = sec || [];
+                } else if (module === 'reading') {
+                    const { data: pas } = await (supabase as any)
+                        .from('passages')
+                        .select('*, question_groups(*, questions(*))')
+                        .or(`test_id.ilike.%${testId}%,exam_id.ilike.%${testId}%`)
+                        .order('part_number', { ascending: true });
+                    sectionsOrPassages = pas || [];
+                }
+
+                const allQuestions: Array<{ qNum: number; prompt: string; type: string; correct: string; explanation?: string; partName: string }> = [];
+                sectionsOrPassages.forEach((sec: any) => {
+                    const groups = sec.question_groups || [];
+                    groups.forEach((g: any) => {
+                        const qs = g.questions || [];
+                        qs.forEach((q: any) => {
+                            const qNum = q.question_number || (allQuestions.length + 1);
+                            allQuestions.push({
+                                qNum,
+                                prompt: q.prompt || `Question ${qNum}`,
+                                type: g.question_type || 'Completion',
+                                correct: q.correct_answer || '',
+                                explanation: q.explanation || '',
+                                partName: sec.passage_title || `Part ${sec.part_number || 1}`
+                            });
+                        });
+                    });
+                });
+
+                if (allQuestions.length === 0) return;
+
+                allQuestions.sort((a, b) => a.qNum - b.qNum);
+                const normalize = (v: string) => (v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+                let correctCount = 0;
+                let incorrectCount = 0;
+                let unansweredCount = 0;
+
+                const answers: ObjectiveAnswer[] = allQuestions.map((q) => {
+                    const userRaw = (userAnswers[q.qNum] || userAnswers[String(q.qNum)] || '').trim();
+                    const isBlank = !userRaw;
+                    const isMatch = !isBlank && normalize(userRaw) === normalize(q.correct);
+                    if (isBlank) unansweredCount++;
+                    else if (isMatch) correctCount++;
+                    else incorrectCount++;
+
+                    return {
+                        q: q.qNum,
+                        your: userRaw || '(No answer provided)',
+                        correct: q.correct || '—',
+                        type: q.type,
+                        timeSpent: Math.round(attemptRow.time_spent_seconds ? attemptRow.time_spent_seconds / allQuestions.length : 45),
+                        status: isBlank ? 'unanswered' : isMatch ? 'correct' : 'incorrect',
+                        prompt: q.prompt,
+                        explanation: q.explanation,
+                        tapeScriptExcerpt: q.explanation || q.prompt
+                    };
+                });
+
+                const typeMap: Record<string, { total: number; correct: number }> = {};
+                answers.forEach((ans) => {
+                    if (!typeMap[ans.type]) typeMap[ans.type] = { total: 0, correct: 0 };
+                    typeMap[ans.type].total += 1;
+                    if (ans.status === 'correct') typeMap[ans.type].correct += 1;
+                });
+
+                const questionTypes = Object.entries(typeMap).map(([type, stats]) => {
+                    const acc = Math.round((stats.correct / (stats.total || 1)) * 100);
+                    return {
+                        type,
+                        accuracy: acc,
+                        count: stats.total,
+                        critical: acc < 60
+                    };
+                });
+
+                if (isMounted) {
+                    setRealObjective({
+                        band: Number(attemptRow.band_score) || rawData.objective?.band || 6.5,
+                        correct: correctCount,
+                        incorrect: incorrectCount,
+                        unanswered: unansweredCount,
+                        total: allQuestions.length,
+                        timeSpent: Math.round((attemptRow.time_spent_seconds || 1800) / 60),
+                        allocated: rawData.objective?.allocated || 60,
+                        questionTypes: questionTypes.length > 0 ? questionTypes : (rawData.objective?.questionTypes || []),
+                        pacing: rawData.objective?.pacing || [],
+                        answers,
+                        passageCtx: rawData.objective?.passageCtx || {
+                            heading: `${rawData.title || 'Official'} Context`,
+                            paragraph: 'Official exam passage and transcript telemetry.',
+                            highlight: '',
+                            trick: 'Pay attention to synonyms and grammatical shifts.'
+                        }
+                    });
+                }
+            } catch (err) {
+                console.warn('[IELTSAnalysisView] Real exam data ingestion note:', err);
+            }
+        };
+
+        fetchRealExamData();
+        return () => { isMounted = false; };
+    }, [attemptId, rawData.skill, rawData.title, rawData.objective]);
+
+    const data: ResolvedAnalysis = {
+        ...rawData,
+        objective: realObjective || rawData.objective
+    };
+
     const title = data.title ?? (data.skill ? skillLabels[data.skill] : 'Analysis');
-    const headerBand =
+    const rawAiBand =
         data.kind === 'bundle'
             ? data.bundle?.verdict.prediction ?? 0
             : data.kind === 'objective'
@@ -518,26 +685,46 @@ const IELTSAnalysisView: React.FC<IELTSAnalysisViewProps> = ({ attemptId, bundle
             : data.kind === 'writing'
             ? data.writing?.band ?? 0
             : data.speaking?.band ?? 0;
+            
+    // If teacher verified, simulated +0.5 band increase
+    const teacherBand = Math.min(9.0, rawAiBand + 0.5);
+    const headerBand = scoreViewMode === 'teacher' ? teacherBand : rawAiBand;
     const accent = data.skill ? skillColors[data.skill] : 'text-amber-400';
 
-    return (
-        <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto custom-scrollbar" onClick={onClose}>
+    if (typeof document === 'undefined') return null;
+
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[999] w-screen h-screen min-h-screen bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+            onClick={onClose}
+        >
             <div
-                className="w-full max-w-5xl my-8 rounded-2xl bg-[#0D0D0E] border border-neutral-800 shadow-2xl"
+                className="relative w-full max-w-5xl max-h-[92vh] my-auto rounded-2xl bg-[#0D0F12] border border-[#222732] shadow-2xl overflow-y-auto custom-scrollbar space-y-6"
                 onClick={(e) => e.stopPropagation()}
             >
-                <header className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-4 bg-surface border-b border-neutral-800 rounded-t-2xl">
+                <header className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-4 bg-[#15181E] border-b border-[#222732] rounded-t-2xl flex-wrap">
                     <div className="min-w-0">
                         <p className="text-[10px] uppercase tracking-wider text-neutral-500">Test Analysis</p>
                         <h2 className={`text-lg font-semibold tracking-tight truncate ${accent}`}>{title}</h2>
                         {data.attemptDate && <p className="text-[11px] text-neutral-500 mt-0.5">{data.attemptDate}</p>}
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
+
+                    <div className="flex items-center gap-3 shrink-0 flex-wrap">
+                        {/* Universal Student Dispute Action & Modal */}
+                        <StudentDisputeButtonAndModal
+                            testTitle={title}
+                            module={(data.skill as any) || 'writing'}
+                            originalBand={rawAiBand}
+                            rawAnswers={data.objective?.answers}
+                            scoreViewMode={scoreViewMode}
+                            onScoreViewModeChange={setScoreViewMode}
+                        />
+
                         <BandPill band={headerBand} size="lg" />
                         <span className="text-[10px] uppercase tracking-wider text-neutral-500 border border-neutral-800 rounded-full px-3 py-1">Target 7.5</span>
                         <button
                             onClick={onClose}
-                            className="w-9 h-9 rounded-lg bg-canvas border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors"
+                            className="w-9 h-9 rounded-lg bg-canvas border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors cursor-pointer"
                         >
                             ✕
                         </button>
@@ -551,7 +738,8 @@ const IELTSAnalysisView: React.FC<IELTSAnalysisViewProps> = ({ attemptId, bundle
                     {data.kind === 'bundle' && data.bundle && <BundleView data={data.bundle} />}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

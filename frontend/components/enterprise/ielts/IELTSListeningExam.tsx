@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { supabase } from '../../../supabaseClient';
 import { addAttempt, rawToBand, formatClock, type SimulationProps } from './ieltsShared';
 import IELTSExitModal from './IELTSExitModal';
+import ListeningAnalysisModal from './ListeningAnalysisModal';
 
 export interface QuestionGroupMeta {
     part: 1 | 2 | 3 | 4;
@@ -1479,21 +1480,24 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
     }
 
     if (testState === 'completed') {
-        const band = score != null ? rawToBand(score) : null;
+        const band = score != null ? rawToBand(score) : 6.5;
         return (
-            <div className="fixed inset-0 z-50 w-screen h-screen flex items-center justify-center bg-[#F2F2F2]">
-                <div className="bg-white p-8 rounded-2xl shadow-xl text-center max-w-md w-full border border-gray-200">
-                    <h2 className="text-2xl font-bold text-[#0072CE] mb-4">Exam Completed</h2>
-                    <p className="text-lg text-neutral-800 mb-2">Score: <strong>{score}</strong> / {allCurrentIds.length}</p>
-                    <p className="text-lg text-neutral-800 mb-6">Band: <strong>{band?.toFixed(1)}</strong></p>
-                    <button
-                        onClick={handleExit}
-                        className="px-6 py-2.5 bg-[#0072CE] text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold cursor-pointer shadow-md shadow-blue-500/20"
-                    >
-                        Back to Listening Hub
-                    </button>
-                </div>
-            </div>
+            <ListeningAnalysisModal
+                score={score ?? 0}
+                totalQuestions={allCurrentIds.length || 40}
+                bandScore={band}
+                testTitle={`Cambridge ${bookNumber} Listening — Test ${testNumber}`}
+                userAnswers={answers as Record<number, string>}
+                bookNumber={bookNumber}
+                testNumber={testNumber}
+                onExit={handleExit}
+                onRetake={() => {
+                    setAnswers({});
+                    setElapsed(0);
+                    setActivePart(1);
+                    setTestState('active');
+                }}
+            />
         );
     }
 

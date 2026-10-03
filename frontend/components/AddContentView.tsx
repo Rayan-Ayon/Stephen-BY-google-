@@ -14,11 +14,21 @@ interface AddContentViewProps {
   onCourseCreated: (course: HistoryItem) => void;
   recentVideos: HistoryItem[];
   onSelectRecent: (item: HistoryItem) => void;
+  onNavigate?: (view: string, context?: any) => void;
 }
 
 interface Message {
   role: 'user' | 'model';
   text: string;
+}
+
+interface ActiveVideoState {
+  videoId: string;
+  title: string;
+  channel?: string;
+  duration?: string;
+  url?: string;
+  fromContentLibrary?: boolean;
 }
 
 const formatRelativeTime = (timeString: string): string => {
@@ -70,7 +80,7 @@ const TypingIndicator = () => (
     </div>
 );
 
-const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated, recentVideos, onSelectRecent }) => {
+const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated, recentVideos, onSelectRecent, onNavigate }) => {
     const [isPasteUrlModalOpen, setIsPasteUrlModalOpen] = useState(false);
     const [isPasteTextModalOpen, setIsPasteTextModalOpen] = useState(false);
     const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
@@ -83,11 +93,28 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated, recent
     const [selectedModel, setSelectedModel] = useState('Auto');
     const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
+    const [activeVideo, setActiveVideo] = useState<ActiveVideoState | null>(null);
+    const [isFromContentLibrary, setIsFromContentLibrary] = useState(false);
     const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const modelDropdownRef = useRef<HTMLDivElement>(null);
     const inputContainerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem('stephen_active_learn_ai_video');
+            if (stored) {
+                const parsed = JSON.parse(stored) as ActiveVideoState;
+                if (parsed && parsed.videoId) {
+                    setActiveVideo(parsed);
+                    setIsFromContentLibrary(true);
+                }
+            }
+        } catch (e) {
+            console.error('Failed to read active learn ai video:', e);
+        }
+    }, []);
 
     useEffect(() => {
         const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
@@ -277,7 +304,97 @@ const AddContentView: React.FC<AddContentViewProps> = ({ onCourseCreated, recent
     );
 
     const renderInitialUI = () => (
-         <motion.div key="initial-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="w-full max-w-2xl flex flex-col items-center pt-12">
+         <motion.div key="initial-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="w-full max-w-2xl flex flex-col items-center pt-6">
+                {/* Context-Aware Top Navigation Header */}
+                <div className="w-full flex items-center justify-between pb-6 px-4">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (isFromContentLibrary) {
+                                localStorage.removeItem('stephen_active_learn_ai_video');
+                                if (onNavigate) {
+                                    onNavigate('content_library');
+                                } else {
+                                    window.location.hash = '#content_library';
+                                }
+                            } else {
+                                if (onNavigate) {
+                                    onNavigate('overview');
+                                } else {
+                                    window.location.hash = '#overview';
+                                }
+                            }
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl dark:bg-[#15181E] bg-white border dark:border-[#222732] border-gray-200 text-xs font-bold dark:text-slate-300 text-gray-700 dark:hover:text-white hover:text-black hover:border-gray-400 dark:hover:border-slate-500 transition-all cursor-pointer shadow-xs"
+                    >
+                        <ChevronLeftIcon className="w-4 h-4" />
+                        <span>{isFromContentLibrary ? '← Back to Free Content Library' : '← Back'}</span>
+                    </button>
+
+                    {isFromContentLibrary && activeVideo && (
+                        <span className="text-[11px] font-semibold text-rose-500 dark:text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20 flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                            AI Video Learning Canvas
+                        </span>
+                    )}
+                </div>
+
+                {/* If loaded from Learn with AI, render interactive video canvas */}
+                {activeVideo && (
+                    <div className="w-full px-4 mb-8">
+                        <div className="rounded-2xl p-4 bg-[#0D0F12] border border-[#222732] shadow-2xl space-y-3">
+                            <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-black shadow-inner">
+                                <iframe
+                                    src={`https://www.youtube-nocookie.com/embed/${activeVideo.videoId}?rel=0`}
+                                    title={activeVideo.title}
+                                    className="w-full h-full border-0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between gap-3 pt-1">
+                                <div className="min-w-0 flex-1">
+                                    <h3 className="text-sm font-bold text-white truncate">{activeVideo.title}</h3>
+                                    <p className="text-xs text-slate-400">{activeVideo.channel || 'IELTS Preparation'}</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setActiveVideo(null);
+                                        localStorage.removeItem('stephen_active_learn_ai_video');
+                                        setIsFromContentLibrary(false);
+                                    }}
+                                    className="text-xs text-slate-500 hover:text-rose-400 font-medium px-2 py-1 cursor-pointer"
+                                >
+                                    Dismiss Video
+                                </button>
+                            </div>
+
+                            <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[#222732]">
+                                {[
+                                    'Summarize key IELTS strategies in this lecture',
+                                    'Generate 5 practice questions based on this video',
+                                    'Extract vocabulary & lexical resources taught here',
+                                    'Explain common traps and Band 8+ tips mentioned'
+                                ].map((promptText, idx) => (
+                                    <button
+                                        key={idx}
+                                        type="button"
+                                        onClick={() => {
+                                            setInputValue(promptText);
+                                            setIsFocused(true);
+                                        }}
+                                        className="text-[11px] font-medium text-slate-300 hover:text-white bg-[#15181E] hover:bg-[#1E232E] border border-[#222732] px-2.5 py-1 rounded-lg transition-colors cursor-pointer text-left"
+                                    >
+                                        💡 {promptText}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <h1 className="text-3xl md:text-5xl font-medium text-black dark:text-white mb-14 text-center tracking-tight" style={{ fontFamily: "'Lora', serif" }}>
                     What should we learn, Ayon?
                 </h1>

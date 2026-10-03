@@ -77,7 +77,9 @@ const AppContent: React.FC = () => {
       setInitialView('community');
     }
     const orgSession = localStorage.getItem('stephen_active_tenant_session');
-    if (path === '/org-space') {
+    if (path === '/coaching/evaluations' || path.startsWith('/coaching')) {
+      setIsOrgManager(true);
+    } else if (path === '/org-space' || path.startsWith('/org')) {
       setIsOrgManager(true);
     } else if (orgSession && path === '/') {
       window.history.pushState({}, '', '/org-space');
@@ -146,8 +148,10 @@ const AppContent: React.FC = () => {
   };
 
   if (isOrgManager) {
+    const isCoachingEval = window.location.pathname === '/coaching/evaluations' || window.location.pathname.startsWith('/coaching');
     return (
       <OrgSpaceView
+        initialSubView={isCoachingEval ? 'evaluation_studio' : undefined}
         onExit={() => {
           localStorage.removeItem('stephen_active_tenant_session');
           window.history.pushState({}, '', '/');

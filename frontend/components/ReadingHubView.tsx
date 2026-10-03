@@ -212,7 +212,7 @@ export default function ReadingHubView({ userEmail, onExamStateChange }: Reading
   React.useEffect(() => {
     if (typeof window !== 'undefined' && window.location.pathname.startsWith('/reading/results')) {
       setShowExam(true);
-      onExamStateChange?.(true);
+      onExamStateChange?.(false);
     }
   }, [onExamStateChange]);
 
@@ -256,7 +256,7 @@ export default function ReadingHubView({ userEmail, onExamStateChange }: Reading
         testNumber={examTestNumber}
         onExit={handleExitExam}
       >
-        <div className="flex-1 h-full bg-[#FFFFFF] overflow-hidden">
+        <div className="flex-1 h-full w-full bg-[#0D0F12] overflow-y-auto">
           <IELTSReadingExam
             candidateEmail={userEmail}
             sourceType={examSourceType}

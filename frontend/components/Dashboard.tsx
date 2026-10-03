@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import DashboardView from './DashboardView';
 import WorkspaceOverview from './WorkspaceOverview';
+import Overview from './Overview';
 import RightSidebar from './RightSidebar';
 import AddContentView from './AddContentView';
 import AddCoursesView from './AddCoursesView';
@@ -33,6 +34,7 @@ import AIIELTSChatbotView from './AIIELTSChatbotView';
 import SupportView from './SupportView';
 import AIRewriterView from './AIRewriterView';
 import FreeContentLibraryView from './FreeContentLibraryView';
+import SubscriptionsView from './SubscriptionsView';
 import StudyPlanView from './StudyPlanView';
 import SpaceView from './SpaceView';
 import IndividualSandboxView from './IndividualSandboxView';
@@ -50,16 +52,17 @@ import { DORMANT_NAV_ENABLED, DORMANT_NAV_KEYS } from './dormantNav';
 import SpacedRepetitionEngine from './enterprise/srs/SpacedRepetitionEngine';
 import StudentPortal from './enterprise/portal/StudentPortal';
 import CohortCommunityPage from './community/CohortCommunityPage';
+import UpdatesView from './UpdatesView';
 import { DeleteSpaceModal, ShareSpaceModal } from './modals';
 import { Theme } from '../App';
 import { useWorkspace } from '../workspaceContext';
 import {
-  initMockDb,
-  getSpaces,
-  addSpace,
-  updateSpace,
-  deleteSpace,
-  type Space,
+    initMockDb,
+    getSpaces,
+    addSpace,
+    updateSpace,
+    deleteSpace,
+    type Space,
 } from '../utils/mockDb';
 
 export interface HistoryItem {
@@ -140,7 +143,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
 
     // State for AddCourses flow context persistence
     const [addCoursesContext, setAddCoursesContext] = useState({ flow: 'landing', topic: '' });
-    
+
     // State for Debate flow context
     const [debateInitialMessage, setDebateInitialMessage] = useState('');
 
@@ -250,7 +253,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
         } else if (view === 'quick_guide') {
             setIsQuickGuideOpen(true);
         } else if (view === 'contact_us') {
-             setIsContactUsOpen(true);
+            setIsContactUsOpen(true);
         } else {
             if (view === 'add_courses' && data?.topic) {
                 setAddCoursesContext({ flow: 'qa', topic: data.topic });
@@ -366,22 +369,16 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
         }
 
         if (DORMANT_NAV_ENABLED && DORMANT_NAV_KEYS.has(currentView)) {
-            return <AddContentView onCourseCreated={handleCourseCreated} recentVideos={isEnterprise ? [] : recentVideos} onSelectRecent={handleSelectCourse} />;
+            return <AddContentView onCourseCreated={handleCourseCreated} recentVideos={isEnterprise ? [] : recentVideos} onSelectRecent={handleSelectCourse} onNavigate={handleNavigate} />;
         }
 
         switch (currentView) {
-            case 'sandbox': return isEnterprise
-                ? (
-                    <div className="flex gap-6 w-full min-h-screen bg-[#0E0F12] p-6">
-                        <div className="flex-[7] min-w-0">
-                            <DashboardView userEmail={userEmail} onNavigate={handleNavigate} />
-                        </div>
-                        <div className="flex-[3] min-w-0">
-                            <RightSidebar onNavigate={handleNavigate} />
-                        </div>
-                    </div>
-                )
-                : <WorkspaceOverview userEmail={userEmail} onNavigate={handleNavigate} />;
+            case 'sandbox':
+            case 'overview':
+            case 'dashboard':
+                return <Overview userEmail={userEmail} onNavigate={handleNavigate} />;
+            case 'workspace_overview':
+                return <WorkspaceOverview userEmail={userEmail} onNavigate={handleNavigate} />;
             case 'ielts_dashboard': return <IELTSEvaluationHub key="ielts_dashboard" userEmail={userEmail} onExamStateChange={setIsExamActive} exitPulse={exitPulse} onLockedNavigationAttempt={handleLockedNav} initialView="dashboard" hideInternalNav onNavigate={handleNavigate} />;
             case 'speaking_studio': return <SpeakingHubView userEmail={userEmail} onExamStateChange={setIsExamActive} />;
             case 'listening_engine': return <ListeningHubView userEmail={userEmail} onExamStateChange={setIsExamActive} />;
@@ -463,15 +460,22 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
                         </div>
                     );
                 }
-                return <AddContentView onCourseCreated={handleCourseCreated} recentVideos={isEnterprise ? [] : recentVideos} onSelectRecent={handleSelectCourse} />;
+                return <AddContentView onCourseCreated={handleCourseCreated} recentVideos={isEnterprise ? [] : recentVideos} onSelectRecent={handleSelectCourse} onNavigate={handleNavigate} />;
             case 'add_courses':
-                 return (
-                    <AddCoursesView 
-                        onSelectCourse={(c) => handleSelectCourse({...c, isStructured: true})} 
+                return (
+                    <AddCoursesView
+                        onSelectCourse={(c) => handleSelectCourse({ ...c, isStructured: true })}
                         context={addCoursesContext}
                         setContext={setAddCoursesContext}
                     />
-                 );
+                );
+            case 'content_library':
+            case 'content-library':
+            case 'free_content_library':
+                return <FreeContentLibraryView userEmail={userEmail} onNavigate={handleNavigate} />;
+            case 'subscriptions':
+            case '/subscriptions':
+                return <SubscriptionsView userEmail={userEmail} onNavigate={handleNavigate} />;
             case 'competitions': return <CompetitionView />;
             case 'projects': return <ProjectsView onNavigate={handleNavigate} />;
             case 'discover': return <DiscoverView email={userEmail} workspaceScopeId={isEnterprise ? activeWorkspace.id : undefined} />;
@@ -480,6 +484,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             case 'tracker': return <TrackerView />;
             case 'consult_professors': return <ConsultProfessorsView />;
             case 'pricing': return <PricingView />;
+            case 'updates': return <UpdatesView onNavigate={handleNavigate} />;
             case 'history': return <HistoryView historyItems={isEnterprise ? [] : historyItems} onSelectCourse={handleSelectCourse} />;
             case 'invite_earn': return <InviteEarnView onContactUs={() => setIsContactUsOpen(true)} />;
             case 'research_lab': return <ResearchLabView />;
@@ -493,13 +498,13 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
         }
     };
 
-return (
+    return (
         <div className="flex h-screen w-full overflow-hidden bg-canvas">
             {!isExamActive && (
-                <Sidebar 
-                    toggleTheme={toggleTheme} 
-                    theme={theme} 
-                    onNavigate={(view) => handleNavigate(view)} 
+                <Sidebar
+                    toggleTheme={toggleTheme}
+                    theme={theme}
+                    onNavigate={(view) => handleNavigate(view)}
                     activeItem={currentView}
                     sidebarMode={sidebarMode}
                     setSidebarMode={setSidebarMode}
@@ -517,39 +522,31 @@ return (
                     onLockedNavigationAttempt={handleLockedNav}
                 />
             )}
-            
+
             <main className={`flex-1 flex flex-col min-w-0 overflow-hidden ${isExamActive ? 'w-full' : ''}`}>
                 {/* Content Area */}
                 <div className={`flex-1 flex min-h-0 overflow-hidden ${isExamActive ? 'w-full' : ''}`}>
-                    {/* Left Column (~68%) */}
-                    <div className={`${isExamActive ? 'flex-1 min-w-0 overflow-hidden' : 'flex-[7] min-w-0 overflow-y-auto'}`}>
+                    <div className="flex-1 min-w-0 overflow-y-auto w-full">
                         {renderContent()}
                     </div>
-
-                    {/* Right Sidebar (~32%) — Dashboard Only */}
-                    {!isExamActive && isDashboardView && !isEnterprise && (
-                        <div className="flex-[3] border-l border-border overflow-y-auto bg-canvas">
-                            <RightSidebar onNavigate={handleNavigate} />
-                        </div>
-                    )}
                 </div>
             </main>
 
             {!isExamActive && <HawkingFab onNavigate={handleNavigate} />}
-            
+
             {isSettingsOpen && <SettingsModal onClose={() => setIsSettingsOpen(false)} />}
             {isFeedbackOpen && <FeedbackModal onClose={() => setIsFeedbackOpen(false)} />}
             {isQuickGuideOpen && <QuickGuideModal onClose={() => setIsQuickGuideOpen(false)} />}
             {isContactUsOpen && <ContactUsSlide onClose={() => setIsContactUsOpen(false)} />}
-            
+
             {deleteSpaceId && (
-                <DeleteSpaceModal 
-                    spaceName={spaces.find(s => s.id === deleteSpaceId)?.title || 'Space'} 
-                    onClose={() => setDeleteSpaceId(null)} 
-                    onDelete={handleDeleteSpace} 
+                <DeleteSpaceModal
+                    spaceName={spaces.find(s => s.id === deleteSpaceId)?.title || 'Space'}
+                    onClose={() => setDeleteSpaceId(null)}
+                    onDelete={handleDeleteSpace}
                 />
             )}
-            
+
             {shareSpaceId && (
                 <ShareSpaceModal onClose={() => setShareSpaceId(null)} />
             )}

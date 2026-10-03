@@ -226,7 +226,7 @@ export default function ListeningHubView({ userEmail, onExamStateChange }: Liste
         testNumber={examTestNumber}
         onExit={handleExitExam}
       >
-        <div className="fixed inset-0 z-50 w-screen h-screen bg-white flex flex-col overflow-hidden">
+        <div className="flex-1 h-full w-full bg-[#0D0F12] flex flex-col overflow-hidden">
           <IELTSListeningExam
             candidateEmail={userEmail}
             sourceType={examSourceType}

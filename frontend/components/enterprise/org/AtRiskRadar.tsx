@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import { CANONICAL_20_STUDENTS, CanonicalStudent } from '@/lib/telemetryEgress';
+import { Student360AuditModal } from './Student360AuditModal';
 
 type RiskLevel = 'critical' | 'watchlist';
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -125,6 +127,7 @@ const AtRiskRadar: React.FC = () => {
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
     const [interventionFilter, setInterventionFilter] = useState<InterventionFilter>('all');
+    const [auditStudent, setAuditStudent] = useState<CanonicalStudent | null>(null);
 
     const filtered = useMemo(() => {
         let result = CANDIDATES;
@@ -157,32 +160,37 @@ const AtRiskRadar: React.FC = () => {
         CANDIDATES.reduce((sum, c) => sum + (c.targetBand - c.currentBand), 0) / CANDIDATES.length;
     const avgInactivity =
         CANDIDATES.reduce((sum, c) => sum + c.daysInactive, 0) / CANDIDATES.length;
+    const handleMessageStudent = (candidate: Candidate) => {
+        const handle = candidate.name.toLowerCase().replace(/\s+/g, '-');
+        window.location.href = `/portal/community?view=messages&dm=${encodeURIComponent(handle)}`;
+    };
 
     return (
-        <div className="min-h-screen bg-[#0A0B0D] text-[#F3F4F6] p-6 space-y-6">
+        <div className="min-h-screen bg-[#0D0F12] text-slate-100 p-6 space-y-6 font-sans">
             <div>
-                <h1 className="text-sm font-semibold tracking-[0.2em] uppercase text-[#8E95A3]">
+                <h1 className="text-sm font-mono tracking-[0.2em] uppercase text-slate-400">
                     Cohort Telemetry // At-Risk Radar &amp; Early Warning Pipeline
                 </h1>
+                <p className="text-xs text-slate-500 mt-1">Automatic detection of student inactivity, negative score trajectory, and band deficit.</p>
             </div>
 
-            <div className="bg-[#121316] border border-[#1E2026] rounded-xl overflow-hidden">
+            <div className="bg-[#15181E] border border-[#222732] rounded-2xl overflow-hidden shadow-sm">
                 <table className="w-full text-sm">
                     <thead>
-                        <tr className="border-b border-[#1E2026]">
-                            <th className="text-left text-[#8E95A3] text-xs uppercase tracking-wider font-medium px-5 py-3">Candidate</th>
-                            <th className="text-center text-[#8E95A3] text-xs uppercase tracking-wider font-medium px-5 py-3">Target Band</th>
-                            <th className="text-center text-[#8E95A3] text-xs uppercase tracking-wider font-medium px-5 py-3">Current Band</th>
-                            <th className="text-center text-[#8E95A3] text-xs uppercase tracking-wider font-medium px-5 py-3">Gap</th>
-                            <th className="text-center text-[#8E95A3] text-xs uppercase tracking-wider font-medium px-5 py-3">Last Active</th>
-                            <th className="text-left text-[#8E95A3] text-xs uppercase tracking-wider font-medium px-5 py-3">Intervention</th>
-                            <th className="text-left text-[#8E95A3] text-xs uppercase tracking-wider font-medium px-5 py-3">Actions</th>
+                        <tr className="border-b border-[#222732] bg-[#181C24]">
+                            <th className="text-left text-slate-400 text-xs uppercase tracking-wider font-semibold px-5 py-3.5">Candidate</th>
+                            <th className="text-center text-slate-400 text-xs uppercase tracking-wider font-semibold px-5 py-3.5">Target Band</th>
+                            <th className="text-center text-slate-400 text-xs uppercase tracking-wider font-semibold px-5 py-3.5">Current Band</th>
+                            <th className="text-center text-slate-400 text-xs uppercase tracking-wider font-semibold px-5 py-3.5">Gap</th>
+                            <th className="text-center text-slate-400 text-xs uppercase tracking-wider font-semibold px-5 py-3.5">Last Active</th>
+                            <th className="text-left text-slate-400 text-xs uppercase tracking-wider font-semibold px-5 py-3.5">Intervention</th>
+                            <th className="text-left text-slate-400 text-xs uppercase tracking-wider font-semibold px-5 py-3.5">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-[#222732]">
                         {filtered.length === 0 ? (
                             <tr>
-                                <td colSpan={7} className="text-center text-[#565E6D] py-12">
+                                <td colSpan={7} className="text-center text-slate-500 py-12">
                                     No candidates match the current filters.
                                 </td>
                             </tr>
@@ -195,44 +203,68 @@ const AtRiskRadar: React.FC = () => {
                                 return (
                                     <tr
                                         key={c.id}
-                                        className="border-b border-[#1E2026]/50 hover:bg-[#181A20] transition-colors"
+                                        className="hover:bg-[#181C24] transition-colors"
                                     >
-                                        <td className="px-5 py-3">
-                                            <p className="text-[#F3F4F6] font-medium">{c.name}</p>
-                                            <p className="text-[#565E6D] text-xs">{c.studentId}</p>
+                                        <td className="px-5 py-4">
+                                            <p className="text-white font-bold">{c.name}</p>
+                                            <p className="text-slate-400 font-mono text-xs">{c.studentId}</p>
                                         </td>
-                                        <td className="text-center px-5 py-3 text-[#F3F4F6]">{c.targetBand}</td>
-                                        <td className="text-center px-5 py-3 text-[#F3F4F6]">{c.currentBand}</td>
-                                        <td className="text-center px-5 py-3">
-                                            <span className={`font-semibold ${gap >= 2.0 ? 'text-red-400' : gap >= 1.5 ? 'text-amber-400' : 'text-emerald-400'}`}>
-                                                {gap.toFixed(1)}
+                                        <td className="text-center px-5 py-4 text-white font-mono font-bold">{c.targetBand}</td>
+                                        <td className="text-center px-5 py-4 text-slate-300 font-mono">{c.currentBand}</td>
+                                        <td className="text-center px-5 py-4 font-mono font-bold">
+                                            <span className={`px-2 py-0.5 rounded-md ${gap >= 2.0 ? 'bg-red-950/40 text-red-400 border border-red-800/40' : gap >= 1.5 ? 'bg-amber-950/40 text-amber-400 border border-amber-800/40' : 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/40'}`}>
+                                                -{gap.toFixed(1)}
                                             </span>
                                         </td>
-                                        <td className="text-center px-5 py-3">
-                                            <span className={`inline-flex items-center gap-1.5 text-xs ${c.daysInactive >= 14 ? 'text-red-400' : 'text-[#8E95A3]'}`}>
+                                        <td className="text-center px-5 py-4">
+                                            <span className={`inline-flex items-center gap-1.5 text-xs font-mono font-medium ${c.daysInactive >= 14 ? 'text-red-400' : 'text-slate-400'}`}>
                                                 <ClockIcon />
                                                 {c.daysInactive}d
                                             </span>
                                         </td>
-                                        <td className="px-5 py-3">
+                                        <td className="px-5 py-4">
                                             <div className="flex items-center gap-2">
-                                                <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${risk.className}`}>
+                                                <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${risk.className}`}>
                                                     {risk.icon} {risk.label}
                                                 </span>
-                                                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${intervention.className}`}>
+                                                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${intervention.className}`}>
                                                     {intervention.label}
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-5 py-3">
+                                        <td className="px-5 py-4">
                                             <div className="flex items-center gap-2">
-                                                <button className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-[#1E2026] text-[#8E95A3] hover:text-[#F3F4F6] text-xs font-medium px-3 py-1.5 rounded-lg transition-colors">
-                                                    <FlagIcon />
-                                                    Flag
+                                                <button
+                                                    onClick={() => {
+                                                        const found = CANONICAL_20_STUDENTS.find(s => s.name.toLowerCase().includes(c.name.toLowerCase()) || c.name.toLowerCase().includes(s.name.toLowerCase()));
+                                                        setAuditStudent(found || {
+                                                            id: c.studentId,
+                                                            name: c.name,
+                                                            handle: c.name.toLowerCase().replace(/\s+/g, '_'),
+                                                            email: `${c.studentId.toLowerCase()}@farmgate.edu`,
+                                                            avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face',
+                                                            branch: 'Farmgate Branch',
+                                                            streak: 7,
+                                                            targetBand: c.targetBand,
+                                                            currentBand: c.currentBand,
+                                                            aiCoins: 350,
+                                                            status: 'Active',
+                                                            dailyStatus: 'at_risk',
+                                                            activeMinutesToday: 15,
+                                                            submissionCount: 8
+                                                        });
+                                                    }}
+                                                    className="bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/40 text-rose-300 hover:text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all cursor-pointer shadow-xs"
+                                                >
+                                                    View Profile / Audit Log
                                                 </button>
-                                                <button className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-[#1E2026] text-[#8E95A3] hover:text-[#F3F4F6] text-xs font-medium px-3 py-1.5 rounded-lg transition-colors">
+                                                <button
+                                                    onClick={() => handleMessageStudent(c)}
+                                                    className="flex items-center gap-1.5 bg-rose-600/15 hover:bg-rose-600/25 border border-rose-500/30 text-rose-300 hover:text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all cursor-pointer shadow-xs"
+                                                    title={`Open direct message thread with ${c.name} in Community Hub`}
+                                                >
                                                     <MessageIcon />
-                                                    Message
+                                                    <span>Message</span>
                                                 </button>
                                             </div>
                                         </td>
@@ -289,11 +321,14 @@ const AtRiskRadar: React.FC = () => {
                     <option value="assigned">Assigned</option>
                 </select>
 
-                <button className="flex items-center gap-2 bg-[#F04438] hover:bg-[#FF4D4D] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-                    <BellIcon />
-                    Send Alert
-                </button>
             </div>
+
+            {/* 360 AUDIT MODAL */}
+            <Student360AuditModal
+                student={auditStudent}
+                isOpen={!!auditStudent}
+                onClose={() => setAuditStudent(null)}
+            />
         </div>
     );
 };

@@ -1,4 +1,5 @@
 import { CohortMetadata, CohortMember, BenchmarkItem, DiscussionPost, ActivityTickerItem, CohortRecording } from '@/types/community';
+import { CANONICAL_20_STUDENTS } from '@/lib/telemetryEgress';
 
 export const INITIAL_COHORT_DATA: CohortMetadata = {
   id: 'c8888888-8888-4888-8888-888888888888',
@@ -19,8 +20,8 @@ export const INITIAL_COHORT_DATA: CohortMetadata = {
   dailyMission: {
     title: "Tonight's Focus: Cam 18 Task 2 Paraphrasing Traps",
     description: 'Submit your 250-word introduction and body paragraph 1 addressing double-question prompts without lexical repetition.',
-    submittedCount: 38,
-    totalAssigned: 50
+    submittedCount: 16,
+    totalAssigned: 20
   }
 };
 
@@ -65,88 +66,18 @@ export const INITIAL_RECORDINGS: CohortRecording[] = [
   }
 ];
 
-export const INITIAL_MEMBERS: CohortMember[] = [
-  {
-    id: 'mem-1',
-    userId: 'u1',
-    userName: 'Nafis Rayan',
-    streakCount: 19,
-    latestMockBand: 7.5,
-    targetScore: 8.0,
-    dailyStatus: 'completed',
-    dailySubmissionText: 'Completed C18 T2 Writing & Reading'
-  },
-  {
-    id: 'mem-2',
-    userId: 'u2',
-    userName: 'Tasnim Haque',
-    streakCount: 14,
-    latestMockBand: 7.0,
-    targetScore: 7.5,
-    dailyStatus: 'completed',
-    dailySubmissionText: 'Logged 25m Speaking Partner'
-  },
-  {
-    id: 'mem-3',
-    userId: 'u3',
-    userName: 'Ayesha Rahman',
-    streakCount: 22,
-    latestMockBand: 8.0,
-    targetScore: 8.5,
-    dailyStatus: 'completed',
-    dailySubmissionText: 'Submitted Model Essay #14'
-  },
-  {
-    id: 'mem-4',
-    userId: 'u4',
-    userName: 'Zubair Hossain',
-    streakCount: 5,
-    latestMockBand: 6.5,
-    targetScore: 7.0,
-    dailyStatus: 'pending',
-    dailySubmissionText: 'Drafting introduction'
-  },
-  {
-    id: 'mem-5',
-    userId: 'u5',
-    userName: 'Samira Akter',
-    streakCount: 11,
-    latestMockBand: 7.0,
-    targetScore: 7.5,
-    dailyStatus: 'completed',
-    dailySubmissionText: 'Submitted Cam 17 Test 3'
-  },
-  {
-    id: 'mem-6',
-    userId: 'u6',
-    userName: 'Farhan Kabir',
-    streakCount: 2,
-    latestMockBand: 6.0,
-    targetScore: 7.0,
-    dailyStatus: 'at_risk',
-    dailySubmissionText: 'No submission today'
-  },
-  {
-    id: 'mem-7',
-    userId: 'u7',
-    userName: 'Mahir Faisal',
-    streakCount: 8,
-    latestMockBand: 6.5,
-    targetScore: 7.5,
-    dailyStatus: 'pending',
-    dailySubmissionText: 'Reviewing vocabulary'
-  },
-  {
-    id: 'mem-8',
-    userId: 'u8',
-    userName: 'Priya Sen',
-    streakCount: 16,
-    latestMockBand: 7.5,
-    targetScore: 8.0,
-    dailyStatus: 'completed',
-    dailySubmissionText: 'Completed C16 Speaking Simulation'
-  }
-];
+// 20 Enrolled Students (Farmgate Executive Batch)
+export const INITIAL_MEMBERS: CohortMember[] = CANONICAL_20_STUDENTS.map((item, idx) => ({
+  id: item.id,
+  userId: item.handle,
+  userName: item.name,
+  avatarUrl: item.avatarUrl,
+  streakCount: item.streak,
+  latestMockBand: item.currentBand,
+  targetScore: item.targetBand,
+  dailyStatus: item.dailyStatus,
+  dailySubmissionText: item.dailyStatus === 'completed' ? 'Submitted Cam 18 Task 2' : 'Drafting introduction'
+}));
 
 export const INITIAL_BENCHMARK: BenchmarkItem = {
   id: 'bm-801',
@@ -446,9 +377,51 @@ export const INITIAL_CONVERSATIONS = [
       conversationId: 'dm-stephen',
       senderId: 'm1111111-1111-4111-1111-111111111111',
       senderName: 'Dr. Stephen Vance',
-      content: 'Your latest Task 1 overview shows solid growth. Review the feedback audio note.',
+      content: 'Great job on Task 2 thesis statement! Keep this academic precision.',
       audioUrl: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg',
       createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+    }
+  },
+  {
+    id: 'dm-ayesha',
+    type: 'direct_message' as const,
+    title: 'Ayesha Rahman',
+    createdAt: new Date(Date.now() - 72 * 3600 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+    unreadCount: 0,
+    recipient: INITIAL_PROFILES[4],
+    lastMessage: {
+      id: 'dm-m-3',
+      conversationId: 'dm-ayesha',
+      senderId: 'u-ayesha',
+      senderName: 'Ayesha Rahman',
+      content: 'I uploaded my benchmark essay for Task 2. Let me know what you think!',
+      createdAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+    }
+  },
+  {
+    id: 'dm-samira',
+    type: 'direct_message' as const,
+    title: 'Samira Akter',
+    createdAt: new Date(Date.now() - 36 * 3600 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+    unreadCount: 0,
+    recipient: INITIAL_PROFILES[7] || {
+      id: 'u-samira',
+      username: 'samira_a',
+      fullName: 'Samira Akter',
+      targetBand: 7.5,
+      currentBand: 7.0,
+      streakCount: 15,
+      batchName: 'Batch #08 — Alpha',
+    },
+    lastMessage: {
+      id: 'dm-m-4',
+      conversationId: 'dm-samira',
+      senderId: 'u-samira',
+      senderName: 'Samira Akter',
+      content: 'Hey, do you have notes for Part 3?',
+      createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
     }
   },
   {
@@ -466,23 +439,6 @@ export const INITIAL_CONVERSATIONS = [
       senderName: 'Tanvir Hossain',
       content: 'Hey, do you want to do a peer mock test on Speaking Part 2 tonight at 9 PM?',
       createdAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-    }
-  },
-  {
-    id: 'dm-ayesha',
-    type: 'direct_message' as const,
-    title: 'Ayesha Rahman',
-    createdAt: new Date(Date.now() - 72 * 3600 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
-    unreadCount: 0,
-    recipient: INITIAL_PROFILES[4],
-    lastMessage: {
-      id: 'dm-m-3',
-      conversationId: 'dm-ayesha',
-      senderId: 'u-ayesha',
-      senderName: 'Ayesha Rahman',
-      content: 'Sent you the Cambridge 17 vocabulary list. Let me know if you need the audio files too!',
-      createdAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
     }
   }
 ];

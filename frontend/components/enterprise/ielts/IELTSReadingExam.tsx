@@ -1592,7 +1592,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
 
     if (testState === 'results' && resultsPayload) {
         return (
-            <div className="flex-1 h-full w-full overflow-hidden bg-gray-50 flex flex-col">
+            <div className="w-full h-full min-h-screen overflow-y-auto pr-2 custom-scrollbar space-y-6 bg-[#0D0F12] flex flex-col">
                 <ReadingExamResultsView
                     results={resultsPayload}
                     onBack={() => {

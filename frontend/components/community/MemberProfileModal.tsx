@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CohortMember } from '@/types/community';
-import { X, Flame, Award, CheckCircle, Clock, Send, Trophy, Target } from 'lucide-react';
+import { X, Flame, Award, CheckCircle, Clock, Send, Trophy, Target, ShieldAlert } from 'lucide-react';
+import { Student360AuditModal } from '../enterprise/org/Student360AuditModal';
+import { CANONICAL_20_STUDENTS, CanonicalStudent } from '@/lib/telemetryEgress';
 
 interface MemberProfileModalProps {
   member: CohortMember | null;
@@ -11,7 +13,29 @@ export const MemberProfileModal: React.FC<MemberProfileModalProps> = ({
   member,
   onClose
 }) => {
+  const [showAudit, setShowAudit] = useState(false);
   if (!member) return null;
+
+  const canonicalMatch: CanonicalStudent = CANONICAL_20_STUDENTS.find(
+    s => s.name.toLowerCase() === member.userName.toLowerCase() ||
+         s.handle.toLowerCase() === member.userId.toLowerCase() ||
+         member.userName.toLowerCase().includes(s.name.toLowerCase())
+  ) || {
+    id: member.id,
+    name: member.userName,
+    handle: member.userId.replace(/^u-/, '').replace(/\s+/g, '_'),
+    email: `${member.userName.toLowerCase().replace(/\s+/g, '.')}@farmgate.edu`,
+    avatarUrl: member.avatarUrl,
+    branch: 'Farmgate Branch',
+    streak: member.streakCount,
+    targetBand: member.targetScore || 7.5,
+    currentBand: member.latestMockBand || 6.5,
+    aiCoins: 480,
+    status: 'Active',
+    dailyStatus: member.dailyStatus,
+    activeMinutesToday: 45,
+    submissionCount: 16
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
@@ -81,6 +105,15 @@ export const MemberProfileModal: React.FC<MemberProfileModalProps> = ({
             </p>
           </div>
 
+          {/* 360 Diagnostic Audit Trigger */}
+          <button
+            onClick={() => setShowAudit(true)}
+            className="w-full py-2.5 bg-[#0F1115] hover:bg-[#181C24] text-rose-400 border border-rose-900/40 font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <ShieldAlert className="w-3.5 h-3.5 text-rose-500" />
+            <span>[ View Full 360° Diagnostic Audit Log ]</span>
+          </button>
+
           {/* Peer Cheer Button */}
           <button
             onClick={() => {
@@ -94,6 +127,13 @@ export const MemberProfileModal: React.FC<MemberProfileModalProps> = ({
           </button>
         </div>
       </div>
+
+      {/* 360 AUDIT MODAL */}
+      <Student360AuditModal
+        student={canonicalMatch}
+        isOpen={showAudit}
+        onClose={() => setShowAudit(false)}
+      />
     </div>
   );
 };

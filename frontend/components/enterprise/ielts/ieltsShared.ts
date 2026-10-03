@@ -1,3 +1,5 @@
+import { recordExamAttempt } from '@/lib/telemetryEgress';
+
 export type IeltsSkill = 'listening' | 'reading' | 'writing' | 'speaking';
 
 export interface IeltsAttempt {
@@ -56,6 +58,23 @@ export const addAttempt = (attempt: IeltsAttempt) => {
     const next = [attempt, ...readAttempts()].slice(0, 60);
     persistAttempts(next);
     notifyAttemptsUpdated();
+
+    // Asynchronously replicate attempt into Supabase telemetry table
+    try {
+        recordExamAttempt({
+            testId: attempt.bundle || attempt.title || `test-${attempt.id}`,
+            module: attempt.skill,
+            bandScore: attempt.band,
+            correctCount: attempt.score || 0,
+            totalQuestions: 40,
+            timeSpentSeconds: (attempt.timeSpent || 0) * 60,
+        }).catch((err) => {
+            console.warn('[Telemetry] async recordExamAttempt error:', err);
+        });
+    } catch {
+        // non-blocking
+    }
+
     return next;
 };
 

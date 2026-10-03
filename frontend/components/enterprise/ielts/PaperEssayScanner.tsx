@@ -1,6 +1,7 @@
 
 import React, { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { uploadHandwrittenEssay } from '@/lib/telemetryEgress';
 
 type Stage = 'idle' | 'scanning' | 'done';
 
@@ -116,9 +117,25 @@ const PaperEssayScanner: React.FC = () => {
         setRotate(0);
     };
 
-    const submit = () => {
+    const submit = async () => {
         toast.success('Handwritten essay uploaded & queued for Teacher Evaluation');
         setSubmitted(true);
+
+        try {
+            const title = activeSample === 'sample-task1'
+                ? 'Task 1: Sports Participation Comparative Analysis'
+                : 'Task 2: Free Higher Education & Tuition Subsidies';
+
+            await uploadHandwrittenEssay({
+                imageBlobOrFile: imageSrc || 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&auto=format&fit=crop',
+                promptTitle: title,
+                ocrExtractedText: ocrText,
+                aiBandScore: 6.5,
+                studentName: 'Candidate Scholar'
+            });
+        } catch (err) {
+            console.warn('[Telemetry] Error uploading handwritten essay:', err);
+        }
     };
 
     return (

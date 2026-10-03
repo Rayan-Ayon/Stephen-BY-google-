@@ -7,7 +7,7 @@ import {
   BenchmarkItem,
   DiscussionPost,
   DiscussionReply,
-  ProfileUser
+  ProfileUser,
 } from '@/types/community';
 import {
   INITIAL_COHORT_DATA,
@@ -15,27 +15,20 @@ import {
   INITIAL_RECORDINGS,
   INITIAL_BENCHMARK,
   INITIAL_POSTS,
-  INITIAL_PROFILES
+  INITIAL_PROFILES,
 } from './mockCommunityData';
 import { obsidianTokens } from './obsidianTokens';
-import { GlobalUserDiscoveryBar } from './GlobalUserDiscoveryBar';
-import { CohortBatchChat } from './CohortBatchChat';
-import { DirectMessagingPanel } from './DirectMessagingPanel';
-import { BatchClassroomView } from './BatchClassroomView';
-import { AcademicQAForum } from './AcademicQAForum';
+import { CohortTopHeader } from './CohortTopHeader';
+import { MentorBroadcastHero } from './MentorBroadcastHero';
+import { BenchmarkSpotlightCard } from './BenchmarkSpotlightCard';
+import { AcademicForumCard } from './AcademicForumCard';
+import { LiveClassBridgeCard } from './LiveClassBridgeCard';
+import { CohortTransparencyRoster } from './CohortTransparencyRoster';
+import { RealtimeActivityTicker } from './RealtimeActivityTicker';
+import { MessagesWorkspaceView } from './MessagesWorkspaceView';
 import { PostDrawerModal } from './PostDrawerModal';
 import { BenchmarkReviewModal } from './BenchmarkReviewModal';
 import { MemberProfileModal } from './MemberProfileModal';
-import {
-  MessageSquare,
-  Mail,
-  GraduationCap,
-  Lightbulb,
-  Radio,
-  Sparkles
-} from 'lucide-react';
-
-export type CommunityTab = 'chat' | 'dms' | 'classroom' | 'qa';
 
 interface CohortCommunityPageProps {
   userEmail?: string;
@@ -44,28 +37,74 @@ interface CohortCommunityPageProps {
 
 export const CohortCommunityPage: React.FC<CohortCommunityPageProps> = ({
   userEmail,
-  cohortId = 'c8888888-8888-4888-8888-888888888888'
+  cohortId = 'c8888888-8888-4888-8888-888888888888',
 }) => {
-  // Navigation tab state ('chat' | 'dms' | 'classroom' | 'qa')
-  const [activeTab, setActiveTab] = useState<CommunityTab>('chat');
-
-  // Master State
-  const [cohort, setCohort] = useState<CohortMetadata>(INITIAL_COHORT_DATA);
+  // Master Cohort State
+  const [cohort, setCohort] = useState<CohortMetadata>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('stephen_active_pinned_directive');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          return {
+            ...INITIAL_COHORT_DATA,
+            dailyMission: {
+              title: parsed.title,
+              description: parsed.description,
+              submittedCount: parsed.submittedCount ?? 0,
+              totalAssigned: parsed.totalAssigned ?? 50,
+            }
+          };
+        }
+      }
+    } catch (e) {}
+    return INITIAL_COHORT_DATA;
+  });
   const [members, setMembers] = useState<CohortMember[]>(INITIAL_MEMBERS);
   const [recordings, setRecordings] = useState<CohortRecording[]>(INITIAL_RECORDINGS);
   const [benchmark, setBenchmark] = useState<BenchmarkItem>(INITIAL_BENCHMARK);
   const [posts, setPosts] = useState<DiscussionPost[]>(INITIAL_POSTS);
 
-  // DM state
-  const [dmTargetUser, setDmTargetUser] = useState<ProfileUser | null>(null);
-  const [unreadDmCount, setUnreadDmCount] = useState<number>(3);
+  // Sync pinned directive live
+  useEffect(() => {
+    const handleMissionSync = () => {
+      try {
+        const stored = localStorage.getItem('stephen_active_pinned_directive');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setCohort((prev) => ({
+            ...prev,
+            dailyMission: {
+              title: parsed.title,
+              description: parsed.description,
+              submittedCount: parsed.submittedCount ?? 0,
+              totalAssigned: parsed.totalAssigned ?? 50,
+            }
+          }));
+        }
+      } catch (e) {}
+    };
 
-  // Modals state
+    window.addEventListener('stephen_mission_published', handleMissionSync);
+    window.addEventListener('storage', handleMissionSync);
+    return () => {
+      window.removeEventListener('stephen_mission_published', handleMissionSync);
+      window.removeEventListener('storage', handleMissionSync);
+    };
+  }, []);
+
+  // Unified Navigation Viewport: 'HQ' (Main Community HQ) | 'MESSAGES' (Full-Page Messaging Center)
+  const [activeView, setActiveView] = useState<'HQ' | 'MESSAGES'>('HQ');
+  const [messagingConvId, setMessagingConvId] = useState<string>('conv-cohort-group');
+  const [messagingTargetUser, setMessagingTargetUser] = useState<ProfileUser | null>(null);
+  const [unreadCount, setUnreadCount] = useState<number>(3);
+
+  // Modals state for drill-down inspection
   const [selectedPost, setSelectedPost] = useState<DiscussionPost | null>(null);
   const [selectedBenchmark, setSelectedBenchmark] = useState<BenchmarkItem | null>(null);
   const [selectedMember, setSelectedMember] = useState<CohortMember | null>(null);
 
-  // Sync URL query params with active tab & modals
+  // Sync URL query params with active modals / views
   const updateUrlParam = useCallback((param: string, value: string | null) => {
     try {
       const url = new URL(window.location.href);
@@ -76,35 +115,62 @@ export const CohortCommunityPage: React.FC<CohortCommunityPageProps> = ({
       }
       window.history.pushState({}, '', url.toString());
     } catch {
-      // non-browser or test environment fallback
+      // Non-browser fallback
     }
   }, []);
 
-  // Handle URL params on load and popstate
+  // Handle URL params on load and browser navigation
   useEffect(() => {
     const handleUrlSync = () => {
       try {
         const params = new URLSearchParams(window.location.search);
-        const tabParam = params.get('tab') as CommunityTab | null;
-        if (tabParam && ['chat', 'dms', 'classroom', 'qa'].includes(tabParam)) {
-          setActiveTab(tabParam);
-        }
-
+        const viewParam = params.get('view');
+        const chatParam = params.get('chat');
+        const dmParam = params.get('dm');
         const postId = params.get('post');
         const bmId = params.get('benchmark');
         const memId = params.get('member');
 
+        if (viewParam === 'messages' || chatParam === 'open' || chatParam === 'true') {
+          setActiveView('MESSAGES');
+          setMessagingConvId('conv-cohort-group');
+        }
+
+        if (dmParam) {
+          setActiveView('MESSAGES');
+          const cleanDm = dmParam.toLowerCase();
+          const found = INITIAL_PROFILES.find(
+            (p) =>
+              p.username?.toLowerCase() === cleanDm ||
+              p.id?.toLowerCase() === cleanDm ||
+              p.fullName?.toLowerCase().includes(cleanDm.replace(/-/g, ' '))
+          );
+          if (found) {
+            setMessagingTargetUser(found);
+            setMessagingConvId(`dm-${found.username || found.id}`);
+          } else {
+            const dynamicUser: ProfileUser = {
+              id: dmParam,
+              fullName: dmParam.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+              username: dmParam.toLowerCase().replace(/\s+/g, ''),
+              avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face',
+              batchName: 'Farmgate Cohort #08',
+              targetBand: 7.5,
+              currentBand: 6.0,
+              streakCount: 4,
+            };
+            setMessagingTargetUser(dynamicUser);
+            setMessagingConvId(`dm-${dynamicUser.username}`);
+          }
+        }
+
         if (postId) {
           const found = posts.find((p) => p.id === postId);
           if (found) setSelectedPost(found);
-        } else {
-          setSelectedPost(null);
         }
 
         if (bmId) {
           setSelectedBenchmark(benchmark);
-        } else {
-          setSelectedBenchmark(null);
         }
 
         if (memId) {
@@ -112,7 +178,6 @@ export const CohortCommunityPage: React.FC<CohortCommunityPageProps> = ({
           if (foundMem) {
             setSelectedMember(foundMem);
           } else {
-            // Check profiles
             const foundProfile = INITIAL_PROFILES.find((p) => p.id === memId || p.username === memId);
             if (foundProfile) {
               setSelectedMember({
@@ -123,12 +188,10 @@ export const CohortCommunityPage: React.FC<CohortCommunityPageProps> = ({
                 streakCount: foundProfile.streakCount,
                 latestMockBand: foundProfile.currentBand,
                 targetScore: foundProfile.targetBand,
-                dailyStatus: 'completed'
+                dailyStatus: 'completed',
               });
             }
           }
-        } else {
-          setSelectedMember(null);
         }
       } catch (err) {
         console.warn('URL sync issue:', err);
@@ -140,13 +203,7 @@ export const CohortCommunityPage: React.FC<CohortCommunityPageProps> = ({
     return () => window.removeEventListener('popstate', handleUrlSync);
   }, [posts, members, benchmark]);
 
-  // Tab switch handler
-  const handleTabChange = (tab: CommunityTab) => {
-    setActiveTab(tab);
-    updateUrlParam('tab', tab);
-  };
-
-  // Convert ProfileUser or CohortMember to CohortMember for Profile Modal
+  // Convert ProfileUser or CohortMember for Profile Modal
   const handleOpenProfileModal = (memberOrProfile: CohortMember | ProfileUser) => {
     if ('userName' in memberOrProfile) {
       setSelectedMember(memberOrProfile as CohortMember);
@@ -161,7 +218,7 @@ export const CohortCommunityPage: React.FC<CohortCommunityPageProps> = ({
         streakCount: p.streakCount || 0,
         latestMockBand: p.currentBand || 6.5,
         targetScore: p.targetBand || 7.5,
-        dailyStatus: 'completed'
+        dailyStatus: 'completed',
       };
       setSelectedMember(converted);
       updateUrlParam('member', p.username || p.id);
@@ -173,7 +230,7 @@ export const CohortCommunityPage: React.FC<CohortCommunityPageProps> = ({
     updateUrlParam('member', null);
   };
 
-  // Direct Message Initiator from Search / Member Cards
+  // Direct Message Initiator: switches to full-page Messaging Workspace with user selected
   const handleStartDirectMessage = (memberOrProfile: CohortMember | ProfileUser) => {
     let profile: ProfileUser;
     if ('username' in memberOrProfile) {
@@ -188,13 +245,15 @@ export const CohortCommunityPage: React.FC<CohortCommunityPageProps> = ({
         targetBand: m.targetScore || 7.5,
         currentBand: m.latestMockBand || 6.5,
         streakCount: m.streakCount || 0,
-        batchName: 'Batch #08'
+        batchName: 'Batch #08',
       };
     }
 
-    setDmTargetUser(profile);
-    setActiveTab('dms');
-    updateUrlParam('tab', 'dms');
+    setMessagingTargetUser(profile);
+    setMessagingConvId(`dm-${profile.username || profile.id}`);
+    setActiveView('MESSAGES');
+    updateUrlParam('view', 'messages');
+    updateUrlParam('dm', profile.username);
   };
 
   // Benchmark Modal Handlers
@@ -233,7 +292,7 @@ export const CohortCommunityPage: React.FC<CohortCommunityPageProps> = ({
           return {
             ...p,
             replies: nextReplies,
-            replyCount: nextReplies.length
+            replyCount: nextReplies.length,
           };
         }
         return p;
@@ -241,119 +300,118 @@ export const CohortCommunityPage: React.FC<CohortCommunityPageProps> = ({
     );
   };
 
-  return (
-    <div className={`min-h-screen ${obsidianTokens.pageBg} p-4 md:p-6 lg:p-8 space-y-6 max-w-[1680px] mx-auto`}>
-      {/* ====================================================================
-          TIER 1: PERSISTENT TOP BAR (Global @username Discovery + Cohort Meta)
-          ==================================================================== */}
-      <GlobalUserDiscoveryBar
+  // ========================================================================
+  // VIEWPORT CONDITIONAL: FULL-PAGE MESSAGES WORKSPACE
+  // ========================================================================
+  if (activeView === 'MESSAGES') {
+    return (
+      <MessagesWorkspaceView
         cohort={cohort}
-        onSelectMemberForProfile={handleOpenProfileModal}
-        onStartDirectMessage={handleStartDirectMessage}
+        userEmail={userEmail}
+        initialConvId={messagingConvId}
+        targetUser={messagingTargetUser}
+        onBackToHq={() => {
+          setActiveView('HQ');
+          setMessagingTargetUser(null);
+          updateUrlParam('view', null);
+          updateUrlParam('dm', null);
+          updateUrlParam('chat', null);
+        }}
+        onSelectProfile={handleOpenProfileModal}
+      />
+    );
+  }
+
+  // ========================================================================
+  // DEFAULT VIEWPORT: 2-COLUMN COMMUNITY HEADQUARTERS
+  // ========================================================================
+  return (
+    <div className={`min-h-screen ${obsidianTokens.pageBg} flex flex-col`}>
+      {/* ====================================================================
+          TOP BAR & NAVIGATION ORCHESTRATION (Batch identity + Search + [ 💬 Messages (3) ])
+          ==================================================================== */}
+      <CohortTopHeader
+        cohort={cohort}
         onlineCount={34}
+        unreadCount={unreadCount}
+        onOpenMessages={() => {
+          setActiveView('MESSAGES');
+          setMessagingConvId('conv-cohort-group');
+          updateUrlParam('view', 'messages');
+        }}
+        onSelectProfile={handleOpenProfileModal}
+        onStartDirectMessage={handleStartDirectMessage}
       />
 
       {/* ====================================================================
-          TIER 2: SUB-NAV TABS ("Linear-Meets-Slack" 2-Tier Architecture)
+          MAIN COHORT HEADQUARTERS ARCHITECTURE
+          Clean 2-Column Executive Headquarters Layout:
+          - Left Column (65% Width): Academic Directives, Benchmarks & Q&A
+          - Right Column (35% Width): Live Sync, Transparency Roster & Activity
           ==================================================================== */}
-      <div className={obsidianTokens.subNavContainer}>
-        {/* Tab 1: Cohort Chat */}
-        <button
-          onClick={() => handleTabChange('chat')}
-          className={`cursor-pointer ${activeTab === 'chat' ? obsidianTokens.tabActive : obsidianTokens.tabInactive}`}
-        >
-          <MessageSquare className="w-4 h-4" />
-          <span>Cohort Chat</span>
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-        </button>
-
-        {/* Tab 2: Direct Messages */}
-        <button
-          onClick={() => handleTabChange('dms')}
-          className={`cursor-pointer ${activeTab === 'dms' ? obsidianTokens.tabActive : obsidianTokens.tabInactive}`}
-        >
-          <Mail className="w-4 h-4" />
-          <span>Direct Messages</span>
-          {unreadDmCount > 0 && (
-            <span className="px-1.5 py-0.2 text-[11px] font-black rounded-full bg-amber-500 text-slate-950">
-              {unreadDmCount}
-            </span>
-          )}
-        </button>
-
-        {/* Tab 3: Batch Classroom */}
-        <button
-          onClick={() => handleTabChange('classroom')}
-          className={`cursor-pointer ${activeTab === 'classroom' ? obsidianTokens.tabActive : obsidianTokens.tabInactive}`}
-        >
-          <GraduationCap className="w-4 h-4" />
-          <span>Batch Classroom</span>
-        </button>
-
-        {/* Tab 4: Q&A Forum */}
-        <button
-          onClick={() => handleTabChange('qa')}
-          className={`cursor-pointer ${activeTab === 'qa' ? obsidianTokens.tabActive : obsidianTokens.tabInactive}`}
-        >
-          <Lightbulb className="w-4 h-4" />
-          <span>Q&amp;A Forum</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-400 border border-slate-700/60 font-mono">
-            {posts.length}
-          </span>
-        </button>
-      </div>
-
-      {/* ====================================================================
-          ACTIVE WORKSPACE VIEW (Renders cleanly based on selected Sub-Nav Tab)
-          ==================================================================== */}
-      <main className="w-full">
-        {activeTab === 'chat' && (
-          <div className="animate-in fade-in duration-200">
-            <CohortBatchChat
-              cohort={cohort}
-              userEmail={userEmail}
-              onSelectMemberForProfile={handleOpenProfileModal}
-              onStartDirectMessage={handleStartDirectMessage}
+      <main className="flex-1 w-full max-w-[1680px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* ================================================================
+              LEFT COLUMN: MAIN CONTENT FEED (65% Width -> 8 cols on lg)
+              ================================================================ */}
+          <section className="lg:col-span-8 space-y-6 overflow-y-auto max-h-[calc(100vh-140px)] pr-3 custom-scrollbar">
+            {/* 1. Mentor Broadcast & Daily Mission Hero Card */}
+            <MentorBroadcastHero
+              mentor={cohort.mentor}
+              mission={cohort.dailyMission}
+              onSubmitMission={() => {
+                setActiveView('MESSAGES');
+                setMessagingConvId('conv-cohort-group');
+                updateUrlParam('view', 'messages');
+              }}
             />
-          </div>
-        )}
 
-        {activeTab === 'dms' && (
-          <div className="animate-in fade-in duration-200">
-            <DirectMessagingPanel
-              userEmail={userEmail}
-              targetUser={dmTargetUser}
-              onClearTargetUser={() => setDmTargetUser(null)}
-              onSelectMemberForProfile={handleOpenProfileModal}
-            />
-          </div>
-        )}
-
-        {activeTab === 'classroom' && (
-          <div className="animate-in fade-in duration-200">
-            <BatchClassroomView
-              cohort={cohort}
-              members={members}
+            {/* 2. Benchmark of the Week Spotlight */}
+            <BenchmarkSpotlightCard
               benchmark={benchmark}
-              onOpenBenchmarkModal={handleOpenBenchmark}
-              onSelectMemberForProfile={handleOpenProfileModal}
+              onReviewFull={handleOpenBenchmark}
+            />
+
+            {/* 3. Academic Doubt & Q&A Forum */}
+            <AcademicForumCard
+              posts={posts}
+              onOpenPostDrawer={handleOpenPost}
+              onUpvote={handleUpvotePost}
+              onReplyAdded={handleReplyAdded}
+            />
+          </section>
+
+          {/* ================================================================
+              RIGHT COLUMN: SIDEBAR PANEL (35% Width -> 4 cols on lg)
+              ================================================================ */}
+          <aside className="lg:col-span-4 space-y-6 overflow-y-auto max-h-[calc(100vh-140px)] pl-3 custom-scrollbar">
+            {/* 4. Live Class Bridge Card */}
+            <LiveClassBridgeCard
+              meetingUrl={cohort.liveMeetingUrl}
+              nextSessionIso={cohort.nextLiveSession}
+              recordings={recordings}
+              onSelectTimestamp={(rec) => {
+                if (rec.recordingUrl) {
+                  window.open(rec.recordingUrl, '_blank');
+                }
+              }}
+            />
+
+            {/* 5. Cohort Transparency Matrix (Peer Accountability Roster) */}
+            <CohortTransparencyRoster
+              members={members}
+              onSelectMember={handleOpenProfileModal}
               onStartDirectMessage={handleStartDirectMessage}
             />
-          </div>
-        )}
 
-        {activeTab === 'qa' && (
-          <div className="animate-in fade-in duration-200">
-            <AcademicQAForum
-              cohortId={cohort.id}
-              onSelectPost={handleOpenPost}
-            />
-          </div>
-        )}
+            {/* 6. Real-Time Activity Ticker */}
+            <RealtimeActivityTicker cohortId={cohort.id} />
+          </aside>
+        </div>
       </main>
 
       {/* ====================================================================
-          PERSISTENT MODALS & DRAWERS (?post, ?benchmark, ?member)
+          PERSISTENT MODALS (?post, ?benchmark, ?member)
           ==================================================================== */}
       <PostDrawerModal
         post={selectedPost}

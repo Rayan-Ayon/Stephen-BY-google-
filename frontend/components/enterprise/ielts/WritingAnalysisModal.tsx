@@ -1,5 +1,23 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import {
+  X,
+  ArrowLeft,
+  Award,
+  CheckCircle2,
+  Clock,
+  FileText,
+  Sparkles,
+  TrendingUp,
+  AlertTriangle,
+  ChevronDown,
+  Volume2,
+  Play,
+  Pause,
+  RotateCcw
+} from 'lucide-react';
 import type { AnalysisSegment } from './analysisMockData';
+import StudentDisputeButtonAndModal from './StudentDisputeButtonAndModal';
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 
@@ -27,29 +45,33 @@ export interface WritingTeacher {
 
 export interface WritingAnalysisModalProps {
     band: number;
-    targetBand: number;
+    targetBand?: number;
     examTitle: string;
-    examDate: string;
+    examDate?: string;
     criteria: WritingCriterion[];
     segments: AnalysisSegment[];
     rewrites: WritingRewrite[];
-    teacher: WritingTeacher;
+    teacher?: WritingTeacher;
+    wordCount?: number;
+    minWordCount?: number;
+    timeSpentMinutes?: number;
+    promptText?: string;
     onClose: () => void;
 }
 
 /* ─── Segment Color Map ─────────────────────────────────────────── */
 
 const segColor: Record<string, string> = {
-    plain: 'text-neutral-300',
-    grammar: 'bg-red-500/15 text-red-300 border-b border-red-400/50 cursor-pointer',
-    vocab: 'bg-yellow-400/10 text-yellow-200 border-b border-yellow-400/40 cursor-pointer',
-    strong: 'bg-emerald-500/10 text-emerald-300 border-b border-emerald-400/40 cursor-pointer',
+    plain: 'text-slate-300',
+    grammar: 'bg-rose-500/20 text-rose-300 border-b-2 border-rose-500 cursor-pointer px-0.5 rounded',
+    vocab: 'bg-amber-500/20 text-amber-200 border-b-2 border-amber-400 cursor-pointer px-0.5 rounded',
+    strong: 'bg-emerald-500/20 text-emerald-300 border-b-2 border-emerald-400 cursor-pointer px-0.5 rounded',
 };
 
 const segNote = (s: AnalysisSegment): string => {
-    if (s.kind === 'grammar') return `Grammar slip: "${s.text}" — review agreement, articles, or word form.`;
-    if (s.kind === 'vocab') return `Weak / Band 6 lexis: "${s.text}" — replace with more precise vocabulary.`;
-    if (s.kind === 'strong') return `Band 8+ collocation: "${s.text}" — keep using this structure.`;
+    if (s.kind === 'grammar') return `Grammar slip: "${s.text}" — review agreement, articles, or clause structure.`;
+    if (s.kind === 'vocab') return `Weak / Band 6 lexis: "${s.text}" — replace with more precise academic vocabulary.`;
+    if (s.kind === 'strong') return `Band 8+ collocation: "${s.text}" — excellent natural academic cadence.`;
     return '';
 };
 
@@ -100,11 +122,11 @@ const CRITERION_DETAILS: Record<string, { subMetrics: { label: string; score: nu
             'Some academic terms correctly deployed',
         ],
         weaknesses: [
-            'Repeats "important" — vary with "pivotal", "paramount", "instrumental"',
-            '"Peoples" is incorrect — use "people" or "populations"',
-            'Limited paraphrasing — "good thing" → use "advantageous development"',
+            'Repeats generic verbs — vary with "pivotal", "paramount", "instrumental"',
+            'Minor collocations could be more natural',
+            'Limited paraphrasing of prompt keyphrases',
         ],
-        booster: 'Replace generic adjectives with Band 8+ collocations: "create a level playing field" → "yield a more equitable playing field".',
+        booster: 'Replace generic adjectives with Band 8+ collocations: "level playing field" → "equitable playing field".',
     },
     'GRA': {
         subMetrics: [
@@ -118,9 +140,9 @@ const CRITERION_DETAILS: Record<string, { subMetrics: { label: string; score: nu
             'Passive voice appropriately used',
         ],
         weaknesses: [
-            'Subject-verb agreement: "many peoples believe"',
-            'Article omission: "creates level playing field"',
-            'Run-on sentence in paragraph 3',
+            'Subject-verb agreement slips in compound sentences',
+            'Occasional article omission before countable nouns',
+            'Run-on sentence in development section',
         ],
         booster: 'Practice complex clause structures: "While X, Y has shown that Z..." See Cambridge IELTS Grammar #18.',
     },
@@ -128,34 +150,30 @@ const CRITERION_DETAILS: Record<string, { subMetrics: { label: string; score: nu
 
 /* ─── WritingAnalysisModal ──────────────────────────────────────── */
 
-const WritingAnalysisModal: React.FC<WritingAnalysisModalProps> = ({
+export const WritingAnalysisModal: React.FC<WritingAnalysisModalProps> = ({
     band,
-    targetBand,
+    targetBand = 7.5,
     examTitle,
-    examDate,
+    examDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
     criteria,
     segments,
     rewrites,
-    teacher,
+    teacher = { verified: true, remark: 'Candidate demonstrates strong structural control with Band 7.5 potential once complex clause accuracy is consolidated.', audioNote: false },
+    wordCount = 285,
+    minWordCount = 250,
+    timeSpentMinutes = 38,
+    promptText,
     onClose,
 }) => {
     const [expandedCriterion, setExpandedCriterion] = useState<string | null>(null);
-    const [expandedRewrite, setExpandedRewrite] = useState<number | null>(null);
+    const [expandedRewrite, setExpandedRewrite] = useState<number | null>(0);
     const [selectedSegment, setSelectedSegment] = useState<AnalysisSegment | null>(null);
+    const [scoreViewMode, setScoreViewMode] = useState<'ai' | 'teacher'>('ai');
     const [audioPlaying, setAudioPlaying] = useState(false);
 
-    const targetGap = targetBand - band;
-    const bandColor = band >= targetBand ? 'text-emerald-400' : band >= targetBand - 0.5 ? 'text-amber-400' : 'text-red-400';
-    const bandGlow = band >= targetBand
-        ? 'shadow-[0_0_20px_rgba(16,185,129,0.3)]'
-        : band >= targetBand - 0.5
-        ? 'shadow-[0_0_20px_rgba(251,191,0,0.3)]'
-        : 'shadow-[0_0_20px_rgba(239,68,68,0.3)]';
-    const bandBorder = band >= targetBand
-        ? 'border-emerald-500/40'
-        : band >= targetBand - 0.5
-        ? 'border-amber-500/40'
-        : 'border-red-500/40';
+    // Verified score simulation
+    const teacherVerifiedBand = Math.min(9.0, band + 0.5);
+    const displayedBand = scoreViewMode === 'teacher' ? teacherVerifiedBand : band;
 
     /* ── Effect: Escape key ── */
     React.useEffect(() => {
@@ -171,259 +189,404 @@ const WritingAnalysisModal: React.FC<WritingAnalysisModalProps> = ({
         return { original, upgraded, improved: upgraded.length > original.length };
     }), [rewrites]);
 
-    return (
-        <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto custom-scrollbar" onClick={onClose}>
-            <div className="w-full max-w-5xl my-8 rounded-2xl bg-[#0D0D0E] border border-neutral-800 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    const cefrLevel = displayedBand >= 8.0 ? 'C2 Proficiency' : displayedBand >= 7.0 ? 'C1 Advanced' : displayedBand >= 6.0 ? 'B2 Vantage' : 'B1 Intermediate';
 
-                {/* ── Header ── */}
-                <header className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-4 bg-surface border-b border-neutral-800 rounded-t-2xl">
-                    <div className="min-w-0">
-                        <p className="text-[10px] uppercase tracking-wider text-neutral-500">Writing Analysis</p>
-                        <h2 className="text-lg font-semibold tracking-tight text-white truncate">{examTitle}</h2>
-                        <p className="text-[11px] text-neutral-500 mt-0.5">{examDate}</p>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                        <span className={`inline-flex items-center rounded-full border font-semibold text-lg px-4 py-1.5 ${bandBorder} ${bandGlow} ${bandColor}`}>
-                            {band.toFixed(1)}
-                        </span>
-                        <span className="text-[10px] uppercase tracking-wider text-neutral-500 border border-neutral-800 rounded-full px-3 py-1">
-                            TARGET {targetBand.toFixed(1)}
-                        </span>
+    if (typeof document === 'undefined') return null;
+
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[999] w-screen h-screen min-h-screen bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+            onClick={onClose}
+        >
+            <div
+                className="relative w-full max-w-6xl max-h-[92vh] my-auto rounded-2xl bg-[#0D0F12] border border-[#222732] shadow-2xl overflow-y-auto custom-scrollbar space-y-6 text-slate-100 font-sans"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* ── STICKY TOP TELEMETRY HEADER ── */}
+                <header className="sticky top-0 z-20 bg-[#15181E]/95 backdrop-blur-md border-b border-[#222732] px-6 py-4 flex items-center justify-between shadow-lg flex-wrap gap-4 rounded-t-2xl">
+                    <div className="flex items-center gap-3 min-w-0">
                         <button
                             onClick={onClose}
-                            className="w-9 h-9 rounded-lg bg-canvas border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors"
+                            className="p-2 rounded-xl border border-[#222732] hover:bg-[#181C24] text-slate-300 hover:text-white transition-colors cursor-pointer"
+                            title="Return to Writing Hub"
                         >
-                            ✕
+                            <ArrowLeft className="w-4 h-4" />
+                        </button>
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
+                                <span>Overview</span>
+                                <span>&gt;</span>
+                                <span className="text-slate-300">Writing Engine</span>
+                                <span>&gt;</span>
+                                <span className="text-rose-400 font-semibold">Post-Exam Analysis Canvas</span>
+                            </div>
+                            <h1 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">
+                                {examTitle} — Evaluation Canvas
+                            </h1>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0 flex-wrap">
+                        {/* Universal Student Dispute Action & Modal */}
+                        <StudentDisputeButtonAndModal
+                            testTitle={examTitle}
+                            module="writing"
+                            originalBand={band}
+                            rawAnswers={segments}
+                            scoreViewMode={scoreViewMode}
+                            onScoreViewModeChange={setScoreViewMode}
+                        />
+
+                        <button
+                            onClick={onClose}
+                            className="px-4 py-2 rounded-xl bg-[#222732] hover:bg-neutral-700 text-xs font-bold text-white transition-colors cursor-pointer"
+                        >
+                            Exit Hub
                         </button>
                     </div>
                 </header>
 
                 <div className="p-6 space-y-6">
+                    {/* ════ SECTION 1: TOP TELEMETRY KPI CARDS (OBSIDIAN GRID) ════ */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {/* Card 1: Overall Band Score */}
+                        <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                    Overall Writing Band
+                                </span>
+                                <span className="bg-rose-950/60 border border-rose-800/40 text-rose-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                    Official IELTS 9.0
+                                </span>
+                            </div>
+                            <div className="my-1">
+                                <div className="text-4xl sm:text-5xl font-black text-rose-500 tracking-tight">
+                                    Band {displayedBand.toFixed(1)}
+                                </div>
+                                <p className="text-xs font-semibold text-slate-300 mt-1">
+                                    {displayedBand >= 7.5 ? 'Very Good / Expert Academic User' : displayedBand >= 6.5 ? 'Competent Academic User' : 'Moderate User — Needs Targeted Remediation'}
+                                </p>
+                            </div>
+                            <div className="pt-2 border-t border-[#222732] text-[11px] text-slate-400 flex items-center justify-between">
+                                <span>CEFR: <span className="text-white font-semibold">{cefrLevel}</span></span>
+                                {scoreViewMode === 'teacher' && <span className="text-emerald-400 font-bold">Faculty Verified</span>}
+                            </div>
+                        </div>
 
-                    {/* ── Four Criteria Accordions ── */}
-                    <div className="space-y-3">
-                        <h3 className="text-[11px] uppercase tracking-wider text-neutral-500 font-semibold">Criterion Breakdown</h3>
+                        {/* Card 2: Criteria Breakdown Average */}
+                        <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-5 flex flex-col justify-between shadow-sm">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                    Target Gap
+                                </span>
+                                <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                    <TrendingUp className="w-4 h-4" />
+                                </div>
+                            </div>
+                            <div className="my-1">
+                                <div className="text-4xl sm:text-5xl font-black text-white tracking-tight">
+                                    {displayedBand >= targetBand ? 'Met' : `-${(targetBand - displayedBand).toFixed(1)}`}
+                                    <span className="text-lg font-normal text-slate-500 ml-2">/ Target {targetBand.toFixed(1)}</span>
+                                </div>
+                                <p className="text-xs font-semibold text-slate-300 mt-1">
+                                    {displayedBand >= targetBand ? 'Meets institutional requirement' : 'Requires improvement in lexical resource'}
+                                </p>
+                            </div>
+                            <div className="pt-2 border-t border-[#222732] text-[11px] text-slate-400">
+                                Exam date: <span className="text-white font-mono">{examDate}</span>
+                            </div>
+                        </div>
+
+                        {/* Card 3: Word Count Telemetry */}
+                        <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-5 flex flex-col justify-between shadow-sm">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                    Word Count Telemetry
+                                </span>
+                                <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                    <FileText className="w-4 h-4" />
+                                </div>
+                            </div>
+                            <div className="my-1">
+                                <div className="text-4xl sm:text-5xl font-black text-white tracking-tight">
+                                    {wordCount} <span className="text-lg font-normal text-slate-500">words</span>
+                                </div>
+                                <p className="text-xs font-semibold text-slate-300 mt-1">
+                                    {wordCount >= minWordCount ? `+${wordCount - minWordCount} over ${minWordCount} threshold (No penalty)` : `Below minimum requirement (${minWordCount})`}
+                                </p>
+                            </div>
+                            <div className="pt-2 border-t border-[#222732] text-[11px] text-slate-400 flex items-center justify-between">
+                                <span>Status: {wordCount >= minWordCount ? 'Safe Length' : 'Under length'}</span>
+                                <span className="text-emerald-400 font-semibold">Valid</span>
+                            </div>
+                        </div>
+
+                        {/* Card 4: Pacing & Timer */}
+                        <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-5 flex flex-col justify-between shadow-sm">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                    Time Management
+                                </span>
+                                <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                    <Clock className="w-4 h-4" />
+                                </div>
+                            </div>
+                            <div className="my-1">
+                                <div className="text-4xl sm:text-5xl font-black text-white tracking-tight">
+                                    {timeSpentMinutes} <span className="text-lg font-normal text-slate-500">min</span>
+                                </div>
+                                <p className="text-xs font-semibold text-slate-300 mt-1">
+                                    {timeSpentMinutes <= 40 ? 'Well within the 40-minute recommendation' : 'Pacing warning: exceeding recommended duration'}
+                                </p>
+                            </div>
+                            <div className="pt-2 border-t border-[#222732] text-[11px] text-slate-400 flex items-center justify-between">
+                                <span>Allocated: 40m</span>
+                                <span className="text-emerald-400 font-semibold">{40 - timeSpentMinutes}m reserve</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ════ SECTION 2: 4 CRITERIA SUB-SCORE PILL ROW ════ */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {criteria.map((c) => {
-                            const isExpanded = expandedCriterion === c.code;
-                            const detail = CRITERION_DETAILS[c.code];
-                            const accentColor = c.band >= targetBand ? 'text-emerald-400' : c.band >= targetBand - 1 ? 'text-amber-400' : 'text-red-400';
-                            const summary = c.note.length > 80 ? c.note.slice(0, 80) + '...' : c.note;
-
+                            const pct = Math.min(100, Math.round((c.band / 9) * 100));
                             return (
-                                <div key={c.code} className="rounded-xl bg-[#1E1E22] border border-neutral-800 overflow-hidden transition-all">
-                                    {/* Closed state — clickable header */}
-                                    <button
-                                        onClick={() => setExpandedCriterion(isExpanded ? null : c.code)}
-                                        className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-white/[0.02] transition-colors"
-                                    >
-                                        <span className="text-[10px] font-mono text-amber-400 shrink-0">{c.code}</span>
-                                        <span className="flex-1 min-w-0">
-                                            <span className="text-sm font-medium text-white block">{c.name}</span>
-                                            {!isExpanded && <span className="text-[11px] text-neutral-500 mt-0.5 block">{summary}</span>}
-                                        </span>
-                                        <span className={`text-xl font-semibold shrink-0 ${accentColor}`}>{c.band.toFixed(1)}</span>
-                                        <svg className={`w-4 h-4 shrink-0 text-neutral-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                            <path d="M6 9l6 6 6-6" />
-                                        </svg>
-                                    </button>
-
-                                    {/* Expanded state */}
-                                    {isExpanded && detail && (
-                                        <div className="px-5 pb-5 border-t border-neutral-800/70">
-                                            <div className="pt-4 space-y-4">
-                                                {/* Sub-metrics */}
-                                                <div className="grid grid-cols-3 gap-3">
-                                                    {detail.subMetrics.map((sm) => (
-                                                        <div key={sm.label} className="rounded-lg bg-[#0D0D0E] border border-neutral-800 p-3">
-                                                            <p className="text-[10px] text-neutral-500 mb-1">{sm.label}</p>
-                                                            <p className="text-lg font-semibold text-white">{sm.score.toFixed(1)}</p>
-                                                            <div className="mt-1.5 h-1.5 rounded bg-neutral-800 overflow-hidden">
-                                                                <div className="h-full rounded bg-amber-400 transition-all" style={{ width: `${(sm.score / 9) * 100}%` }} />
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-
-                                                {/* Strengths vs Weaknesses */}
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="rounded-lg bg-[#0D0D0E] border border-neutral-800 p-3">
-                                                        <p className="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold mb-2">Strengths</p>
-                                                        <ul className="space-y-1">
-                                                            {detail.strengths.map((s, i) => (
-                                                                <li key={i} className="text-[12px] text-neutral-300 flex items-start gap-1.5">
-                                                                    <span className="text-emerald-400 mt-0.5">✓</span>{s}
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                    <div className="rounded-lg bg-[#0D0D0E] border border-neutral-800 p-3">
-                                                        <p className="text-[10px] uppercase tracking-wider text-amber-400 font-semibold mb-2">Areas to Improve</p>
-                                                        <ul className="space-y-1">
-                                                            {detail.weaknesses.map((w, i) => (
-                                                                <li key={i} className="text-[12px] text-neutral-300 flex items-start gap-1.5">
-                                                                    <span className="text-amber-400 mt-0.5">⚠</span>{w}
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                </div>
-
-                                                {/* Band Booster */}
-                                                <div className="rounded-lg bg-amber-400/5 border border-amber-400/20 p-3">
-                                                    <p className="text-[10px] uppercase tracking-wider text-amber-400 font-semibold mb-1">Band Booster</p>
-                                                    <p className="text-[12px] text-amber-200/90">{detail.booster}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
+                                <div key={c.code} className="bg-[#15181E] border border-[#222732] rounded-xl p-4 flex flex-col justify-between">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-[11px] font-mono font-bold text-amber-400">{c.code}</span>
+                                        <span className="text-lg font-black text-white">{c.band.toFixed(1)}</span>
+                                    </div>
+                                    <p className="text-xs font-medium text-slate-300 truncate mb-2">{c.name}</p>
+                                    <div className="w-full bg-[#222732] h-1.5 rounded-full overflow-hidden">
+                                        <div
+                                            className="bg-gradient-to-r from-rose-500 to-amber-500 h-full rounded-full transition-all duration-500"
+                                            style={{ width: `${pct}%` }}
+                                        />
+                                    </div>
                                 </div>
                             );
                         })}
                     </div>
 
-                    {/* ── Interactive Essay Canvas ── */}
-                    <div className="rounded-xl bg-[#1E1E22] border border-neutral-800 p-6">
-                        <h4 className="text-sm font-semibold text-white tracking-tight mb-1">Interactive Essay Canvas</h4>
-                        <p className="text-[11px] text-neutral-500 mb-4">Click any highlighted marker for instant correction</p>
-
-                        <div className="text-[15px] leading-[1.8] whitespace-pre-line">
-                            {segments.map((s, i) => (
-                                <span
-                                    key={i}
-                                    className={segColor[s.kind] || 'text-neutral-300'}
-                                    onClick={() => (s.kind === 'plain' ? setSelectedSegment(null) : setSelectedSegment(s))}
-                                >
-                                    {s.text}
-                                </span>
-                            ))}
-                        </div>
-
-                        {/* Diagnostic Drawer */}
-                        <div className="mt-4 rounded-lg bg-[#0D0D0E] border border-neutral-800 p-4 min-h-[60px]">
-                            {selectedSegment ? (
-                                <div className="space-y-2">
-                                    <p className="text-[12px] text-neutral-300">
-                                        <span className="font-semibold text-amber-300">Correction · </span>
-                                        {segNote(selectedSegment)}
+                    {/* ════ SECTION 3: 2-COLUMN MAIN WORKSPACE ════ */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                        {/* ── LEFT COLUMN (6 COLS): CANDIDATE ESSAY & PROMPT CANVAS ── */}
+                        <div className="lg:col-span-6 space-y-6">
+                            {promptText && (
+                                <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-5 shadow-sm">
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-2">
+                                        <FileText className="w-3.5 h-3.5 text-rose-500" />
+                                        Task Prompt & Requirements
+                                    </h3>
+                                    <p className="text-xs text-slate-200 leading-relaxed font-sans bg-[#0D0F12] border border-[#222732] p-3.5 rounded-xl">
+                                        {promptText}
                                     </p>
-                                    <div className="flex items-center gap-2 text-[10px] text-neutral-500">
-                                        <span className="bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded-full font-medium">Original: "{selectedSegment.text}"</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-[10px]">
-                                        <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-medium">
-                                            📖 Rule Ref: Cambridge IELTS Grammar #18 — Complex Clause Structures
-                                        </span>
-                                    </div>
                                 </div>
-                            ) : (
-                                <p className="text-[12px] text-neutral-600">Select a highlighted phrase above to see the correction note.</p>
                             )}
-                        </div>
 
-                        {/* Legend */}
-                        <div className="mt-3 flex gap-3 text-[10px] text-neutral-500">
-                            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-500/30 border-b border-red-400/50" /> Grammar</span>
-                            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-yellow-400/20 border-b border-yellow-400/40" /> Weak vocab</span>
-                            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-emerald-500/20 border-b border-emerald-400/40" /> Band 8+ collocation</span>
-                        </div>
-                    </div>
-
-                    {/* ── Paragraph-by-Paragraph AI Upgrade ── */}
-                    <div className="rounded-xl bg-[#1E1E22] border border-neutral-800 p-6">
-                        <h4 className="text-sm font-semibold text-white tracking-tight mb-1">Paragraph AI Upgrade</h4>
-                        <p className="text-[11px] text-neutral-500 mb-4">Original → Band 8/9 alternative</p>
-
-                        <div className="space-y-3">
-                            {upgrades.map((u, i) => {
-                                const isOpen = expandedRewrite === i;
-                                return (
-                                    <div key={i} className="rounded-lg bg-[#0D0D0E] border border-neutral-800 overflow-hidden">
-                                        <button
-                                            onClick={() => setExpandedRewrite(isOpen ? null : i)}
-                                            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
-                                        >
-                                            <span className="text-[12px] font-medium text-neutral-300">Paragraph {i + 1}</span>
-                                            <svg className={`w-3.5 h-3.5 text-neutral-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                                                <path d="M6 9l6 6 6-6" />
-                                            </svg>
-                                        </button>
-                                        {isOpen && (
-                                            <div className="px-4 pb-4 space-y-2 border-t border-neutral-800/70 pt-3">
-                                                <p className="text-[12px] text-red-300/90 leading-relaxed">
-                                                    <span className="font-semibold">Original · </span>{u.original}
-                                                </p>
-                                                <p className="text-[12px] text-emerald-300/90 leading-relaxed">
-                                                    <span className="font-semibold">Upgraded · </span>{u.upgraded}
-                                                </p>
-                                            </div>
-                                        )}
+                            {/* Interactive Essay Canvas */}
+                            <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-6 shadow-sm">
+                                <div className="flex items-center justify-between mb-3 pb-3 border-b border-[#222732]">
+                                    <div>
+                                        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                            <Sparkles className="w-4 h-4 text-amber-400" />
+                                            Candidate Essay & Diagnostics
+                                        </h3>
+                                        <p className="text-[11px] text-slate-400 mt-0.5">Click highlighted segments to view syntax & lexis recommendations</p>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    </div>
+                                    <span className="text-xs font-mono text-slate-400 bg-[#0D0F12] border border-[#222732] px-2.5 py-1 rounded-lg">
+                                        {wordCount} words
+                                    </span>
+                                </div>
 
-                    {/* ── Teacher Override & Audio Feedback ── */}
-                    <div className="rounded-xl bg-[#1E1E22] border border-neutral-800 p-6">
-                        <div className="flex items-center justify-between mb-3">
-                            <h4 className="text-sm font-semibold text-white tracking-tight">Teacher Override & Audio Feedback</h4>
-                            {teacher.verified && (
-                                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-[11px] text-emerald-300">
-                                    ✓ Verified by Senior Evaluator
-                                </span>
-                            )}
-                        </div>
+                                <div className="text-[14px] sm:text-[15px] leading-[1.85] text-slate-200 whitespace-pre-line bg-[#0D0F12] border border-[#222732] p-5 rounded-xl font-serif">
+                                    {segments.map((s, i) => (
+                                        <span
+                                            key={i}
+                                            className={segColor[s.kind] || 'text-slate-200'}
+                                            onClick={() => (s.kind === 'plain' ? setSelectedSegment(null) : setSelectedSegment(s))}
+                                        >
+                                            {s.text}
+                                        </span>
+                                    ))}
+                                </div>
 
-                        <p className="text-[13px] text-neutral-300 leading-relaxed mb-4">{teacher.remark}</p>
-
-                        {teacher.audioNote && (
-                            <div className="rounded-lg bg-[#0D0D0E] border border-neutral-800 p-4">
-                                <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-2">Audio Instructor Note</p>
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        onClick={() => setAudioPlaying(!audioPlaying)}
-                                        className="w-10 h-10 rounded-full bg-amber-400 text-black flex items-center justify-center text-sm shrink-0"
-                                    >
-                                        {audioPlaying ? (
-                                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
-                                        ) : (
-                                            <svg className="w-4 h-4 ml-0.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
-                                        )}
-                                    </button>
-                                    <div className="flex-1">
-                                        {/* Waveform visualization */}
-                                        <svg viewBox="0 0 400 40" className="w-full h-8" preserveAspectRatio="none">
-                                            {Array.from({ length: 60 }).map((_, i) => {
-                                                const h = 8 + Math.sin(i * 0.5) * 12 + Math.random() * 6;
-                                                const x = (i / 60) * 400;
-                                                const played = audioPlaying && i < 20;
-                                                return <rect key={i} x={x} y={20 - h / 2} width={400 / 60 - 1.5} height={h} fill={played ? '#fbbf24' : '#3f3f46'} rx="1.5" />;
-                                            })}
-                                        </svg>
-                                        <div className="flex items-center justify-between mt-1">
-                                            <span className="text-[10px] font-mono text-neutral-500">
-                                                {audioPlaying ? '0:42' : '0:00'} / 1:18
-                                            </span>
-                                            <div className="flex items-center gap-2">
-                                                <button className="text-neutral-500 hover:text-neutral-300 transition-colors">
-                                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polygon points="19,20 9,12 19,4" /><line x1="5" y1="19" x2="5" y2="5" /></svg>
-                                                </button>
-                                                <button className="text-neutral-500 hover:text-neutral-300 transition-colors">
-                                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polygon points="5,4 15,12 5,20" /><line x1="19" y1="5" x2="19" y2="19" /></svg>
-                                                </button>
-                                                <button className="text-neutral-500 hover:text-neutral-300 transition-colors">
-                                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M11 5L6 9H2v6h4l5 4V5z" /><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07" /></svg>
-                                                </button>
+                                {/* Diagnostic Feedback Drawer */}
+                                <div className="mt-4 rounded-xl bg-[#0D0F12] border border-[#222732] p-4 min-h-[64px]">
+                                    {selectedSegment ? (
+                                        <div className="space-y-2">
+                                            <p className="text-xs text-slate-200">
+                                                <span className="font-bold text-amber-400">Diagnostic Note: </span>
+                                                {segNote(selectedSegment)}
+                                            </p>
+                                            <div className="flex items-center gap-2 text-[11px] flex-wrap">
+                                                <span className="bg-rose-950/80 text-rose-300 border border-rose-800/60 px-2 py-0.5 rounded-full font-medium">
+                                                    Original: "{selectedSegment.text}"
+                                                </span>
+                                                <span className="bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 px-2 py-0.5 rounded-full font-medium">
+                                                    Target: Band 8.0+ Collocation
+                                                </span>
                                             </div>
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <p className="text-xs text-slate-500 italic">Select any highlighted phrase in your essay above to inspect diagnostic feedback.</p>
+                                    )}
+                                </div>
+
+                                {/* Legend */}
+                                <div className="mt-4 flex flex-wrap gap-4 text-[11px] text-slate-400 pt-3 border-t border-[#222732]">
+                                    <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-rose-500/30 border-b-2 border-rose-500" /> Grammar Slip</span>
+                                    <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-500/20 border-b-2 border-amber-400" /> Weak / Repetitive Lexis</span>
+                                    <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-500/20 border-b-2 border-emerald-400" /> Band 8+ Collocation</span>
                                 </div>
                             </div>
-                        )}
+                        </div>
+
+                        {/* ── RIGHT COLUMN (6 COLS): AI DIAGNOSTIC BREAKDOWN & UPGRADES ── */}
+                        <div className="lg:col-span-6 space-y-6">
+                            {/* Criterion Breakdown Accordions */}
+                            <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-6 shadow-sm space-y-3">
+                                <div className="flex items-center justify-between pb-2 border-b border-[#222732]">
+                                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                        <Award className="w-4 h-4 text-rose-500" />
+                                        IELTS 4-Pillar Evaluator Rubric
+                                    </h3>
+                                    <span className="text-[11px] font-mono text-slate-400">Expand for Sub-metrics</span>
+                                </div>
+
+                                {criteria.map((c) => {
+                                    const isExpanded = expandedCriterion === c.code;
+                                    const detail = CRITERION_DETAILS[c.code];
+                                    const accentColor = c.band >= targetBand ? 'text-emerald-400' : c.band >= targetBand - 1 ? 'text-amber-400' : 'text-rose-400';
+
+                                    return (
+                                        <div key={c.code} className="rounded-xl bg-[#0D0F12] border border-[#222732] overflow-hidden transition-all">
+                                            <button
+                                                onClick={() => setExpandedCriterion(isExpanded ? null : c.code)}
+                                                className="w-full flex items-center gap-4 px-4 py-3.5 text-left hover:bg-[#15181E] transition-colors cursor-pointer"
+                                            >
+                                                <span className="text-xs font-mono font-bold text-amber-400 shrink-0">{c.code}</span>
+                                                <span className="flex-1 min-w-0">
+                                                    <span className="text-xs font-semibold text-white block truncate">{c.name}</span>
+                                                    {!isExpanded && <span className="text-[11px] text-slate-400 mt-0.5 block truncate">{c.note}</span>}
+                                                </span>
+                                                <span className={`text-base font-bold shrink-0 ${accentColor}`}>{c.band.toFixed(1)}</span>
+                                                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                            </button>
+
+                                            {isExpanded && detail && (
+                                                <div className="px-4 pb-4 pt-2 border-t border-[#222732] space-y-3">
+                                                    <div className="grid grid-cols-3 gap-2">
+                                                        {detail.subMetrics.map((sm) => (
+                                                            <div key={sm.label} className="bg-[#15181E] border border-[#222732] rounded-lg p-2.5">
+                                                                <p className="text-[10px] text-slate-400 truncate">{sm.label}</p>
+                                                                <p className="text-base font-bold text-white mt-0.5">{sm.score.toFixed(1)}</p>
+                                                                <div className="mt-1 h-1 rounded bg-[#222732] overflow-hidden">
+                                                                    <div className="h-full bg-amber-400 rounded" style={{ width: `${(sm.score / 9) * 100}%` }} />
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                                        <div className="bg-[#15181E] border border-[#222732] rounded-lg p-3">
+                                                            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-1.5">Strengths</p>
+                                                            <ul className="space-y-1">
+                                                                {detail.strengths.map((s, idx) => (
+                                                                    <li key={idx} className="text-[11px] text-slate-300 flex items-start gap-1.5">
+                                                                        <span className="text-emerald-400">✓</span> {s}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                        <div className="bg-[#15181E] border border-[#222732] rounded-lg p-3">
+                                                            <p className="text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-1.5">Areas for Growth</p>
+                                                            <ul className="space-y-1">
+                                                                {detail.weaknesses.map((w, idx) => (
+                                                                    <li key={idx} className="text-[11px] text-slate-300 flex items-start gap-1.5">
+                                                                        <span className="text-amber-400">⚠</span> {w}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-amber-950/20 border border-amber-800/40 rounded-lg p-3 text-xs">
+                                                        <p className="text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-1">Band 8.0+ Booster</p>
+                                                        <p className="text-[11px] text-amber-200/90 leading-relaxed">{detail.booster}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Paragraph AI Upgrade & Model Essay */}
+                            <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-6 shadow-sm space-y-3">
+                                <div className="flex items-center justify-between pb-2 border-b border-[#222732]">
+                                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                        <Sparkles className="w-4 h-4 text-emerald-400" />
+                                        Band 8.5+ Model Reconstructions
+                                    </h3>
+                                    <span className="text-[11px] font-mono text-slate-400">Side-by-Side</span>
+                                </div>
+
+                                <div className="space-y-3">
+                                    {upgrades.map((u, i) => {
+                                        const isOpen = expandedRewrite === i;
+                                        return (
+                                            <div key={i} className="rounded-xl bg-[#0D0F12] border border-[#222732] overflow-hidden">
+                                                <button
+                                                    onClick={() => setExpandedRewrite(isOpen ? null : i)}
+                                                    className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[#15181E] transition-colors cursor-pointer"
+                                                >
+                                                    <span className="text-xs font-semibold text-slate-300">Paragraph {i + 1} Comparison</span>
+                                                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                                                </button>
+                                                {isOpen && (
+                                                    <div className="px-4 pb-4 pt-1 space-y-3 border-t border-[#222732]">
+                                                        <div className="bg-[#15181E] p-3 rounded-lg border border-[#222732]">
+                                                            <p className="text-[10px] font-bold uppercase tracking-wider text-rose-400 mb-1">Candidate Original</p>
+                                                            <p className="text-xs text-slate-300 leading-relaxed">{u.original}</p>
+                                                        </div>
+                                                        <div className="bg-emerald-950/20 p-3 rounded-lg border border-emerald-800/40">
+                                                            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-1">Band 8.5+ Lexical Upgrade</p>
+                                                            <p className="text-xs text-emerald-200 leading-relaxed">{u.upgraded}</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Teacher Feedback Note */}
+                            {teacher && (
+                                <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-5 shadow-sm">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                            Senior Faculty Evaluation Note
+                                        </h4>
+                                        {teacher.verified && (
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2.5 py-0.5 rounded-full">
+                                                <CheckCircle2 className="w-3 h-3" />
+                                                Verified by Senior Evaluator
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-slate-300 leading-relaxed bg-[#0D0F12] border border-[#222732] p-3 rounded-xl font-sans">
+                                        {teacher.remark}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

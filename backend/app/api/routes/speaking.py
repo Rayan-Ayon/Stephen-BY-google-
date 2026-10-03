@@ -124,23 +124,42 @@ async def speaking_session_ws(
     # Last client activity timestamp (for idle timeout)
     last_activity = time.time()
 
-    config = types.LiveConnectConfig(
-        response_modalities=[types.Modality.AUDIO],
-        system_instruction=types.Content(parts=[types.Part(text=SPEAKING_LIVE_INSTRUCTION)]),
-        input_audio_transcription=types.AudioTranscriptionConfig(),
-        output_audio_transcription=types.AudioTranscriptionConfig(),
-        speech_config=types.SpeechConfig(
-            voice_config=types.VoiceConfig(
-                prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name="Puck")
-            )
-        ),
-    )
+    # NOTE: AudioTranscriptionConfig takes no fields in google-genai (extra='forbid');
+    # passing language_code raises a ValidationError. English is enforced via the
+    # system instruction below instead.
+    try:
+        config = types.LiveConnectConfig(
+            response_modalities=[types.Modality.AUDIO],
+            system_instruction=types.Content(parts=[types.Part(text=(
+                SPEAKING_LIVE_INSTRUCTION
+                + "\n\nLANGUAGE: The candidate speaks English (en-US). Always conduct the test in English."
+            ))]),
+            input_audio_transcription=types.AudioTranscriptionConfig(),
+            output_audio_transcription=types.AudioTranscriptionConfig(),
+            speech_config=types.SpeechConfig(
+                voice_config=types.VoiceConfig(
+                    prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name="Puck")
+                )
+            ),
+        )
+    except Exception as cfg_err:
+        logger.exception("[STEPHEN][WS] Invalid LiveConnectConfig")
+        try:
+            await websocket.send_json({"type": "error", "error": f"Server config error: {cfg_err}"})
+            await websocket.close(code=1011, reason="Invalid Live config")
+        except Exception:
+            pass
+        return
 
     # Initialize debug WAV recorder for audio verification
-    debug_wav = wave.open("debug_gemini_audio.wav", "wb")
-    debug_wav.setnchannels(1)
-    debug_wav.setsampwidth(2)
-    debug_wav.setframerate(16000)
+    debug_wav = None
+    try:
+        debug_wav = wave.open("debug_gemini_audio.wav", "wb")
+        debug_wav.setnchannels(1)
+        debug_wav.setsampwidth(2)
+        debug_wav.setframerate(16000)
+    except Exception as wav_init_err:
+        logger.warning(f"Could not open debug_gemini_audio.wav: {wav_init_err}")
 
     # ── Model fallback loop ───────────────────────────────────────────
     session_opened = False
@@ -180,16 +199,18 @@ async def speaking_session_ws(
 
                             if msg.get("bytes"):
                                 audio_bytes = msg["bytes"]
-                                try:
-                                    debug_wav.writeframes(audio_bytes)
-                                except Exception as wav_err:
-                                    logger.warning(f"Error writing to debug_wav: {wav_err}")
+                                if debug_wav and getattr(debug_wav, "_file", None) is not None:
+                                    try:
+                                        debug_wav.writeframes(audio_bytes)
+                                    except Exception as wav_err:
+                                        logger.warning(f"Error writing to debug_wav: {wav_err}")
 
                                 # Check for dead silence on the backend
                                 is_silent = all(b == 0 for b in audio_bytes)
                                 logger.info(f"Backend received {len(audio_bytes)} bytes. Is completely silent? {is_silent}")
 
                                 try:
+                                    # Send audio chunk to Gemini Live session using audio=types.Blob
                                     await session.send_realtime_input(
                                         audio=types.Blob(
                                             data=audio_bytes,
@@ -202,7 +223,27 @@ async def speaking_session_ws(
                                 try:
                                     data = json.loads(msg["text"])
                                     if isinstance(data, dict):
-                                        if data.get("type") == "text":
+                                        if data.get("type") == "turn_complete":
+                                            logger.info("[STEPHEN][TURN] Received turn_complete from browser. Flushing silence to trigger VAD response.")
+                                            # NEVER use send()/send_client_content() here: mixing client_content with
+                                            # realtime_input crashes the session with 1011.
+                                            try:
+                                                # Flush 500ms of 16kHz 16-bit mono silence (16,000 bytes) so server-side VAD
+                                                # detects end of speech and finalizes transcription + model reply.
+                                                silence_chunk = b'\x00' * 16000
+                                                await session.send_realtime_input(
+                                                    audio=types.Blob(data=silence_chunk, mime_type="audio/pcm;rate=16000")
+                                                )
+                                                logger.info("[STEPHEN][TURN] Successfully flushed 500ms silence chunk to Gemini.")
+                                                # Then close the audio stream turn if supported.
+                                                try:
+                                                    await session.send_realtime_input(audio_stream_end=True)
+                                                    logger.info("[STEPHEN][TURN] Sent audio_stream_end=True.")
+                                                except (TypeError, ValueError) as stream_end_err:
+                                                    logger.debug(f"[STEPHEN][TURN] audio_stream_end not supported: {stream_end_err}")
+                                            except Exception as e:
+                                                logger.error(f"[STEPHEN][TURN] Error closing audio turn: {e}", exc_info=True)
+                                        elif data.get("type") == "text":
                                             await session.send_realtime_input(text=data["text"])
                                         elif data.get("type") == "start":
                                             pass  # greeting already sent above
@@ -218,50 +259,105 @@ async def speaking_session_ws(
                 # ── Gemini → Browser ──────────────────────────────────
                 async def forward_gemini_to_browser():
                     try:
-                        async for response in session.receive():
-                            sc = response.server_content
-                            if not sc:
-                                continue
+                        # CRITICAL: Keep listening across multiple turns until the websocket closes
+                        while True:
+                            turn_completed_cleanly = False
+                            try:
+                                async for response in session.receive():
+                                    sc = response.server_content
+                                    if not sc:
+                                        continue
 
-                            # Forward audio chunks to browser
-                            if sc.model_turn:
-                                for part_item in sc.model_turn.parts:
-                                    if part_item.inline_data:
-                                        audio_bytes = part_item.inline_data.data
-                                        await websocket.send_bytes(audio_bytes)
+                                    # 1. Forward Candidate's Transcribed Speech (user_turn parts)
+                                    if hasattr(sc, "user_turn") and sc.user_turn:
+                                        for part in sc.user_turn.parts:
+                                            if hasattr(part, "text") and part.text and part.text.strip():
+                                                user_text = part.text.strip()
+                                                logger.info(f"[STEPHEN][GEMINI] User turn transcript: '{user_text}'")
+                                                if not (transcript_parts and transcript_parts[-1]["role"] == "user" and transcript_parts[-1]["text"] == user_text):
+                                                    transcript_parts.append({"role": "user", "text": user_text})
+                                                await websocket.send_json({
+                                                    "type": "user_transcript",
+                                                    "text": user_text
+                                                })
 
-                            # Input transcription (user speech → text)
-                            if sc.input_transcription and sc.input_transcription.text:
-                                text = sc.input_transcription.text.strip()
-                                if text:
-                                    transcript_parts.append({"role": "user", "text": text})
+                                    # Check alternative SDK location for input transcription
+                                    if hasattr(sc, "input_transcription") and sc.input_transcription:
+                                        user_text = sc.input_transcription.text
+                                        if user_text and user_text.strip():
+                                            user_text = user_text.strip()
+                                            logger.info(f"[STEPHEN][GEMINI] User input transcript: '{user_text}'")
+                                            if not (transcript_parts and transcript_parts[-1]["role"] == "user" and transcript_parts[-1]["text"] == user_text):
+                                                transcript_parts.append({"role": "user", "text": user_text})
+                                            await websocket.send_json({
+                                                "type": "user_transcript",
+                                                "text": user_text
+                                            })
+
+                                    # 2. Forward Mohona's Response Text & Audio
+                                    if hasattr(sc, "model_turn") and sc.model_turn:
+                                        for part_item in sc.model_turn.parts:
+                                            if hasattr(part_item, "text") and part_item.text:
+                                                text = part_item.text.strip()
+                                                if text:
+                                                    if not (transcript_parts and transcript_parts[-1]["role"] == "gemini" and transcript_parts[-1]["text"] == text):
+                                                        transcript_parts.append({"role": "gemini", "text": text})
+                                                    await websocket.send_json({
+                                                        "type": "gemini_transcript",
+                                                        "text": text
+                                                    })
+                                            if hasattr(part_item, "inline_data") and part_item.inline_data:
+                                                # Send raw binary audio chunk to browser
+                                                await websocket.send_bytes(part_item.inline_data.data)
+
+                                    # Output transcription (Gemini speech → text from output_audio_transcription)
+                                    if hasattr(sc, "output_transcription") and sc.output_transcription:
+                                        text = sc.output_transcription.text
+                                        if text:
+                                            text = text.strip()
+                                            if text:
+                                                if not (transcript_parts and transcript_parts[-1]["role"] == "gemini" and transcript_parts[-1]["text"] == text):
+                                                    transcript_parts.append({"role": "gemini", "text": text})
+                                                await websocket.send_json({
+                                                    "type": "gemini_transcript",
+                                                    "text": text,
+                                                })
+
+                                    # 3. Forward Turn Completion
+                                    if getattr(sc, "turn_complete", False):
+                                        logger.info("[STEPHEN][GEMINI] Model turn complete. Forwarding to browser.")
+                                        await websocket.send_json({"type": "turn_complete"})
+                                        turn_completed_cleanly = True
+                                        # Break inner async-for; outer while-loop restarts for the next turn
+                                        break
+
+                                    # Barge-in / interruption
+                                    if getattr(sc, "interrupted", False):
+                                        await websocket.send_json({"type": "interrupted"})
+
+                            except (WebSocketDisconnect, asyncio.CancelledError):
+                                raise
+                            except Exception as stream_err:
+                                logger.error(f"[STEPHEN][GEMINI] Live session stream terminated: {stream_err}")
+                                # DO NOT spin: inform the client and stop.
+                                try:
                                     await websocket.send_json({
-                                        "type": "user_transcript",
-                                        "text": text,
+                                        "type": "error",
+                                        "error": "AI session encountered an interruption. Please tap to speak again.",
+                                        "message": "AI session encountered an interruption. Please tap to speak again.",
                                     })
+                                except Exception:
+                                    pass
+                                break
 
-                            # Output transcription (Gemini speech → text)
-                            if sc.output_transcription and sc.output_transcription.text:
-                                text = sc.output_transcription.text.strip()
-                                if text:
-                                    transcript_parts.append({"role": "gemini", "text": text})
-                                    await websocket.send_json({
-                                        "type": "gemini_transcript",
-                                        "text": text,
-                                    })
-
-                            # Turn complete
-                            if sc.turn_complete:
-                                await websocket.send_json({"type": "turn_complete"})
-
-                            # Barge-in / interruption
-                            if sc.interrupted:
-                                await websocket.send_json({"type": "interrupted"})
+                            if not turn_completed_cleanly:
+                                logger.warning("[STEPHEN][GEMINI] receive() iterator ended without turn_complete. Exiting loop.")
+                                break
 
                     except (WebSocketDisconnect, RuntimeError, asyncio.CancelledError):
                         logger.info("Gemini→Browser stream task closed cleanly")
                     except Exception as e:
-                        logger.error(f"Gemini→Browser error: {e}")
+                        logger.error(f"[STEPHEN][GEMINI] Fatal error in receive loop: {e}", exc_info=True)
 
                 # ── Heartbeat: ping every 30s ─────────────────────────
                 async def heartbeat():
@@ -319,8 +415,9 @@ async def speaking_session_ws(
                     idle_task.cancel()
 
                     try:
-                        debug_wav.close()
-                        logger.info("Saved debug audio file to debug_gemini_audio.wav")
+                        if debug_wav:
+                            debug_wav.close()
+                            logger.info("Saved debug audio file to debug_gemini_audio.wav")
                     except Exception:
                         pass
 

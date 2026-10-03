@@ -8841,14 +8841,36 @@ const NOTES_CONTENT: Record<string, React.ReactNode> = {
 
 interface FreeContentLibraryViewProps {
   userEmail?: string;
+  onNavigate?: (view: string, context?: any) => void;
 }
 
-export default function FreeContentLibraryView({ userEmail }: FreeContentLibraryViewProps) {
+export default function FreeContentLibraryView({ userEmail, onNavigate }: FreeContentLibraryViewProps) {
   const [activeModule, setActiveModule] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10>(0);
   const [selectedVideo, setSelectedVideo] = useState<VideoItem>(MODULE_00_DATA[0].videos[0]);
   const [activeSubTopicId, setActiveSubTopicId] = useState<string>('0.1');
   const [embedFailed, setEmbedFailed] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'videos' | 'notes'>('videos');
+
+  const handleLearnWithAI = (video: VideoItem) => {
+    try {
+      const payload = {
+        videoId: video.youtubeId,
+        title: video.title,
+        channel: video.channel,
+        duration: video.duration,
+        url: `https://www.youtube.com/watch?v=${video.youtubeId}`,
+        fromContentLibrary: true
+      };
+      localStorage.setItem('stephen_active_learn_ai_video', JSON.stringify(payload));
+    } catch (e) {
+      console.error(e);
+    }
+    if (onNavigate) {
+      onNavigate('add_content');
+    } else {
+      window.location.hash = '#add_content';
+    }
+  };
 
   const currentModuleData = activeModule === 0 ? MODULE_00_DATA : activeModule === 1 ? MODULE_01_DATA : activeModule === 2 ? READING_MODULE_DATA : activeModule === 3 ? WRITING_MODULE_DATA : activeModule === 4 ? SPEAKING_MODULE_DATA : activeModule === 5 ? GRAMMAR_MODULE_DATA : activeModule === 6 ? VOCABULARY_MODULE_DATA : activeModule === 7 ? PRONUNCIATION_MODULE_DATA : activeModule === 8 ? TEST_TAKING_STRATEGY_MODULE_DATA : activeModule === 9 ? MOCKTEST_MODULE_DATA : POST_TEST_MODULE_DATA;
   const moduleTitle = activeModule === 0 ? 'IELTS পরিচিতি' : activeModule === 1 ? 'Listening Module' : activeModule === 2 ? 'Reading Module' : activeModule === 3 ? 'Writing Module' : activeModule === 4 ? 'Speaking Module' : activeModule === 5 ? 'Grammar Foundations' : activeModule === 6 ? 'Vocabulary Building' : activeModule === 7 ? 'Pronunciation Training' : activeModule === 8 ? 'Test-Taking Strategy' : activeModule === 9 ? 'Mock Tests & Practice Library' : 'Result, EOR & Retake';
@@ -9039,10 +9061,19 @@ export default function FreeContentLibraryView({ userEmail }: FreeContentLibrary
                 <h2 className="text-lg font-bold text-white leading-snug flex-1">
                   {selectedVideo.title}
                 </h2>
-                <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-400 font-bold text-xs px-2.5 py-1 rounded-full border border-amber-500/20">
-                  <SparklesIcon className="w-3.5 h-3.5 text-amber-400" />
-                  +{selectedVideo.xp} XP
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleLearnWithAI(selectedVideo)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md shadow-rose-950/40 transition-colors cursor-pointer"
+                  >
+                    <span>🤖 Learn with AI</span>
+                  </button>
+                  <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-400 font-bold text-xs px-2.5 py-1 rounded-full border border-amber-500/20">
+                    <SparklesIcon className="w-3.5 h-3.5 text-amber-400" />
+                    +{selectedVideo.xp} XP
+                  </span>
+                </div>
               </div>
               <div className="flex items-center gap-3 text-xs text-neutral-400">
                 <span className="font-medium text-neutral-300">{selectedVideo.channel}</span>
@@ -9161,6 +9192,20 @@ export default function FreeContentLibraryView({ userEmail }: FreeContentLibrary
                           <p className="text-xs text-neutral-400 leading-relaxed mt-2 line-clamp-2">
                             {video.description}
                           </p>
+
+                          <div className="mt-2.5 pt-2 border-t border-neutral-700/50 flex items-center justify-between">
+                            <span className="text-[11px] text-neutral-400">Interactive AI Analysis ready</span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleLearnWithAI(video);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors cursor-pointer"
+                            >
+                              <span>🤖 Learn with AI</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );

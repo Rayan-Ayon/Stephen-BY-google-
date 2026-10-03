@@ -15,6 +15,7 @@ import {
 import IELTSLobbyCard from './IELTSLobbyCard';
 import IELTSExitModal from './IELTSExitModal';
 import IeltsExamOptionsModal from '../../exam/IeltsExamOptionsModal';
+import StudentDisputeButtonAndModal from './StudentDisputeButtonAndModal';
 
 const Check = ({ size, strokeWidth, className }: any) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -217,7 +218,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
     }, [seconds, testState]);
 
     useEffect(() => {
-        onActiveChange?.(testState !== 'lobby');
+        onActiveChange?.(testState === 'active' || testState === 'evaluating' || testState === 'saving');
     }, [testState, onActiveChange]);
 
     const timeLimit = simulation ? simulation.timeLimitSeconds : 60 * 60;
@@ -563,114 +564,267 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
         const modelAnswer = activeTaskData?.modelAnswer?.en ?? '';
         const modelAnswerBn = activeTaskData?.modelAnswer?.bn ?? '';
         const aiSummary = activeTaskData?.summary ?? '';
+        const totalWords = (result?.task1?.wordCount ?? 0) + (result?.task2?.wordCount ?? 0);
+        const cefrBadge =
+            overallBand >= 8.5 ? 'C2 Expert User' :
+            overallBand >= 7.0 ? 'C1 Proficient User' :
+            overallBand >= 5.5 ? 'B2 Independent User' : 'B1 Intermediate User';
+
         return (
-            <div className="flex flex-col h-full w-full bg-white text-black overflow-hidden">
-                <header className="shrink-0 h-14 bg-[#121212] flex items-center justify-between px-6">
-                    <div className="flex items-center gap-4">
-                        <button onClick={handleExit} className="text-gray-400 hover:text-white flex items-center justify-center w-8 h-8 rounded-lg hover:bg-neutral-800" aria-label="Back to Writing Hub">
+            <div className="flex flex-col h-full w-full bg-[#0D0F12] text-slate-100 overflow-hidden font-sans">
+                {/* ── STICKY TOP HEADER ── */}
+                <header className="shrink-0 h-14 bg-[#15181E] border-b border-[#222732] flex items-center justify-between px-4 sm:px-6 z-20">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        <button
+                            onClick={handleExit}
+                            className="text-slate-400 hover:text-white flex items-center justify-center w-8 h-8 rounded-xl border border-[#222732] hover:bg-[#1C212B] transition-colors cursor-pointer"
+                            aria-label="Back to Writing Hub"
+                        >
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                         </button>
                         <div>
-                            <p className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">Cambridge · Test 1</p>
-                            <p className="text-sm font-bold text-white leading-tight">Results & Analysis</p>
+                            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Cambridge Writing · Test {testNumber || 1}</p>
+                            <p className="text-sm font-bold text-white leading-tight">Writing Diagnostic &amp; Evaluation Analysis</p>
                         </div>
                     </div>
-                    <button onClick={handleExit} className="text-sm font-semibold text-gray-300 hover:text-white bg-neutral-800 hover:bg-neutral-700 px-4 py-2 rounded-xl transition-colors">Back to Writing Hub</button>
+                    <div className="flex items-center gap-3">
+                        <StudentDisputeButtonAndModal
+                            testTitle={`Cambridge Writing — Task ${resultsTab}`}
+                            module="writing"
+                            originalBand={overallBand}
+                            studentName={candidateEmail || 'Writing Scholar'}
+                            rawAnswers={{ task1: essayPart1, task2: essayPart2 }}
+                        />
+                        <button
+                            onClick={handleExit}
+                            className="text-xs font-semibold text-slate-300 hover:text-white bg-[#1E232D] hover:bg-[#252B38] border border-[#2B3242] px-4 py-2 rounded-xl transition-all cursor-pointer shadow-xs"
+                        >
+                            Back to Writing Hub
+                        </button>
+                    </div>
                 </header>
-                <div className="flex-1 min-h-0 overflow-y-auto bg-[#F7F7F8] p-6 custom-scrollbar">
-                    <div className="max-w-5xl mx-auto space-y-6 pb-10">
-                        <div className="bg-white rounded-2xl border border-neutral-200 p-6 flex flex-col md:flex-row gap-6 items-start">
-                            <div className="text-center bg-orange-50 border border-orange-200 rounded-2xl px-8 py-6 min-w-[180px]">
-                                <p className="text-[11px] uppercase tracking-wider text-orange-600 font-bold mb-1">Overall Band</p>
-                                <p className="text-5xl font-black text-neutral-900">{overallBand.toFixed(1)}</p>
-                                <p className="text-xs text-neutral-500 mt-2">{(result?.task1?.wordCount ?? 0) + (result?.task2?.wordCount ?? 0)} words · Task 1: {result?.task1?.wordCount ?? 0} · Task 2: {result?.task2?.wordCount ?? 0}</p>
+
+                {/* ── MAIN SCROLLABLE DASHBOARD ── */}
+                <div className="flex-1 min-h-0 overflow-y-auto bg-[#0D0F12] p-4 sm:p-6 custom-scrollbar">
+                    <div className="max-w-6xl mx-auto space-y-6 pb-12">
+                        {/* ── 1. TOP TELEMETRY ROW (OBSIDIAN GRID) ── */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                            {/* Overall Band Card */}
+                            <div className="md:col-span-4 rounded-2xl bg-[#15181E] border border-[#222732] p-6 flex flex-col justify-between shadow-xl relative overflow-hidden">
+                                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 via-amber-500 to-emerald-500" />
+                                <div>
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Overall Writing Band</p>
+                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">
+                                            {cefrBadge}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-baseline gap-3 mt-3">
+                                        <span className="text-5xl font-black text-white tracking-tight">{overallBand.toFixed(1)}</span>
+                                        <span className="text-xs text-slate-400 font-medium">/ 9.0 Band Scale</span>
+                                    </div>
+                                </div>
+                                <div className="pt-4 border-t border-[#222732] mt-4 flex items-center justify-between text-xs text-slate-400">
+                                    <span>⏱️ Time: {formatClock(seconds)}</span>
+                                    <span>📝 Total: {totalWords} words</span>
+                                </div>
                             </div>
-                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+
+                            {/* 4 Criteria Sub-Score Cards */}
+                            <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {[
-                                    { label: 'Task Achievement / Response', value: criteriaScores.task },
-                                    { label: 'Coherence & Cohesion', value: criteriaScores.coherence },
-                                    { label: 'Lexical Resource', value: criteriaScores.lexical },
-                                    { label: 'Grammatical Range & Accuracy', value: criteriaScores.grammar },
+                                    { code: 'TR/TA', label: 'Task Achievement / Response', value: criteriaScores.task },
+                                    { code: 'CC', label: 'Coherence & Cohesion', value: criteriaScores.coherence },
+                                    { code: 'LR', label: 'Lexical Resource', value: criteriaScores.lexical },
+                                    { code: 'GRA', label: 'Grammatical Range & Accuracy', value: criteriaScores.grammar },
                                 ].map((c) => (
-                                    <div key={c.label} className="rounded-xl bg-[#FAFAFA] border border-neutral-200 p-4">
-                                        <p className="text-[11px] uppercase tracking-wider text-neutral-500 font-semibold mb-1">{c.label}</p>
-                                        <p className="text-2xl font-bold text-neutral-900">{c.value.toFixed(1)}</p>
-                                        <div className="h-1.5 rounded bg-neutral-200 overflow-hidden mt-2">
-                                            <div className="h-full bg-orange-500" style={{ width: `${(c.value / 9) * 100}%` }} />
+                                    <div key={c.label} className="rounded-2xl bg-[#15181E] border border-[#222732] p-4 flex flex-col justify-between shadow-sm">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{c.code}</span>
+                                            <span className="text-lg font-black text-white">{c.value.toFixed(1)}</span>
+                                        </div>
+                                        <p className="text-xs text-slate-300 font-medium truncate">{c.label}</p>
+                                        <div className="h-1.5 rounded-full bg-[#222732] overflow-hidden mt-3">
+                                            <div
+                                                className="h-full bg-gradient-to-r from-rose-500 to-amber-500 rounded-full transition-all duration-500"
+                                                style={{ width: `${(c.value / 9) * 100}%` }}
+                                            />
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="flex gap-2 bg-white border border-neutral-200 p-1 rounded-xl w-fit">
+                        {/* ── 2. TASK TAB SELECTOR ── */}
+                        <div className="flex items-center gap-2 p-1.5 bg-[#15181E] border border-[#222732] rounded-2xl w-fit">
                             {([1, 2] as (1 | 2)[]).map((t) => (
-                                <button key={t} onClick={() => { setResultsTab(t); setExpandedAnswer(false); }} className={`px-5 py-2 rounded-lg text-sm font-bold transition-colors ${resultsTab === t ? 'bg-neutral-900 text-white' : 'text-neutral-500 hover:text-black'}`}>
-                                    Task {t} Analysis
+                                <button
+                                    key={t}
+                                    onClick={() => { setResultsTab(t); setExpandedAnswer(false); }}
+                                    className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                                        resultsTab === t
+                                            ? 'bg-rose-600 text-white shadow-md'
+                                            : 'text-slate-400 hover:text-slate-200 hover:bg-[#181C24]'
+                                    }`}
+                                >
+                                    <span>Task {t} Analysis</span>
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                                        resultsTab === t ? 'bg-black/30 text-white' : 'bg-rose-950/60 text-rose-400 border border-rose-800/40'
+                                    }`}>
+                                        {t === 1 ? (result?.task1?.band?.toFixed(1) || '6.5') : (result?.task2?.band?.toFixed(1) || '6.5')}
+                                    </span>
                                 </button>
                             ))}
                         </div>
 
-                        <div className="bg-white rounded-2xl border border-neutral-200 p-6 space-y-6">
-                            <div>
-                                <button onClick={() => setExpandedAnswer(!expandedAnswer)} className="flex items-center justify-between w-full text-left">
-                                    <h3 className="text-base font-bold text-neutral-900">User Answer Preview — Task {resultsTab} ({activeWords} words)</h3>
-                                    <span className="text-neutral-400 text-sm">{expandedAnswer ? 'Hide ▲' : 'Expand ▼'}</span>
-                                </button>
-                                <div className={`mt-3 rounded-xl bg-[#FAFAFA] border border-neutral-200 p-4 text-sm leading-relaxed text-neutral-800 whitespace-pre-wrap ${expandedAnswer ? '' : 'line-clamp-4 overflow-hidden'}`}>
-                                    {activeAnswer.trim() || '(No answer submitted for this task)'}
+                        {/* ── 3. MAIN 2-COLUMN OBSIDIAN WORKSPACE ── */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                            {/* Left Column (Student Response & Prompt Canvas) */}
+                            <div className="lg:col-span-7 bg-[#15181E] border border-[#222732] rounded-2xl p-6 shadow-xl space-y-4">
+                                <div className="flex items-center justify-between pb-3 border-b border-[#222732]">
+                                    <h3 className="text-base font-bold text-white flex items-center gap-2">
+                                        <span>📝</span> Student Response — Task {resultsTab}
+                                    </h3>
+                                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-[#0D0F12] border border-[#222732] text-slate-300">
+                                        {activeWords} words · Min {resultsTab === 1 ? 150 : 250}
+                                    </span>
                                 </div>
-                                <div className="mt-3 rounded-xl bg-canvas border border-neutral-800 p-4">
-                                    <p className="text-[11px] uppercase tracking-wider text-neutral-500 font-semibold mb-2">Inline Highlight Preview</p>
-                                    <p className="text-sm leading-relaxed text-neutral-200 whitespace-pre-wrap">
+
+                                {/* Official Prompt Display */}
+                                <div className="bg-[#0D0F12] border border-[#222732] rounded-xl p-4 text-xs text-slate-300 leading-relaxed space-y-1">
+                                    <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Official Prompt</p>
+                                    <p className="font-medium text-slate-200">{activeTaskData?.prompt || (resultsTab === 1 ? TASK1_ACADEMIC_TITLE : 'Task 2 Essay Prompt')}</p>
+                                </div>
+
+                                {/* Student Submitted Essay Text */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-xs font-bold text-slate-300">Submitted Essay Text</span>
+                                        <button
+                                            onClick={() => setExpandedAnswer(!expandedAnswer)}
+                                            className="text-[11px] text-slate-400 hover:text-white transition-colors cursor-pointer"
+                                        >
+                                            {expandedAnswer ? 'Collapse' : 'Expand full view'}
+                                        </button>
+                                    </div>
+                                    <div className={`bg-[#0D0F12] border border-[#222732] rounded-xl p-5 text-sm leading-relaxed text-slate-200 whitespace-pre-wrap font-normal ${expandedAnswer ? '' : 'max-h-[320px] overflow-y-auto custom-scrollbar'}`}>
+                                        {activeAnswer.trim() || '(No answer submitted for this task)'}
+                                    </div>
+                                </div>
+
+                                {/* Inline Diagnostic Highlight Preview */}
+                                <div className="bg-[#0D0F12] border border-[#222732] rounded-xl p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Diagnostic Highlight Preview</p>
+                                        <div className="flex items-center gap-3 text-[10px]">
+                                            <span className="text-yellow-300">■ Lexical Choice</span>
+                                            <span className="text-rose-400">■ Grammatical Form</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs leading-relaxed text-slate-300 whitespace-pre-wrap">
                                         {activeAnswer.trim() ? buildSegments(activeAnswer).map((seg, i) =>
-                                            seg.kind === 'plain' ? <span key={i}>{seg.text}</span> : seg.kind === 'vocab' ? <span key={i} className="bg-yellow-400/20 border-b border-yellow-400/50 text-yellow-100">{seg.text}</span> : <span key={i} className="bg-red-500/20 border-b border-red-500/60 text-red-200">{seg.text}</span>
-                                        ) : <span className="text-neutral-500">No text to highlight</span>}
+                                            seg.kind === 'plain' ? (
+                                                <span key={i}>{seg.text}</span>
+                                            ) : seg.kind === 'vocab' ? (
+                                                <span key={i} className="bg-yellow-400/15 border-b border-yellow-400/50 text-yellow-200 px-0.5 rounded-xs">{seg.text}</span>
+                                            ) : (
+                                                <span key={i} className="bg-rose-500/20 border-b border-rose-500/60 text-rose-200 px-0.5 rounded-xs">{seg.text}</span>
+                                            )
+                                        ) : <span className="text-slate-500">No text to highlight</span>}
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
-                                    <h4 className="text-sm font-bold text-emerald-800 mb-2">Key Strengths</h4>
-                                    <ul className="list-disc ml-5 space-y-1.5 text-sm text-emerald-900">
-                                        {strengths.map((s, i) => <li key={i}>{s}</li>)}
-                                    </ul>
-                                </div>
-                                <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
-                                    <h4 className="text-sm font-bold text-amber-800 mb-2">Areas for Improvement</h4>
-                                    <ul className="list-disc ml-5 space-y-1.5 text-sm text-amber-900">
-                                        {improvements.map((s, i) => <li key={i}>{s}</li>)}
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <div>
-                                <h4 className="text-sm font-bold text-neutral-900 mb-3">Grammar & Spelling Error Corrections</h4>
-                                <div className="space-y-3">
-                                    {corrections.map((c, i) => (
-                                        <div key={i} className="rounded-xl border border-neutral-200 overflow-hidden">
-                                            <div className="bg-red-50 px-4 py-2.5 text-sm"><span className="text-[10px] uppercase font-bold text-red-600 block mb-1">Original</span><span className="text-neutral-800 line-through decoration-red-400">{c.original}</span></div>
-                                            <div className="bg-emerald-50 px-4 py-2.5 text-sm"><span className="text-[10px] uppercase font-bold text-emerald-600 block mb-1">Suggested Correction</span><span className="text-neutral-900 font-medium">{c.suggested}</span></div>
+                            {/* Right Column (AI Diagnostic Breakdown & Upgrades) */}
+                            <div className="lg:col-span-5 space-y-4">
+                                {/* Grammar Corrections */}
+                                <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-5 shadow-xl space-y-3">
+                                    <div className="flex items-center justify-between pb-2 border-b border-[#222732]">
+                                        <h4 className="text-xs font-bold text-white flex items-center gap-2">
+                                            <span>🔍</span> Grammar &amp; Spelling Corrections
+                                        </h4>
+                                        <span className="text-[10px] font-bold text-slate-400 bg-[#0D0F12] px-2 py-0.5 rounded-full border border-[#222732]">
+                                            {corrections.length} Issues
+                                        </span>
+                                    </div>
+                                    {corrections.length > 0 ? (
+                                        <div className="space-y-2 max-h-[220px] overflow-y-auto custom-scrollbar pr-1">
+                                            {corrections.map((c, i) => (
+                                                <div key={i} className="rounded-xl border border-[#222732] bg-[#0D0F12] p-3 text-xs space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[9px] uppercase font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 px-1.5 py-0.5 rounded">Original</span>
+                                                        <span className="text-slate-400 line-through decoration-rose-500/70">{c.original}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[9px] uppercase font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">Suggested</span>
+                                                        <span className="text-emerald-300 font-medium">{c.suggested}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
+                                    ) : (
+                                        <div className="p-3 rounded-xl bg-[#0D0F12] border border-[#222732] text-xs text-slate-400 text-center">
+                                            ✓ No critical grammar errors detected.
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
 
-                            <div className="rounded-xl bg-[#121212] p-5">
-                                <h4 className="text-sm font-bold text-white mb-2">Model Answer / High Band Sample (Band 8.0+)</h4>
-                                <p className="text-sm leading-relaxed text-gray-300 whitespace-pre-wrap">{lang === 'en' ? modelAnswer : (modelAnswerBn || modelAnswer)}</p>
-                                <div className="flex items-center gap-1 rounded-lg bg-neutral-800 border border-neutral-700 p-1 w-fit mt-4">
-                                    {(['en', 'bn'] as const).map((l) => (
-                                        <button key={l} onClick={() => setLang(l)} className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-colors ${lang === l ? 'bg-white text-black' : 'text-neutral-400 hover:text-white'}`}>{l.toUpperCase()}</button>
-                                    ))}
+                                {/* Strengths and Improvements */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div className="rounded-2xl bg-emerald-950/20 border border-emerald-800/30 p-4">
+                                        <h4 className="text-xs font-bold text-emerald-300 mb-2">Key Strengths</h4>
+                                        <ul className="list-disc ml-4 space-y-1 text-xs text-emerald-200/90">
+                                            {strengths.slice(0, 3).map((s, i) => <li key={i}>{s}</li>)}
+                                        </ul>
+                                    </div>
+                                    <div className="rounded-2xl bg-amber-950/20 border border-amber-800/30 p-4">
+                                        <h4 className="text-xs font-bold text-amber-300 mb-2">Improvements</h4>
+                                        <ul className="list-disc ml-4 space-y-1 text-xs text-amber-200/90">
+                                            {improvements.slice(0, 3).map((s, i) => <li key={i}>{s}</li>)}
+                                        </ul>
+                                    </div>
                                 </div>
-                                {aiSummary && <p className="text-sm text-gray-400 leading-relaxed whitespace-pre-wrap mt-3">{aiSummary}</p>}
+
+                                {/* Model Answer (Band 8.0+) */}
+                                <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-5 shadow-xl space-y-3">
+                                    <div className="flex items-center justify-between pb-2 border-b border-[#222732]">
+                                        <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                                            <span>🌟</span> Model Answer (Band 8.0+)
+                                        </h4>
+                                        <div className="flex items-center gap-1 rounded-lg bg-[#0D0F12] border border-[#222732] p-0.5">
+                                            {(['en', 'bn'] as const).map((l) => (
+                                                <button
+                                                    key={l}
+                                                    onClick={() => setLang(l)}
+                                                    className={`px-2.5 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                                                        lang === l ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'
+                                                    }`}
+                                                >
+                                                    {l.toUpperCase()}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="bg-[#0D0F12] border border-[#222732] rounded-xl p-3.5 max-h-[200px] overflow-y-auto custom-scrollbar text-xs leading-relaxed text-slate-300 whitespace-pre-wrap">
+                                        {lang === 'en' ? modelAnswer : (modelAnswerBn || modelAnswer)}
+                                    </div>
+                                    {aiSummary && (
+                                        <p className="text-[11px] text-slate-400 leading-relaxed italic bg-[#0D0F12]/60 p-2.5 rounded-lg border border-[#222732]">
+                                            {aiSummary}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
-                        <div className="text-center">
-                            <button onClick={handleExit} className="px-6 py-3 bg-neutral-900 text-white rounded-xl font-bold hover:bg-black transition-colors">Back to Writing Hub</button>
+                        {/* Back action */}
+                        <div className="text-center pt-4">
+                            <button
+                                onClick={handleExit}
+                                className="px-6 py-3 bg-[#15181E] hover:bg-[#1C212B] border border-[#222732] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md"
+                            >
+                                ← Return to Writing Hub
+                            </button>
                         </div>
                     </div>
                 </div>

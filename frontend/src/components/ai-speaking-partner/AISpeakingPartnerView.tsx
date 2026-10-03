@@ -1,12 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/authContext';
+import { uploadSpeakingSession } from '@/lib/telemetryEgress';
+import { PhoneOff } from 'lucide-react';
+
+const API_BASE = (import.meta as any).env?.VITE_API_URL || (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) || 'http://localhost:8000';
+const WS_BASE = API_BASE.replace(/^http/, 'ws');
 
 // ── Types ──
 
 type VoiceMode = 'realistic' | 'normal';
 type Language = 'bn' | 'hi' | 'ur' | 'en';
-type CallState = 'idle' | 'recording' | 'processing';
+type CallState = 'idle' | 'connecting' | 'recording' | 'processing';
 type EvalState = 'idle' | 'loading' | 'complete';
+type ConversationTurnState = 'AI_SPEAKING' | 'USER_READY' | 'USER_RECORDING' | 'AI_THINKING';
 
 interface Partner {
     name: string;
@@ -141,10 +147,8 @@ const PhoneIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
     </svg>
 );
 
-const PhoneOffIcon = ({ className = 'w-6 h-6' }: { className?: string }) => (
-    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="m18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
-    </svg>
+const PhoneOffIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
+    <PhoneOff className={className} />
 );
 
 const ChevronLeftIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
@@ -476,6 +480,7 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
     const [callEnded, setCallEnded] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [callState, setCallState] = useState<CallState>('idle');
+    const [turnState, setTurnState] = useState<ConversationTurnState>('AI_SPEAKING');
     const [transcript, setTranscript] = useState<ChatMessage[]>([]);
     const [sessionElapsed, setSessionElapsed] = useState(0);
     const [isPartnerSpeaking, setIsPartnerSpeaking] = useState(false);
@@ -537,7 +542,15 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
 
     // ── Cleanup WS + audio on unmount ──────────────────────────────────
     useEffect(() => {
-        return () => { _teardownAudio(); };
+        return () => {
+            _teardownAudioPipeline();
+            if (wsRef.current) {
+                try {
+                    wsRef.current.close(1000, 'Component unmounted');
+                } catch (_) {}
+                wsRef.current = null;
+            }
+        };
     }, []);
 
     // ── Sync speaker mute to playback context ──────────────────────────
@@ -587,25 +600,55 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
         });
     };
 
-    // ── Audio Teardown ───────────────────────────────────────────────────
-    const _teardownAudio = () => {
+    // ── Bulletproof Audio Teardown ──────────────────────────────────────
+    const _teardownAudioPipeline = () => {
+        // 1. Gate the mic flag
         isMicActiveRef.current = false;
-        workletNodeRef.current?.disconnect();
-        workletNodeRef.current = null;
-        micSourceRef.current?.disconnect();
-        micSourceRef.current = null;
-        micStreamRef.current?.getTracks().forEach(t => t.stop());
-        micStreamRef.current = null;
+
+        // 2. Disconnect and port-close worklet node
+        if (workletNodeRef.current) {
+            try {
+                workletNodeRef.current.port.onmessage = null;
+                workletNodeRef.current.disconnect();
+            } catch (e) {
+                console.warn('[MIC TEARDOWN] Worklet disconnect error:', e);
+            }
+            workletNodeRef.current = null;
+        }
+
+        // 3. Disconnect source node
+        if (micSourceRef.current) {
+            try {
+                micSourceRef.current.disconnect();
+            } catch (e) {
+                console.warn('[MIC TEARDOWN] Mic source disconnect error:', e);
+            }
+            micSourceRef.current = null;
+        }
+
+        // 4. Stop all hardware tracks (Turns off browser recording dot!)
+        if (micStreamRef.current) {
+            micStreamRef.current.getTracks().forEach((track) => {
+                track.stop();
+                console.log('[MIC TEARDOWN] Stopped hardware audio track:', track.label);
+            });
+            micStreamRef.current = null;
+        }
+
+        // 5. Close the mic AudioContext
         if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
-            audioCtxRef.current.close();
+            audioCtxRef.current.close().catch(console.error);
+            audioCtxRef.current = null;
         }
-        audioCtxRef.current = null;
+
+        // 6. Close playback context and clear audio state
         if (playbackCtxRef.current && playbackCtxRef.current.state !== 'closed') {
-            playbackCtxRef.current.close();
+            playbackCtxRef.current.close().catch(console.error);
+            playbackCtxRef.current = null;
         }
-        playbackCtxRef.current = null;
         playbackQueueRef.current = [];
         isPlayingAudioRef.current = false;
+        setIsPartnerSpeaking(false);
     };
 
     // ── Schedule the next 24kHz PCM chunk for playback ──────────────────
@@ -654,124 +697,147 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
     }, [_scheduleNextAudioChunk]);
 
     // ── Open WebSocket session ───────────────────────────────────────────
-    const _openWebSocket = useCallback(async () => {
-        const token = session?.access_token;
-        if (!token) {
-            setWsError('Not authenticated. Please sign in and try again.');
-            return;
-        }
+    const _openWebSocket = useCallback((): Promise<WebSocket> => {
+        return new Promise<WebSocket>((resolve, reject) => {
+            const token = session?.access_token || 'dev';
+            const part = 1; // IELTS Part 1 — can be wired to a selector later
+            const wsUrl = `${WS_BASE}/api/ielts/ws/speaking-session?token=${encodeURIComponent(token)}&part=${part}`;
+            console.log('[STEPHEN][WS] Connecting to:', wsUrl);
 
-        const part = 1; // IELTS Part 1 — can be wired to a selector later
-        const wsUrl = `ws://localhost:8000/api/ielts/ws/speaking-session?token=${encodeURIComponent(token)}&part=${part}`;
-        console.log('[STEPHEN][WS] Connecting to', wsUrl);
+            const ws = new WebSocket(wsUrl);
+            ws.binaryType = 'arraybuffer';
 
-        const ws = new WebSocket(wsUrl);
-        wsRef.current = ws;
-        ws.binaryType = 'arraybuffer';
+            ws.onopen = () => {
+                console.log('[STEPHEN][WS] Connected successfully.');
+                wsRef.current = ws;
+                setWsError(null);
+                ws.send(JSON.stringify({ type: 'start' }));
+                resolve(ws);
+            };
 
-        ws.onopen = () => {
-            console.log('[STEPHEN][WS] Connected');
-            setWsError(null);
-            ws.send(JSON.stringify({ type: 'start' }));
-        };
+            ws.onerror = (err) => {
+                console.error('[STEPHEN][WS] Connection error:', err);
+                setWsError('Failed to establish realtime audio connection to server.');
+                reject(err);
+            };
 
-        ws.onmessage = (evt) => {
-            // Binary frame = audio PCM from Gemini
-            if (evt.data instanceof ArrayBuffer) {
-                _enqueueAudioChunk(evt.data);
-                return;
-            }
-            // Text frame = JSON control message
-            try {
-                const msg = JSON.parse(evt.data as string);
-                console.log('[STEPHEN][WS] ←', msg.type, msg);
+            ws.onclose = (evt) => {
+                console.log('[STEPHEN][WS] Closed:', evt.code, evt.reason);
+                _teardownAudioPipeline();
+                wsRef.current = null;
+                if (evt.code !== 1000) {
+                    setWsError(`Realtime session closed unexpectedly (code ${evt.code}${evt.reason ? `: ${evt.reason}` : ''}). Check the backend logs, then tap to retry.`);
+                }
+                setCallState('idle');
+                setTurnState('AI_SPEAKING');
+            };
 
-                if (msg.type === 'ping') {
-                    ws.send(JSON.stringify({ type: 'pong' }));
+            ws.onmessage = (evt) => {
+                // Binary frame = audio PCM from Gemini
+                if (evt.data instanceof ArrayBuffer) {
+                    setTurnState('AI_SPEAKING');
+                    setIsPartnerSpeaking(true);
+                    _enqueueAudioChunk(evt.data);
                     return;
                 }
+                // Text frame = JSON control message
+                try {
+                    const msg = JSON.parse(evt.data as string);
+                    console.log('[STEPHEN][WS] ←', msg.type, msg);
 
-                if (msg.type === 'user_transcript' && msg.text) {
-                    const id = nextMsgId.current++;
-                    liveTranscriptTurnsRef.current.push({ role: 'user', text: msg.text });
-                    setTranscript(prev => [...prev, {
-                        id,
-                        sender: 'user',
-                        text: msg.text,
-                        timestamp: formatTimestamp(),
-                    }]);
-                    return;
-                }
+                    if (msg.type === 'ping') {
+                        ws.send(JSON.stringify({ type: 'pong' }));
+                        return;
+                    }
 
-                if (msg.type === 'gemini_transcript' && msg.text) {
-                    liveTranscriptTurnsRef.current.push({ role: 'gemini', text: msg.text });
-                    // Append to or update the current AI streaming bubble
-                    setTranscript(prev => {
-                        const last = prev[prev.length - 1];
-                        if (last && last.sender === 'ai' && last.isStreaming) {
-                            return prev.map(m => m.id === last.id
-                                ? { ...m, text: m.text + (m.text ? ' ' : '') + msg.text }
+                    if (msg.type === 'user_transcript' && msg.text) {
+                        const userText = msg.text.trim();
+                        if (!userText) return;
+                        console.log('[STEPHEN][UI] Received user transcript:', userText);
+                        liveTranscriptTurnsRef.current.push({ role: 'user', text: userText });
+                        setTranscript(prev => {
+                            const last = prev[prev.length - 1];
+                            if (last && last.sender === 'user' && last.text === userText) {
+                                return prev;
+                            }
+                            return [...prev, {
+                                id: nextMsgId.current++,
+                                sender: 'user',
+                                text: userText,
+                                timestamp: formatTimestamp(),
+                            }];
+                        });
+                        return;
+                    }
+
+                    if (msg.type === 'gemini_transcript' && msg.text) {
+                        setTurnState('AI_SPEAKING');
+                        setIsPartnerSpeaking(true);
+                        liveTranscriptTurnsRef.current.push({ role: 'gemini', text: msg.text });
+                        // Append to or update the current AI streaming bubble
+                        setTranscript(prev => {
+                            const last = prev[prev.length - 1];
+                            if (last && last.sender === 'ai' && last.isStreaming) {
+                                return prev.map(m => m.id === last.id
+                                    ? { ...m, text: m.text + (m.text ? ' ' : '') + msg.text }
+                                    : m
+                                );
+                            }
+                            const id = nextMsgId.current++;
+                            return [...prev, {
+                                id,
+                                sender: 'ai',
+                                text: msg.text,
+                                timestamp: formatTimestamp(),
+                                isStreaming: true,
+                            }];
+                        });
+                        return;
+                    }
+
+                    if (msg.type === 'turn_complete') {
+                        console.log('[STEPHEN][UI] Turn complete received. Unlocking user mic.');
+                        // Seal the last AI bubble — stop cursor animation
+                        setTranscript(prev => prev.map((m, i) =>
+                            i === prev.length - 1 && m.sender === 'ai'
+                                ? { ...m, isStreaming: false }
                                 : m
-                            );
-                        }
-                        const id = nextMsgId.current++;
-                        return [...prev, {
-                            id,
-                            sender: 'ai',
-                            text: msg.text,
-                            timestamp: formatTimestamp(),
-                            isStreaming: true,
-                        }];
-                    });
-                    return;
+                        ));
+                        setIsPartnerSpeaking(false);
+                        isMicActiveRef.current = false;
+                        setTurnState('USER_READY');
+                        return;
+                    }
+
+                    if (msg.type === 'interrupted') {
+                        // Gemini barge-in — seal current AI bubble
+                        setTranscript(prev => prev.map(m =>
+                            m.isStreaming ? { ...m, isStreaming: false } : m
+                        ));
+                        return;
+                    }
+
+                    if (msg.type === 'session_ended') {
+                        console.log('[STEPHEN][WS] Session ended by server:', msg.reason);
+                        return;
+                    }
+
+                    if (msg.type === 'error') {
+                        console.error('[STEPHEN][WS] Server error:', msg.error || msg.message);
+                        setWsError(msg.error || msg.message || 'Connection error from server');
+                        // Never leave the user stuck on "Mohona is thinking..."
+                        setTurnState(prev => (prev === 'AI_THINKING' ? 'USER_READY' : prev));
+                        setIsPartnerSpeaking(false);
+                    }
+                } catch (e) {
+                    console.warn('[STEPHEN][WS] Failed to parse message', e);
                 }
-
-                if (msg.type === 'turn_complete') {
-                    // Seal the last AI bubble — stop cursor animation
-                    setTranscript(prev => prev.map((m, i) =>
-                        i === prev.length - 1 && m.sender === 'ai'
-                            ? { ...m, isStreaming: false }
-                            : m
-                    ));
-                    setIsPartnerSpeaking(false);
-                    return;
-                }
-
-                if (msg.type === 'interrupted') {
-                    // Gemini barge-in — seal current AI bubble
-                    setTranscript(prev => prev.map(m =>
-                        m.isStreaming ? { ...m, isStreaming: false } : m
-                    ));
-                    return;
-                }
-
-                if (msg.type === 'session_ended') {
-                    console.log('[STEPHEN][WS] Session ended by server:', msg.reason);
-                    return;
-                }
-
-                if (msg.type === 'error') {
-                    console.error('[STEPHEN][WS] Server error:', msg.error);
-                    setWsError(msg.error || 'Connection error from server');
-                }
-            } catch (e) {
-                console.warn('[STEPHEN][WS] Failed to parse message', e);
-            }
-        };
-
-        ws.onerror = (e) => {
-            console.error('[STEPHEN][WS] Error', e);
-            setWsError('WebSocket connection failed. Is the backend running on localhost:8000?');
-        };
-
-        ws.onclose = (e) => {
-            console.log('[STEPHEN][WS] Closed', e.code, e.reason);
-            wsRef.current = null;
-        };
+            };
+        });
     }, [session, _enqueueAudioChunk]);
 
     // ── Start microphone → AudioWorklet → WebSocket pipeline ───────────
-    const _startMicPipeline = useCallback(async () => {
+    const _startMicPipeline = useCallback(async (ws?: WebSocket) => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: {
@@ -785,8 +851,15 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
             micStreamRef.current = stream;
 
             const ctx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
-            console.log('Actual context sample rate:', ctx.sampleRate);
+            console.log('[STEPHEN][MIC] Context initialized. Sample rate:', ctx.sampleRate, 'Initial state:', ctx.state);
             audioCtxRef.current = ctx;
+
+            // Browser Autoplay Policy: explicit resume required if suspended
+            if (ctx.state === 'suspended') {
+                console.log('[STEPHEN][MIC] AudioContext was suspended, calling resume()...');
+                await ctx.resume();
+                console.log('[STEPHEN][MIC] AudioContext resumed successfully. State:', ctx.state);
+            }
 
             // Load the PCM processor worklet (resampling, clamping, Little-Endian Int16 PCM)
             await ctx.audioWorklet.addModule('/worklets/pcm-processor.js');
@@ -794,68 +867,144 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
             const workletNode = new AudioWorkletNode(ctx, 'pcm-processor');
             workletNodeRef.current = workletNode;
 
+            // Gate mic initially so chunks are NOT sent while AI is giving its greeting / turn
+            isMicActiveRef.current = false;
+
             workletNode.port.onmessage = (e: MessageEvent<ArrayBuffer>) => {
+                // Strict check: drop immediately if mic not armed
                 if (!isMicActiveRef.current) return;
-                const ws = wsRef.current;
-                if (!ws || ws.readyState !== WebSocket.OPEN) {
-                    console.log("Socket is NOT open. Audio chunk dropped.");
-                    return;
+                const activeWs = wsRef.current || ws;
+                if (!activeWs || activeWs.readyState !== WebSocket.OPEN) return;
+
+                const int16 = new Int16Array(e.data);
+                let maxAmp = 0;
+                for (let i = 0; i < int16.length; i++) {
+                    const abs = Math.abs(int16[i]);
+                    if (abs > maxAmp) maxAmp = abs;
                 }
-                console.log("SENDING CHUNK TO BACKEND. Size:", e.data.byteLength);
-                ws.send(e.data);
+                console.log('[MIC DEBUG] Chunk size:', e.data?.byteLength, 'Peak Amplitude:', maxAmp, 'WS State:', activeWs.readyState, 'isMicActive:', isMicActiveRef.current);
+                activeWs.send(e.data);
             };
 
             const source = ctx.createMediaStreamSource(stream);
             micSourceRef.current = source;
             source.connect(workletNode);
-            isMicActiveRef.current = true;
-            setCallState('recording');
+
+            // AudioWorkletNode in Web Audio needs to connect to destination
+            // (via muted gain) so Chromium rendering thread doesn't starve or prune the node
+            const muteGain = ctx.createGain();
+            muteGain.gain.value = 0;
+            workletNode.connect(muteGain);
+            muteGain.connect(ctx.destination);
+
+            setCallState('idle');
         } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : String(err);
-            console.error('[STEPHEN][MIC] Failed to start mic:', msg);
-            setWsError(`Microphone access denied: ${msg}`);
+            const errorName = err instanceof Error ? err.name : '';
+            const errorMsg = err instanceof Error ? err.message : String(err);
+            console.error('[STEPHEN][MIC] Detailed pipeline error:', errorName, errorMsg);
+
+            if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
+                setWsError('Microphone permission denied by your browser. Please allow microphone access.');
+            } else if (errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError') {
+                setWsError('No audio input device detected. Please connect a microphone.');
+            } else if (err instanceof DOMException && errorMsg.includes('addModule')) {
+                setWsError('Failed to load PCM Audio Worklet module from /worklets/pcm-processor.js (404/Load Error).');
+            } else {
+                setWsError(`Audio initialization failed: ${errorMsg}`);
+            }
+
+            isMicActiveRef.current = false;
+            setCallState('idle');
         }
     }, []);
 
     // ── Call Handlers ───────────────────────────────────────────────────
     const handleStartSession = async () => {
-        setSessionActive(true);
-        setCallEnded(false);
-        setIsAnalyzing(false);
-        setLiveTab('transcript');
-        setEvalState('idle');
-        setEvaluation(null);
-        setSessionElapsed(0);
-        setTranscript([]);
-        setCallState('idle');
-        setWsError(null);
-        nextMsgId.current = 1;
-        liveTranscriptTurnsRef.current = [];
-        playbackQueueRef.current = [];
-        isPlayingAudioRef.current = false;
+        try {
+            setSessionActive(true);
+            setCallEnded(false);
+            setIsAnalyzing(false);
+            setLiveTab('transcript');
+            setEvalState('idle');
+            setEvaluation(null);
+            setSessionElapsed(0);
+            setTranscript([]);
+            setWsError(null);
+            setTurnState('AI_SPEAKING');
+            nextMsgId.current = 1;
+            liveTranscriptTurnsRef.current = [];
+            playbackQueueRef.current = [];
+            isPlayingAudioRef.current = false;
 
-        // Open WS first, then start mic once WS is ready
-        await _openWebSocket();
-        // Small delay to let WS handshake complete
-        setTimeout(() => _startMicPipeline(), 800);
+            // Pre-warm playback audio context inside direct user gesture
+            if (!playbackCtxRef.current) {
+                playbackCtxRef.current = new AudioContext({ sampleRate: 24000 });
+            }
+            if (playbackCtxRef.current.state === 'suspended') {
+                await playbackCtxRef.current.resume();
+            }
+
+            setCallState('connecting');
+            const ws = await _openWebSocket();
+            // Immediately start mic pipeline using verified socket; mic stays gated until AI finishes turn
+            await _startMicPipeline(ws);
+            setCallState('idle');
+            setTurnState('AI_SPEAKING');
+        } catch (err) {
+            console.error('[STEPHEN] Session initialization failed:', err);
+            setCallState('idle');
+            setTurnState('AI_SPEAKING');
+        }
     };
 
-    // ── Microphone state during session (continuous PCM streaming) ──
-    const handleTapToSpeak = () => {
-        // Microphone is continuously active during live session.
-        // Rely entirely on Gemini Live native barge-in capabilities.
+    // ── Turn-Taking Handlers ─────────────────────────────────────────────
+    const handleStartSpeaking = async () => {
+        if (callEnded || !sessionActive) return;
+        if (audioCtxRef.current?.state === 'suspended') {
+            await audioCtxRef.current.resume();
+        }
+        isMicActiveRef.current = true;
+        setCallState('recording');
+        setTurnState('USER_RECORDING');
+        console.log('[STEPHEN][TURN] Candidate recording armed.');
+    };
+
+    const handleFinishAnswer = () => {
+        if (callEnded) return;
+        isMicActiveRef.current = false;
+        setCallState('idle');
+        setTurnState('AI_THINKING');
+        console.log('[STEPHEN][TURN] Candidate answer finished. Disarming mic.');
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            console.log('[STEPHEN][WS] → DISPATCHED turn_complete to backend');
+            wsRef.current.send(JSON.stringify({ type: 'turn_complete' }));
+        } else {
+            console.warn('[STEPHEN][WS] ⚠️ Cannot dispatch turn_complete: wsRef is not open! readyState:', wsRef.current?.readyState);
+        }
+    };
+
+    const handleTapToSpeak = async () => {
         if (!sessionActive) {
             handleStartSession();
+            return;
+        }
+
+        if (turnState === 'USER_READY') {
+            await handleStartSpeaking();
+        } else if (turnState === 'USER_RECORDING') {
+            handleFinishAnswer();
         }
     };
 
     const handleDisconnect = () => {
         // Close WS gracefully
         if (wsRef.current) {
-            wsRef.current.close(1000, 'User disconnected');
+            try {
+                wsRef.current.close(1000, 'User disconnected');
+            } catch (_) {}
             wsRef.current = null;
         }
-        _teardownAudio();
+        _teardownAudioPipeline();
 
         if (transcript.length > 0) {
             const rec: RecordingSession = {
@@ -869,6 +1018,15 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
                 messages: transcript,
             };
             setRecordings(prev => [rec, ...prev]);
+
+            uploadSpeakingSession({
+                user_id: session?.user?.id,
+                session_id: rec.id,
+                transcript: transcript.map(m => ({ sender: m.sender, text: m.text })),
+                duration_seconds: sessionElapsed,
+                studentName: session?.user?.user_metadata?.full_name || userEmail?.split('@')[0] || 'Speaking Candidate',
+                userId: session?.user?.id
+            }).catch(e => console.warn('[TELEMETRY] Disconnect session upload error:', e));
         }
         setSessionActive(false);
         setCallEnded(false);
@@ -881,6 +1039,10 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
         setStreamingMessageId(null);
         setSpeakerMuted(false);
         setWsError(null);
+    };
+
+    const handleEndCall = () => {
+        handleDisconnect();
     };
 
     // ── Real post-call evaluation via FastAPI ───────────────────────────
@@ -898,7 +1060,7 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
             formData.append('topic', 'General speaking practice');
 
             const token = session?.access_token ?? '';
-            const resp = await fetch('http://localhost:8000/api/ielts/evaluate-speaking', {
+            const resp = await fetch(`${API_BASE}/api/ielts/evaluate-speaking`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` },
                 body: formData,
@@ -941,6 +1103,31 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
 
             setEvaluation(mapped);
             setEvalState('complete');
+
+            // Asynchronously record speaking session to Supabase Telemetry pipeline
+            try {
+                uploadSpeakingSession({
+                    user_id: session?.user?.id,
+                    transcript: fullTranscript,
+                    band_score: mapped.overallBand,
+                    overallBand: mapped.overallBand,
+                    sub_scores: {
+                        fluency: mapped.fluency,
+                        pronunciation: mapped.pronunciation,
+                        lexical: mapped.lexical,
+                        grammar: mapped.grammar,
+                    },
+                    fluencyScore: mapped.fluency,
+                    pronunciationScore: mapped.pronunciation,
+                    lexicalScore: mapped.lexical,
+                    grammarScore: mapped.grammar,
+                    duration_seconds: sessionElapsed,
+                    studentName: session?.user?.user_metadata?.full_name || userEmail?.split('@')[0] || 'Speaking Candidate',
+                    userId: session?.user?.id
+                }).catch((e) => console.warn('[Telemetry] Speaking session upload error:', e));
+            } catch {
+                // non-blocking
+            }
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : String(err);
             console.error('[STEPHEN][EVAL] Failed:', msg);
@@ -993,10 +1180,12 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
     const handleEndCallForTab = () => {
         // Close WS + audio
         if (wsRef.current) {
-            wsRef.current.close(1000, 'User ended call');
+            try {
+                wsRef.current.close(1000, 'User ended call');
+            } catch (_) {}
             wsRef.current = null;
         }
-        _teardownAudio();
+        _teardownAudioPipeline();
 
         if (transcript.length > 0) {
             const rec: RecordingSession = {
@@ -1516,10 +1705,12 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
                         <p className="text-lg font-semibold text-gray-800">
                             {callEnded
                                 ? 'Call Ended'
-                                : isPartnerSpeaking
+                                : turnState === 'AI_SPEAKING'
                                 ? `${activePartner.name} is speaking...`
-                                : callState === 'recording'
+                                : turnState === 'USER_READY' || turnState === 'USER_RECORDING'
                                 ? 'Listening to you...'
+                                : turnState === 'AI_THINKING'
+                                ? `${activePartner.name} is thinking...`
                                 : `${activePartner.name} is listening...`}
                         </p>
                         <p className="text-2xl text-gray-500 font-medium tracking-wider mt-2 font-mono">
@@ -1530,14 +1721,14 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
                                 <div
                                     key={i}
                                     className={`w-1 rounded-full transition-all duration-150 ${
-                                        !callEnded && (isPartnerSpeaking || callState === 'recording')
+                                        !callEnded && (isPartnerSpeaking || turnState === 'USER_RECORDING')
                                             ? 'bg-rose-500 animate-pulse'
                                             : callEnded
                                             ? 'bg-gray-300'
                                             : 'bg-gray-200'
                                     }`}
                                     style={{
-                                        height: !callEnded && (isPartnerSpeaking || callState === 'recording')
+                                        height: !callEnded && (isPartnerSpeaking || turnState === 'USER_RECORDING')
                                             ? `${8 + Math.random() * 16}px`
                                             : '4px',
                                         animationDelay: `${i * 0.05}s`,
@@ -1555,12 +1746,24 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
                                     {speakerMuted ? <VolumeOffIcon className="w-5 h-5" /> : <VolumeIcon className="w-5 h-5" />}
                                 </button>
                                 <button
-                                    onClick={handleDisconnect}
-                                    className="w-14 h-14 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-md transition-colors"
+                                    onClick={handleEndCall}
+                                    className="w-12 h-12 rounded-full bg-rose-600 hover:bg-rose-700 flex items-center justify-center text-white transition-all shadow-lg shadow-rose-900/40"
+                                    title="End Call"
                                 >
-                                    <PhoneOffIcon className="w-6 h-6" />
+                                    <PhoneOff className="w-5 h-5" />
                                 </button>
-                                <button className="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors text-gray-600">
+                                <button
+                                    onClick={handleTapToSpeak}
+                                    disabled={turnState === 'AI_SPEAKING' || turnState === 'AI_THINKING'}
+                                    title={turnState === 'USER_RECORDING' ? 'Tap to finish answer' : turnState === 'USER_READY' ? 'Tap to speak' : `${activePartner.name} is busy`}
+                                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+                                        turnState === 'USER_RECORDING'
+                                            ? 'bg-rose-600 text-white animate-pulse shadow-md cursor-pointer'
+                                            : turnState === 'USER_READY'
+                                            ? 'bg-slate-900 hover:bg-slate-800 text-white shadow-sm cursor-pointer'
+                                            : 'bg-gray-100 text-gray-400 opacity-60 cursor-not-allowed'
+                                    }`}
+                                >
                                     <MicIcon className="w-5 h-5" />
                                 </button>
                             </div>
@@ -1663,35 +1866,45 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
                                     <div ref={transcriptEndRef} />
                                 </div>
                                 <div className="px-6 py-4 border-t border-gray-100 flex justify-center shrink-0">
-                                    {callState === 'idle' && (
-                                        <button
-                                            onClick={handleTapToSpeak}
-                                            className="bg-slate-900 text-white font-medium px-6 py-3 rounded-full shadow-lg hover:bg-slate-800 transition-all cursor-pointer flex items-center gap-2"
-                                        >
-                                            <MicIcon className="w-5 h-5" />
-                                            Tap to Speak
-                                        </button>
-                                    )}
-                                    {callState === 'recording' && (
-                                        <button
-                                            onClick={handleTapToSpeak}
-                                            className="bg-rose-500 text-white font-medium px-6 py-3 rounded-full shadow-lg animate-pulse flex items-center gap-2 cursor-pointer"
-                                        >
-                                            <div className="w-3 h-3 rounded-full bg-white animate-pulse" />
-                                            Recording... Tap to Stop
-                                        </button>
-                                    )}
-                                    {callState === 'processing' && (
-                                        <div className="bg-gray-100 text-gray-500 font-medium px-6 py-3 rounded-full border border-gray-200 flex items-center gap-2 pointer-events-none">
-                                            <SpinnerIcon className="w-4 h-4" />
-                                            Transcribing audio...
-                                        </div>
-                                    )}
-                                    {callEnded && (
+                                    {callEnded ? (
                                         <div className="bg-gray-100 text-gray-500 font-medium px-6 py-3 rounded-full border border-gray-200 flex items-center gap-2">
                                             <span className="text-xs">Call ended — switch to AI Feedback or AI Scoring for analysis</span>
                                         </div>
-                                    )}
+                                    ) : callState === 'connecting' ? (
+                                        <div className="bg-slate-100 text-slate-700 font-medium px-6 py-3 rounded-full border border-slate-200 flex items-center gap-2">
+                                            <SpinnerIcon className="w-4 h-4 text-slate-600 animate-spin" />
+                                            <span>Connecting to server...</span>
+                                        </div>
+                                    ) : turnState === 'AI_SPEAKING' ? (
+                                        <button
+                                            disabled={true}
+                                            className="opacity-60 cursor-not-allowed bg-slate-800 text-slate-400 font-medium px-6 py-3 rounded-full shadow-sm flex items-center gap-2"
+                                        >
+                                            <span>🎙️ {activePartner.name} is speaking...</span>
+                                        </button>
+                                    ) : turnState === 'USER_READY' ? (
+                                        <button
+                                            onClick={handleStartSpeaking}
+                                            disabled={false}
+                                            className="bg-slate-900 border border-slate-700 hover:border-slate-500 cursor-pointer text-white font-medium px-6 py-3 rounded-full shadow-lg transition-all flex items-center gap-2"
+                                        >
+                                            <span>🎙️ Tap to Speak</span>
+                                        </button>
+                                    ) : turnState === 'USER_RECORDING' ? (
+                                        <button
+                                            onClick={handleFinishAnswer}
+                                            className="bg-rose-600 hover:bg-rose-700 text-white font-medium px-6 py-3 rounded-full shadow-lg animate-pulse flex items-center gap-2 cursor-pointer transition-all"
+                                        >
+                                            <span>🔴 Recording... Tap to Finish Answer</span>
+                                        </button>
+                                    ) : turnState === 'AI_THINKING' ? (
+                                        <button
+                                            disabled={true}
+                                            className="opacity-60 cursor-not-allowed bg-slate-800 text-slate-400 font-medium px-6 py-3 rounded-full shadow-sm flex items-center gap-2"
+                                        >
+                                            <span>⏳ {activePartner.name} is thinking...</span>
+                                        </button>
+                                    ) : null}
                                 </div>
                             </>
                         )}

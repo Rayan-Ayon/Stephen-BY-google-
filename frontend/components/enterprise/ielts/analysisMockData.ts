@@ -48,6 +48,9 @@ export interface ObjectiveAnswer {
     type: string;
     timeSpent: number;
     status: 'correct' | 'incorrect' | 'unanswered';
+    prompt?: string;
+    tapeScriptExcerpt?: string;
+    explanation?: string;
 }
 
 export interface ObjectivePassageCtx {

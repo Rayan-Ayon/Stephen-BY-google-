@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import {
   ArrowLeft,
   BookOpen,
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExamResultsPayload, PassageReviewData, ResultQuestionItem } from './readingResultsTypes';
+import StudentDisputeButtonAndModal from '../StudentDisputeButtonAndModal';
 
 interface ReadingExamResultsViewProps {
   results: ExamResultsPayload;
@@ -95,6 +96,18 @@ export default function ReadingExamResultsView({ results, onBack, onRetake }: Re
   };
 
   const accuracyPct = Math.round((results.correctCount / (results.totalQuestions || 40)) * 100);
+
+  const extractedAnswers = useMemo(() => {
+    const map: Record<number, string> = {};
+    if (results?.passages) {
+      results.passages.forEach((p) => {
+        p.questions?.forEach((q) => {
+          map[q.questionNumber] = q.userAnswer || '';
+        });
+      });
+    }
+    return map;
+  }, [results?.passages]);
 
   // Review this action: smooth-scroll Left Panel to exact section & apply glow
   const handleReviewThis = (sectionKey: string, passageNumber?: number) => {
@@ -191,6 +204,12 @@ export default function ReadingExamResultsView({ results, onBack, onRetake }: Re
 
         {/* Right: Brand & Actions */}
         <div className="flex items-center gap-3">
+          <StudentDisputeButtonAndModal
+            testTitle={results.testTitle}
+            module="reading"
+            originalBand={results.bandScore}
+            rawAnswers={extractedAnswers}
+          />
           {onRetake && (
             <button
               onClick={onRetake}
