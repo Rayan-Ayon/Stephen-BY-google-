@@ -10,6 +10,9 @@ export interface ExamAttemptPayload {
   answersPayload?: Record<string, any>;
   studentName?: string;
   userId?: string;
+  bookNumber?: number;
+  testNumber?: number;
+  sourceType?: string;
 }
 
 export interface HandwrittenSubmissionPayload {
@@ -83,8 +86,23 @@ export async function recordExamAttempt(payload: ExamAttemptPayload) {
       time_spent_seconds: payload.timeSpentSeconds || 0,
       answers_payload: payload.answersPayload || {},
       student_name: resolvedName || 'Candidate Scholar',
+      source_type: payload.sourceType || 'cambridge',
+      book_number: payload.bookNumber,
+      test_number: payload.testNumber,
       ...(resolvedUserId ? { user_id: resolvedUserId } : {})
     };
+
+    // Fallback local cache for instant retrieval & offline resilience
+    try {
+      const cacheKey = `exam_attempts_${payload.module}_${payload.testId}`;
+      const cachedRecord = {
+        id: `local-att-${Date.now()}`,
+        ...row,
+        created_at: new Date().toISOString()
+      };
+      localStorage.setItem(cacheKey, JSON.stringify(cachedRecord));
+      localStorage.setItem(`latest_${payload.module}_attempt`, JSON.stringify(cachedRecord));
+    } catch {}
 
     const { data, error } = await (supabase as any)
       .from('exam_attempts')

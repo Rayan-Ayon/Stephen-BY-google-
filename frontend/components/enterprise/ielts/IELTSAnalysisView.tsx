@@ -1,8 +1,23 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Flag, Clock, CheckCircle2 } from 'lucide-react';
+import {
+    Flag,
+    Clock,
+    CheckCircle2,
+    XCircle,
+    ChevronDown,
+    ChevronUp,
+    Sparkles,
+    BookOpen,
+    Eye,
+    EyeOff,
+    AlertTriangle,
+    Lightbulb
+} from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 import StudentDisputeButtonAndModal from './StudentDisputeButtonAndModal';
+import { useReadingExamData } from '@/hooks/useExamData';
 import {
     readAttempts,
     attemptStatus,
@@ -81,6 +96,472 @@ const segNote = (s: AnalysisSegment): string => {
     if (s.kind === 'vocab') return `Weak / Band 6 lexis: "${s.text}" — replace with more precise vocabulary.`;
     if (s.kind === 'strong') return `Band 8+ collocation: "${s.text}" — keep using this structure.`;
     return '';
+};
+
+/* ───────────────────────── Reading 50/50 Split Analysis Canvas ───────────────────────── */
+
+const ReadingAnalysisSplitCanvas: React.FC<{
+    bookNumber: number;
+    testNumber: number;
+    attemptId?: string | number;
+    rawAnswers?: Record<string | number, string>;
+    testTitle?: string;
+}> = ({ bookNumber, testNumber, attemptId, rawAnswers, testTitle }) => {
+    const {
+        loading,
+        passages,
+        questions,
+    } = useReadingExamData({
+        bookNumber,
+        testNumber,
+        attemptId,
+        initialAnswers: rawAnswers,
+        testTitle,
+    });
+
+    const [activePassageIndex, setActivePassageIndex] = useState(0);
+    const [isPassageHidden, setIsPassageHidden] = useState<boolean>(false);
+    const [vocabLookupEnabled, setVocabLookupEnabled] = useState<boolean>(false);
+    const [selectedWordDef, setSelectedWordDef] = useState<{ word: string; pos: string; def: string } | null>(null);
+    const [activeFilter, setActiveFilter] = useState<'all' | 'incorrect' | 'correct' | 'unanswered'>('all');
+    const [expandedExplanations, setExpandedExplanations] = useState<Record<number, boolean>>({});
+
+    const passageContainerRef = useRef<HTMLDivElement>(null);
+    const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+    const [activeHighlightSection, setActiveHighlightSection] = useState<string | null>(null);
+
+    const activePassage = passages[activePassageIndex] || passages[0] || {
+        passage_number: 1,
+        title: 'Passage 1',
+        passage_text: '',
+        sections: [],
+    };
+
+    // Filter questions based on filter pills
+    const filteredQuestions = useMemo(() => {
+        return questions.filter((q) => {
+            const hasAns = q.candidate_answer && q.candidate_answer.trim() !== '';
+            if (activeFilter === 'incorrect') return hasAns && !q.is_correct;
+            if (activeFilter === 'correct') return q.is_correct;
+            if (activeFilter === 'unanswered') return !hasAns;
+            return true;
+        });
+    }, [questions, activeFilter]);
+
+    // Expand all explanations by default
+    useEffect(() => {
+        if (questions.length > 0) {
+            const initialMap: Record<number, boolean> = {};
+            questions.forEach((q) => {
+                initialMap[q.question_number] = true;
+            });
+            setExpandedExplanations((prev) => ({ ...initialMap, ...prev }));
+        }
+    }, [questions]);
+
+    const toggleExplanation = (qNum: number) => {
+        setExpandedExplanations((prev) => ({ ...prev, [qNum]: !prev[qNum] }));
+    };
+
+    const handleReviewThis = (sectionKey: string, passageNumber?: number) => {
+        if (passageNumber && passageNumber !== activePassage.passage_number) {
+            const targetIndex = passages.findIndex((p) => p.passage_number === passageNumber);
+            if (targetIndex !== -1) {
+                setActivePassageIndex(targetIndex);
+            }
+        }
+
+        if (isPassageHidden) {
+            setIsPassageHidden(false);
+        }
+
+        const cleanLetter = (sectionKey || '').replace(/[^A-Za-z]/g, '').slice(-1) || 'A';
+        const normalizedKey = `Section ${cleanLetter}`;
+        const altKey = `Paragraph ${cleanLetter}`;
+
+        setTimeout(() => {
+            const targetNode = sectionRefs.current[normalizedKey] || sectionRefs.current[altKey] || sectionRefs.current[sectionKey];
+            if (targetNode && passageContainerRef.current) {
+                targetNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setActiveHighlightSection(normalizedKey);
+                toast.info(`Highlighted Paragraph ${cleanLetter} in the reading passage`);
+                setTimeout(() => setActiveHighlightSection(null), 3500);
+            }
+        }, 100);
+    };
+
+    const handleWordClick = (word: string) => {
+        if (!vocabLookupEnabled) return;
+        const clean = word.toLowerCase().replace(/[^a-z]/g, '');
+        if (!clean) return;
+
+        setSelectedWordDef({
+            word: clean,
+            pos: 'academic lexis',
+            def: `Key contextual IELTS reading vocabulary item: "${clean}". Review collocation and nuance in this passage.`
+        });
+    };
+
+    return (
+        <div className="w-full flex flex-col h-[calc(100vh-140px)] overflow-hidden">
+            {/* STICKY TOP CONTROL BAR */}
+            <div className="shrink-0 bg-[#15181E] border border-[#222732] rounded-2xl p-4 mb-4 flex items-center justify-between z-10 flex-wrap gap-3 shadow-md">
+                {/* Passage Selection Tabs */}
+                <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1 select-none">
+                        REVIEW PASSAGE:
+                    </span>
+                    {passages.map((p, idx) => (
+                        <button
+                            key={p.passage_number}
+                            onClick={() => setActivePassageIndex(idx)}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border flex items-center ${
+                                idx === activePassageIndex
+                                    ? 'bg-[#1E232E] border-indigo-500/80 text-white shadow-sm ring-1 ring-indigo-500/50'
+                                    : 'bg-[#0D0F12] border-[#222732] text-slate-300 hover:text-white hover:border-slate-700'
+                            }`}
+                        >
+                            <span className="text-slate-300">Passage {p.passage_number}:</span>
+                            <span className="text-indigo-300 font-semibold ml-1.5 truncate max-w-[180px] sm:max-w-none">
+                                {p.title}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+
+                {/* Filter Pills & Actions */}
+                <div className="flex items-center gap-3 flex-wrap">
+                    {/* Status filter pills */}
+                    <div className="flex items-center gap-1 bg-[#0D0F12] p-1 rounded-xl border border-[#222732]">
+                        {(
+                            [
+                                { id: 'all', label: `All ${questions.length}` },
+                                { id: 'incorrect', label: 'Missed' },
+                                { id: 'correct', label: 'Correct' },
+                                { id: 'unanswered', label: 'Omitted' },
+                            ] as const
+                        ).map((filter) => (
+                            <button
+                                key={filter.id}
+                                onClick={() => setActiveFilter(filter.id)}
+                                className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                                    activeFilter === filter.id
+                                        ? 'bg-indigo-600 text-white shadow-xs'
+                                        : 'text-slate-400 hover:text-slate-200'
+                                }`}
+                            >
+                                {filter.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <button
+                        onClick={() => setVocabLookupEnabled((prev) => !prev)}
+                        className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
+                            vocabLookupEnabled
+                                ? 'bg-amber-950/50 border-amber-500/60 text-amber-300 font-bold'
+                                : 'bg-[#0D0F12] border-[#222732] text-slate-300 hover:text-white'
+                        }`}
+                        title="Click words for vocabulary"
+                    >
+                        <BookOpen className="w-3.5 h-3.5" />
+                        {vocabLookupEnabled ? 'Vocab Lookup: ON' : 'Click words for vocabulary'}
+                    </button>
+
+                    <button
+                        onClick={() => setIsPassageHidden((prev) => !prev)}
+                        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#222732] bg-[#0D0F12] hover:bg-[#1E232E] text-slate-300 transition-colors cursor-pointer"
+                    >
+                        {isPassageHidden ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                        {isPassageHidden ? 'Show passage' : 'Hide passage'}
+                    </button>
+                </div>
+            </div>
+
+            {/* Vocabulary Definition Notification */}
+            {selectedWordDef && (
+                <div className="mb-4 bg-amber-950/40 border border-amber-800/60 text-amber-200 p-3.5 rounded-xl flex items-start justify-between gap-4 shadow-sm animate-in fade-in">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm capitalize text-amber-300">{selectedWordDef.word}</span>
+                            <span className="text-[10px] uppercase font-bold bg-amber-900/60 text-amber-300 border border-amber-700/60 px-1.5 py-0.5 rounded">
+                                {selectedWordDef.pos}
+                            </span>
+                        </div>
+                        <p className="text-xs text-amber-100/90 mt-1 leading-relaxed">{selectedWordDef.def}</p>
+                    </div>
+                    <button
+                        onClick={() => setSelectedWordDef(null)}
+                        className="text-xs text-amber-400 hover:text-amber-200 font-bold px-2 py-1 rounded cursor-pointer"
+                    >
+                        ✕ Close
+                    </button>
+                </div>
+            )}
+
+            {/* INDEPENDENT DUAL-PANE GRID */}
+            <div className="grid grid-cols-12 gap-4 flex-1 min-h-0 overflow-hidden">
+                {/* LEFT PANEL: READING PASSAGE (Col-6) */}
+                <div
+                    ref={passageContainerRef}
+                    className={`${
+                        isPassageHidden ? 'hidden' : 'col-span-12 lg:col-span-6'
+                    } h-full overflow-y-auto custom-scrollbar bg-[#15181E] border border-[#222732] rounded-2xl p-6 space-y-4`}
+                >
+                    <div className="flex items-center justify-between border-b border-[#222732] pb-3">
+                        <div>
+                            <h4 className="text-base font-bold text-white tracking-tight">
+                                {activePassage?.title || `Passage ${activePassage?.passage_number || 1}`}
+                            </h4>
+                            <span className="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">
+                                Reading Passage {activePassage?.passage_number || 1}
+                            </span>
+                        </div>
+                        <span className="text-[11px] font-mono text-slate-400 bg-[#0D0F12] border border-[#222732] px-2.5 py-1 rounded-md">
+                            Cambridge Authentic
+                        </span>
+                    </div>
+
+                    <div className="space-y-4 text-slate-300 text-sm leading-relaxed font-serif">
+                        {loading ? (
+                            <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
+                                <div className="w-8 h-8 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+                                <span className="text-xs text-slate-400">Loading authentic passage data from Supabase...</span>
+                            </div>
+                        ) : activePassage?.sections && activePassage.sections.length > 0 ? (
+                            activePassage.sections.map((block) => {
+                                const sectionKey = `Section ${block.sectionLabel}`;
+                                const altKey = `Paragraph ${block.sectionLabel}`;
+                                const isHighlighted = activeHighlightSection === sectionKey || activeHighlightSection === altKey;
+
+                                return (
+                                    <div
+                                        key={block.sectionLabel}
+                                        ref={(el) => {
+                                            sectionRefs.current[sectionKey] = el;
+                                            sectionRefs.current[altKey] = el;
+                                        }}
+                                        className={`transition-all duration-500 rounded-xl p-3.5 border ${
+                                            isHighlighted
+                                                ? 'bg-indigo-950/80 border-indigo-500/80 ring-2 ring-indigo-500/50 shadow-xl text-white'
+                                                : 'border-transparent hover:bg-[#0D0F12]/60 text-slate-300'
+                                        }`}
+                                    >
+                                        <span className="inline-block font-sans font-extrabold text-xs text-indigo-400 bg-indigo-950/80 border border-indigo-800/80 px-2 py-0.5 rounded mr-2.5 shadow-xs">
+                                            Paragraph {block.sectionLabel}
+                                        </span>
+                                        <span
+                                            className={vocabLookupEnabled ? 'cursor-pointer selection:bg-amber-400/30' : ''}
+                                            onClick={(e) => {
+                                                if (!vocabLookupEnabled) return;
+                                                const selection = window.getSelection()?.toString().trim();
+                                                if (selection && selection.length > 2) {
+                                                    handleWordClick(selection);
+                                                }
+                                            }}
+                                        >
+                                            {block.content}
+                                        </span>
+                                    </div>
+                                );
+                            })
+                        ) : activePassage?.passage_text ? (
+                            <div
+                                className="prose prose-invert max-w-none space-y-3"
+                                dangerouslySetInnerHTML={{ __html: activePassage.passage_text }}
+                            />
+                        ) : (
+                            <p className="text-xs text-slate-500 text-center py-8">Passage text not available.</p>
+                        )}
+                    </div>
+                </div>
+
+                {/* RIGHT PANEL: EXPLANATIONS & EVIDENCE (Col-6 or Col-12) */}
+                <div
+                    className={`${
+                        isPassageHidden ? 'col-span-12' : 'col-span-12 lg:col-span-6'
+                    } h-full overflow-y-auto custom-scrollbar space-y-4 pr-1`}
+                >
+                    {loading ? (
+                        <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
+                            <div className="w-8 h-8 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+                            <span className="text-xs text-slate-400">Loading questions & responses from Supabase...</span>
+                        </div>
+                    ) : filteredQuestions.length === 0 ? (
+                        <div className="p-8 text-center bg-[#15181E] border border-[#222732] rounded-2xl">
+                            <p className="text-sm font-semibold text-slate-300">No questions match filter "{activeFilter}"</p>
+                            <p className="text-xs text-slate-500 mt-1">Switch to "All" to inspect all candidate responses.</p>
+                        </div>
+                    ) : (
+                        filteredQuestions.map((q) => {
+                            const userRaw = q.candidate_answer;
+                            const isCorrect = Boolean(q.is_correct);
+                            const hasAnswer = Boolean(userRaw && userRaw.trim() !== '');
+                            const isExpanded = Boolean(expandedExplanations[q.question_number]);
+                            const evidenceSec = q.evidence_section || `Paragraph A`;
+
+                            return (
+                                <div
+                                    key={q.question_number}
+                                    className={`rounded-2xl border p-5 transition-all bg-[#15181E] ${
+                                        !hasAnswer
+                                            ? 'border-[#222732]'
+                                            : isCorrect
+                                            ? 'border-emerald-500/30'
+                                            : 'border-rose-500/30'
+                                    }`}
+                                >
+                                    {/* Question Card Header */}
+                                    <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-[#0D0F12] border border-[#222732] text-white">
+                                                QUESTION {q.question_number}
+                                            </span>
+                                            <span className="text-[10px] text-slate-400 font-mono">
+                                                • Passage {q.passage_number}
+                                            </span>
+                                            {q.question_type && (
+                                                <span className="text-[10px] text-slate-400 bg-[#0D0F12] px-2 py-0.5 rounded border border-[#222732]">
+                                                    {q.question_type}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div>
+                                            {isCorrect ? (
+                                                <span className="text-[11px] font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1">
+                                                    <CheckCircle2 className="w-3.5 h-3.5" /> Correct: {q.correct_answer}
+                                                </span>
+                                            ) : hasAnswer ? (
+                                                <span className="text-[11px] font-semibold text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded border border-rose-500/30 flex items-center gap-1">
+                                                    <XCircle className="w-3.5 h-3.5" /> Missed
+                                                </span>
+                                            ) : (
+                                                <span className="text-[11px] font-semibold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-500/30">
+                                                    Q{q.question_number} · Not answered
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {q.instruction && (
+                                        <p className="text-[11px] text-slate-400 italic mb-1.5">
+                                            {q.instruction}
+                                        </p>
+                                    )}
+                                    <p className="text-xs font-medium text-slate-100 leading-snug mb-3">
+                                        {q.prompt_text}
+                                    </p>
+
+                                    {/* Candidate Response Box */}
+                                    <div className="rounded-lg bg-[#0D0F12] border border-[#222732] p-3 flex items-center justify-between gap-3">
+                                        <div>
+                                            <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block mb-0.5">
+                                                Candidate Submitted Answer:
+                                            </span>
+                                            {hasAnswer ? (
+                                                <span className={`text-xs font-semibold ${isCorrect ? 'text-emerald-300' : 'text-rose-300'}`}>
+                                                    {userRaw}
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-500 italic text-xs">
+                                                    {"{No answer provided}"}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {!isCorrect && q.correct_answer && (
+                                            <div className="text-right">
+                                                <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block mb-0.5">
+                                                    Official Key:
+                                                </span>
+                                                <span className="text-xs font-mono font-bold text-slate-100 bg-[#15181E] px-2 py-0.5 rounded border border-[#222732]">
+                                                    {q.correct_answer}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Explanation & Evidence Drawer */}
+                                    {(q.explanation || q.evidence_quote) && (
+                                        <div className="mt-3 pt-2.5 border-t border-[#222732] space-y-2.5">
+                                            <div className="flex items-center justify-between">
+                                                <button
+                                                    onClick={() => toggleExplanation(q.question_number)}
+                                                    className="text-[11px] font-semibold text-rose-400 hover:text-rose-300 transition-colors flex items-center gap-1 cursor-pointer"
+                                                >
+                                                    <Sparkles className="w-3 h-3" />
+                                                    {isExpanded ? 'Hide Explanation & Evidence' : 'Show Explanation & Evidence'}
+                                                    {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                                </button>
+
+                                                <button
+                                                    onClick={() => handleReviewThis(evidenceSec, q.passage_number)}
+                                                    className="text-xs bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-700/60 text-indigo-300 font-bold px-3 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+                                                >
+                                                    Review this →
+                                                </button>
+                                            </div>
+
+                                            {isExpanded && (
+                                                <div className="space-y-2.5 bg-[#0D0F12] p-3 rounded-xl border border-[#222732] animate-in fade-in duration-150">
+                                                    {q.explanation && (
+                                                        <div className="text-xs text-slate-300 leading-relaxed">
+                                                            <span className="font-semibold text-white block text-[11px] mb-0.5">Rationale:</span>
+                                                            <p>{q.explanation}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {q.evidence_quote && (
+                                                        <div className="bg-[#15181E] border-l-4 border-indigo-500 p-3 rounded-r-xl space-y-1">
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-[10px] font-bold tracking-wider text-indigo-400 uppercase">
+                                                                    PASSAGE EVIDENCE
+                                                                </span>
+                                                                <span className="text-[10px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-800/80 px-2 py-0.5 rounded">
+                                                                    {evidenceSec}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-slate-200 font-serif italic text-xs leading-relaxed">
+                                                                "{q.evidence_quote}"
+                                                            </p>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Common Traps if available */}
+                                                    {q.common_traps && q.common_traps.length > 0 && (
+                                                        <div className="bg-[#15181E] border border-[#222732] p-2.5 rounded-lg space-y-1 text-xs">
+                                                            <span className="font-bold text-white block text-[11px]">Common Traps</span>
+                                                            {q.common_traps.map((trap, idx) => (
+                                                                <div key={idx} className="text-[11px]">
+                                                                    <span className="font-semibold text-rose-400">{trap.trapWord}: </span>
+                                                                    <span className="text-slate-300">{trap.explanation}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Strategy Tip if available */}
+                                                    {q.strategy_tip && (
+                                                        <div className="bg-purple-950/30 border border-purple-800/40 p-2.5 rounded-lg text-purple-200 text-xs leading-relaxed flex items-start gap-2">
+                                                            <Lightbulb className="w-3.5 h-3.5 text-purple-400 shrink-0 mt-0.5" />
+                                                            <div>
+                                                                <span className="font-bold block text-[11px] text-white">Strategy Tip:</span>
+                                                                <span className="text-[11px]">{q.strategy_tip}</span>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+            </div>
+        </div>
+    );
 };
 
 /* ───────────────────────── Objective View ───────────────────────── */
@@ -516,6 +997,7 @@ const IELTSAnalysisView: React.FC<IELTSAnalysisViewProps> = ({ attemptId, bundle
 
     const [realObjective, setRealObjective] = useState<ObjectiveAnalysis | null>(null);
     const [scoreViewMode, setScoreViewMode] = useState<'ai' | 'teacher'>('ai');
+    const [readingViewMode, setReadingViewMode] = useState<'split' | 'metrics'>('split');
 
     React.useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
@@ -699,7 +1181,7 @@ const IELTSAnalysisView: React.FC<IELTSAnalysisViewProps> = ({ attemptId, bundle
             onClick={onClose}
         >
             <div
-                className="relative w-full max-w-5xl max-h-[92vh] my-auto rounded-2xl bg-[#0D0F12] border border-[#222732] shadow-2xl overflow-y-auto custom-scrollbar space-y-6"
+                className="relative w-full max-w-6xl xl:max-w-7xl max-h-[94vh] my-auto rounded-2xl bg-[#0D0F12] border border-[#222732] shadow-2xl overflow-y-auto custom-scrollbar flex flex-col"
                 onClick={(e) => e.stopPropagation()}
             >
                 <header className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-4 bg-[#15181E] border-b border-[#222732] rounded-t-2xl flex-wrap">
@@ -731,11 +1213,49 @@ const IELTSAnalysisView: React.FC<IELTSAnalysisViewProps> = ({ attemptId, bundle
                     </div>
                 </header>
 
-                <div className="p-6">
-                    {data.kind === 'objective' && data.objective && <ObjectiveView data={data.objective} />}
-                    {data.kind === 'writing' && data.writing && <WritingView data={data.writing} />}
-                    {data.kind === 'speaking' && data.speaking && <SpeakingView data={data.speaking} />}
-                    {data.kind === 'bundle' && data.bundle && <BundleView data={data.bundle} />}
+                {/* Reading View Switcher: 50/50 Split Canvas vs Analytics */}
+                {data.skill === 'reading' && (
+                    <div className="flex items-center gap-2 px-6 pt-3 pb-2 bg-[#0D0F12] border-b border-[#222732] flex-wrap">
+                        <button
+                            onClick={() => setReadingViewMode('split')}
+                            className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1.5 ${
+                                readingViewMode === 'split'
+                                    ? 'bg-rose-500/15 border-rose-500/60 text-rose-300 shadow-sm'
+                                    : 'bg-[#15181E] border-[#222732] text-neutral-400 hover:text-white'
+                            }`}
+                        >
+                            <BookOpen className="w-3.5 h-3.5" />
+                            50/50 Split Analysis (Passages & Questions)
+                        </button>
+                        <button
+                            onClick={() => setReadingViewMode('metrics')}
+                            className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
+                                readingViewMode === 'metrics'
+                                    ? 'bg-rose-500/15 border-rose-500/60 text-rose-300 shadow-sm'
+                                    : 'bg-[#15181E] border-[#222732] text-neutral-400 hover:text-white'
+                            }`}
+                        >
+                            📊 Performance Breakdown & Pacing
+                        </button>
+                    </div>
+                )}
+
+                <div className="p-6 flex-1 min-h-0">
+                    {data.skill === 'reading' && readingViewMode === 'split' ? (
+                        <ReadingAnalysisSplitCanvas
+                            bookNumber={parseInt((title || '').match(/Cambridge\s*(\d+)/i)?.[1] || '7', 10)}
+                            testNumber={parseInt((title || '').match(/Test\s*(\d+)/i)?.[1] || '1', 10)}
+                            attemptId={attemptId}
+                            testTitle={title}
+                        />
+                    ) : (
+                        <>
+                            {data.kind === 'objective' && data.objective && <ObjectiveView data={data.objective} />}
+                            {data.kind === 'writing' && data.writing && <WritingView data={data.writing} />}
+                            {data.kind === 'speaking' && data.speaking && <SpeakingView data={data.speaking} />}
+                            {data.kind === 'bundle' && data.bundle && <BundleView data={data.bundle} />}
+                        </>
+                    )}
                 </div>
             </div>
         </div>,

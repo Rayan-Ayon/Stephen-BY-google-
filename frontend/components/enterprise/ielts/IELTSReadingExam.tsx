@@ -9,6 +9,7 @@ import ReadingExamResultsView from './results/ReadingExamResultsView';
 import { generateExamResultsPayload } from './results/readingResultsGenerator';
 import type { ExamResultsPayload } from './results/readingResultsTypes';
 import { getSnippetQuestionsForExam, getSnippetAnswersKey } from './data/cambridgeQuestionSnippets';
+import { recordExamAttempt } from '@/lib/telemetryEgress';
 
 // ── Icons ──
 const Check = ({ size = 24, strokeWidth = 3, className = '' }: any) => (
@@ -1297,14 +1298,29 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
         const sessionId = 'c' + bookNumber + 't' + testNumber + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 7);
         const timeSpentSecs = Math.max(elapsed, 4);
 
+        // Construct complete candidate answer payload mapping Question IDs to responses (q1 to q40)
+        const userAnswersPayload: Record<string, string> = {};
+        for (let i = 1; i <= 40; i++) {
+            const rawVal = answers[i] || answers[String(i)] || '';
+            userAnswersPayload[`q${i}`] = String(rawVal).trim();
+        }
+
         // Generate full exam results payload matching schema
-        const payload = generateExamResultsPayload(
+        const basePayload = generateExamResultsPayload(
             sessionId,
             `Cambridge IELTS ${bookNumber} — Test ${testNumber}`,
             answers,
             timeSpentSecs,
             answersKey
         );
+
+        const payload: any = {
+            ...basePayload,
+            sessionId,
+            bookNumber,
+            testNumber,
+            userAnswersPayload,
+        };
 
         // Persist for page refresh & direct navigation
         try {
@@ -1313,6 +1329,30 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
         } catch (err) {
             console.error('Failed to cache reading results payload', err);
         }
+
+        // Record attempt to Supabase telemetry egress pipeline (public.exam_attempts)
+        recordExamAttempt({
+            testId: `cambridge-${bookNumber}-test-${testNumber}`,
+            module: 'reading',
+            bandScore: payload.bandScore,
+            correctCount: payload.correctCount,
+            totalQuestions: 40,
+            timeSpentSeconds: timeSpentSecs,
+            answersPayload: userAnswersPayload,
+            bookNumber,
+            testNumber,
+            sourceType: 'cambridge',
+        }).then((attemptData) => {
+            if (attemptData?.id) {
+                payload.attemptId = attemptData.id;
+                try {
+                    localStorage.setItem('reading_results_' + sessionId, JSON.stringify(payload));
+                    localStorage.setItem('latest_reading_results', JSON.stringify(payload));
+                } catch {}
+            }
+        }).catch((err) => {
+            console.warn('[IELTSReadingExam] Supabase attempt record note:', err);
+        });
 
         // Record attempt in IELTS history
         if (simulation) {

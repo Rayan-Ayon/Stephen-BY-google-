@@ -2195,8 +2195,8 @@
     "semantic_hash": ""
   },
   "frontend/App.tsx": {
-    "mtime": 1790951996.6856334,
-    "ast_hash": "d0f80ea13300c27ea386c921809fa02a",
+    "mtime": 1791055787.0379627,
+    "ast_hash": "0762bc16d02e50ae0bb38effd30c4ac9",
     "semantic_hash": ""
   },
   "frontend/components/AddContentView.tsx": {
@@ -2285,8 +2285,8 @@
     "semantic_hash": ""
   },
   "frontend/components/LandingPage.tsx": {
-    "mtime": 1782140578.2949705,
-    "ast_hash": "628a5a6b83ae8bd96a72e3f86752efe4",
+    "mtime": 1791054745.7447214,
+    "ast_hash": "399157beadb990a69e04b0a4db7878e2",
     "semantic_hash": ""
   },
   "frontend/components/PricingView.tsx": {
@@ -2825,8 +2825,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSReadingExam.tsx": {
-    "mtime": 1790976391.468402,
-    "ast_hash": "f74c060f12cb9ccdc37685baa5c7d972",
+    "mtime": 1791053311.4697537,
+    "ast_hash": "bcc4b478341611eaa98124f95a37fc98",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSSpeakingExam.tsx": {
@@ -2885,8 +2885,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSAnalysisView.tsx": {
-    "mtime": 1791039898.06518,
-    "ast_hash": "bb1050bce870fad9b97b2cc35adb71d4",
+    "mtime": 1791057532.2233036,
+    "ast_hash": "67c3c9c14e4d20dab82b2e6588f157a0",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/analysisMockData.ts": {
@@ -3135,8 +3135,8 @@
     "semantic_hash": ""
   },
   "backend/app/api/routes/speaking.py": {
-    "mtime": 1791043753.4159136,
-    "ast_hash": "bc5c9e0ece5719ac581906a7024a626f",
+    "mtime": 1791046171.9863508,
+    "ast_hash": "6013a863dd9983138e8ec351b7f674bb",
     "semantic_hash": ""
   },
   "backend/app/schemas/speaking.py": {
@@ -3170,8 +3170,8 @@
     "semantic_hash": ""
   },
   "backend/debug_gemini_audio.wav": {
-    "mtime": 1791043536.4268577,
-    "ast_hash": "228765a79eaa254bc119229850dbcb16",
+    "mtime": 1791047076.8952208,
+    "ast_hash": "ecf0a79b006d1ec46e576cae1ca63598",
     "semantic_hash": ""
   },
   "backend/app/api/routes/chatbot.py": {
@@ -3235,8 +3235,8 @@
     "semantic_hash": ""
   },
   "frontend/src/components/ai-speaking-partner/AISpeakingPartnerView.tsx": {
-    "mtime": 1791039961.3620381,
-    "ast_hash": "64b8900ceb2786ec581174c43eca4061",
+    "mtime": 1791046183.2385223,
+    "ast_hash": "03c1a818cb4061e1bf8a6b38f89ca3c4",
     "semantic_hash": ""
   },
   "frontend/src/components/ai-speaking-partner/index.ts": {
@@ -3275,8 +3275,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/results/ReadingExamResultsView.tsx": {
-    "mtime": 1790976718.332864,
-    "ast_hash": "90ab26de5713888a3187d19b08f88e53",
+    "mtime": 1791057473.594465,
+    "ast_hash": "2269916cecea92b602d93f98cd26c82d",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/results/cambridge7Test1Explanations.ts": {
@@ -3470,8 +3470,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/telemetryEgress.ts": {
-    "mtime": 1791038975.0701885,
-    "ast_hash": "ecf820322f7570414abdf27e9a0304d6",
+    "mtime": 1791053244.3021965,
+    "ast_hash": "b9d6e4540d5364219e2d0d5eed1795df",
     "semantic_hash": ""
   },
   "supabase/migrations/20261001_telemetry_pipeline.sql": {
@@ -3597,6 +3597,96 @@
   "frontend/lib/teacherReviewNotifications.ts": {
     "mtime": 1791036075.3776975,
     "ast_hash": "ebc2ffe13ca6b973ed408a97babfdd89",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/ielts/ReadingAnalysisModal.tsx": {
+    "mtime": 1791053281.8737085,
+    "ast_hash": "ace907837442ffaa6fed77f4fc7cd462",
+    "semantic_hash": ""
+  },
+  "frontend/hooks/useExamData.ts": {
+    "mtime": 1791057403.225117,
+    "ast_hash": "d74b67be94e8173256e4d5892a842de7",
+    "semantic_hash": ""
+  },
+  "frontend/components/Footer.tsx": {
+    "mtime": 1791053996.513527,
+    "ast_hash": "fd7e2624559de0a9bdfbbffb858151d2",
+    "semantic_hash": ""
+  },
+  "frontend/components/Navbar.tsx": {
+    "mtime": 1791057046.3203318,
+    "ast_hash": "02bb6498a5d8199cd10031d845c1c911",
+    "semantic_hash": ""
+  },
+  "frontend/components/PublicPricingView.tsx": {
+    "mtime": 1791055836.4079473,
+    "ast_hash": "986aca7e444d5d2d37e3b8ea4d8a9966",
+    "semantic_hash": ""
+  },
+  "frontend/components/auth/InstitutionLoginView.tsx": {
+    "mtime": 1791055722.6554272,
+    "ast_hash": "98b8c426b2de57843565e43e2c3e17b3",
+    "semantic_hash": ""
+  },
+  "frontend/components/auth/StudentLoginModal.tsx": {
+    "mtime": 1791054022.7230368,
+    "ast_hash": "a18cbfed04691eb2f03be31d061bc8f2",
+    "semantic_hash": ""
+  },
+  "frontend/pages/institution/login.tsx": {
+    "mtime": 1791054039.6852074,
+    "ast_hash": "0347bae740472e3af364cabb71687723",
+    "semantic_hash": ""
+  },
+  "frontend/components/navigation/BusinessPortalView.tsx": {
+    "mtime": 1791055850.0927088,
+    "ast_hash": "c98949b67b5d5af325d4088160bced60",
+    "semantic_hash": ""
+  },
+  "frontend/components/navigation/FeaturesShowcaseView.tsx": {
+    "mtime": 1791055695.9319983,
+    "ast_hash": "02d349ba556d02fa823c7dde9ee6c12d",
+    "semantic_hash": ""
+  },
+  "frontend/components/navigation/LearnHubView.tsx": {
+    "mtime": 1791055869.2680385,
+    "ast_hash": "01ed76e656fa035765909e7fd1ef5b7a",
+    "semantic_hash": ""
+  },
+  "frontend/pages/pricing.tsx": {
+    "mtime": 1791054323.684973,
+    "ast_hash": "73726d7259880afa547e93e8b175796e",
+    "semantic_hash": ""
+  },
+  "frontend/public/ielts-dynasty-emblem.png": {
+    "mtime": 1791054607.7020073,
+    "ast_hash": "9551ea4b2aa25c89bb9924ba7425819b",
+    "semantic_hash": ""
+  },
+  "frontend/public/ielts-dynasty-logo-dark.png": {
+    "mtime": 1791054607.6898751,
+    "ast_hash": "051d70e3e0aeb09aa9aab9a4d7ce5cfc",
+    "semantic_hash": ""
+  },
+  "frontend/public/ielts-dynasty-logo-white.png": {
+    "mtime": 1791054607.6732774,
+    "ast_hash": "749ad688c4c66da3465709f6c135bcf4",
+    "semantic_hash": ""
+  },
+  "frontend/public/ielts-dynasty-logo.png": {
+    "mtime": 1791054532.5332649,
+    "ast_hash": "ad695860670b15e485cc9342c1379b71",
+    "semantic_hash": ""
+  },
+  "frontend/public/logo-emblem.png": {
+    "mtime": 1791054532.5332649,
+    "ast_hash": "ad695860670b15e485cc9342c1379b71",
+    "semantic_hash": ""
+  },
+  "frontend/components/ThemeToggle.tsx": {
+    "mtime": 1791055649.6964698,
+    "ast_hash": "7a431a5600798ca912008085e1993ccc",
     "semantic_hash": ""
   }
 }

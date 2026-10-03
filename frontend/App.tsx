@@ -8,6 +8,11 @@ import AuthOverlay from './components/AuthOverlay';
 import SuperAdminView from './components/SuperAdminView';
 import OrgSpaceView from './components/OrgSpaceView';
 import ActivationView from './components/ActivationView';
+import { InstitutionLoginView } from './components/auth/InstitutionLoginView';
+import { PublicPricingView } from './components/PublicPricingView';
+import { FeaturesShowcaseView } from './components/navigation/FeaturesShowcaseView';
+import { LearnHubView } from './components/navigation/LearnHubView';
+import { BusinessPortalView } from './components/navigation/BusinessPortalView';
 import { WorkspaceProvider } from './workspaceContext';
 import { initMockDb } from './utils/mockDb';
 
@@ -49,7 +54,13 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 
 const AppContent: React.FC = () => {
   const { userId, userEmail, isLoading: authLoading, isAuthenticated, signOut } = useAuth();
-  const [theme, setTheme] = useState<Theme>('dark');
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('stephen_theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+    }
+    return 'dark';
+  });
   const [showDashboard, setShowDashboard] = useState(false);
   const [initialView, setInitialView] = useState('add_content');
   const [authType, setAuthType] = useState<AuthType>(null);
@@ -57,6 +68,15 @@ const AppContent: React.FC = () => {
   const [spaceCode, setSpaceCode] = useState('');
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isOrgManager, setIsOrgManager] = useState(false);
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   useEffect(() => {
     initMockDb();
@@ -90,12 +110,16 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
       document.body.classList.add('dark');
+      document.body.classList.remove('light');
       document.body.style.backgroundColor = '#0A0B0D';
     } else {
       document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
       document.body.classList.remove('dark');
-      document.body.style.backgroundColor = '#ffffff';
+      document.body.classList.add('light');
+      document.body.style.backgroundColor = '#f8fafc';
     }
   }, [theme]);
 
@@ -109,10 +133,20 @@ const AppContent: React.FC = () => {
   }, [authLoading, isAuthenticated]);
 
   const toggleTheme = () => {
-    setTheme(prevTheme => (prevTheme === 'dark' ? 'light' : 'dark'));
+    setTheme(prevTheme => {
+      const next = prevTheme === 'dark' ? 'light' : 'dark';
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('stephen_theme', next);
+      }
+      return next;
+    });
   };
 
   const handleStartLearning = (view: string = 'add_content') => {
+    if (currentPath !== '/') {
+      window.history.pushState({}, '', '/');
+      setCurrentPath('/');
+    }
     setInitialView(view);
     setShowDashboard(true);
   };
@@ -129,16 +163,151 @@ const AppContent: React.FC = () => {
     setShowDashboard(false);
   };
 
-  const isActivation = window.location.pathname === '/activate';
+  const isActivation = currentPath === '/activate';
 
   if (isActivation) {
     return (
       <ActivationView
         onComplete={() => {
           window.history.pushState({}, '', '/');
+          setCurrentPath('/');
           window.location.reload();
         }}
       />
+    );
+  }
+
+  const isInstitutionLogin = currentPath.startsWith('/institution/login');
+
+  if (isInstitutionLogin) {
+    return (
+      <InstitutionLoginView
+        onSuccess={() => {
+          window.history.pushState({}, '', '/org-space');
+          setCurrentPath('/org-space');
+          setIsOrgManager(true);
+        }}
+        onSwitchToStudent={() => {
+          window.history.pushState({}, '', '/');
+          setCurrentPath('/');
+          setAuthType('login');
+        }}
+        onExit={() => {
+          window.history.pushState({}, '', '/');
+          setCurrentPath('/');
+        }}
+      />
+    );
+  }
+
+  const isPricing = currentPath === '/pricing' || currentPath.startsWith('/pricing');
+  if (isPricing) {
+    return (
+      <div className={`transition-colors duration-300 ${theme === 'dark' ? 'dark text-neutral-200' : 'text-neutral-800'}`} style={{ fontFamily: "'Inter', sans-serif" }}>
+        <PublicPricingView
+          theme={theme}
+          toggleTheme={toggleTheme}
+          userEmail={userEmail}
+          onAuth={(type) => setAuthType(type)}
+          onStartLearning={handleStartLearning}
+          onNavigate={(path) => {
+            window.history.pushState({}, '', path);
+            setCurrentPath(path);
+          }}
+        />
+        {authType && (
+          <AuthOverlay
+            type={authType}
+            setType={setAuthType}
+            onClose={() => setAuthType(null)}
+            onSuccess={(email) => handleAuthSuccess(email, '')}
+          />
+        )}
+      </div>
+    );
+  }
+
+  const isFeatures = currentPath === '/features' || currentPath.startsWith('/features');
+  if (isFeatures) {
+    return (
+      <div className={`transition-colors duration-300 ${theme === 'dark' ? 'dark text-neutral-200' : 'text-neutral-800'}`} style={{ fontFamily: "'Inter', sans-serif" }}>
+        <FeaturesShowcaseView
+          theme={theme}
+          toggleTheme={toggleTheme}
+          userEmail={userEmail}
+          onAuth={(type) => setAuthType(type)}
+          onStartLearning={handleStartLearning}
+          onNavigate={(path) => {
+            window.history.pushState({}, '', path);
+            setCurrentPath(path);
+          }}
+          subPath={currentPath}
+        />
+        {authType && (
+          <AuthOverlay
+            type={authType}
+            setType={setAuthType}
+            onClose={() => setAuthType(null)}
+            onSuccess={(email) => handleAuthSuccess(email, '')}
+          />
+        )}
+      </div>
+    );
+  }
+
+  const isLearn = currentPath === '/learn' || currentPath.startsWith('/learn');
+  if (isLearn) {
+    return (
+      <div className={`transition-colors duration-300 ${theme === 'dark' ? 'dark text-neutral-200' : 'text-neutral-800'}`} style={{ fontFamily: "'Inter', sans-serif" }}>
+        <LearnHubView
+          theme={theme}
+          toggleTheme={toggleTheme}
+          userEmail={userEmail}
+          onAuth={(type) => setAuthType(type)}
+          onStartLearning={handleStartLearning}
+          onNavigate={(path) => {
+            window.history.pushState({}, '', path);
+            setCurrentPath(path);
+          }}
+          subPath={currentPath}
+        />
+        {authType && (
+          <AuthOverlay
+            type={authType}
+            setType={setAuthType}
+            onClose={() => setAuthType(null)}
+            onSuccess={(email) => handleAuthSuccess(email, '')}
+          />
+        )}
+      </div>
+    );
+  }
+
+  const isBusiness = currentPath === '/business' || currentPath.startsWith('/business');
+  if (isBusiness) {
+    return (
+      <div className={`transition-colors duration-300 ${theme === 'dark' ? 'dark text-neutral-200' : 'text-neutral-800'}`} style={{ fontFamily: "'Inter', sans-serif" }}>
+        <BusinessPortalView
+          theme={theme}
+          toggleTheme={toggleTheme}
+          userEmail={userEmail}
+          onAuth={(type) => setAuthType(type)}
+          onStartLearning={handleStartLearning}
+          onNavigate={(path) => {
+            window.history.pushState({}, '', path);
+            setCurrentPath(path);
+          }}
+          subPath={currentPath}
+        />
+        {authType && (
+          <AuthOverlay
+            type={authType}
+            setType={setAuthType}
+            onClose={() => setAuthType(null)}
+            onSuccess={(email) => handleAuthSuccess(email, '')}
+          />
+        )}
+      </div>
     );
   }
 
@@ -200,6 +369,14 @@ const AppContent: React.FC = () => {
           theme={theme}
           userEmail={userEmail}
           onOrgAccess={handleOrgAccess}
+          onNavigateInstitutionLogin={() => {
+            window.history.pushState({}, '', '/institution/login');
+            setCurrentPath('/institution/login');
+          }}
+          onNavigate={(path) => {
+            window.history.pushState({}, '', path);
+            setCurrentPath(path);
+          }}
         />
       )}
 

@@ -4,7 +4,8 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Theme, AuthType } from '../App';
 import { SunIcon, MoonIcon, BrainIcon, UploadIcon, FlashcardIcon, TrophyIcon, EdgramIcon, DebatePodiumIcon, QuestionMarkIcon, ArrowUpRightIcon, BuildingLibraryIcon } from './icons';
 import EnterpriseView from './EnterpriseView';
-import OrgAuthModal from './OrgAuthModal';
+import { Navbar, IeltsDynastyEmblem } from './Navbar';
+import Footer from './Footer';
 
 interface LandingPageProps {
   onStartLearning: (view?: string) => void;
@@ -13,6 +14,8 @@ interface LandingPageProps {
   theme: Theme;
   userEmail: string;
   onOrgAccess: () => void;
+  onNavigateInstitutionLogin?: () => void;
+  onNavigate?: (path: string) => void;
 }
 
 const universities = [
@@ -137,13 +140,30 @@ const DustText = ({ text, theme }: { text: string, theme: Theme }) => {
     );
 };
 
-const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, toggleTheme, theme, userEmail, onOrgAccess }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ 
+    onStartLearning, 
+    onAuth, 
+    toggleTheme, 
+    theme, 
+    userEmail, 
+    onOrgAccess,
+    onNavigateInstitutionLogin,
+    onNavigate,
+}) => {
     const [currentView, setCurrentView] = useState<'home' | 'enterprise'>('home');
-    const [showOrgAuth, setShowOrgAuth] = useState(false);
     const [enterpriseType, setEnterpriseType] = useState<'business' | 'team' | 'universities' | 'government'>('business');
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+
+    const handleInstitutionLogin = () => {
+        if (onNavigateInstitutionLogin) {
+            onNavigateInstitutionLogin();
+        } else {
+            window.history.pushState({}, '', '/institution/login');
+            window.dispatchEvent(new PopStateEvent('popstate'));
+        }
+    };
 
     useEffect(() => {
         const handleScroll = () => {
@@ -518,300 +538,31 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartLearning, onAuth, togg
         <div style={{ zoom: 0.9, width: '100%', height: '100%' }}>
             <div className={`w-full min-h-screen flex flex-col ${theme === 'dark' ? 'text-neutral-200 bg-[#111]' : 'text-neutral-800 bg-white'}`}>
                 {/* Fixed Navbar with Glassmorphism */}
-                <header className={`fixed top-0 left-0 right-0 z-50 px-6 py-4 transition-all duration-300 ${isScrolled ? 'bg-white/50 dark:bg-black/50 backdrop-blur-xl border-b border-gray-200/20 dark:border-white/5' : 'bg-transparent'}`}>
-                    <div className="container mx-auto flex items-center justify-between">
-                        {/* Left: Logo */}
-                        <div className="flex items-center">
-                            <button onClick={() => setCurrentView('home')} className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'} flex items-center tracking-tight`} style={{ fontFamily: "'Lora', serif" }}>
-                                Stephen
-                                {getLogoSuffix() && (
-                                    <span className={`ml-2 text-xl font-normal ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'} font-sans`}>
-                                        {getLogoSuffix()}
-                                    </span>
-                                )}
-                            </button>
-                        </div>
-
-                        {/* Center: Navigation */}
-                        <div className="hidden md:flex items-center space-x-1 lg:space-x-2">
-                            {navLinks.map(link => {
-                                const isSelected = link.key === 'enterprise' && currentView === 'enterprise';
-                                return (
-                                <div 
-                                    key={link.name} 
-                                    className="relative group"
-                                    onMouseEnter={() => link.hasDropdown && setActiveDropdown(link.key)}
-                                    onMouseLeave={() => link.hasDropdown && setActiveDropdown(null)}
-                                >
-                                    <button 
-                                        onClick={() => {
-                                            if (link.key === 'pricing') {
-                                                onStartLearning('pricing');
-                                            } else if (link.key === 'enterprise') {
-                                                setCurrentView('enterprise');
-                                                setEnterpriseType('business');
-                                                setActiveDropdown(null);
-                                            } else if (!link.hasDropdown) {
-                                                if (link.key === 'edgram') onStartLearning('edgram');
-                                                else onStartLearning(link.key);
-                                            }
-                                        }} 
-                                        className={`flex items-center text-sm font-medium px-4 py-2 rounded-full transition-all ${
-                                            isSelected 
-                                            ? 'bg-white/10 text-white font-bold backdrop-blur-sm' 
-                                            : (theme === 'dark' ? 'text-neutral-300 hover:text-white' : 'text-neutral-600 hover:text-black')
-                                        }`}
-                                    >
-                                        {link.name}
-                                    </button>
-
-                                    {link.hasDropdown && activeDropdown === link.key && (
-                                        <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 z-50 w-max">
-                                            {/* FEATURES DROPDOWN */}
-                                            {link.key === 'features' && (
-                                                <div className={dropdownClasses}>
-                                                    <div className="flex flex-col w-64 group/list">
-                                                        {featuresData.map(item => (
-                                                            <button key={item.key} onClick={() => handleDropdownClick(item.key)} className={dropdownItemClasses}>
-                                                                <div className="text-sm font-bold mb-0.5">{item.name}</div>
-                                                                <div className="text-xs opacity-60">{item.desc}</div>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* LEARN DROPDOWN */}
-                                            {link.key === 'learn' && (
-                                                <div className={`${dropdownClasses} grid grid-cols-3 gap-8 p-6 w-[700px]`}>
-                                                    <div>
-                                                        <h4 className="text-xs font-bold opacity-50 uppercase tracking-wider mb-4">Stephen for</h4>
-                                                        <div className="flex flex-col space-y-3 group/list">
-                                                            {learnData.for.map(item => (
-                                                                <button key={item.key} onClick={() => onStartLearning()} className="text-sm font-medium text-left transition-opacity duration-200 group-hover/list:opacity-40 hover:!opacity-100">
-                                                                    {item.name}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                    <div className={`pl-8 border-l ${theme === 'dark' ? 'border-white/10' : 'border-black/10'}`}>
-                                                        <h4 className="text-xs font-bold opacity-50 uppercase tracking-wider mb-4">Inspiration</h4>
-                                                        <div className="flex flex-col space-y-3 group/list">
-                                                            {learnData.inspiration.map(item => (
-                                                                <button key={item.key} onClick={() => onStartLearning()} className="text-sm font-medium text-left transition-opacity duration-200 group-hover/list:opacity-40 hover:!opacity-100">
-                                                                    {item.name}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                    <div className={`pl-8 border-l ${theme === 'dark' ? 'border-white/10' : 'border-black/10'}`}>
-                                                        <h4 className="text-xs font-bold opacity-50 uppercase tracking-wider mb-4">Ways to Use</h4>
-                                                        <div className="flex flex-col space-y-3 group/list">
-                                                            {learnData.waysToUse.map(item => (
-                                                                <button key={item.key} onClick={() => onStartLearning()} className="text-sm font-medium text-left transition-opacity duration-200 group-hover/list:opacity-40 hover:!opacity-100">
-                                                                    {item.name}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* BUSINESS DROPDOWN */}
-                                            {link.key === 'business' && (
-                                                <div className={`${dropdownClasses} p-6 grid grid-cols-2 gap-8 w-[500px]`}>
-                                                    <div>
-                                                        <h4 className="text-xs font-bold opacity-50 uppercase tracking-wider mb-4">Business</h4>
-                                                        <div className="flex flex-col space-y-3 group/list">
-                                                            {businessData.main.map(item => (
-                                                                <button key={item.key} onClick={() => handleDropdownClick(item.key)} className="text-sm font-medium text-left transition-opacity duration-200 group-hover/list:opacity-40 hover:!opacity-100">
-                                                                    {item.name}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                    <div className={`pl-8 border-l ${theme === 'dark' ? 'border-white/10' : 'border-black/10'}`}>
-                                                        <h4 className="text-xs font-bold opacity-50 uppercase tracking-wider mb-4">AI solutions for</h4>
-                                                        <div className="flex flex-col space-y-3 group/list">
-                                                            {businessData.solutions.map(item => (
-                                                                <button key={item.key} onClick={() => handleDropdownClick(item.key)} className="text-sm font-medium text-left transition-opacity duration-200 group-hover/list:opacity-40 hover:!opacity-100">
-                                                                    {item.name}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* PRICING DROPDOWN */}
-                                            {link.key === 'pricing' && (
-                                                <div className={`${dropdownClasses} w-48`}>
-                                                    <div className="flex flex-col group/list">
-                                                        {pricingData.map(item => (
-                                                            <button key={item.key} onClick={() => handleDropdownClick(item.key)} className="px-5 py-2.5 text-left text-sm font-medium hover:bg-neutral-100 dark:hover:bg-white/10 transition-all duration-200 group-hover/list:opacity-40 hover:!opacity-100">
-                                                                {item.name}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* ENTERPRISE DROPDOWN */}
-                                            {link.key === 'enterprise' && (
-                                                <div className={`${dropdownClasses} w-56`}>
-                                                    <div className="flex flex-col group/list">
-                                                        {enterpriseDropdownItems.map((item) => (
-                                                            <button
-                                                                key={item.name}
-                                                                onClick={() => handleDropdownClick(item.key)} 
-                                                                className={`px-5 py-2.5 text-left text-sm font-medium transition-all duration-200 hover:bg-neutral-100 dark:hover:bg-white/10 group-hover/list:opacity-40 hover:!opacity-100`}
-                                                            >
-                                                                {item.name}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            )})}
-                        </div>
-
-                        {/* Right: Auth & Theme & Help */}
-                        <div className="flex items-center space-x-3">
-                            <button onClick={toggleTheme} className={`p-2 rounded-full ${theme === 'dark' ? 'text-neutral-400 hover:bg-neutral-800' : 'text-neutral-500 hover:bg-neutral-200'} transition-colors`}>
-                                {theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
-                            </button>
-                            {userEmail ? (
-                                <>
-                                    <button
-                                        onClick={() => setShowOrgAuth(true)}
-                                        className="px-3.5 py-2 text-sm font-semibold rounded-full border border-[#333] text-neutral-400 hover:border-[#FF5500] hover:text-[#FF5500] transition-all duration-200"
-                                    >
-                                        Institution Login
-                                    </button>
-                                    <div className="w-9 h-9 rounded-full bg-neutral-700 border border-neutral-600 flex items-center justify-center text-xs text-neutral-300 font-bold select-none">
-                                        {userEmail[0].toUpperCase()}
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <button
-                                        onClick={() => setShowOrgAuth(true)}
-                                        className="px-3.5 py-2 text-sm font-semibold rounded-full border border-[#333] text-neutral-400 hover:border-[#FF5500] hover:text-[#FF5500] transition-all duration-200"
-                                    >
-                                        Institution Login
-                                    </button>
-                                    <button onClick={() => onAuth('login')} className={`px-5 py-2.5 text-sm font-bold rounded-full ${theme === 'dark' ? 'text-white hover:bg-neutral-800' : 'text-black hover:bg-neutral-100'} transition-colors`}>
-                                        Log in
-                                    </button>
-                                    <button onClick={() => onAuth('signup')} className={`px-5 py-2.5 text-sm font-bold rounded-full bg-white text-black hover:opacity-90 transition-opacity border ${theme === 'dark' ? 'border-transparent' : 'border-gray-300'}`}>
-                                        Sign up for free
-                                    </button>
-                                </>
-                            )}
-                            
-                            <div className="relative">
-                                <button 
-                                    onClick={() => setIsHelpOpen(!isHelpOpen)}
-                                    className={`p-2 rounded-full border transition-colors ${theme === 'dark' ? 'border-gray-700 hover:bg-neutral-800 text-gray-300' : 'border-gray-300 hover:bg-neutral-100 text-gray-600'}`}
-                                >
-                                    <QuestionMarkIcon className="w-5 h-5" />
-                                </button>
-                                
-                                <AnimatePresence>
-                                    {isHelpOpen && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                            className={`absolute right-0 top-full mt-2 w-64 ${dropdownClasses} z-50`}
-                                        >
-                                            <div className="flex flex-col">
-                                                {[
-                                                    { label: 'See plans and pricing', action: () => onStartLearning('pricing') },
-                                                    { label: 'Settings', action: () => {} },
-                                                ].map((item, idx) => (
-                                                    <button key={idx} onClick={() => { item.action(); setIsHelpOpen(false); }} className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors flex items-center justify-between group">
-                                                        {item.label}
-                                                        <ArrowUpRightIcon className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                    </button>
-                                                ))}
-                                                
-                                                <div className={`my-2 border-t ${theme === 'dark' ? 'border-white/10' : 'border-black/10'}`} />
-                                                
-                                                {[
-                                                    { label: 'Help center' },
-                                                    { label: 'Release notes' },
-                                                    { label: 'Terms & policies' },
-                                                ].map((item, idx) => (
-                                                    <button key={idx} className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors flex items-center justify-between group">
-                                                        {item.label}
-                                                        <ArrowUpRightIcon className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        </div>
-                    </div>
-                </header>
+                <Navbar
+                    theme={theme}
+                    toggleTheme={toggleTheme}
+                    userEmail={userEmail}
+                    onStartLearning={onStartLearning}
+                    onAuth={onAuth}
+                    onNavigateInstitutionLogin={onNavigateInstitutionLogin}
+                    onNavigate={onNavigate ? onNavigate : (path) => {
+                        if (path === '/') {
+                            setCurrentView('home');
+                        } else {
+                            window.history.pushState({}, '', path);
+                            window.dispatchEvent(new PopStateEvent('popstate'));
+                        }
+                    }}
+                    isScrolled={isScrolled}
+                />
 
                 <main className="flex-grow pt-0">
                     {currentView === 'home' ? renderHomeView() : <EnterpriseView theme={theme} onStartLearning={onStartLearning} type={enterpriseType} />}
                 </main>
 
-                {/* Updated Footer */}
-                <footer className={`py-16 ${theme === 'dark' ? 'bg-[#0d0d0d] border-t border-white/5' : 'bg-gray-50 border-t border-gray-200'}`}>
-                    <div className="container mx-auto px-6">
-                        <div className="flex flex-col md:flex-row justify-between items-start mb-12">
-                            <div className="mb-8 md:mb-0">
-                                <div className="flex items-center mb-6">
-                                    <div className="w-8 h-8 rounded-lg bg-black dark:bg-white flex items-center justify-center mr-3">
-                                        <div className="w-4 h-4 bg-white dark:bg-black rounded-sm" />
-                                    </div>
-                                    <span className="text-xl font-bold font-serif">Stephen</span>
-                                </div>
-                                <p className="text-sm text-gray-500">© Copyright 2026 Stephen Inc.</p>
-                                <div className="mt-6">
-                                    <button className="flex items-center px-4 py-2 rounded-full border border-gray-300 dark:border-white/20 text-xs font-bold uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
-                                        <span className="mr-2">🏛️</span> AI in Education Partner
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-16 text-sm">
-                                <div className="space-y-4">
-                                    <a href="#" className="block hover:text-blue-500 transition-colors">Discord Community</a>
-                                    <a href="#" className="block hover:text-blue-500 transition-colors">Blogs</a>
-                                    <a href="#" className="block hover:text-blue-500 transition-colors">Invite & Earn</a>
-                                    <a href="#" className="block hover:text-blue-500 transition-colors">Careers</a>
-                                </div>
-                                <div className="space-y-4">
-                                    <a href="#" className="block hover:text-blue-500 transition-colors">Terms & Conditions</a>
-                                    <a href="#" className="block hover:text-blue-500 transition-colors">Privacy Policy</a>
-                                    <a href="#" className="block hover:text-blue-500 transition-colors">Contact Us</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </footer>
+                {/* Rebranded Footer with IELTS Dynasty Legal Disclaimer */}
+                <Footer theme={theme} />
             </div>
-
-            <AnimatePresence>
-              {showOrgAuth && (
-                <OrgAuthModal
-                  onClose={() => setShowOrgAuth(false)}
-                  onAccess={() => {
-                    setShowOrgAuth(false);
-                    onOrgAccess();
-                  }}
-                />
-              )}
-            </AnimatePresence>
         </div>
     );
 };
