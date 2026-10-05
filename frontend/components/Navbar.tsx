@@ -479,13 +479,19 @@ export const Navbar: React.FC<NavbarProps> = ({
           ) : (
             <>
               <button
-                onClick={() => onAuth?.('login')}
+                onClick={() => {
+                  if (onAuth) onAuth('login');
+                  else navigateTo('/login');
+                }}
                 className="px-4 py-2 text-sm font-semibold rounded-xl text-slate-300 hover:text-white hover:bg-[#15181E] border border-transparent hover:border-[#222732] transition-all cursor-pointer"
               >
                 Log in
               </button>
               <button
-                onClick={() => onAuth?.('signup')}
+                onClick={() => {
+                  if (onAuth) onAuth('signup');
+                  else navigateTo('/signup');
+                }}
                 className="px-4 py-2 text-sm font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-600/20 transition-all cursor-pointer"
               >
                 Get Started

@@ -357,6 +357,22 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
     const [dynamicSections, setDynamicSections] = useState<DynamicListeningSection[]>([]);
     const [dynamicAnswersKey, setDynamicAnswersKey] = useState<Record<number, string>>({});
 
+    // Live Audio Engine state & ref
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+    const [isAudioLoaded, setIsAudioLoaded] = useState<boolean>(false);
+    const [audioPlayFailed, setAudioPlayFailed] = useState<boolean>(false);
+
+    // Cambridge Pre-Exam Equipment Check & Audio-Ready Gate Flow
+    type ExamPhase = 'equipment_check' | 'in_progress';
+    const [examPhase, setExamPhase] = useState<ExamPhase>('equipment_check');
+    const [audioReadyState, setAudioReadyState] = useState<'buffering' | 'ready' | 'error'>('buffering');
+    const [isSamplePlaying, setIsSamplePlaying] = useState<boolean>(false);
+
+    const defaultStorageAudioUrl = `https://hucadzqsqsfqgmwnpipp.supabase.co/storage/v1/object/public/listening-audio/cambridge-${bookNumber}/test-${testNumber}/full_audio.mp3`;
+    const activeAudioUrl = useMemo(() => {
+        return dynamicSections.find(s => s.audio_url)?.audio_url || defaultStorageAudioUrl;
+    }, [dynamicSections, defaultStorageAudioUrl]);
+
     useEffect(() => {
         let isMounted = true;
 
@@ -856,18 +872,72 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
     const pct = Math.min(100, (progress / TOTAL) * 100);
 
     useEffect(() => {
-        if (testState !== 'active') return;
+        if (testState !== 'active' || examPhase !== 'in_progress') return;
         const id = window.setInterval(() => setElapsed((e) => e + 1), 1000);
         return () => window.clearInterval(id);
-    }, [testState]);
+    }, [testState, examPhase]);
 
     useEffect(() => {
-        if (!playing || locked) return;
+        if (!playing || locked || examPhase !== 'in_progress') return;
         const id = window.setInterval(() => {
             setProgress((p) => (p >= TOTAL ? 0 : p + 1));
         }, 1000);
         return () => window.clearInterval(id);
-    }, [playing, locked]);
+    }, [playing, locked, examPhase]);
+
+    // Live Audio Engine: Volume and state synchronization
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.volume = isMuted ? 0 : volume / 100;
+        }
+    }, [volume, isMuted]);
+
+    useEffect(() => {
+        if (testState !== 'active' && audioRef.current) {
+            audioRef.current.pause();
+        }
+    }, [testState]);
+
+    // Built-in Headphone Sample Sound Synthesizer (Web Audio API)
+    const playSampleSound = () => {
+        try {
+            const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+            const ctx = new AudioContextClass();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = 'sine';
+            // Pleasant dual chime (880Hz -> 1320Hz)
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.15);
+
+            gain.gain.setValueAtTime((isMuted ? 0 : volume / 100) * 0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start();
+            osc.stop(ctx.currentTime + 0.8);
+            setIsSamplePlaying(true);
+            setTimeout(() => setIsSamplePlaying(false), 800);
+        } catch (err) {
+            console.warn('[STEPHEN][AUDIO] Sample sound preview failed:', err);
+        }
+    };
+
+    // Instant Exam Start on Click (User Gesture Autoplay Unlock)
+    const handleConfirmStartExam = () => {
+        if (audioRef.current) {
+            audioRef.current.volume = isMuted ? 0 : volume / 100;
+            // Synchronous execution unlocks browser autoplay
+            audioRef.current.play().catch((err) => {
+                console.warn('[STEPHEN][AUDIO] Autoplay call returned error:', err);
+                setAudioPlayFailed(true);
+            });
+        }
+        setExamPhase('in_progress'); // Starts immediately! No countdown.
+    };
 
     const setAnswer = (id: number, value: string) => {
         if (locked) return;
@@ -1410,63 +1480,12 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
         );
     };
 
-    // 1. Loading State Screen (Centered Spinner & Skeleton)
-    if (isLoadingData) {
-        return (
-            <div className="flex flex-col h-full w-full bg-white select-none">
-                <header className="shrink-0 h-14 bg-[#121212] border-b border-neutral-800 flex items-center justify-between px-6 z-20">
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={handleExit}
-                            className="text-gray-400 hover:text-white transition-colors flex items-center justify-center w-8 h-8 rounded-lg hover:bg-neutral-800"
-                            title="Exit Exam"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M19 12H5M12 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <div>
-                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                                {sourceType === 'cambridge' ? `CAMBRIDGE ${bookNumber}` : `MOCK SERIES ${bookNumber}`}
-                            </span>
-                            <h1 className="text-base font-bold text-white leading-tight">
-                                Listening Test {testNumber}
-                            </h1>
-                        </div>
-                    </div>
-                </header>
-
-                <div className="flex-1 flex flex-col items-center justify-center p-8 bg-[#FAFAFA]">
-                    <div className="relative mb-5">
-                        <div className="w-14 h-14 rounded-full border-4 border-blue-100 border-t-[#0072CE] animate-spin" />
-                        <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-[#0072CE]">
-                            🎧
-                        </div>
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">Loading Listening Exam</h3>
-                    <p className="text-sm text-gray-500 max-w-sm text-center mb-6">
-                        Fetching dynamic parts, question groups, and audio synchronized from Supabase...
-                    </p>
-                    <div className="w-full max-w-md space-y-3 bg-white p-5 rounded-xl border border-gray-200 shadow-xs animate-pulse">
-                        <div className="h-4 bg-gray-200 rounded w-1/3" />
-                        <div className="h-3 bg-gray-100 rounded w-5/6" />
-                        <div className="h-3 bg-gray-100 rounded w-4/6" />
-                        <div className="pt-2 flex gap-2">
-                            <div className="h-8 bg-gray-200 rounded w-28" />
-                            <div className="h-8 bg-gray-200 rounded w-28" />
-                            <div className="h-8 bg-gray-200 rounded w-28" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    // 2. Empty / Fallback State Screen (Automatically fall back to static mock dataset)
-    if (!isLoadingData && !hasDynamicData && !useMockFallback) {
-        setUseMockFallback(true);
-        return null;
-    }
+    // Ensure mock fallback is triggered if dynamic data is empty, without early unmounting
+    useEffect(() => {
+        if (!isLoadingData && !hasDynamicData && !useMockFallback) {
+            setUseMockFallback(true);
+        }
+    }, [isLoadingData, hasDynamicData, useMockFallback]);
 
     if (testState === 'evaluating') {
         return (
@@ -1483,6 +1502,7 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
         const band = score != null ? rawToBand(score) : 6.5;
         return (
             <ListeningAnalysisModal
+                isModal={false}
                 score={score ?? 0}
                 totalQuestions={allCurrentIds.length || 40}
                 bandScore={band}
@@ -1490,12 +1510,14 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
                 userAnswers={answers as Record<number, string>}
                 bookNumber={bookNumber}
                 testNumber={testNumber}
+                audioUrl={activeAudioUrl}
                 onExit={handleExit}
                 onRetake={() => {
                     setAnswers({});
                     setElapsed(0);
                     setActivePart(1);
                     setTestState('active');
+                    setExamPhase('equipment_check');
                 }}
             />
         );
@@ -1505,6 +1527,132 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
 
     return (
         <div className="flex flex-col h-full w-full relative bg-[#FFFFFF] text-black font-sans min-w-0 overflow-hidden" style={{ flex: 1 }}>
+            {/* Permanent Headless Audio Element with Audio-Ready Gate */}
+            <audio
+                ref={audioRef}
+                src={activeAudioUrl}
+                preload="auto"
+                onCanPlayThrough={() => {
+                    setAudioReadyState('ready');
+                    setIsAudioLoaded(true);
+                    setAudioPlayFailed(false);
+                }}
+                onLoadedData={() => {
+                    setIsAudioLoaded(true);
+                    if (audioRef.current && audioRef.current.duration > 60) {
+                        setAudioReadyState('ready');
+                    }
+                }}
+                onError={(e) => {
+                    console.error('[STEPHEN][AUDIO] Decoding or network error:', e);
+                    setAudioReadyState('error');
+                }}
+                onEnded={() => console.log('[STEPHEN][AUDIO] Track completed')}
+            />
+
+            {/* Phase: 'equipment_check' (Official Cambridge Sound Check Screen) */}
+            {examPhase === 'equipment_check' && (
+                <div className="fixed inset-0 z-50 bg-[#0D0F12]/85 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-[#15181E] border border-[#222732] rounded-2xl max-w-lg w-full p-8 shadow-2xl text-center">
+                        <div className="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mx-auto mb-5 text-2xl text-rose-500">
+                            🎧
+                        </div>
+
+                        <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">
+                            Information for Candidates
+                        </h2>
+                        <p className="text-sm text-slate-400 mb-6">
+                            Put on your headphones now. Check that you can hear the sound clearly using the button below. Once the exam begins, the audio track cannot be paused or replayed.
+                        </p>
+
+                        {/* Volume and Sample Sound Rig */}
+                        <div className="bg-[#0D0F12] border border-[#222732] rounded-xl p-5 mb-6 flex flex-col gap-4">
+                            <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
+                                <span>HEADPHONE VOLUME</span>
+                                <span className="text-white font-bold">{isMuted ? 'MUTED' : `${volume}%`}</span>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsMuted(!isMuted)}
+                                    className="text-slate-400 hover:text-white transition-colors cursor-pointer"
+                                >
+                                    {isMuted ? '🔇' : '🔊'}
+                                </button>
+                                <input
+                                    type="range"
+                                    min={0}
+                                    max={100}
+                                    value={volume}
+                                    onChange={(e) => setVolume(Number(e.target.value))}
+                                    className="w-full accent-rose-500 cursor-pointer"
+                                />
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={playSampleSound}
+                                className="w-full py-2.5 rounded-lg border border-[#222732] bg-[#1A1F26] hover:bg-[#222732] text-xs font-semibold text-slate-200 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                                {isSamplePlaying ? '🔔 Playing Test Chime...' : '▶ Play Sample Sound'}
+                            </button>
+                        </div>
+
+                        {/* Start Exam Button & Gate */}
+                        <button
+                            type="button"
+                            disabled={isLoadingData || audioReadyState !== 'ready'}
+                            onClick={handleConfirmStartExam}
+                            className={`w-full py-3.5 px-6 rounded-xl font-bold text-sm tracking-wide shadow-lg transition-all flex items-center justify-center gap-2 ${
+                                !isLoadingData && audioReadyState === 'ready'
+                                    ? 'bg-rose-600 hover:bg-rose-500 text-white cursor-pointer shadow-rose-900/30'
+                                    : 'bg-rose-600/50 text-white/70 cursor-not-allowed opacity-50 shadow-none'
+                            }`}
+                        >
+                            Start Listening Exam
+                        </button>
+
+                        {/* Real-time Audio Connection & Buffering Status */}
+                        {audioReadyState === 'buffering' && (
+                            <div className="mt-3 flex items-center justify-center gap-2 text-xs text-amber-400 font-medium">
+                                <span className="inline-block animate-spin">⏳</span>
+                                <span>Connecting official audio track... (Buffering stream)</span>
+                            </div>
+                        )}
+                        {audioReadyState === 'ready' && (
+                            <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-emerald-400 font-medium">
+                                <span>✓</span>
+                                <span>Audio synchronized and ready</span>
+                            </div>
+                        )}
+                        {audioReadyState === 'error' && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (audioRef.current) {
+                                        setAudioReadyState('buffering');
+                                        audioRef.current.load();
+                                    }
+                                }}
+                                className="mt-3 flex items-center justify-center gap-1.5 text-xs text-rose-400 hover:text-rose-300 font-medium cursor-pointer"
+                            >
+                                <span>⚠️</span>
+                                <span>Audio stream connection failed. Click here to reconnect.</span>
+                            </button>
+                        )}
+
+                        <button
+                            type="button"
+                            onClick={handleExit}
+                            className="mt-4 text-xs text-slate-400 hover:text-slate-200 underline transition-colors cursor-pointer"
+                        >
+                            Cancel & Exit
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Unified Reading-Style Top Header Bar */}
             {/* Unified Reading-Style Top Header Bar */}
             <header className="relative shrink-0 h-14 bg-[#121212] border-b border-neutral-800 flex items-center justify-between px-4 sm:px-6 z-20 select-none">
@@ -1648,6 +1796,27 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
             >
                 {/* Anti-Gravity Sticky Sub-Header Pinned Directly Under Top Navbar */}
                 {renderStickyHeader()}
+
+                {/* Audio element is permanently mounted at root level */}
+
+                {/* Autoplay Blocker Banner (If Browser Blocks Audio Autoplay) */}
+                {audioPlayFailed && (
+                    <div className="max-w-4xl mx-auto px-6 mt-4">
+                        <div className="bg-rose-500/15 border border-rose-500/30 text-rose-800 dark:text-rose-200 px-4 py-3 rounded-lg flex items-center justify-between shadow-xs">
+                            <span className="text-sm font-semibold flex items-center gap-2">
+                                <span className="text-base">🎧</span> Audio autoplay was restricted by browser permissions. Click to begin official audio track:
+                            </span>
+                            <button
+                                onClick={() => {
+                                    audioRef.current?.play().then(() => setAudioPlayFailed(false)).catch(() => {});
+                                }}
+                                className="px-4 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-md shadow-xs cursor-pointer transition-colors"
+                            >
+                                ▶ Start Audio
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {hasDynamicData && !useMockFallback ? (
                     <div className="max-w-4xl mx-auto px-8 py-6 space-y-8">

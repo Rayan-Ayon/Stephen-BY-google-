@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { getSnippetQuestionsForExam, getSnippetAnswersKey } from '@/components/enterprise/ielts/data/cambridgeQuestionSnippets';
 import { CAMBRIDGE_7_TEST_1_PASSAGES, C7_T1_EXPLANATIONS } from '@/components/enterprise/ielts/results/cambridge7Test1Explanations';
@@ -54,27 +54,88 @@ export interface UseReadingExamDataResult {
 
 export function parseSectionsFromText(text: string): Array<{ sectionLabel: string; content: string }> {
   if (!text) return [{ sectionLabel: 'A', content: '' }];
-  const parserRegex = /(?:<p>|<div>)?\s*(?:<strong>|<b>)?\s*(?:Section|Paragraph)?\s*([A-I])\b[:.]?\s*(?:<\/strong>|<\/b>)?\s*(.*?)(?=(?:<p>|<div>)?\s*(?:<strong>|<b>)?\s*(?:Section|Paragraph)?\s*[A-I]\b[:.]?|$)/gis;
-  const matches = [...text.matchAll(parserRegex)];
-  if (matches.length >= 2) {
-    return matches.map((m) => ({
-      sectionLabel: m[1].toUpperCase(),
-      content: m[2].replace(/<\/?[^>]+(>|$)/g, ' ').trim(),
-    }));
-  }
-  const rawBlocks = text
-    .split(/<\/p>|<br\s*\/?>|\n\n+/i)
-    .map((b) => b.replace(/<\/?[^>]+(>|$)/g, ' ').trim())
-    .filter((b) => b.length > 20);
 
-  if (rawBlocks.length > 0) {
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    return rawBlocks.map((block, i) => ({
-      sectionLabel: alphabet[i] || String(i + 1),
-      content: block,
-    }));
+  const cleaned = text.replace(/<style[^>]*>.*?<\/style>/gis, '').replace(/<script[^>]*>.*?<\/script>/gis, '');
+  const pTagRegex = /<(?:p|div)[^>]*>(.*?)<\/(?:p|div)>/gis;
+  const blocks: string[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = pTagRegex.exec(cleaned)) !== null) {
+    const rawInner = m[1].trim();
+    if (rawInner) blocks.push(rawInner);
   }
-  return [{ sectionLabel: 'A', content: text.replace(/<\/?[^>]+(>|$)/g, ' ').trim() }];
+
+  const rawList = blocks.length > 0 ? blocks : cleaned.split(/\n\s*\n/).map((s) => s.trim()).filter(Boolean);
+
+  const singleLetterRegex = /^\s*(?:<strong>|<b>)?\s*(?:(?:Section|Paragraph)\s+)?([A-I])\s*(?:<\/strong>|<\/b>)?\s*$/i;
+  const leadingLetterRegex = /^\s*(?:<strong>|<b>)?\s*(?:(?:Section|Paragraph)\s+)?([A-I])\s*(?:[:.]|<\/strong>|<\/b>|<br\s*\/?>)\s*(.*)$/is;
+
+  // First pass: check if any block has explicit section markers
+  let hasExplicitHeaders = false;
+  for (const item of rawList) {
+    const stripped = item.replace(/<\/?[^>]+(>|$)/g, ' ').replace(/\s+/g, ' ').trim();
+    if (singleLetterRegex.test(stripped) || leadingLetterRegex.test(item)) {
+      hasExplicitHeaders = true;
+      break;
+    }
+  }
+
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const sections: Array<{ sectionLabel: string; content: string }> = [];
+
+  if (hasExplicitHeaders) {
+    let currentLabel = '';
+    let currentContent: string[] = [];
+
+    for (let i = 0; i < rawList.length; i++) {
+      const item = rawList[i];
+      const stripped = item.replace(/<\/?[^>]+(>|$)/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!stripped) continue;
+
+      const singleMatch = stripped.match(singleLetterRegex);
+      if (singleMatch) {
+        if (currentLabel && currentContent.length > 0) {
+          sections.push({ sectionLabel: currentLabel, content: currentContent.join('\n\n') });
+        }
+        currentLabel = singleMatch[1].toUpperCase();
+        currentContent = [];
+        continue;
+      }
+
+      const leadingMatch = item.match(leadingLetterRegex);
+      if (leadingMatch) {
+        if (currentLabel && currentContent.length > 0) {
+          sections.push({ sectionLabel: currentLabel, content: currentContent.join('\n\n') });
+        }
+        currentLabel = leadingMatch[1].toUpperCase();
+        const contentPart = leadingMatch[2].replace(/<\/?[^>]+(>|$)/g, ' ').replace(/\s+/g, ' ').trim();
+        currentContent = [contentPart];
+        continue;
+      }
+
+      if (!currentLabel) {
+        currentLabel = alphabet[sections.length] || String(sections.length + 1);
+      }
+      currentContent.push(stripped);
+    }
+
+    if (currentLabel && currentContent.length > 0) {
+      sections.push({ sectionLabel: currentLabel, content: currentContent.join('\n\n') });
+    }
+  } else {
+    // Each paragraph is its own section
+    rawList.forEach((item, idx) => {
+      const stripped = item.replace(/<\/?[^>]+(>|$)/g, ' ').replace(/\s+/g, ' ').trim();
+      if (stripped.length > 20) {
+        sections.push({
+          sectionLabel: alphabet[idx] || String(idx + 1),
+          content: stripped,
+        });
+      }
+    });
+  }
+
+  if (sections.length > 0) return sections;
+  return [{ sectionLabel: 'A', content: cleaned.replace(/<\/?[^>]+(>|$)/g, ' ').trim() }];
 }
 
 // Cambridge 7 Test 1 static questions definition
@@ -162,6 +223,10 @@ export function useReadingExamData({
   const resolvedBook = propBookNumber ?? (testTitle ? parseInt(testTitle.match(/Cambridge\s*(\d+)/i)?.[1] || '7', 10) : 7);
   const resolvedTest = propTestNumber ?? (testTitle ? parseInt(testTitle.match(/Test\s*(\d+)/i)?.[1] || '1', 10) : 1);
 
+  const initialAnswersKey = typeof initialAnswers === 'string'
+    ? initialAnswers
+    : (initialAnswers && typeof initialAnswers === 'object' ? JSON.stringify(initialAnswers) : '');
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [passages, setPassages] = useState<ReadingPassageItem[]>([]);
@@ -170,26 +235,33 @@ export function useReadingExamData({
   const [correctCount, setCorrectCount] = useState<number>(0);
   const [bandScore, setBandScore] = useState<number>(6.5);
   const [attemptId, setAttemptId] = useState<string | null>(propAttemptId ? String(propAttemptId) : null);
+  const hasDataRef = useRef(false);
 
   const fetchData = useCallback(async () => {
-    setLoading(true);
+    if (!hasDataRef.current) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const book = resolvedBook;
       const test = resolvedTest;
       const testKey = `cambridge-${book}-test-${test}`;
-      const examId = `c${book}000000-0000-0000-0000-${String(test).padStart(12, '0')}`;
+      const examUuidPrefix = `c${book}`.padEnd(8, '0');
+      const examId = `${examUuidPrefix}-0000-0000-0000-${String(test).padStart(12, '0')}`;
 
       // ── 1. Fetch Candidate Answers from Supabase or Local Storage ──
       let loadedAnswers: Record<string, string> = {};
       let resolvedAttemptRow: any = null;
 
-      // Initialize from initialAnswers prop if provided
-      if (initialAnswers && Object.keys(initialAnswers).length > 0) {
-        Object.entries(initialAnswers).forEach(([k, v]) => {
-          const cleanKey = k.startsWith('q') ? k : `q${k}`;
-          if (v) loadedAnswers[cleanKey] = String(v).trim();
-        });
+      // Initialize from initialAnswersKey if provided
+      if (initialAnswersKey) {
+        try {
+          const parsed = JSON.parse(initialAnswersKey);
+          Object.entries(parsed).forEach(([k, v]) => {
+            const cleanKey = k.startsWith('q') ? k : `q${k}`;
+            if (v) loadedAnswers[cleanKey] = String(v).trim();
+          });
+        } catch {}
       }
 
       // Check Supabase exam_attempts
@@ -257,12 +329,17 @@ export function useReadingExamData({
           .order('passage_number', { ascending: true });
 
         if (rpData && rpData.length > 0 && !rpErr) {
-          loadedPassages = rpData.map((p: any) => ({
-            passage_number: Number(p.passage_number),
-            title: p.title || `Passage ${p.passage_number}`,
-            passage_text: p.passage_text || '',
-            sections: parseSectionsFromText(p.passage_text || ''),
-          }));
+          loadedPassages = rpData.map((p: any) => {
+            const partNum = Number(p.passage_number);
+            const difficulty = partNum === 1 ? 'easy' : partNum === 2 ? 'medium' : 'hard';
+            return {
+              passage_number: partNum,
+              title: p.title || `Passage ${partNum}`,
+              difficulty,
+              passage_text: p.passage_text || '',
+              sections: parseSectionsFromText(p.passage_text || ''),
+            };
+          });
         }
       } catch {}
 
@@ -272,16 +349,21 @@ export function useReadingExamData({
           const { data: pData } = await (supabase as any)
             .from('passages')
             .select('part_number, title, content_html')
-            .eq('exam_id', examId)
+            .or(`exam_id.eq.${examId},exam_id.ilike.%c${book}%${test}%`)
             .order('part_number', { ascending: true });
 
           if (pData && pData.length > 0) {
-            loadedPassages = pData.map((p: any) => ({
-              passage_number: Number(p.part_number),
-              title: p.title || `Passage ${p.part_number}`,
-              passage_text: p.content_html || '',
-              sections: parseSectionsFromText(p.content_html || ''),
-            }));
+            loadedPassages = pData.map((p: any) => {
+              const partNum = Number(p.part_number);
+              const difficulty = partNum === 1 ? 'easy' : partNum === 2 ? 'medium' : 'hard';
+              return {
+                passage_number: partNum,
+                title: p.title || `Passage ${partNum}`,
+                difficulty,
+                passage_text: p.content_html || '',
+                sections: parseSectionsFromText(p.content_html || ''),
+              };
+            });
           }
         } catch (err) {
           console.warn('[useExamData] Passages table query note:', err);
@@ -289,7 +371,7 @@ export function useReadingExamData({
       }
 
       // C. Fallback for offline or Book 7 Test 1 static content
-      if (loadedPassages.length === 0) {
+      if (loadedPassages.length === 0 || (book === 7 && test === 1 && loadedPassages.some(p => !p.sections || p.sections.length === 0))) {
         if (book === 7 && test === 1) {
           loadedPassages = CAMBRIDGE_7_TEST_1_PASSAGES.map((p) => ({
             passage_number: p.passageNumber,
@@ -303,6 +385,7 @@ export function useReadingExamData({
           loadedPassages = [1, 2, 3].map((num) => ({
             passage_number: num,
             title: `Cambridge ${book} Test ${test} — Passage ${num}`,
+            difficulty: num === 1 ? 'easy' : num === 2 ? 'medium' : 'hard',
             passage_text: `<p>Passage ${num} content for Cambridge ${book} Test ${test}. Review official test materials for comprehensive passage text.</p>`,
             sections: [{ sectionLabel: 'A', content: `Passage ${num} content for Cambridge ${book} Test ${test}. Review official test materials for comprehensive passage text.` }],
           }));
@@ -453,13 +536,14 @@ export function useReadingExamData({
       setQuestions(mappedQuestions);
       setCorrectCount(correct);
       setBandScore(Number(resolvedAttemptRow?.band_score) || calculatedBand);
+      hasDataRef.current = true;
     } catch (err: any) {
       console.error('[useReadingExamData] Error fetching reading exam data:', err);
       setError(err?.message || 'Failed to load reading exam data');
     } finally {
       setLoading(false);
     }
-  }, [resolvedBook, resolvedTest, propAttemptId, initialAnswers]);
+  }, [resolvedBook, resolvedTest, propAttemptId, initialAnswersKey]);
 
   useEffect(() => {
     fetchData();

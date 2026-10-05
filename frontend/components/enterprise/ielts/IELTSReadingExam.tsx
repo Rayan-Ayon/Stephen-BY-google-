@@ -10,6 +10,7 @@ import { generateExamResultsPayload } from './results/readingResultsGenerator';
 import type { ExamResultsPayload } from './results/readingResultsTypes';
 import { getSnippetQuestionsForExam, getSnippetAnswersKey } from './data/cambridgeQuestionSnippets';
 import { recordExamAttempt } from '@/lib/telemetryEgress';
+import IELTSAnalysisView from './IELTSAnalysisView';
 
 // ── Icons ──
 const Check = ({ size = 24, strokeWidth = 3, className = '' }: any) => (
@@ -101,6 +102,49 @@ const STATIC_PASSAGES: Record<number, { title: string; subtitle: string; content
 <p>While suggestopedia has gained some notoriety through success in the teaching of modern languages, few teachers are able to emulate the spectacular results of Lozanov and his associates. We can, perhaps, attribute mediocre results to an inadequate placebo effect. The students have not developed the appropriate mind set. They are often not motivated to learn through this method. They do not have enough ‘faith’. They do not see it as ‘real teaching’, especially as it does not seem to involve the ‘work’ they have learned to believe is essential to learning.</p>
         `,
     }
+};
+
+// ── Static Passages for Cambridge 7 GT Test 1 ──
+const STATIC_GT_PASSAGES: Record<number, { title: string; subtitle: string; content_html: string }> = {
+    1: {
+        title: "Community Education & Local Services",
+        subtitle: "14 questions • easy",
+        content_html: `
+<h4 class="font-bold text-gray-900 mb-2">Community College Evening Classes & Local Notices</h4>
+<p><strong>A. Italian Cookery for Beginners</strong><br/>Master the basics of authentic regional Italian cooking. Focuses on fresh ingredients, homemade pasta, sauces, and traditional doughs. Tuesdays 7:00–9:30 pm (8 weeks). All materials and apron provided in the training kitchen.</p>
+<p><strong>B. Introductory Pottery & Ceramics</strong><br/>Learn wheel throwing, hand-building, glazing, and kiln firing techniques. Ideal for complete beginners looking to produce their own decorative tableware. Wednesdays 6:30–9:00 pm. Firing fees included in registration.</p>
+<p><strong>C. Digital Photography & Image Editing</strong><br/>Take full control of your camera manual settings, lighting, composition, and raw image workflow with professional editing software. Saturdays 10:00 am–1:00 pm. Bring your own digital SLR or mirrorless camera.</p>
+<p><strong>D. Community Volunteer Wildlife Watch</strong><br/>Join our local wetlands conservation group. Volunteers assist with monthly bird counts, trail clearing, and native wetland planting. Suitable for families and all fitness levels. Free induction workshop provided on the first Sunday of each month.</p>
+<p><strong>E. Spanish Conversation Circle</strong><br/>Practice speaking and listening in a relaxed, friendly environment. Led by a native speaker with weekly topics including travel, culture, cuisine, and literature. Thursdays 7:00–8:30 pm. Prerequisite: basic conversational vocabulary.</p>
+<hr class="my-4 border-gray-200"/>
+<h4 class="font-bold text-gray-900 mb-2">Westley Central Library: Computer & Study Room Regulations</h4>
+<p>Public workstations are available free of charge to all registered library cardholders for up to two consecutive hours daily. Advance bookings can be made up to three days ahead online or via the kiosk. Unclaimed reservations are automatically released after 15 minutes. Headphones are mandatory for all audio playback and can be borrowed from the circulation desk. Printing and scanning facilities are located on the second floor, charged at standard cost-recovery rates.</p>
+        `,
+    },
+    2: {
+        title: "Workplace Safety & Employee Entitlements",
+        subtitle: "13 questions • medium",
+        content_html: `
+<h4 class="font-bold text-gray-900 mb-2">Health, Safety & Emergency Procedures at Apex Logistics</h4>
+<p><strong>Emergency Evacuation Protocol:</strong> On hearing the continuous alarm siren, all personnel must immediately stop operational machinery, close office doors without locking them, and proceed calmly along designated escape corridors to Assembly Point B on the south parking apron. Under no circumstances should elevators be used during an alarm.</p>
+<p><strong>Appointed Fire Wardens:</strong> Each sector has two trained fire wardens wearing high-visibility orange tabards. Wardens conduct a systematic sweep of restrooms, storage rooms, and workspaces before leaving the building. Do not re-enter the building until the Senior Safety Officer issues an official all-clear announcement.</p>
+<p><strong>Reporting Workplace Incidents:</strong> All workplace injuries, near-miss occurrences, and equipment defects must be recorded in the safety register within 24 hours. First-aid treatment stations are located on every mezzanine level, staffed by certified workplace first aiders.</p>
+<hr class="my-4 border-gray-200"/>
+<h4 class="font-bold text-gray-900 mb-2">Employee Flexible Working & Leave Guidelines</h4>
+<p>All full-time staff who have completed six continuous months of probationary service are eligible to submit a statutory flexible working application. Requests may encompass core hour adjustments, compressed work weeks, or remote teleworking arrangements. Line managers must review submissions within 28 calendar days and provide written reasons if an application cannot be accommodated due to operational necessities.</p>
+        `,
+    },
+    3: {
+        title: "The Evolution of the Modern Bicycle",
+        subtitle: "13 questions • medium",
+        content_html: `
+<p><strong>Paragraph A</strong><br/>The earliest ancestor of the modern bicycle was invented in Germany in 1817 by Baron Karl von Drais. Known as the "Laufmaschine" (running machine) or "Draisine", it was constructed almost entirely of wood and featured two wheels aligned in tandem. However, it completely lacked pedals, gears, or chains; riders propelled themselves by pushing vigorously against the ground with their feet in a striding motion, steering via a pivoted front tiller.</p>
+<p><strong>Paragraph B</strong><br/>During the 1860s, French carriage makers Pierre Michaux and Pierre Lallement introduced rotary cranks and pedals affixed directly to the front wheel hub. This design, nicknamed the "Velocipede" or "boneshaker", featured a rigid wrought-iron frame and iron-banded wooden wheels. The combination of solid tires and cobblestone roadways produced severe vibration, earning the vehicle its uncomfortable moniker but nonetheless sparking widespread urban popularity across Europe and North America.</p>
+<p><strong>Paragraph C</strong><br/>To increase cruising speed without complicated gearing, manufacturers began enlarging the front drive wheel. Because each revolution of the pedals turned the wheel exactly once, a larger wheel traveled a greater distance per pedal stroke. This development culminated in the 1870s with the "High-Wheeler" or "Penny-Farthing", whose massive front wheel often measured over 1.5 meters in diameter compared to a diminutive rear trailing wheel. Despite its rapid velocity, the high center of gravity made riding treacherous, as hitting a small stone could launch the rider headfirst over the handlebars.</p>
+<p><strong>Paragraph D</strong><br/>The breakthrough that transformed bicycling from an athletic daredevil pastime into universal everyday transport occurred in 1885 with John Kemp Starley’s "Rover Safety Bicycle". Starley’s design featured equal-sized front and rear wheels, a steerable front fork, and a rear-wheel chain drive system connected to central pedals. By lowering the saddle height so riders could place their feet flat on the ground when stationary, the safety bicycle virtually eliminated dangerous over-the-handlebar tumbles.</p>
+<p><strong>Paragraph E</strong><br/>Three years later, in 1888, Scottish-born inventor John Boyd Dunlop patented the pneumatic (air-filled) rubber tire for bicycles. Dunlop’s air cushions absorbed vibrations from rough gravel roads far more effectively than solid rubber, offering unprecedented comfort and dramatically reducing rolling resistance. Combined with the safety frame, pneumatic tires triggered the global bicycle boom of the 1890s, empowering women with unprecedented personal mobility and transforming urban commuting.</p>
+        `,
+    },
 };
 
 // ── Headings List for Part 2 Module 1 ──
@@ -983,10 +1027,15 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
     const [elapsed, setElapsed] = useState(0);
     const [score, setScore] = useState<number | null>(null);
 
-    const isCambridge7Test1 = Number(bookNumber) === 7 && Number(testNumber) === 1;
-    const isCambridge7Test2 = Number(bookNumber) === 7 && Number(testNumber) === 2;
-    const isCambridge7Test3 = Number(bookNumber) === 7 && Number(testNumber) === 3;
-    const isCambridge7Test4 = Number(bookNumber) === 7 && Number(testNumber) === 4;
+    const isAcademic = category === 'academic' || !category;
+    const isGT = category === 'general';
+
+    const isCambridge7Test1 = isAcademic && Number(bookNumber) === 7 && Number(testNumber) === 1;
+    const isCambridge7Test2 = isAcademic && Number(bookNumber) === 7 && Number(testNumber) === 2;
+    const isCambridge7Test3 = isAcademic && Number(bookNumber) === 7 && Number(testNumber) === 3;
+    const isCambridge7Test4 = isAcademic && Number(bookNumber) === 7 && Number(testNumber) === 4;
+    const isCambridge7GTTest1 = isGT && Number(bookNumber) === 7 && Number(testNumber) === 1;
+    const isCambridge7GTTest2 = isGT && Number(bookNumber) === 7 && Number(testNumber) === 2;
     const testDifficulty = Number(testNumber) === 1 ? 'easy' : Number(testNumber) === 4 ? 'hard' : 'medium';
 
     // Supabase Data Fetching State
@@ -1036,7 +1085,13 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
             try {
                 const numBook = Number(bookNumber) || 7;
                 const numTest = Number(testNumber) || 1;
-                const hexPrefix = ('c' + numBook).padEnd(8, '0');
+                const isGeneral = category === 'general';
+
+                // Academic prefix: c<book_padded> (e.g., c7000000)
+                // General Training prefix: 6774<book_padded> (e.g., 67740700) - 6774 is ASCII hex for 'gt'
+                const hexPrefix = isGeneral 
+                    ? ('6774' + String(numBook).padStart(2, '0')).padEnd(8, '0') 
+                    : ('c' + numBook).padEnd(8, '0');
                 const hexSuffix = String(numTest).padStart(12, '0');
                 const deterministicId = `${hexPrefix}-0000-0000-0000-${hexSuffix}`;
 
@@ -1052,7 +1107,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                 let examData: any = null;
                 let examErr: any = null;
 
-                // Strategy A: Direct deterministic ID (used by Cambridge 7–21 Academic Reading)
+                // Strategy A: Direct deterministic ID (used by Cambridge 7–21 Academic & GT Reading)
                 const resById = await (supabase as any)
                     .from('exams')
                     .select('*')
@@ -1067,10 +1122,12 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
 
                 // Strategy B: Query by Title excluding Listening to resolve 'multiple rows returned' collision
                 if (!examData) {
+                    const categoryFilter = isGeneral ? 'General' : 'Academic';
                     const resByTitle = await (supabase as any)
                         .from('exams')
                         .select('*')
                         .ilike('title', `%Cambridge%${numBook}%`)
+                        .ilike('title', `%${categoryFilter}%`)
                         .not('title', 'ilike', '%Listening%')
                         .eq('test_number', numTest)
                         .limit(1);
@@ -1084,10 +1141,12 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
 
                 // Strategy C: Check fallback tests table if exams table has no matching row
                 if (!examData) {
+                    const categoryFilter = isGeneral ? 'General' : 'Academic';
                     const resByTestsTable = await (supabase as any)
                         .from('tests')
                         .select('*')
                         .ilike('title', `%Cambridge%${numBook}%`)
+                        .ilike('title', `%${categoryFilter}%`)
                         .not('title', 'ilike', '%Listening%')
                         .eq('test_number', numTest)
                         .limit(1);
@@ -1250,8 +1309,8 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
     }, [testState]);
 
     useEffect(() => {
-        onActiveChange?.(testState === 'active' || testState === 'evaluating');
-    }, [testState, onActiveChange]);
+        onActiveChange?.(!isProcessingSubmission && (testState === 'active' || testState === 'evaluating'));
+    }, [testState, isProcessingSubmission, onActiveChange]);
 
     // Resizable Splitter
     const startResize = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -1305,13 +1364,17 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
             userAnswersPayload[`q${i}`] = String(rawVal).trim();
         }
 
+        const isGeneralExam = category === 'general';
+        const examLabel = `Cambridge IELTS ${bookNumber}${isGeneralExam ? ' (GT)' : ''} — Test ${testNumber}`;
+
         // Generate full exam results payload matching schema
         const basePayload = generateExamResultsPayload(
             sessionId,
-            `Cambridge IELTS ${bookNumber} — Test ${testNumber}`,
+            examLabel,
             answers,
             timeSpentSecs,
-            answersKey
+            answersKey,
+            category
         );
 
         const payload: any = {
@@ -1319,6 +1382,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
             sessionId,
             bookNumber,
             testNumber,
+            category: isGeneralExam ? 'general' : 'academic',
             userAnswersPayload,
         };
 
@@ -1330,10 +1394,14 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
             console.error('Failed to cache reading results payload', err);
         }
 
+        const examTitle = `Cambridge ${bookNumber} ${isGeneralExam ? '(GT) ' : ''}— Test ${testNumber}`;
+
         // Record attempt to Supabase telemetry egress pipeline (public.exam_attempts)
         recordExamAttempt({
-            testId: `cambridge-${bookNumber}-test-${testNumber}`,
+            testId: `cambridge-${bookNumber}-${isGeneralExam ? 'gt-' : ''}test-${testNumber}`,
             module: 'reading',
+            title: examTitle,
+            category: isGeneralExam ? 'general' : 'academic',
             bandScore: payload.bandScore,
             correctCount: payload.correctCount,
             totalQuestions: 40,
@@ -1368,6 +1436,12 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
             addAttempt({
                 id: Date.now(),
                 skill: 'reading',
+                module: 'reading',
+                title: examTitle,
+                book_number: bookNumber,
+                test_number: testNumber,
+                answers_payload: userAnswersPayload,
+                raw_answers: userAnswersPayload,
                 band: payload.bandScore,
                 score: payload.correctCount,
                 timeSpent: Math.max(1, Math.round(timeSpentSecs / 60)),
@@ -1401,7 +1475,9 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
 
     const activePassage = {
         title: dynamicPassage?.title || (
-            isCambridge7Test1
+            isCambridge7GTTest1
+                ? (STATIC_GT_PASSAGES[activePart]?.title || `Cambridge 7 GT Test 1 - Section ${activePart}`)
+                : isCambridge7Test1
                 ? (STATIC_PASSAGES[activePart]?.title || `Cambridge 7 Test 1 - Part ${activePart}`)
                 : isCambridge7Test2
                 ? (CAMBRIDGE_7_TEST_2_RIGHT_PANEL[`part${activePart}`]?.title || `Cambridge 7 Test 2 - Part ${activePart}`)
@@ -1409,10 +1485,12 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                 ? (CAMBRIDGE_7_TEST_3_RIGHT_PANEL[`part${activePart}`]?.title || `Cambridge 7 Test 3 - Part ${activePart}`)
                 : isCambridge7Test4
                 ? (CAMBRIDGE_7_TEST_4_RIGHT_PANEL[`part${activePart}`]?.title || `Cambridge 7 Test 4 - Part ${activePart}`)
-                : (sourceType === 'cambridge' ? `Cambridge ${bookNumber} Test ${testNumber} - Part ${activePart}` : `Mock Series ${bookNumber} Test ${testNumber} - Part ${activePart}`)
+                : (sourceType === 'cambridge' ? `Cambridge ${bookNumber} ${isGT ? '(GT) ' : ''}Test ${testNumber} - Part ${activePart}` : `Mock Series ${bookNumber} Test ${testNumber} - Part ${activePart}`)
         ),
         subtitle: (dynamicPassage as any)?.subtitle || (
-            isCambridge7Test2
+            isCambridge7GTTest1
+                ? (STATIC_GT_PASSAGES[activePart]?.subtitle || `${activePart === 1 ? 14 : 13} questions • general training`)
+                : isCambridge7Test2
                 ? (CAMBRIDGE_7_TEST_2_RIGHT_PANEL[`part${activePart}`]?.subtitle || `${activePart === 3 ? 14 : 13} questions • medium`)
                 : isCambridge7Test3
                 ? (CAMBRIDGE_7_TEST_3_RIGHT_PANEL[`part${activePart}`]?.subtitle || `${activePart === 3 ? 14 : 13} questions • easy`)
@@ -1423,7 +1501,9 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                 : `${activePart === 3 ? 14 : 13} questions • ${testDifficulty}`
         ),
         content_html: dynamicPassageHtml || (
-            isCambridge7Test1
+            isCambridge7GTTest1
+                ? (STATIC_GT_PASSAGES[activePart]?.content_html || '')
+                : isCambridge7Test1
                 ? (STATIC_PASSAGES[activePart]?.content_html || '')
                 : ''
         ),
@@ -1651,21 +1731,48 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
         );
     }
 
-    if (testState === 'evaluating' || testState === 'completed') {
+    if (testState === 'evaluating') {
         return (
-            <div className="flex-1 min-h-0 flex items-center justify-center bg-[#F2F2F2]">
-                <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md w-full border border-[#CCCCCC]">
-                    <h2 className="text-2xl font-bold text-[#0072CE] mb-4">Exam Completed</h2>
-                    {testState === 'evaluating' ? (
-                        <p className="text-neutral-600">Evaluating your answers...</p>
-                    ) : (
-                        <>
-                            <p className="text-lg text-neutral-800 mb-2">Score: <strong>{score}</strong> / 40</p>
-                            <p className="text-lg text-neutral-800 mb-6">Band: <strong>{rawToBand(score || 0).toFixed(1)}</strong></p>
-                            <button onClick={handleExit} className="px-6 py-2 bg-[#0072CE] text-white rounded hover:bg-blue-700 transition-colors font-medium">Back to Reading Hub</button>
-                        </>
-                    )}
+            <div className="flex-1 min-h-0 flex items-center justify-center bg-[#0D0F12]">
+                <div className="bg-[#15181E] border border-[#222732] p-8 rounded-2xl shadow-xl text-center max-w-md w-full">
+                    <h2 className="text-2xl font-bold text-rose-500 mb-4">Exam Completed</h2>
+                    <p className="text-slate-400">Evaluating your answers...</p>
                 </div>
+            </div>
+        );
+    }
+
+    if (testState === 'completed') {
+        if (resultsPayload) {
+            return (
+                <div className="w-full h-full min-h-screen overflow-y-auto pr-2 custom-scrollbar space-y-6 bg-[#0D0F12] flex flex-col">
+                    <ReadingExamResultsView
+                        results={resultsPayload}
+                        onBack={() => {
+                            window.history.pushState({}, '', '/ielts/reading');
+                            handleExit();
+                        }}
+                        onRetake={() => {
+                            setAnswers({});
+                            setElapsed(0);
+                            setResultsPayload(null);
+                            setTestState('active');
+                            window.history.pushState({}, '', '/ielts/reading');
+                        }}
+                    />
+                </div>
+            );
+        }
+        return (
+            <div className="w-full h-full min-h-screen overflow-y-auto pr-2 custom-scrollbar space-y-6 bg-[#0D0F12] flex flex-col">
+                <IELTSAnalysisView
+                    isModal={false}
+                    bookNumber={bookNumber}
+                    testNumber={testNumber}
+                    answersPayload={answers}
+                    skillModule="reading"
+                    onClose={handleExit}
+                />
             </div>
         );
     }
@@ -1800,9 +1907,11 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                                         <polyline points="10 9 9 9 8 9"/>
                                     </svg>
                                 </div>
-                                <h3 className="text-base font-bold text-gray-900 mb-1.5">Reading Passage Pending</h3>
+                                <h3 className="text-base font-bold text-gray-900 mb-1.5">
+                                    {category === 'general' ? 'General Training Reading Test Syncing...' : 'Reading Passage Pending'}
+                                </h3>
                                 <p className="text-sm text-gray-500 max-w-md leading-relaxed mb-4">
-                                    Passage text pending Supabase synchronization for Cambridge {bookNumber} Test {testNumber} Part {activePart}.
+                                    Passage text pending Supabase synchronization for Cambridge {bookNumber}{category === 'general' ? ' (GT)' : ''} Test {testNumber} Part {activePart}.
                                 </p>
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-200 rounded-full text-xs font-medium text-gray-600 shadow-2xs">
                                     <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
@@ -3594,7 +3703,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                                 </div>
                             </div>
                         )
-                    ) : activePart === 1 && (isCambridge7Test1 || sectionBlocks.length === 0) ? (
+                    ) : isCambridge7Test1 && activePart === 1 ? (
                         <div className="space-y-10">
                             {/* Module A: Questions 1–5 (Matching Information) */}
                             <div>
@@ -3785,7 +3894,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                                 </div>
                             </div>
                         </div>
-                    ) : activePart === 2 && (isCambridge7Test1 || sectionBlocks.length === 0) ? (
+                    ) : isCambridge7Test1 && activePart === 2 ? (
                         /* ════ PART 2 MODULES (Questions 14–26) ════ */
                         <div className="space-y-10">
                             {/* Module 1: Questions 14–20 (MATCHING HEADING) */}
@@ -3933,7 +4042,7 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
                                 </div>
                             </div>
                         </div>
-                    ) : activePart === 3 && (isCambridge7Test1 || sectionBlocks.length === 0) ? (
+                    ) : isCambridge7Test1 && activePart === 3 ? (
                         /* ════ PART 3 MODULES (Questions 27–40) ════ */
                         <div className="space-y-10">
                             {/* Module 1: Questions 27–30 (MULTIPLE CHOICE) */}

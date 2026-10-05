@@ -104,7 +104,8 @@ export function generateExamResultsPayload(
   testTitle: string,
   userAnswers: Record<number, string>,
   timeSpentSeconds: number,
-  answersKeyOverrides?: Record<number, string>
+  answersKeyOverrides?: Record<number, string>,
+  category?: 'academic' | 'general'
 ): ExamResultsPayload {
   const passagesMap: Record<number, ResultQuestionItem[]> = { 1: [], 2: [], 3: [] };
   let correctCount = 0;
@@ -175,7 +176,7 @@ export function generateExamResultsPayload(
     passagesMap[qDef.passageNum].push(questionItem);
   }
 
-  const bandScore = rawToBand(correctCount);
+  const bandScore = rawToBand(correctCount, category);
   const bandLabel = getBandLabel(bandScore);
 
   const questionTypeBreakdown = [

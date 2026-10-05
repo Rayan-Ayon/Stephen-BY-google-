@@ -5,6 +5,7 @@ export type IeltsSkill = 'listening' | 'reading' | 'writing' | 'speaking';
 export interface IeltsAttempt {
     id: number;
     skill: IeltsSkill;
+    module?: IeltsSkill;
     band: number;
     title?: string;
     score?: number;
@@ -13,6 +14,13 @@ export interface IeltsAttempt {
     timeSpent?: number;
     criteria?: { label: string; band: number }[];
     bundle?: string;
+    book_number?: number;
+    test_number?: number;
+    is_general?: boolean;
+    exam_type?: 'academic' | 'general';
+    status?: string;
+    answers_payload?: Record<string, string>;
+    raw_answers?: Record<string, string>;
 }
 
 export const ATTEMPTS_UPDATED_EVENT = 'ielts-attempts-updated';
@@ -124,21 +132,76 @@ export const createDemoAttempt = (skill: IeltsSkill): IeltsAttempt => {
     };
 };
 
+export const isGeneralAttempt = (attempt: IeltsAttempt): boolean => {
+    if (attempt.is_general != null) return Boolean(attempt.is_general);
+    if (attempt.exam_type === 'general') return true;
+    const title = (attempt.title || '').toLowerCase();
+    if (title.includes('general training') || title.includes('(gt)') || title.includes(' gt') || title.includes('general')) {
+        return true;
+    }
+    if (attempt.taskType === 'task1' && (title.includes('letter') || title.includes('general'))) {
+        return true;
+    }
+    return false;
+};
+
+export const resolveExamTitle = (attempt: IeltsAttempt): string => {
+    if (attempt.book_number && attempt.test_number) {
+        return `Cambridge ${attempt.book_number} — Test ${attempt.test_number}`;
+    }
+    const book = parseInt((attempt.title || '').match(/Cambridge\s*(\d+)/i)?.[1] || '0', 10);
+    const test = attempt.test_number || parseInt((attempt.title || '').match(/Test\s*(\d+)/i)?.[1] || '0', 10);
+    if (book && test) {
+        return `Cambridge ${book} — Test ${test}`;
+    }
+    const series = parseInt((attempt.title || '').match(/Series\s*(\d+)|Set\s*(\d+)/i)?.[1] || '0', 10);
+    if (series && test) {
+        return `IELTSly Mock Series ${series} — Test ${test}`;
+    }
+    if (
+        attempt.title &&
+        !/^(reading|listening|writing|speaking)\s*practice$/i.test(attempt.title.trim()) &&
+        !/^(reading|listening|writing|speaking)\s*attempt$/i.test(attempt.title.trim())
+    ) {
+        return attempt.title;
+    }
+    if (attempt.skill === 'reading') return 'Reading Practice';
+    if (attempt.skill === 'listening') return 'Listening Practice';
+    if (attempt.skill === 'writing') return 'Writing Practice';
+    return 'Academic Practice';
+};
+
+export const formatTestTopic = (a: IeltsAttempt): string => {
+    return resolveExamTitle(a);
+};
+
+export const formatTimeSpent = (m?: number, s?: number): string => {
+    if (s != null && s > 0) {
+        const mins = Math.floor(s / 60);
+        const secs = s % 60;
+        return `${mins}m ${String(secs).padStart(2, '0')}s`;
+    }
+    if (m != null && m > 0) {
+        return `${m}m 00s`;
+    }
+    return '—';
+};
+
 export const SEED_ATTEMPTS: IeltsAttempt[] = [
-    { id: 1, skill: 'listening', band: 7.0, score: 32, date: 'Jul 28, 2026', timeSpent: 32, criteria: [{ label: 'Detail Recognition', band: 7.5 }, { label: 'Map Labelling', band: 6.5 }, { label: 'Number Capture', band: 7.0 }] },
-    { id: 2, skill: 'reading', band: 6.5, score: 27, date: 'Aug 2, 2026', timeSpent: 38, criteria: [{ label: 'Skimming', band: 7.0 }, { label: 'TFNG Traps', band: 5.5 }, { label: 'Gap-Fill', band: 6.5 }] },
-    { id: 3, skill: 'writing', band: 6.5, taskType: 'task2', date: 'Aug 9, 2026', timeSpent: 46, criteria: [{ label: 'Task Response', band: 6.5 }, { label: 'Coherence', band: 7.0 }, { label: 'Lexical Range', band: 6.0 }, { label: 'Grammar', band: 6.5 }] },
-    { id: 4, skill: 'speaking', band: 7.5, date: 'Aug 14, 2026', timeSpent: 14, criteria: [{ label: 'Fluency', band: 7.5 }, { label: 'Lexical Resource', band: 7.0 }, { label: 'Pronunciation', band: 8.0 }, { label: 'Grammar', band: 7.0 }] },
-    { id: 5, skill: 'listening', band: 7.5, score: 34, date: 'Aug 17, 2026', timeSpent: 29, criteria: [{ label: 'Detail Recognition', band: 8.0 }, { label: 'Map Labelling', band: 7.0 }, { label: 'Number Capture', band: 7.5 }] },
-    { id: 6, skill: 'reading', band: 7.0, score: 30, date: 'Aug 19, 2026', timeSpent: 35, criteria: [{ label: 'Skimming', band: 7.5 }, { label: 'TFNG Traps', band: 6.5 }, { label: 'Gap-Fill', band: 7.0 }] },
-    { id: 7, skill: 'writing', band: 6.5, title: 'Task 2 - Education Policy', taskType: 'task2', date: 'Aug 20, 2026', timeSpent: 44, criteria: [{ label: 'Task Response', band: 6.5 }, { label: 'Coherence', band: 6.5 }, { label: 'Lexical Range', band: 6.0 }, { label: 'Grammar', band: 7.0 }] },
-    { id: 8, skill: 'writing', band: 7.0, title: 'Task 1 - Line Graph', taskType: 'task1', date: 'Aug 21, 2026', timeSpent: 20, criteria: [{ label: 'Task Achievement', band: 7.0 }, { label: 'Coherence', band: 7.0 }, { label: 'Lexical Range', band: 7.0 }, { label: 'Grammar', band: 7.0 }] },
-    { id: 9, skill: 'speaking', band: 7.0, title: 'Part 2 - Describe a Memorable Journey', date: 'Aug 18, 2026', timeSpent: 12, criteria: [{ label: 'Fluency', band: 7.0 }, { label: 'Lexical Resource', band: 7.0 }, { label: 'Pronunciation', band: 7.5 }, { label: 'Grammar', band: 6.5 }] },
-    { id: 10, skill: 'speaking', band: 5.5, title: 'Part 3 - Environmental Conservation', date: 'Aug 21, 2026', timeSpent: 15, criteria: [{ label: 'Fluency', band: 5.5 }, { label: 'Lexical Resource', band: 5.5 }, { label: 'Pronunciation', band: 6.0 }, { label: 'Grammar', band: 5.5 }] },
-    { id: 11, skill: 'listening', band: 7.5, title: 'Cambridge 18 Test 1 Listening', score: 34, date: 'Aug 19, 2026', timeSpent: 30, criteria: [{ label: 'Detail Recognition', band: 8.0 }, { label: 'Map Labelling', band: 7.0 }, { label: 'Number Capture', band: 7.5 }] },
-    { id: 12, skill: 'listening', band: 7.0, title: 'Section 4 Lecture Notes', score: 31, date: 'Aug 22, 2026', timeSpent: 28, criteria: [{ label: 'Detail Recognition', band: 7.0 }, { label: 'Map Labelling', band: 7.0 }, { label: 'Number Capture', band: 7.0 }] },
-    { id: 13, skill: 'reading', band: 7.0, title: 'The Physics of Traffic Behavior', score: 30, date: 'Aug 20, 2026', timeSpent: 36, criteria: [{ label: 'Skimming', band: 7.5 }, { label: 'TFNG Traps', band: 6.5 }, { label: 'Gap-Fill', band: 7.0 }] },
-    { id: 14, skill: 'reading', band: 5.5, title: 'Plain English Movement', score: 22, date: 'Aug 22, 2026', timeSpent: 34, criteria: [{ label: 'Skimming', band: 6.0 }, { label: 'TFNG Traps', band: 5.0 }, { label: 'Gap-Fill', band: 5.5 }] },
+    { id: 1, skill: 'reading', book_number: 7, test_number: 1, title: 'Cambridge 7 — Test 1', band: 4.0, score: 0, is_general: false, date: 'Oct 5, 2026', timeSpent: 14, criteria: [{ label: 'Skimming', band: 4.0 }, { label: 'TFNG Traps', band: 4.0 }, { label: 'Gap-Fill', band: 4.0 }] },
+    { id: 2, skill: 'reading', book_number: 18, test_number: 2, title: 'Cambridge 18 — Test 2', band: 7.5, score: 32, is_general: true, date: 'Oct 4, 2026', timeSpent: 38, criteria: [{ label: 'Skimming', band: 7.5 }, { label: 'TFNG Traps', band: 7.0 }, { label: 'Gap-Fill', band: 7.5 }] },
+    { id: 3, skill: 'listening', book_number: 7, test_number: 1, title: 'Cambridge 7 — Test 1', band: 6.5, score: 28, is_general: false, date: 'Oct 3, 2026', timeSpent: 32, criteria: [{ label: 'Detail Recognition', band: 7.0 }, { label: 'Map Labelling', band: 6.0 }, { label: 'Number Capture', band: 6.5 }] },
+    { id: 4, skill: 'listening', book_number: 18, test_number: 1, title: 'Cambridge 18 — Test 1', band: 7.5, score: 34, is_general: true, date: 'Oct 2, 2026', timeSpent: 30, criteria: [{ label: 'Detail Recognition', band: 8.0 }, { label: 'Map Labelling', band: 7.0 }, { label: 'Number Capture', band: 7.5 }] },
+    { id: 5, skill: 'writing', book_number: 7, test_number: 1, title: 'Cambridge 7 — Test 1', taskType: 'task2', band: 6.5, is_general: false, date: 'Oct 1, 2026', timeSpent: 40, criteria: [{ label: 'Task Response', band: 6.5 }, { label: 'Coherence', band: 6.5 }, { label: 'Lexical Range', band: 6.0 }, { label: 'Grammar', band: 7.0 }] },
+    { id: 6, skill: 'reading', book_number: 7, test_number: 2, title: 'Cambridge 7 — Test 2', band: 6.5, score: 27, is_general: false, date: 'Aug 28, 2026', timeSpent: 38, criteria: [{ label: 'Skimming', band: 7.0 }, { label: 'TFNG Traps', band: 5.5 }, { label: 'Gap-Fill', band: 6.5 }] },
+    { id: 7, skill: 'writing', title: 'Task 2 - Education Policy', taskType: 'task2', band: 6.5, is_general: false, date: 'Aug 20, 2026', timeSpent: 44, criteria: [{ label: 'Task Response', band: 6.5 }, { label: 'Coherence', band: 6.5 }, { label: 'Lexical Range', band: 6.0 }, { label: 'Grammar', band: 7.0 }] },
+    { id: 8, skill: 'writing', title: 'Task 1 - General Letter', taskType: 'task1', band: 7.0, is_general: true, date: 'Aug 21, 2026', timeSpent: 20, criteria: [{ label: 'Task Achievement', band: 7.0 }, { label: 'Coherence', band: 7.0 }, { label: 'Lexical Range', band: 7.0 }, { label: 'Grammar', band: 7.0 }] },
+    { id: 9, skill: 'speaking', title: 'Part 2 - Describe a Memorable Journey', band: 7.0, is_general: false, date: 'Aug 18, 2026', timeSpent: 12, criteria: [{ label: 'Fluency', band: 7.0 }, { label: 'Lexical Resource', band: 7.0 }, { label: 'Pronunciation', band: 7.5 }, { label: 'Grammar', band: 6.5 }] },
+    { id: 10, skill: 'speaking', title: 'Part 3 - Environmental Conservation', band: 5.5, is_general: false, date: 'Aug 21, 2026', timeSpent: 15, criteria: [{ label: 'Fluency', band: 5.5 }, { label: 'Lexical Resource', band: 5.5 }, { label: 'Pronunciation', band: 6.0 }, { label: 'Grammar', band: 5.5 }] },
+    { id: 11, skill: 'listening', book_number: 18, test_number: 2, title: 'Cambridge 18 — Test 2', band: 7.0, score: 31, is_general: true, date: 'Aug 19, 2026', timeSpent: 30, criteria: [{ label: 'Detail Recognition', band: 8.0 }, { label: 'Map Labelling', band: 7.0 }, { label: 'Number Capture', band: 7.5 }] },
+    { id: 12, skill: 'listening', title: 'Section 4 Lecture Notes', band: 7.0, score: 31, is_general: false, date: 'Aug 22, 2026', timeSpent: 28, criteria: [{ label: 'Detail Recognition', band: 7.0 }, { label: 'Map Labelling', band: 7.0 }, { label: 'Number Capture', band: 7.0 }] },
+    { id: 13, skill: 'reading', title: 'The Physics of Traffic Behavior', band: 7.0, score: 30, is_general: false, date: 'Aug 20, 2026', timeSpent: 36, criteria: [{ label: 'Skimming', band: 7.5 }, { label: 'TFNG Traps', band: 6.5 }, { label: 'Gap-Fill', band: 7.0 }] },
+    { id: 14, skill: 'reading', title: 'Plain English Movement', band: 5.5, score: 22, is_general: false, date: 'Aug 22, 2026', timeSpent: 34, criteria: [{ label: 'Skimming', band: 6.0 }, { label: 'TFNG Traps', band: 5.0 }, { label: 'Gap-Fill', band: 5.5 }] },
 ];
 
 export interface DiagnosticSubSkill {
@@ -178,9 +241,10 @@ export const MISTAKE_TOKENS: MistakeToken[] = [
 ];
 
 export const attemptStatus = (band: number): { label: string; color: string } => {
-    if (band >= 7) return { label: 'Approved', color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20' };
-    if (band >= 6) return { label: 'Developing', color: 'text-amber-400 bg-amber-400/10 border-amber-400/20' };
-    return { label: 'At Risk', color: 'text-red-400 bg-red-400/10 border-red-400/20' };
+    if (band >= 7.5) return { label: 'TARGET BAND', color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/30' };
+    if (band >= 7.0) return { label: 'APPROVED', color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20' };
+    if (band >= 6.0) return { label: 'DEVELOPING', color: 'text-amber-400 bg-amber-400/10 border-amber-400/20' };
+    return { label: 'AT RISK', color: 'text-rose-400 bg-rose-400/10 border-rose-400/30' };
 };
 
 export type IeltsBundleId = 'sprint' | 'express' | 'mock';
@@ -268,7 +332,25 @@ export const formatClock = (s: number) => {
     return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
 };
 
-export const rawToBand = (score: number): number => {
+export const rawToBandGT = (score: number): number => {
+    if (score >= 40) return 9;
+    if (score >= 39) return 8.5;
+    if (score >= 37) return 8;
+    if (score >= 36) return 7.5;
+    if (score >= 34) return 7;
+    if (score >= 32) return 6.5;
+    if (score >= 30) return 6;
+    if (score >= 27) return 5.5;
+    if (score >= 23) return 5;
+    if (score >= 19) return 4.5;
+    if (score >= 15) return 4;
+    return 3.5;
+};
+
+export const rawToBand = (score: number, category?: string): number => {
+    if (category === 'general') {
+        return rawToBandGT(score);
+    }
     if (score >= 39) return 9;
     if (score >= 37) return 8.5;
     if (score >= 35) return 8;

@@ -1,5 +1,4 @@
-import React from 'react';
-import AuthOverlay from '../AuthOverlay';
+import React, { useEffect } from 'react';
 import { AuthType } from '../../App';
 
 export interface StudentLoginModalProps {
@@ -14,19 +13,17 @@ export const StudentLoginModal: React.FC<StudentLoginModalProps> = ({
   type = 'login',
   isOpen = true,
   onClose,
-  onSuccess = () => {},
-  onTypeChange = () => {},
 }) => {
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen) {
+      const target = type === 'signup' ? '/signup' : '/login';
+      window.history.pushState({}, '', target);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      onClose();
+    }
+  }, [isOpen, type, onClose]);
 
-  return (
-    <AuthOverlay
-      type={type}
-      setType={onTypeChange}
-      onClose={onClose}
-      onSuccess={onSuccess}
-    />
-  );
+  return null;
 };
 
 export default StudentLoginModal;

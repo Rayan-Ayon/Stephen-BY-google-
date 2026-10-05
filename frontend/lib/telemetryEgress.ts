@@ -13,6 +13,8 @@ export interface ExamAttemptPayload {
   bookNumber?: number;
   testNumber?: number;
   sourceType?: string;
+  category?: 'academic' | 'general';
+  title?: string;
 }
 
 export interface HandwrittenSubmissionPayload {
@@ -77,9 +79,16 @@ export async function recordExamAttempt(payload: ExamAttemptPayload) {
       }
     }
 
+    const defaultTitle = payload.title || (
+      payload.bookNumber && payload.testNumber
+        ? `Cambridge ${payload.bookNumber} — Test ${payload.testNumber}`
+        : 'Reading Practice'
+    );
+
     const row = {
       test_id: payload.testId,
       module: payload.module,
+      title: defaultTitle,
       band_score: Number(payload.bandScore),
       correct_count: payload.correctCount || 0,
       total_questions: payload.totalQuestions || 40,
@@ -89,6 +98,7 @@ export async function recordExamAttempt(payload: ExamAttemptPayload) {
       source_type: payload.sourceType || 'cambridge',
       book_number: payload.bookNumber,
       test_number: payload.testNumber,
+      category: payload.category || 'academic',
       ...(resolvedUserId ? { user_id: resolvedUserId } : {})
     };
 
@@ -98,6 +108,9 @@ export async function recordExamAttempt(payload: ExamAttemptPayload) {
       const cachedRecord = {
         id: `local-att-${Date.now()}`,
         ...row,
+        book_number: payload.bookNumber,
+        test_number: payload.testNumber,
+        title: defaultTitle,
         created_at: new Date().toISOString()
       };
       localStorage.setItem(cacheKey, JSON.stringify(cachedRecord));

@@ -107,6 +107,16 @@ const ReadingAnalysisSplitCanvas: React.FC<{
     rawAnswers?: Record<string | number, string>;
     testTitle?: string;
 }> = ({ bookNumber, testNumber, attemptId, rawAnswers, testTitle }) => {
+    const memoizedAnswers = useMemo(() => {
+        if (!rawAnswers) return {};
+        if (typeof rawAnswers === 'object') return rawAnswers;
+        try {
+            return JSON.parse(rawAnswers as unknown as string);
+        } catch {
+            return {};
+        }
+    }, [rawAnswers]);
+
     const {
         loading,
         passages,
@@ -115,56 +125,89 @@ const ReadingAnalysisSplitCanvas: React.FC<{
         bookNumber,
         testNumber,
         attemptId,
-        initialAnswers: rawAnswers,
+        initialAnswers: memoizedAnswers,
         testTitle,
     });
 
+    const [activePassage, setActivePassage] = useState<1 | 2 | 3>(1);
     const [activePassageIndex, setActivePassageIndex] = useState(0);
     const [isPassageHidden, setIsPassageHidden] = useState<boolean>(false);
     const [vocabLookupEnabled, setVocabLookupEnabled] = useState<boolean>(false);
     const [selectedWordDef, setSelectedWordDef] = useState<{ word: string; pos: string; def: string } | null>(null);
-    const [activeFilter, setActiveFilter] = useState<'all' | 'incorrect' | 'correct' | 'unanswered'>('all');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'missed' | 'correct' | 'omitted'>('all');
     const [expandedExplanations, setExpandedExplanations] = useState<Record<number, boolean>>({});
 
     const passageContainerRef = useRef<HTMLDivElement>(null);
     const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const [activeHighlightSection, setActiveHighlightSection] = useState<string | null>(null);
 
-    const activePassage = passages[activePassageIndex] || passages[0] || {
-        passage_number: 1,
-        title: 'Passage 1',
+    const isInitialLoading = loading && passages.length === 0;
+
+    const allQuestions = questions;
+
+    const activePassageData = passages.find((p) => p.passage_number === activePassage) || passages[activePassageIndex] || passages[0] || {
+        passage_number: activePassage,
+        title: `Passage ${activePassage}`,
         passage_text: '',
         sections: [],
     };
 
-    // Filter questions based on filter pills
-    const filteredQuestions = useMemo(() => {
-        return questions.filter((q) => {
-            const hasAns = q.candidate_answer && q.candidate_answer.trim() !== '';
-            if (activeFilter === 'incorrect') return hasAns && !q.is_correct;
-            if (activeFilter === 'correct') return q.is_correct;
-            if (activeFilter === 'unanswered') return !hasAns;
+    // Compute questions strictly belonging to the currently selected passage
+    const currentPassageQuestions = useMemo(() => {
+        if (!allQuestions || allQuestions.length === 0) return [];
+
+        // Filter by explicit passage_number OR fallback by standard question index boundaries
+        return allQuestions.filter((q) => {
+            if (q.passage_number) {
+                return q.passage_number === activePassage;
+            }
+            // Fallback boundary map for standard 40-question IELTS Reading tests
+            if (activePassage === 1) return q.question_number >= 1 && q.question_number <= 13;
+            if (activePassage === 2) return q.question_number >= 14 && q.question_number <= 26;
+            if (activePassage === 3) return q.question_number >= 27 && q.question_number <= 40;
             return true;
         });
-    }, [questions, activeFilter]);
+    }, [allQuestions, activePassage]);
 
-    // Expand all explanations by default
-    useEffect(() => {
-        if (questions.length > 0) {
-            const initialMap: Record<number, boolean> = {};
-            questions.forEach((q) => {
-                initialMap[q.question_number] = true;
-            });
-            setExpandedExplanations((prev) => ({ ...initialMap, ...prev }));
+    // Sub-Filter Binding (All, Missed, Correct, Omitted)
+    const displayedQuestions = useMemo(() => {
+        if (statusFilter === 'missed') {
+            return currentPassageQuestions.filter(
+                (q) => (q as any).is_incorrect || (q.candidate_answer && q.candidate_answer.trim() !== '' && !q.is_correct)
+            );
         }
-    }, [questions]);
+        if (statusFilter === 'correct') {
+            return currentPassageQuestions.filter((q) => q.is_correct);
+        }
+        if (statusFilter === 'omitted') {
+            return currentPassageQuestions.filter((q) => !q.candidate_answer || q.candidate_answer.trim() === '');
+        }
+        return currentPassageQuestions;
+    }, [currentPassageQuestions, statusFilter]);
+
+    // Expand all explanations by default for questions in the active passage
+    useEffect(() => {
+        if (currentPassageQuestions.length > 0) {
+            setExpandedExplanations((prev) => {
+                const initialMap: Record<number, boolean> = { ...prev };
+                currentPassageQuestions.forEach((q) => {
+                    if (initialMap[q.question_number] === undefined) {
+                        initialMap[q.question_number] = true;
+                    }
+                });
+                return initialMap;
+            });
+        }
+    }, [currentPassageQuestions]);
 
     const toggleExplanation = (qNum: number) => {
         setExpandedExplanations((prev) => ({ ...prev, [qNum]: !prev[qNum] }));
     };
 
     const handleReviewThis = (sectionKey: string, passageNumber?: number) => {
-        if (passageNumber && passageNumber !== activePassage.passage_number) {
+        if (passageNumber && passageNumber !== activePassage) {
+            const pNum = passageNumber as 1 | 2 | 3;
+            setActivePassage(pNum);
             const targetIndex = passages.findIndex((p) => p.passage_number === passageNumber);
             if (targetIndex !== -1) {
                 setActivePassageIndex(targetIndex);
@@ -202,6 +245,36 @@ const ReadingAnalysisSplitCanvas: React.FC<{
         });
     };
 
+    if (isInitialLoading) {
+        return (
+            <div className="w-full h-[calc(100vh-140px)] flex flex-col space-y-4 animate-pulse">
+                <div className="h-14 bg-[#15181E] border border-[#222732] rounded-2xl p-4 flex items-center justify-between">
+                    <div className="flex gap-2">
+                        <div className="h-7 w-28 bg-[#222732] rounded-xl" />
+                        <div className="h-7 w-28 bg-[#222732] rounded-xl" />
+                        <div className="h-7 w-28 bg-[#222732] rounded-xl" />
+                    </div>
+                    <div className="h-7 w-40 bg-[#222732] rounded-xl" />
+                </div>
+                <div className="grid grid-cols-12 gap-4 flex-1 min-h-0 overflow-hidden">
+                    <div className="col-span-12 lg:col-span-6 h-full bg-[#15181E] border border-[#222732] rounded-2xl p-6 space-y-4">
+                        <div className="h-6 w-1/3 bg-[#222732] rounded" />
+                        <div className="h-4 w-full bg-[#1C2028] rounded" />
+                        <div className="h-4 w-5/6 bg-[#1C2028] rounded" />
+                        <div className="h-4 w-4/6 bg-[#1C2028] rounded" />
+                        <div className="h-4 w-full bg-[#1C2028] rounded" />
+                    </div>
+                    <div className="col-span-12 lg:col-span-6 h-full bg-[#15181E] border border-[#222732] rounded-2xl p-6 space-y-4">
+                        <div className="h-6 w-1/3 bg-[#222732] rounded" />
+                        <div className="h-24 w-full bg-[#1C2028] rounded-xl" />
+                        <div className="h-24 w-full bg-[#1C2028] rounded-xl" />
+                        <div className="h-24 w-full bg-[#1C2028] rounded-xl" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="w-full flex flex-col h-[calc(100vh-140px)] overflow-hidden">
             {/* STICKY TOP CONTROL BAR */}
@@ -211,22 +284,28 @@ const ReadingAnalysisSplitCanvas: React.FC<{
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1 select-none">
                         REVIEW PASSAGE:
                     </span>
-                    {passages.map((p, idx) => (
-                        <button
-                            key={p.passage_number}
-                            onClick={() => setActivePassageIndex(idx)}
-                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border flex items-center ${
-                                idx === activePassageIndex
-                                    ? 'bg-[#1E232E] border-indigo-500/80 text-white shadow-sm ring-1 ring-indigo-500/50'
-                                    : 'bg-[#0D0F12] border-[#222732] text-slate-300 hover:text-white hover:border-slate-700'
-                            }`}
-                        >
-                            <span className="text-slate-300">Passage {p.passage_number}:</span>
-                            <span className="text-indigo-300 font-semibold ml-1.5 truncate max-w-[180px] sm:max-w-none">
-                                {p.title}
-                            </span>
-                        </button>
-                    ))}
+                    {passages.map((p, idx) => {
+                        const pNum = (p.passage_number || (idx + 1)) as 1 | 2 | 3;
+                        return (
+                            <button
+                                key={p.passage_number || idx}
+                                onClick={() => {
+                                    setActivePassageIndex(idx);
+                                    setActivePassage(pNum);
+                                }}
+                                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border flex items-center ${
+                                    activePassage === pNum
+                                        ? 'bg-[#1E232E] border-indigo-500/80 text-white shadow-sm ring-1 ring-indigo-500/50'
+                                        : 'bg-[#0D0F12] border-[#222732] text-slate-300 hover:text-white hover:border-slate-700'
+                                }`}
+                            >
+                                <span className="text-slate-300">Passage {p.passage_number}:</span>
+                                <span className="text-indigo-300 font-semibold ml-1.5 truncate max-w-[180px] sm:max-w-none">
+                                    {p.title}
+                                </span>
+                            </button>
+                        );
+                    })}
                 </div>
 
                 {/* Filter Pills & Actions */}
@@ -235,17 +314,17 @@ const ReadingAnalysisSplitCanvas: React.FC<{
                     <div className="flex items-center gap-1 bg-[#0D0F12] p-1 rounded-xl border border-[#222732]">
                         {(
                             [
-                                { id: 'all', label: `All ${questions.length}` },
-                                { id: 'incorrect', label: 'Missed' },
+                                { id: 'all', label: `All ${currentPassageQuestions.length}` },
+                                { id: 'missed', label: 'Missed' },
                                 { id: 'correct', label: 'Correct' },
-                                { id: 'unanswered', label: 'Omitted' },
+                                { id: 'omitted', label: 'Omitted' },
                             ] as const
                         ).map((filter) => (
                             <button
                                 key={filter.id}
-                                onClick={() => setActiveFilter(filter.id)}
+                                onClick={() => setStatusFilter(filter.id)}
                                 className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                                    activeFilter === filter.id
+                                    statusFilter === filter.id
                                         ? 'bg-indigo-600 text-white shadow-xs'
                                         : 'text-slate-400 hover:text-slate-200'
                                 }`}
@@ -309,28 +388,25 @@ const ReadingAnalysisSplitCanvas: React.FC<{
                         isPassageHidden ? 'hidden' : 'col-span-12 lg:col-span-6'
                     } h-full overflow-y-auto custom-scrollbar bg-[#15181E] border border-[#222732] rounded-2xl p-6 space-y-4`}
                 >
-                    <div className="flex items-center justify-between border-b border-[#222732] pb-3">
+                    <div className="flex items-center justify-between border-b border-[#222732] pb-3.5 flex-wrap gap-2">
                         <div>
-                            <h4 className="text-base font-bold text-white tracking-tight">
-                                {activePassage?.title || `Passage ${activePassage?.passage_number || 1}`}
-                            </h4>
-                            <span className="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">
-                                Reading Passage {activePassage?.passage_number || 1}
-                            </span>
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="inline-flex items-center text-[10px] font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300">
+                                    Passage {activePassageData?.passage_number || activePassage} • {activePassageData?.difficulty ? (activePassageData.difficulty.charAt(0).toUpperCase() + activePassageData.difficulty.slice(1)) : (activePassage === 1 ? 'Easy' : activePassage === 2 ? 'Medium' : 'Hard')}
+                                </span>
+                                <span className="text-[11px] font-mono text-slate-400 bg-[#0D0F12] border border-[#222732] px-2.5 py-1 rounded-md">
+                                    Cambridge Authentic
+                                </span>
+                            </div>
+                            <h3 className="text-lg font-bold text-white tracking-tight">
+                                {activePassageData?.title || `Passage ${activePassageData?.passage_number || activePassage}`}
+                            </h3>
                         </div>
-                        <span className="text-[11px] font-mono text-slate-400 bg-[#0D0F12] border border-[#222732] px-2.5 py-1 rounded-md">
-                            Cambridge Authentic
-                        </span>
                     </div>
 
-                    <div className="space-y-4 text-slate-300 text-sm leading-relaxed font-serif">
-                        {loading ? (
-                            <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
-                                <div className="w-8 h-8 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-                                <span className="text-xs text-slate-400">Loading authentic passage data from Supabase...</span>
-                            </div>
-                        ) : activePassage?.sections && activePassage.sections.length > 0 ? (
-                            activePassage.sections.map((block) => {
+                    <div className="space-y-4 text-slate-200 text-[14px] leading-[1.85] font-serif">
+                        {activePassageData?.sections && activePassageData.sections.length > 0 ? (
+                            activePassageData.sections.map((block) => {
                                 const sectionKey = `Section ${block.sectionLabel}`;
                                 const altKey = `Paragraph ${block.sectionLabel}`;
                                 const isHighlighted = activeHighlightSection === sectionKey || activeHighlightSection === altKey;
@@ -342,18 +418,22 @@ const ReadingAnalysisSplitCanvas: React.FC<{
                                             sectionRefs.current[sectionKey] = el;
                                             sectionRefs.current[altKey] = el;
                                         }}
-                                        className={`transition-all duration-500 rounded-xl p-3.5 border ${
+                                        className={`transition-all duration-300 rounded-xl p-4 border ${
                                             isHighlighted
-                                                ? 'bg-indigo-950/80 border-indigo-500/80 ring-2 ring-indigo-500/50 shadow-xl text-white'
-                                                : 'border-transparent hover:bg-[#0D0F12]/60 text-slate-300'
+                                                ? 'bg-indigo-950/70 border-indigo-500/80 ring-2 ring-indigo-500/40 shadow-xl text-white'
+                                                : 'border-[#222732]/40 bg-[#0D0F12]/40 hover:border-[#222732] text-slate-200'
                                         }`}
                                     >
-                                        <span className="inline-block font-sans font-extrabold text-xs text-indigo-400 bg-indigo-950/80 border border-indigo-800/80 px-2 py-0.5 rounded mr-2.5 shadow-xs">
-                                            Paragraph {block.sectionLabel}
-                                        </span>
-                                        <span
-                                            className={vocabLookupEnabled ? 'cursor-pointer selection:bg-amber-400/30' : ''}
-                                            onClick={(e) => {
+                                        <div className="mb-2">
+                                            <span className="inline-block font-sans font-extrabold text-[11px] text-indigo-300 bg-indigo-950/90 border border-indigo-700/80 px-2.5 py-0.5 rounded shadow-xs">
+                                                Paragraph {block.sectionLabel}
+                                            </span>
+                                        </div>
+                                        <div
+                                            className={`font-serif text-[14px] leading-[1.85] text-slate-200 whitespace-pre-line ${
+                                                vocabLookupEnabled ? 'cursor-pointer selection:bg-amber-400/30' : ''
+                                            }`}
+                                            onClick={() => {
                                                 if (!vocabLookupEnabled) return;
                                                 const selection = window.getSelection()?.toString().trim();
                                                 if (selection && selection.length > 2) {
@@ -362,14 +442,14 @@ const ReadingAnalysisSplitCanvas: React.FC<{
                                             }}
                                         >
                                             {block.content}
-                                        </span>
+                                        </div>
                                     </div>
                                 );
                             })
-                        ) : activePassage?.passage_text ? (
+                        ) : activePassageData?.passage_text ? (
                             <div
-                                className="prose prose-invert max-w-none space-y-3"
-                                dangerouslySetInnerHTML={{ __html: activePassage.passage_text }}
+                                className="prose prose-invert max-w-none space-y-4 text-slate-200 text-[14px] leading-[1.85] font-serif"
+                                dangerouslySetInnerHTML={{ __html: activePassageData.passage_text }}
                             />
                         ) : (
                             <p className="text-xs text-slate-500 text-center py-8">Passage text not available.</p>
@@ -383,18 +463,17 @@ const ReadingAnalysisSplitCanvas: React.FC<{
                         isPassageHidden ? 'col-span-12' : 'col-span-12 lg:col-span-6'
                     } h-full overflow-y-auto custom-scrollbar space-y-4 pr-1`}
                 >
-                    {loading ? (
-                        <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
-                            <div className="w-8 h-8 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-                            <span className="text-xs text-slate-400">Loading questions & responses from Supabase...</span>
-                        </div>
-                    ) : filteredQuestions.length === 0 ? (
+                    {displayedQuestions.length === 0 ? (
                         <div className="p-8 text-center bg-[#15181E] border border-[#222732] rounded-2xl">
-                            <p className="text-sm font-semibold text-slate-300">No questions match filter "{activeFilter}"</p>
-                            <p className="text-xs text-slate-500 mt-1">Switch to "All" to inspect all candidate responses.</p>
+                            <p className="text-sm font-semibold text-slate-300">
+                                No questions match filter "{statusFilter}" in Passage {activePassage}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-1">
+                                Switch to "All {currentPassageQuestions.length}" to inspect all candidate responses for this passage.
+                            </p>
                         </div>
                     ) : (
-                        filteredQuestions.map((q) => {
+                        displayedQuestions.map((q) => {
                             const userRaw = q.candidate_answer;
                             const isCorrect = Boolean(q.is_correct);
                             const hasAnswer = Boolean(userRaw && userRaw.trim() !== '');
@@ -570,20 +649,53 @@ const ObjectiveView: React.FC<{ data: ObjectiveAnalysis }> = ({ data }) => {
     const [passage, setPassage] = React.useState<ObjectiveAnalysis['passageCtx'] | null>(null);
     const o = data;
 
+    const passageBreakdown = useMemo(() => {
+        const p1 = o.answers.filter((a) => a.q <= 13);
+        const p2 = o.answers.filter((a) => a.q >= 14 && a.q <= 26);
+        const p3 = o.answers.filter((a) => a.q >= 27);
+        const p1Correct = p1.filter((a) => a.status === 'correct').length;
+        const p2Correct = p2.filter((a) => a.status === 'correct').length;
+        const p3Correct = p3.filter((a) => a.status === 'correct').length;
+
+        return [
+            { name: 'Passage 1', title: 'Let’s Go Bats', correct: p1Correct, total: p1.length || 13, accuracy: Math.round((p1Correct / (p1.length || 13)) * 100), difficulty: 'Easy' },
+            { name: 'Passage 2', title: 'Making Every Drop Count', correct: p2Correct, total: p2.length || 13, accuracy: Math.round((p2Correct / (p2.length || 13)) * 100), difficulty: 'Medium' },
+            { name: 'Passage 3', title: 'Educating Psyche', correct: p3Correct, total: p3.length || 14, accuracy: Math.round((p3Correct / (p3.length || 14)) * 100), difficulty: 'Hard' },
+        ];
+    }, [o.answers]);
+
     return (
         <div className="space-y-4">
             <Card title="Overview Metric Bar" subtitle="Performance snapshot vs allocated time">
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                     {[
                         { l: 'Band Score', v: o.band.toFixed(1) },
+                        { l: 'Accuracy Rate', v: `${Math.round((o.correct / (o.total || 40)) * 100)}%` },
                         { l: 'Correct', v: `${o.correct}/${o.total}` },
-                        { l: 'Incorrect', v: String(o.incorrect) },
-                        { l: 'Unanswered', v: String(o.unanswered) },
-                        { l: 'Time / Alloc.', v: `${o.timeSpent}m / ${o.allocated}m` },
+                        { l: 'Missed / Omitted', v: `${o.incorrect} / ${o.unanswered}` },
+                        { l: 'Elapsed Duration', v: `${o.timeSpent}m / ${o.allocated}m` },
                     ].map((m) => (
                         <div key={m.l} className="rounded-lg bg-[#0D0D0E] border border-neutral-800 p-3">
                             <p className="text-[10px] uppercase tracking-wider text-neutral-500">{m.l}</p>
                             <p className="text-xl font-semibold text-white mt-1">{m.v}</p>
+                        </div>
+                    ))}
+                </div>
+            </Card>
+
+            <Card title="Breakdown by Passage" subtitle="Accuracy rate and completion progress per reading passage">
+                <div className="space-y-4">
+                    {passageBreakdown.map((pb) => (
+                        <div key={pb.name} className="space-y-1.5">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="font-semibold text-white">
+                                    {pb.name} <span className="text-slate-400 font-normal">({pb.title} • {pb.difficulty})</span>
+                                </span>
+                                <span className="font-mono text-slate-300">
+                                    {pb.correct}/{pb.total} Correct ({pb.accuracy}%)
+                                </span>
+                            </div>
+                            <Bar value={pb.accuracy} max={100} color={pb.accuracy >= 70 ? '#10b981' : pb.accuracy >= 50 ? '#fbbf24' : '#ef4444'} />
                         </div>
                     ))}
                 </div>
@@ -983,13 +1095,40 @@ const BundleView: React.FC<{ data: BundleAnalysis }> = ({ data }) => {
 
 /* ───────────────────────── Main Modal ───────────────────────── */
 
-interface IELTSAnalysisViewProps {
+export interface IELTSAnalysisViewProps {
+    isModal?: boolean; // true when opened from History Matrix, false when embedded in post-submission
     attemptId?: number | string;
     bundleId?: IeltsBundleId;
-    onClose: () => void;
+    bookNumber?: number;
+    testNumber?: number;
+    answersPayload?: any;
+    skillModule?: 'reading' | 'listening' | 'writing' | 'speaking';
+    title?: string;
+    onClose?: () => void;
 }
 
-const IELTSAnalysisView: React.FC<IELTSAnalysisViewProps> = ({ attemptId, bundleId, onClose }) => {
+const IELTSAnalysisView: React.FC<IELTSAnalysisViewProps> = ({
+    isModal = false,
+    attemptId,
+    bundleId,
+    bookNumber,
+    testNumber,
+    answersPayload,
+    skillModule,
+    title: propsTitle,
+    onClose
+}) => {
+    const parsedUserAnswers = useMemo(() => {
+        if (!answersPayload) return {};
+        if (typeof answersPayload === 'object') return answersPayload;
+        try {
+            return JSON.parse(answersPayload as unknown as string);
+        } catch (e) {
+            console.error('Failed to parse answersPayload:', e);
+            return {};
+        }
+    }, [answersPayload]);
+
     const rawData = React.useMemo<ResolvedAnalysis>(
         () => resolveAnalysis({ attemptId: typeof attemptId === 'number' ? attemptId : undefined, bundleId }, readAttempts()),
         [attemptId, bundleId],
@@ -1151,14 +1290,20 @@ const IELTSAnalysisView: React.FC<IELTSAnalysisViewProps> = ({ attemptId, bundle
 
         fetchRealExamData();
         return () => { isMounted = false; };
-    }, [attemptId, rawData.skill, rawData.title, rawData.objective]);
+    }, [attemptId, rawData.skill, rawData.title]);
 
     const data: ResolvedAnalysis = {
         ...rawData,
         objective: realObjective || rawData.objective
     };
 
-    const title = data.title ?? (data.skill ? skillLabels[data.skill] : 'Analysis');
+    const parsedBook = bookNumber || parseInt(((propsTitle || rawData.title) || '').match(/Cambridge\s*(\d+)/i)?.[1] || '7', 10);
+    const parsedTest = testNumber || parseInt(((propsTitle || rawData.title) || '').match(/Test\s*(\d+)/i)?.[1] || '1', 10);
+    const effectiveSkill = skillModule || (bookNumber ? 'reading' : rawData.skill || 'reading');
+    const title = propsTitle || ((bookNumber && testNumber)
+        ? `Reading Attempt — Performance Analytics (Cambridge ${parsedBook} Test ${parsedTest})`
+        : (data.title ?? (data.skill ? skillLabels[data.skill] : 'Reading Attempt — Performance Analytics')));
+
     const rawAiBand =
         data.kind === 'bundle'
             ? data.bundle?.verdict.prediction ?? 0
@@ -1171,95 +1316,126 @@ const IELTSAnalysisView: React.FC<IELTSAnalysisViewProps> = ({ attemptId, bundle
     // If teacher verified, simulated +0.5 band increase
     const teacherBand = Math.min(9.0, rawAiBand + 0.5);
     const headerBand = scoreViewMode === 'teacher' ? teacherBand : rawAiBand;
-    const accent = data.skill ? skillColors[data.skill] : 'text-amber-400';
+    const accent = effectiveSkill ? (skillColors[effectiveSkill as IeltsSkill] || 'text-rose-400') : 'text-amber-400';
 
-    if (typeof document === 'undefined') return null;
-
-    return createPortal(
+    const innerModalCanvas = (
         <div
-            className="fixed inset-0 z-[999] w-screen h-screen min-h-screen bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
-            onClick={onClose}
+            className={`relative w-full max-w-7xl bg-[#0D0F12] border border-[#222732] shadow-2xl overflow-hidden flex flex-col ${
+                isModal ? 'h-[92vh] rounded-2xl' : 'rounded-2xl min-h-[calc(100vh-3rem)]'
+            }`}
+            onClick={(e) => e.stopPropagation()}
         >
-            <div
-                className="relative w-full max-w-6xl xl:max-w-7xl max-h-[94vh] my-auto rounded-2xl bg-[#0D0F12] border border-[#222732] shadow-2xl overflow-y-auto custom-scrollbar flex flex-col"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <header className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-4 bg-[#15181E] border-b border-[#222732] rounded-t-2xl flex-wrap">
-                    <div className="min-w-0">
-                        <p className="text-[10px] uppercase tracking-wider text-neutral-500">Test Analysis</p>
-                        <h2 className={`text-lg font-semibold tracking-tight truncate ${accent}`}>{title}</h2>
-                        {data.attemptDate && <p className="text-[11px] text-neutral-500 mt-0.5">{data.attemptDate}</p>}
+            <header className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-4 bg-[#15181E] border-b border-[#222732] rounded-t-2xl flex-wrap">
+                <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono mb-1">
+                        <span>Overview</span>
+                        <span>&gt;</span>
+                        <span className="text-slate-300">Reading Engine</span>
+                        <span>&gt;</span>
+                        <span className="text-rose-400 font-semibold">Post-Exam Analysis Canvas</span>
                     </div>
+                    <h2 className={`text-lg font-bold tracking-tight truncate ${accent}`}>{title}</h2>
+                    {data.attemptDate && <p className="text-[11px] text-neutral-500 mt-0.5">{data.attemptDate}</p>}
+                </div>
 
-                    <div className="flex items-center gap-3 shrink-0 flex-wrap">
-                        {/* Universal Student Dispute Action & Modal */}
-                        <StudentDisputeButtonAndModal
-                            testTitle={title}
-                            module={(data.skill as any) || 'writing'}
-                            originalBand={rawAiBand}
-                            rawAnswers={data.objective?.answers}
-                            scoreViewMode={scoreViewMode}
-                            onScoreViewModeChange={setScoreViewMode}
-                        />
+                <div className="flex items-center gap-3 shrink-0 flex-wrap">
+                    {/* Universal Student Dispute Action & Modal */}
+                    <StudentDisputeButtonAndModal
+                        testTitle={title}
+                        module={(effectiveSkill as any) || 'reading'}
+                        originalBand={rawAiBand || 6.5}
+                        rawAnswers={parsedUserAnswers || data.objective?.answers}
+                        bookNumber={parsedBook}
+                        testNumber={parsedTest}
+                        scoreViewMode={scoreViewMode}
+                        onScoreViewModeChange={setScoreViewMode}
+                    />
 
-                        <BandPill band={headerBand} size="lg" />
-                        <span className="text-[10px] uppercase tracking-wider text-neutral-500 border border-neutral-800 rounded-full px-3 py-1">Target 7.5</span>
+                    <BandPill band={headerBand || 6.5} size="lg" />
+                    <span className="text-[10px] uppercase tracking-wider text-neutral-500 border border-neutral-800 rounded-full px-3 py-1">Target 7.5</span>
+                    
+                    {onClose && (
                         <button
                             onClick={onClose}
-                            className="w-9 h-9 rounded-lg bg-canvas border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors cursor-pointer"
+                            className="px-4 py-2 rounded-xl bg-[#222732] hover:bg-neutral-700 text-xs font-bold text-white transition-colors cursor-pointer"
                         >
-                            ✕
+                            Exit Hub
                         </button>
-                    </div>
-                </header>
-
-                {/* Reading View Switcher: 50/50 Split Canvas vs Analytics */}
-                {data.skill === 'reading' && (
-                    <div className="flex items-center gap-2 px-6 pt-3 pb-2 bg-[#0D0F12] border-b border-[#222732] flex-wrap">
-                        <button
-                            onClick={() => setReadingViewMode('split')}
-                            className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1.5 ${
-                                readingViewMode === 'split'
-                                    ? 'bg-rose-500/15 border-rose-500/60 text-rose-300 shadow-sm'
-                                    : 'bg-[#15181E] border-[#222732] text-neutral-400 hover:text-white'
-                            }`}
-                        >
-                            <BookOpen className="w-3.5 h-3.5" />
-                            50/50 Split Analysis (Passages & Questions)
-                        </button>
-                        <button
-                            onClick={() => setReadingViewMode('metrics')}
-                            className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
-                                readingViewMode === 'metrics'
-                                    ? 'bg-rose-500/15 border-rose-500/60 text-rose-300 shadow-sm'
-                                    : 'bg-[#15181E] border-[#222732] text-neutral-400 hover:text-white'
-                            }`}
-                        >
-                            📊 Performance Breakdown & Pacing
-                        </button>
-                    </div>
-                )}
-
-                <div className="p-6 flex-1 min-h-0">
-                    {data.skill === 'reading' && readingViewMode === 'split' ? (
-                        <ReadingAnalysisSplitCanvas
-                            bookNumber={parseInt((title || '').match(/Cambridge\s*(\d+)/i)?.[1] || '7', 10)}
-                            testNumber={parseInt((title || '').match(/Test\s*(\d+)/i)?.[1] || '1', 10)}
-                            attemptId={attemptId}
-                            testTitle={title}
-                        />
-                    ) : (
-                        <>
-                            {data.kind === 'objective' && data.objective && <ObjectiveView data={data.objective} />}
-                            {data.kind === 'writing' && data.writing && <WritingView data={data.writing} />}
-                            {data.kind === 'speaking' && data.speaking && <SpeakingView data={data.speaking} />}
-                            {data.kind === 'bundle' && data.bundle && <BundleView data={data.bundle} />}
-                        </>
                     )}
                 </div>
+            </header>
+
+            {/* Reading View Switcher: 50/50 Split Canvas vs Analytics */}
+            {effectiveSkill === 'reading' && (
+                <div className="flex items-center gap-2 px-6 pt-3 pb-2.5 bg-[#0D0F12] border-b border-[#222732] flex-wrap">
+                    <button
+                        type="button"
+                        onClick={() => setReadingViewMode('split')}
+                        className={`text-xs font-bold px-4 py-2 rounded-xl border transition-all cursor-pointer flex items-center gap-2 ${
+                            readingViewMode === 'split'
+                                ? 'bg-rose-500/20 border-rose-500/80 text-rose-200 shadow-md ring-1 ring-rose-500/40'
+                                : 'bg-[#15181E] border-[#222732] text-slate-400 hover:text-white hover:border-slate-700'
+                        }`}
+                    >
+                        <BookOpen className="w-3.5 h-3.5 text-rose-400" />
+                        📖 50/50 Split Analysis (Passages & Questions)
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setReadingViewMode('metrics')}
+                        className={`text-xs font-bold px-4 py-2 rounded-xl border transition-all cursor-pointer flex items-center gap-2 ${
+                            readingViewMode === 'metrics'
+                                ? 'bg-rose-500/20 border-rose-500/80 text-rose-200 shadow-md ring-1 ring-rose-500/40'
+                                : 'bg-[#15181E] border-[#222732] text-slate-400 hover:text-white hover:border-slate-700'
+                        }`}
+                    >
+                        📊 Performance Breakdown & Pacing
+                    </button>
+                </div>
+            )}
+
+            <div className="p-6 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+                {effectiveSkill === 'reading' && readingViewMode === 'split' ? (
+                    <ReadingAnalysisSplitCanvas
+                        bookNumber={parsedBook}
+                        testNumber={parsedTest}
+                        attemptId={attemptId}
+                        rawAnswers={parsedUserAnswers}
+                        testTitle={title}
+                    />
+                ) : (
+                    <>
+                        {data.kind === 'objective' && data.objective && <ObjectiveView data={data.objective} />}
+                        {data.kind === 'writing' && data.writing && <WritingView data={data.writing} />}
+                        {data.kind === 'speaking' && data.speaking && <SpeakingView data={data.speaking} />}
+                        {data.kind === 'bundle' && data.bundle && <BundleView data={data.bundle} />}
+                    </>
+                )}
             </div>
-        </div>,
-        document.body
+        </div>
+    );
+
+    // Scenario B: History Matrix Pop-Up Modal (React Portal with blurred backdrop)
+    if (isModal) {
+        if (typeof document === 'undefined') return null;
+        return createPortal(
+            <div
+                className="fixed inset-0 z-[9999] w-screen h-screen bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-hidden"
+                onClick={onClose}
+            >
+                {innerModalCanvas}
+            </div>,
+            document.body
+        );
+    }
+
+    // Scenario A: Direct Exam Submission Mode (Full-Page Embedded Standard Block Component)
+    return (
+        <div className="w-full space-y-6 bg-[#0D0F12] p-4 sm:p-6 overflow-y-auto custom-scrollbar flex flex-col min-h-screen">
+            <div className="w-full max-w-7xl mx-auto flex flex-col">
+                {innerModalCanvas}
+            </div>
+        </div>
     );
 };
 

@@ -16,7 +16,7 @@ import {
   Pause,
   RotateCcw
 } from 'lucide-react';
-import type { AnalysisSegment } from './analysisMockData';
+import { AnalysisSegment, buildWriting } from './analysisMockData';
 import StudentDisputeButtonAndModal from './StudentDisputeButtonAndModal';
 
 /* ─── Types ─────────────────────────────────────────────────────── */
@@ -44,18 +44,20 @@ export interface WritingTeacher {
 }
 
 export interface WritingAnalysisModalProps {
-    band: number;
+    isModal?: boolean; // true when opened from History Matrix, false when embedded in post-submission
+    band?: number;
     targetBand?: number;
-    examTitle: string;
+    examTitle?: string;
     examDate?: string;
-    criteria: WritingCriterion[];
-    segments: AnalysisSegment[];
-    rewrites: WritingRewrite[];
+    criteria?: WritingCriterion[];
+    segments?: AnalysisSegment[];
+    rewrites?: WritingRewrite[];
     teacher?: WritingTeacher;
     wordCount?: number;
     minWordCount?: number;
     timeSpentMinutes?: number;
     promptText?: string;
+    attempt?: any;
     onClose: () => void;
 }
 
@@ -151,20 +153,40 @@ const CRITERION_DETAILS: Record<string, { subMetrics: { label: string; score: nu
 /* ─── WritingAnalysisModal ──────────────────────────────────────── */
 
 export const WritingAnalysisModal: React.FC<WritingAnalysisModalProps> = ({
-    band,
+    isModal = true,
+    band: propBand,
     targetBand = 7.5,
-    examTitle,
-    examDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-    criteria,
-    segments,
-    rewrites,
-    teacher = { verified: true, remark: 'Candidate demonstrates strong structural control with Band 7.5 potential once complex clause accuracy is consolidated.', audioNote: false },
-    wordCount = 285,
+    examTitle: propExamTitle,
+    examDate: propExamDate,
+    criteria: propCriteria,
+    segments: propSegments,
+    rewrites: propRewrites,
+    teacher: propTeacher,
+    wordCount: propWordCount,
     minWordCount = 250,
-    timeSpentMinutes = 38,
-    promptText,
+    timeSpentMinutes: propTimeSpentMinutes,
+    promptText: propPromptText,
+    attempt,
     onClose,
 }) => {
+    const derivedWriting = useMemo(() => {
+        if (attempt) {
+            return buildWriting(attempt);
+        }
+        return null;
+    }, [attempt]);
+
+    const band = propBand ?? derivedWriting?.band ?? 6.5;
+    const examTitle = propExamTitle ?? attempt?.title ?? 'Academic Writing Attempt';
+    const examDate = propExamDate ?? attempt?.date ?? new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const criteria = propCriteria ?? derivedWriting?.criteria ?? [];
+    const segments = propSegments ?? derivedWriting?.segments ?? [];
+    const rewrites = propRewrites ?? derivedWriting?.rewrites ?? [];
+    const teacher = propTeacher ?? derivedWriting?.teacher ?? { verified: true, remark: 'Candidate demonstrates strong structural control with Band 7.5 potential once complex clause accuracy is consolidated.', audioNote: false };
+    const wordCount = propWordCount ?? attempt?.wordCount ?? attempt?.word_count ?? 285;
+    const timeSpentMinutes = propTimeSpentMinutes ?? attempt?.timeSpent ?? attempt?.time_spent ?? 38;
+    const promptText = propPromptText ?? attempt?.prompt ?? attempt?.title;
+
     const [expandedCriterion, setExpandedCriterion] = useState<string | null>(null);
     const [expandedRewrite, setExpandedRewrite] = useState<number | null>(0);
     const [selectedSegment, setSelectedSegment] = useState<AnalysisSegment | null>(null);
@@ -191,19 +213,15 @@ export const WritingAnalysisModal: React.FC<WritingAnalysisModalProps> = ({
 
     const cefrLevel = displayedBand >= 8.0 ? 'C2 Proficiency' : displayedBand >= 7.0 ? 'C1 Advanced' : displayedBand >= 6.0 ? 'B2 Vantage' : 'B1 Intermediate';
 
-    if (typeof document === 'undefined') return null;
-
-    return createPortal(
+    const innerModalCanvas = (
         <div
-            className="fixed inset-0 z-[999] w-screen h-screen min-h-screen bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
-            onClick={onClose}
+            className={`relative w-full max-w-7xl bg-[#0D0F12] border border-[#222732] shadow-2xl overflow-hidden flex flex-col text-slate-100 font-sans ${
+                isModal ? 'h-[92vh] rounded-2xl' : 'rounded-2xl min-h-[calc(100vh-3rem)]'
+            }`}
+            onClick={(e) => e.stopPropagation()}
         >
-            <div
-                className="relative w-full max-w-6xl max-h-[92vh] my-auto rounded-2xl bg-[#0D0F12] border border-[#222732] shadow-2xl overflow-y-auto custom-scrollbar space-y-6 text-slate-100 font-sans"
-                onClick={(e) => e.stopPropagation()}
-            >
                 {/* ── STICKY TOP TELEMETRY HEADER ── */}
-                <header className="sticky top-0 z-20 bg-[#15181E]/95 backdrop-blur-md border-b border-[#222732] px-6 py-4 flex items-center justify-between shadow-lg flex-wrap gap-4 rounded-t-2xl">
+                <header className="sticky top-0 z-20 bg-[#15181E] border-b border-[#222732] px-6 py-4 flex items-center justify-between shadow-lg flex-wrap gap-4 rounded-t-2xl">
                     <div className="flex items-center gap-3 min-w-0">
                         <button
                             onClick={onClose}
@@ -246,7 +264,7 @@ export const WritingAnalysisModal: React.FC<WritingAnalysisModalProps> = ({
                     </div>
                 </header>
 
-                <div className="p-6 space-y-6">
+                <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-6 space-y-6">
                     {/* ════ SECTION 1: TOP TELEMETRY KPI CARDS (OBSIDIAN GRID) ════ */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {/* Card 1: Overall Band Score */}
@@ -585,8 +603,29 @@ export const WritingAnalysisModal: React.FC<WritingAnalysisModalProps> = ({
                     </div>
                 </div>
             </div>
-        </div>,
-        document.body
+        );
+
+    // Scenario B: History Matrix Pop-Up Modal (React Portal with blurred backdrop)
+    if (isModal) {
+        if (typeof document === 'undefined') return null;
+        return createPortal(
+            <div
+                className="fixed inset-0 z-[9999] w-screen h-screen bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-hidden"
+                onClick={onClose}
+            >
+                {innerModalCanvas}
+            </div>,
+            document.body
+        );
+    }
+
+    // Scenario A: Direct Exam Submission Mode (Full-Page Embedded Standard Block Component)
+    return (
+        <div className="w-full space-y-6 bg-[#0D0F12] p-4 sm:p-6 overflow-y-auto custom-scrollbar flex flex-col min-h-screen">
+            <div className="w-full max-w-7xl mx-auto flex flex-col">
+                {innerModalCanvas}
+            </div>
+        </div>
     );
 };
 

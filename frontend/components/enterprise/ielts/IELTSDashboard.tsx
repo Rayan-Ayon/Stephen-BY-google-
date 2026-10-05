@@ -769,7 +769,7 @@ const IELTSDashboard: React.FC<IELTSDashboardProps> = ({ onNavigate }) => {
             </section>
 
             {analysis && (
-                <IELTSAnalysisView attemptId={analysis.attemptId} bundleId={analysis.bundleId} onClose={() => setAnalysis(null)} />
+                <IELTSAnalysisView isModal={true} attemptId={analysis.attemptId} bundleId={analysis.bundleId} onClose={() => setAnalysis(null)} />
             )}
 
             {/* Quick Guide Modal */}

@@ -33,13 +33,18 @@ const ACADEMIC_CAMBRIDGE_SERIES: TestSeries[] = Array.from({ length: 15 }, (_, i
 }));
 
 // General Training Series: Zero Mock Series, Zero Cambridge 21, ONLY Books 7–20 (length: 14)
-const GT_CAMBRIDGE_SERIES: TestSeries[] = Array.from({ length: 14 }, (_, i) => ({
-  id: `gt-cambridge-${i + 7}`,
-  label: `Cambridge IELTS ${i + 7} (GT)`,
-  setLabel: `BOOK ${i + 7}`,
-  testCount: 4,
-  group: 'cambridge' as const,
-}));
+const GT_CAMBRIDGE_SERIES: TestSeries[] = Array.from({ length: 14 }, (_, i) => {
+  const bookNum = i + 7;
+  // Official Cambridge specification: Books 7-10 GT have 2 tests; Books 11-20 GT have 4 tests
+  const testCount = bookNum <= 10 ? 2 : 4;
+  return {
+    id: `gt-cambridge-${bookNum}`,
+    label: `Cambridge IELTS ${bookNum} (GT)`,
+    setLabel: `BOOK ${bookNum}`,
+    testCount,
+    group: 'cambridge' as const,
+  };
+});
 
 const DIFFICULTY_MAP: Record<number, { label: string; className: string }> = {
   0: { label: 'Easy', className: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },

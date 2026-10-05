@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Play,
   Pause,
@@ -34,16 +35,19 @@ export interface ListeningQuestionResult {
 }
 
 export interface ListeningAnalysisModalProps {
-  score: number;
+  isModal?: boolean; // true when opened from History Matrix, false when embedded in post-submission
+  score?: number;
   totalQuestions?: number;
   bandScore?: number;
   testTitle?: string;
   userAnswers?: Record<number, string>;
+  answersPayload?: Record<string, string> | Record<number, string>;
   audioUrl?: string;
   attemptId?: string | number;
   bookNumber?: number;
   testNumber?: number;
-  onExit: () => void;
+  onExit?: () => void;
+  onClose?: () => void;
   onRetake?: () => void;
 }
 
@@ -345,25 +349,58 @@ const PART_TIMESTAMPS: Record<1 | 2 | 3 | 4, number> = {
 };
 
 export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
+  isModal = false,
   score: propScore,
   totalQuestions: propTotalQuestions = 40,
   bandScore: propBandScore,
   testTitle = 'Cambridge 18 Academic Listening — Test 1',
   userAnswers = {},
+  answersPayload,
   audioUrl = 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg',
   attemptId,
   bookNumber,
   testNumber,
   onExit,
+  onClose,
   onRetake,
 }) => {
+  const handleClose = onClose || onExit || (() => {});
+
+  useEffect(() => {
+    if (!isModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isModal, handleClose]);
+
   const parsedBook = bookNumber ?? parseInt(testTitle.match(/Cambridge\s*(\d+)/i)?.[1] || '18', 10);
   const parsedTest = testNumber ?? parseInt(testTitle.match(/Test\s*(\d+)/i)?.[1] || '1', 10);
+
+  const initialAnswers = useMemo(() => {
+    let raw: any = answersPayload || userAnswers || {};
+    if (typeof raw === 'string') {
+      try {
+        raw = JSON.parse(raw);
+      } catch {
+        raw = {};
+      }
+    }
+    const res: Record<number, string> = {};
+    Object.keys(raw).forEach((k) => {
+      const num = parseInt(k, 10);
+      if (!isNaN(num) && (raw as any)[k]) {
+        res[num] = String((raw as any)[k]);
+      }
+    });
+    return res;
+  }, [answersPayload, userAnswers]);
 
   const [activePartFilter, setActivePartFilter] = useState<'all' | 1 | 2 | 3 | 4>('all');
   const [expandedScripts, setExpandedScripts] = useState<Record<number, boolean>>({});
   const [scoreViewMode, setScoreViewMode] = useState<'ai' | 'teacher'>('ai');
-  const [activeAnswers, setActiveAnswers] = useState<Record<number, string>>(userAnswers);
+  const [activeAnswers, setActiveAnswers] = useState<Record<number, string>>(initialAnswers);
   const [dbQuestions, setDbQuestions] = useState<Record<number, { prompt?: string; correct?: string; excerpt?: string; explanation?: string }>>({});
   const [fetchedScore, setFetchedScore] = useState<number | null>(null);
 
@@ -461,7 +498,7 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
     return () => { isMounted = false; };
   }, [attemptId, parsedBook, parsedTest]);
 
-  const score = fetchedScore ?? propScore;
+  const score = fetchedScore ?? propScore ?? 0;
   const totalQuestions = propTotalQuestions;
 
   // Derived metrics
@@ -596,71 +633,76 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
     setExpandedScripts({});
   };
 
-  return (
-    <div className="w-full h-full min-h-screen overflow-y-auto pr-2 custom-scrollbar space-y-6 bg-[#0D0F12] text-slate-100 font-sans pb-16">
-      {/* ── STICKY TOP TELEMETRY HEADER ── */}
-      <header className="sticky top-0 z-30 bg-[#15181E]/95 backdrop-blur-md border-b border-[#222732] px-4 sm:px-6 py-3.5 flex items-center justify-between shadow-lg flex-wrap gap-4">
-        {/* Left: Back & Breadcrumb */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onExit}
-            className="p-2 rounded-xl border border-[#222732] hover:bg-[#181C24] text-slate-300 hover:text-white transition-colors cursor-pointer"
-            title="Return to Listening Hub"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div>
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
-              <span>Overview</span>
-              <span>&gt;</span>
-              <span className="text-slate-300">Listening Engine</span>
-              <span>&gt;</span>
-              <span className="text-rose-400 font-semibold">Post-Exam Analysis Canvas</span>
-            </div>
-            <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">
-              {testTitle} — Evaluation Canvas
-            </h1>
-          </div>
-        </div>
-
-        {/* Right: Challenge Action Badge + Retake Button */}
-        <div className="flex items-center gap-3 flex-wrap">
-          {onRetake && (
+  const innerModalCanvas = (
+    <div
+      className={`relative w-full max-w-7xl bg-[#0D0F12] border border-[#222732] shadow-2xl overflow-hidden flex flex-col ${
+        isModal ? 'h-[92vh] rounded-2xl' : 'rounded-2xl min-h-[calc(100vh-3rem)]'
+      }`}
+      onClick={(e) => e.stopPropagation()}
+    >
+        {/* ── STICKY TOP TELEMETRY HEADER ── */}
+        <header className="sticky top-0 z-30 bg-[#15181E] border-b border-[#222732] px-6 py-4 flex items-center justify-between shadow-lg flex-wrap gap-4 rounded-t-2xl">
+          {/* Left: Back & Breadcrumb */}
+          <div className="flex items-center gap-3">
             <button
-              onClick={onRetake}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#222732] hover:bg-[#181C24] text-slate-300 hover:text-white text-xs font-bold transition-all cursor-pointer"
+              onClick={handleClose}
+              className="p-2 rounded-xl border border-[#222732] hover:bg-[#181C24] text-slate-300 hover:text-white transition-colors cursor-pointer"
+              title="Return to Listening Hub"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Retake Test</span>
+              <ArrowLeft className="w-4 h-4" />
             </button>
-          )}
+            <div>
+              <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
+                <span>Overview</span>
+                <span>&gt;</span>
+                <span className="text-slate-300">Listening Engine</span>
+                <span>&gt;</span>
+                <span className="text-rose-400 font-semibold">Post-Exam Analysis Canvas</span>
+              </div>
+              <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                Listening Attempt — Performance Analytics (Cambridge {parsedBook} Test {parsedTest})
+              </h1>
+            </div>
+          </div>
 
-          {/* Universal Dispute Component */}
-          <StudentDisputeButtonAndModal
-            testTitle={testTitle}
-            module="listening"
-            originalBand={calculatedBand}
-            rawAnswers={activeAnswers}
-            sourceType="cambridge"
-            bookNumber={parsedBook}
-            testNumber={parsedTest}
-            scoreViewMode={scoreViewMode}
-            onScoreViewModeChange={setScoreViewMode}
-          />
+          {/* Right: Challenge Action Badge + Retake Button */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {onRetake && (
+              <button
+                onClick={onRetake}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#222732] hover:bg-[#181C24] text-slate-300 hover:text-white text-xs font-bold transition-all cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Retake Test</span>
+              </button>
+            )}
 
-          <button
-            onClick={onExit}
-            className="px-4 py-2 rounded-xl bg-[#222732] hover:bg-neutral-700 text-xs font-bold text-white transition-colors cursor-pointer"
-          >
-            Exit Hub
-          </button>
-        </div>
-      </header>
+            {/* Universal Dispute Component */}
+            <StudentDisputeButtonAndModal
+              testTitle={testTitle}
+              module="listening"
+              originalBand={calculatedBand}
+              rawAnswers={activeAnswers}
+              sourceType="cambridge"
+              bookNumber={parsedBook}
+              testNumber={parsedTest}
+              scoreViewMode={scoreViewMode}
+              onScoreViewModeChange={setScoreViewMode}
+            />
 
-      {/* ── MAIN CONTENT ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6 pt-2">
-        {/* ════ SECTION 1: TOP TELEMETRY KPI CARDS ════ */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <button
+              onClick={handleClose}
+              className="px-4 py-2 rounded-xl bg-[#222732] hover:bg-neutral-700 text-xs font-bold text-white transition-colors cursor-pointer"
+            >
+              Exit Hub
+            </button>
+          </div>
+        </header>
+
+        {/* ── SCROLLABLE CONTENT BODY ── */}
+        <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-6">
+          {/* ════ SECTION 1: TOP TELEMETRY KPI CARDS ════ */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Overall Band Score */}
           <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden">
             <div className="flex items-center justify-between mb-2">
@@ -1004,6 +1046,29 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
             })}
           </div>
         </div>
+      </div>
+    </div>
+  );
+
+  // Scenario B: History Matrix Pop-Up Modal (React Portal with blurred backdrop)
+  if (isModal) {
+    if (typeof document === 'undefined') return null;
+    return createPortal(
+      <div
+        className="fixed inset-0 z-[9999] w-screen h-screen bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-hidden"
+        onClick={handleClose}
+      >
+        {innerModalCanvas}
+      </div>,
+      document.body
+    );
+  }
+
+  // Scenario A: Direct Exam Submission Mode (Full-Page Embedded Standard Block Component)
+  return (
+    <div className="w-full space-y-6 bg-[#0D0F12] p-4 sm:p-6 overflow-y-auto custom-scrollbar flex flex-col min-h-screen">
+      <div className="w-full max-w-7xl mx-auto flex flex-col">
+        {innerModalCanvas}
       </div>
     </div>
   );

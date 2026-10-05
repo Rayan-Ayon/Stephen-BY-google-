@@ -4,11 +4,11 @@ import { supabase } from './supabaseClient';
 import { AuthProvider, useAuth } from './authContext';
 import Dashboard from './components/Dashboard';
 import LandingPage from './components/LandingPage';
-import AuthOverlay from './components/AuthOverlay';
 import SuperAdminView from './components/SuperAdminView';
 import OrgSpaceView from './components/OrgSpaceView';
 import ActivationView from './components/ActivationView';
 import { InstitutionLoginView } from './components/auth/InstitutionLoginView';
+import StudentAuthCanvas from './components/auth/StudentAuthCanvas';
 import { PublicPricingView } from './components/PublicPricingView';
 import { FeaturesShowcaseView } from './components/navigation/FeaturesShowcaseView';
 import { LearnHubView } from './components/navigation/LearnHubView';
@@ -63,7 +63,6 @@ const AppContent: React.FC = () => {
   });
   const [showDashboard, setShowDashboard] = useState(false);
   const [initialView, setInitialView] = useState('add_content');
-  const [authType, setAuthType] = useState<AuthType>(null);
   const [sessionChecked, setSessionChecked] = useState(false);
   const [spaceCode, setSpaceCode] = useState('');
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
@@ -151,9 +150,14 @@ const AppContent: React.FC = () => {
     setShowDashboard(true);
   };
 
-  const handleAuthSuccess = (email: string, code: string) => {
+  const handleAuthNavigation = (type: AuthType) => {
+    const target = type === 'signup' ? '/signup' : '/login';
+    window.history.pushState({}, '', target);
+    setCurrentPath(target);
+  };
+
+  const handleAuthSuccess = (email: string, code: string = '') => {
     setSpaceCode(code);
-    setAuthType(null);
     handleStartLearning();
   };
 
@@ -177,6 +181,7 @@ const AppContent: React.FC = () => {
     );
   }
 
+  // ── Dedicated Institutional B2B Login Route ──
   const isInstitutionLogin = currentPath.startsWith('/institution/login');
 
   if (isInstitutionLogin) {
@@ -188,13 +193,40 @@ const AppContent: React.FC = () => {
           setIsOrgManager(true);
         }}
         onSwitchToStudent={() => {
-          window.history.pushState({}, '', '/');
-          setCurrentPath('/');
-          setAuthType('login');
+          window.history.pushState({}, '', '/login');
+          setCurrentPath('/login');
         }}
         onExit={() => {
           window.history.pushState({}, '', '/');
           setCurrentPath('/');
+        }}
+      />
+    );
+  }
+
+  // ── Dedicated Student Candidate Split-Screen Auth Route (/login & /signup) ──
+  const isStudentAuth =
+    currentPath === '/login' ||
+    currentPath.startsWith('/login') ||
+    currentPath === '/signup' ||
+    currentPath.startsWith('/signup');
+
+  if (isStudentAuth) {
+    return (
+      <StudentAuthCanvas
+        initialMode={currentPath.startsWith('/signup') ? 'signup' : 'login'}
+        onSuccess={(email) => {
+          handleAuthSuccess(email, '');
+          window.history.pushState({}, '', '/');
+          setCurrentPath('/');
+        }}
+        onExit={() => {
+          window.history.pushState({}, '', '/');
+          setCurrentPath('/');
+        }}
+        onSwitchToInstitution={() => {
+          window.history.pushState({}, '', '/institution/login');
+          setCurrentPath('/institution/login');
         }}
       />
     );
@@ -208,21 +240,13 @@ const AppContent: React.FC = () => {
           theme={theme}
           toggleTheme={toggleTheme}
           userEmail={userEmail}
-          onAuth={(type) => setAuthType(type)}
+          onAuth={handleAuthNavigation}
           onStartLearning={handleStartLearning}
           onNavigate={(path) => {
             window.history.pushState({}, '', path);
             setCurrentPath(path);
           }}
         />
-        {authType && (
-          <AuthOverlay
-            type={authType}
-            setType={setAuthType}
-            onClose={() => setAuthType(null)}
-            onSuccess={(email) => handleAuthSuccess(email, '')}
-          />
-        )}
       </div>
     );
   }
@@ -235,7 +259,7 @@ const AppContent: React.FC = () => {
           theme={theme}
           toggleTheme={toggleTheme}
           userEmail={userEmail}
-          onAuth={(type) => setAuthType(type)}
+          onAuth={handleAuthNavigation}
           onStartLearning={handleStartLearning}
           onNavigate={(path) => {
             window.history.pushState({}, '', path);
@@ -243,14 +267,6 @@ const AppContent: React.FC = () => {
           }}
           subPath={currentPath}
         />
-        {authType && (
-          <AuthOverlay
-            type={authType}
-            setType={setAuthType}
-            onClose={() => setAuthType(null)}
-            onSuccess={(email) => handleAuthSuccess(email, '')}
-          />
-        )}
       </div>
     );
   }
@@ -263,7 +279,7 @@ const AppContent: React.FC = () => {
           theme={theme}
           toggleTheme={toggleTheme}
           userEmail={userEmail}
-          onAuth={(type) => setAuthType(type)}
+          onAuth={handleAuthNavigation}
           onStartLearning={handleStartLearning}
           onNavigate={(path) => {
             window.history.pushState({}, '', path);
@@ -271,14 +287,6 @@ const AppContent: React.FC = () => {
           }}
           subPath={currentPath}
         />
-        {authType && (
-          <AuthOverlay
-            type={authType}
-            setType={setAuthType}
-            onClose={() => setAuthType(null)}
-            onSuccess={(email) => handleAuthSuccess(email, '')}
-          />
-        )}
       </div>
     );
   }
@@ -291,7 +299,7 @@ const AppContent: React.FC = () => {
           theme={theme}
           toggleTheme={toggleTheme}
           userEmail={userEmail}
-          onAuth={(type) => setAuthType(type)}
+          onAuth={handleAuthNavigation}
           onStartLearning={handleStartLearning}
           onNavigate={(path) => {
             window.history.pushState({}, '', path);
@@ -299,14 +307,6 @@ const AppContent: React.FC = () => {
           }}
           subPath={currentPath}
         />
-        {authType && (
-          <AuthOverlay
-            type={authType}
-            setType={setAuthType}
-            onClose={() => setAuthType(null)}
-            onSuccess={(email) => handleAuthSuccess(email, '')}
-          />
-        )}
       </div>
     );
   }
@@ -319,33 +319,31 @@ const AppContent: React.FC = () => {
   if (isOrgManager) {
     const isCoachingEval = window.location.pathname === '/coaching/evaluations' || window.location.pathname.startsWith('/coaching');
     return (
-      <OrgSpaceView
-        initialSubView={isCoachingEval ? 'evaluation_studio' : undefined}
-        onExit={() => {
-          localStorage.removeItem('stephen_active_tenant_session');
-          window.history.pushState({}, '', '/');
-          setIsOrgManager(false);
-        }}
-      />
+      <div className="w-screen h-screen overflow-hidden bg-canvas text-neutral-200 font-sans">
+        <OrgSpaceView
+          onExit={() => {
+            setIsOrgManager(false);
+            window.history.pushState({}, '', '/');
+            window.location.reload();
+          }}
+          initialSubView={isCoachingEval ? 'evaluations' : 'overview'}
+        />
+        <Toaster position="bottom-right" />
+      </div>
     );
   }
 
   if (isSuperAdmin) {
     return (
-      <SuperAdminView />
-    );
-  }
-
-  if (!sessionChecked) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0F0F0F]">
-        <div className="text-neutral-500 text-sm">Loading...</div>
+      <div className="w-screen h-screen overflow-hidden bg-canvas text-neutral-200 font-sans">
+        <SuperAdminView />
+        <Toaster position="bottom-right" />
       </div>
     );
   }
 
   return (
-    <div className={`transition-colors duration-300 ${theme === 'dark' ? 'dark text-neutral-200' : 'text-neutral-800'}`} style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className={`min-h-screen bg-canvas text-neutral-200 font-sans ${theme === 'dark' ? 'dark' : ''}`}>
       {showDashboard ? (
         <ErrorBoundary>
           <WorkspaceProvider>
@@ -364,7 +362,7 @@ const AppContent: React.FC = () => {
       ) : (
         <LandingPage
           onStartLearning={handleStartLearning}
-          onAuth={(type) => setAuthType(type)}
+          onAuth={handleAuthNavigation}
           toggleTheme={toggleTheme}
           theme={theme}
           userEmail={userEmail}
@@ -377,15 +375,6 @@ const AppContent: React.FC = () => {
             window.history.pushState({}, '', path);
             setCurrentPath(path);
           }}
-        />
-      )}
-
-      {authType && (
-        <AuthOverlay
-          type={authType}
-          setType={setAuthType}
-          onClose={() => setAuthType(null)}
-          onSuccess={(email) => handleAuthSuccess(email, '')}
         />
       )}
 
