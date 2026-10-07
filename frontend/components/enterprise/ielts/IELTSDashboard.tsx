@@ -55,11 +55,11 @@ const IELTSDashboard: React.FC<IELTSDashboardProps> = ({ onNavigate }) => {
     const [expandedSkill, setExpandedSkill] = React.useState<IeltsSkill | null>(null);
     const [moduleFilter, setModuleFilter] = React.useState<'all' | IeltsSkill>('all');
     const [statusFilter, setStatusFilter] = React.useState<'all' | 'approved' | 'developing' | 'at-risk'>('all');
-    const [analysis, setAnalysis] = React.useState<{ attemptId?: number; bundleId?: IeltsBundleId } | null>(null);
+    const [analysis, setAnalysis] = React.useState<{ attemptId?: number | string; bundleId?: IeltsBundleId } | null>(null);
     const [showQuickGuide, setShowQuickGuide] = React.useState(false);
     const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
 
-    const newestFirst = [...attempts].sort((a, b) => b.id - a.id);
+    const newestFirst = [...attempts].sort((a, b) => Number(b.id) - Number(a.id));
 
     // KPI Metrics
     const completedCount = attempts.length;

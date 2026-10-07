@@ -361,6 +361,7 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const [isAudioLoaded, setIsAudioLoaded] = useState<boolean>(false);
     const [audioPlayFailed, setAudioPlayFailed] = useState<boolean>(false);
+    const [lastAttemptId, setLastAttemptId] = useState<string | null>(null);
 
     // Cambridge Pre-Exam Equipment Check & Audio-Ready Gate Flow
     type ExamPhase = 'equipment_check' | 'in_progress';
@@ -1083,18 +1084,57 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
             }
 
             const timeSpent = Math.max(1, Math.round(elapsed / 60));
+            const currentExamId = `c${String(bookNumber).padStart(2, '0')}00000-0000-0000-0000-${String(testNumber).padStart(12, '0')}`;
+            const computedBand = rawToBand(correct);
+            const genAttemptId = `att-${Date.now()}`;
+            setLastAttemptId(genAttemptId);
+
+            const attemptRecord = {
+                id: genAttemptId,
+                test_id: currentExamId,
+                module: 'listening',
+                category: 'academic',
+                title: `Cambridge ${bookNumber} Listening — Test ${testNumber}`,
+                book_number: Number(bookNumber),
+                test_number: Number(testNumber),
+                raw_score: correct,
+                total_questions: 40,
+                band_score: computedBand,
+                time_spent_seconds: elapsed,
+                answers_payload: answers,
+                created_at: new Date().toISOString()
+            };
+
+            try {
+                localStorage.setItem(`listening_attempt_${genAttemptId}`, JSON.stringify(attemptRecord));
+                localStorage.setItem(`latest_listening_attempt_${currentExamId}`, JSON.stringify(attemptRecord));
+                localStorage.setItem('latest_listening_attempt', JSON.stringify(attemptRecord));
+            } catch {}
+
+            // Attempt async insert to Supabase exam_attempts
+            (supabase as any)
+                .from('exam_attempts')
+                .insert([attemptRecord])
+                .then(() => {})
+                .catch(() => {});
+
             if (simulation) {
-                simulation.onComplete({ skill: 'listening', band: rawToBand(correct), score: correct, timeSpent });
+                simulation.onComplete({ skill: 'listening', band: computedBand, score: correct, timeSpent });
             } else {
                 setScore(correct);
                 addAttempt({
                     id: Date.now(),
                     skill: 'listening',
-                    band: rawToBand(correct),
+                    band: computedBand,
                     score: correct,
                     timeSpent,
+                    title: `Cambridge ${bookNumber} Listening — Test ${testNumber}`,
+                    book_number: Number(bookNumber),
+                    test_number: Number(testNumber),
+                    answers_payload: answers,
+                    raw_answers: answers,
                     date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                });
+                } as any);
             }
             setTestState('completed');
         }, 900);
@@ -1503,8 +1543,9 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
         return (
             <ListeningAnalysisModal
                 isModal={false}
+                attemptId={lastAttemptId || undefined}
                 score={score ?? 0}
-                totalQuestions={allCurrentIds.length || 40}
+                totalQuestions={40}
                 bandScore={band}
                 testTitle={`Cambridge ${bookNumber} Listening — Test ${testNumber}`}
                 userAnswers={answers as Record<number, string>}

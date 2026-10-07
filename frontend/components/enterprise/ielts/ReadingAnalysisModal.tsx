@@ -406,7 +406,7 @@ export const ReadingAnalysisModal: React.FC<ReadingAnalysisModalProps> = ({
 
                           {isExpanded && (
                             <div className="mt-2 text-xs text-neutral-300 bg-[#0D0F12] p-3 rounded-lg border border-[#222732] leading-relaxed animate-in fade-in duration-150">
-                              <p>{q.explanation}</p>
+                              <p>{typeof q.explanation === 'string' ? q.explanation : (q.explanation as any)?.why_correct || (q.explanation as any)?.rationale || (q.explanation as any)?.explanation || q.explanation_text || ''}</p>
                             </div>
                           )}
                         </div>

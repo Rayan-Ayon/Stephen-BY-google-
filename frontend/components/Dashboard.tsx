@@ -400,7 +400,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             case 'leaderboard': return <LeaderboardView userEmail={userEmail} />;
             case 'streaks': return <StreaksView userEmail={userEmail} />;
             case 'ai_speaking_partner': return <AISpeakingPartnerView userEmail={userEmail} />;
-            case 'ai_rewriter': return <AIRewriterView userEmail={userEmail} />;
+            case 'ai_rewriter': return <AIRewriterView userEmail={userEmail} onNavigate={handleNavigate} />;
             case 'ai_ielts_chatbot': return <AIIELTSChatbotView userEmail={userEmail} />;
             case 'free_content_library': return <FreeContentLibraryView userEmail={userEmail} />;
             case 'study_plan': return <StudyPlanView userEmail={userEmail} />;

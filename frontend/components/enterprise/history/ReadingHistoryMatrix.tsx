@@ -5,6 +5,7 @@ import {
     formatTimeSpent,
     resolveExamTitle,
     isGeneralAttempt,
+    transformExamAttemptRow,
     ATTEMPTS_UPDATED_EVENT,
     type IeltsAttempt,
 } from '../ielts/ieltsShared';
@@ -46,26 +47,7 @@ export const ReadingHistoryMatrix: React.FC<ReadingHistoryMatrixProps> = ({ book
                     .limit(50);
 
                 if (dbAttempts && dbAttempts.length > 0 && mounted) {
-                    const mappedDb: IeltsAttempt[] = dbAttempts.map((row: any) => {
-                        const book = row.book_number || parseInt((row.title || '').match(/Cambridge\s*(\d+)/i)?.[1] || '7', 10);
-                        const test = row.test_number || parseInt((row.title || '').match(/Test\s*(\d+)/i)?.[1] || '1', 10);
-                        const isGen = row.is_general != null ? Boolean(row.is_general) : (row.category === 'general' || (row.title || '').toLowerCase().includes('general') || (row.title || '').toLowerCase().includes('(gt)'));
-                        return {
-                            id: row.id,
-                            skill: 'reading',
-                            module: 'reading',
-                            band: Number(row.band_score || 0),
-                            score: row.correct_count,
-                            book_number: book,
-                            test_number: test,
-                            is_general: isGen,
-                            title: row.title || (book && test ? `Cambridge ${book} — Test ${test}` : 'Reading Practice'),
-                            date: new Date(row.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                            timeSpent: Math.max(1, Math.round((row.time_spent_seconds || 0) / 60)),
-                            answers_payload: row.answers_payload,
-                            raw_answers: row.answers_payload,
-                        };
-                    });
+                    const mappedDb: IeltsAttempt[] = dbAttempts.map((row: any) => transformExamAttemptRow(row, 'reading'));
 
                     const seen = new Set(mappedDb.map((d) => String(d.id)));
                     const merged = [...mappedDb];
@@ -263,6 +245,9 @@ export const ReadingHistoryMatrix: React.FC<ReadingHistoryMatrixProps> = ({ book
                     answersPayload={selectedAttempt.answers_payload || selectedAttempt.raw_answers}
                     skillModule="reading"
                     title={resolveExamTitle(selectedAttempt)}
+                    timeSpent={selectedAttempt.timeSpent}
+                    bandScoreProp={selectedAttempt.band}
+                    scoreProp={selectedAttempt.score}
                     onClose={() => setSelectedAttempt(null)}
                 />
             )}

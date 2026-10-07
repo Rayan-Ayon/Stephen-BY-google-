@@ -1,6 +1,24 @@
 import type { DynamicQuestionGroup, DynamicQuestion } from '../DynamicRightPanel';
 
 export const CAMBRIDGE_PASSAGE_TITLES: Record<number, Record<number, string[]>> = {
+    7: {
+        1: ["Let's Go Bats", "Making Every Drop Count", "Educating Psyche"],
+        2: ["Why Pagodas Don't Fall Down", "The True Cost of Food", "Makete Integrated Rural Transport Project"],
+        3: ["Ant Intelligence", "Population Movements and Genetics", "Educating Psyche"],
+        4: ["Pulling Strings to Build Pyramids", "Endless Harvest", "Effects of Noise"]
+    },
+    8: {
+        1: ["A Chronicle of Timekeeping", "Air Traffic Control in the USA", "Telepathy"],
+        2: ["Sheet Glass Manufacture: The Float Process", "The Little Ice Age", "The Meaning and Power of Smell"],
+        3: ["Striking Back at Lightning with Lasers", "The Nature of Genius", "How Does the Biological Clock Tick?"],
+        4: ["Land of the Rising Sun", "Biological Control of Pests", "Collecting Ant Specimens"]
+    },
+    9: {
+        1: ["William Henry Perkin", "Is There Anybody Out There?", "The History of the Tortoise"],
+        2: ["Hearing Impairment in Children", "Venus in Transit", "A Neuroscientist Reveals How To Think Differently"],
+        3: ["Information Theory - The Big Data of Its Day", "Tidal Power", "Information Theory"],
+        4: ["The Life and Work of Marie Curie", "Young Children's Sense of Identity", "The Development of Museums"]
+    },
     10: {
         1: ["Stepwells", "European Transport Systems 1990-2010", "The Psychology of Innovation"],
         2: ["Tea and the Industrial Revolution", "Gifted Children and Learning", "Museums of Fine Art and Their Public"],

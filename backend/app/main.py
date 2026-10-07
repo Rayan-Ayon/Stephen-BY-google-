@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 
-from app.api.routes import videos, ai_features, recent_videos, auth, ielts, speaking, chatbot
+from app.api.routes import videos, ai_features, recent_videos, auth, ielts, speaking, chatbot, writing_studio
 from app.db.session import init_db, backfill_user_email
 
 load_dotenv()
@@ -51,6 +51,7 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(ielts.router, prefix="/api")
 app.include_router(speaking.router, prefix="/api")
 app.include_router(chatbot.router, prefix="/api")
+app.include_router(writing_studio.router, prefix="/api")
 
 
 @app.get("/api/health")

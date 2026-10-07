@@ -1,11 +1,34 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Theme, AuthType } from '../App';
-import { SunIcon, MoonIcon, BrainIcon, UploadIcon, FlashcardIcon, TrophyIcon, EdgramIcon, DebatePodiumIcon, QuestionMarkIcon, ArrowUpRightIcon, BuildingLibraryIcon } from './icons';
+import { SunIcon, MoonIcon, ArrowUpRightIcon } from './icons';
 import EnterpriseView from './EnterpriseView';
 import { Navbar, IeltsDynastyEmblem } from './Navbar';
 import Footer from './Footer';
+import {
+  Mic,
+  PenTool,
+  Headphones,
+  ShieldAlert,
+  Sparkles,
+  ArrowRight,
+  Play,
+  CheckCircle2,
+  Zap,
+  BarChart3,
+  ShieldCheck,
+  Building2,
+  Volume2,
+  Check,
+  RotateCcw,
+  Sliders,
+  FileText,
+  Clock,
+  Layers,
+  Award,
+  ChevronRight,
+  ArrowUpRight
+} from 'lucide-react';
 
 interface LandingPageProps {
   onStartLearning: (view?: string) => void;
@@ -18,127 +41,17 @@ interface LandingPageProps {
   onNavigate?: (path: string) => void;
 }
 
-const universities = [
-    { name: 'Yale', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Yale_University_Shield_1.svg/1200px-Yale_University_Shield_1.svg.png', url: 'https://www.yale.edu' },
-    { name: 'Tsinghua', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Tsinghua_University_Logo.svg/1200px-Tsinghua_University_Logo.svg.png', url: 'https://www.tsinghua.edu.cn/en/' },
-    { name: 'Stanford', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Stanford_Cardinal_logo.svg/1200px-Stanford_Cardinal_logo.svg.png', url: 'https://www.stanford.edu' },
-    { name: 'Peking', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Peking_University_seal.svg/1200px-Peking_University_seal.svg.png', url: 'https://english.pku.edu.cn/' },
-    { name: 'MIT', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/MIT_logo.svg/1200px-MIT_logo.svg.png', url: 'https://www.mit.edu' },
-    { name: 'Michigan', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Michigan_Wolverines_logo.svg/1200px-Michigan_Wolverines_logo.svg.png', url: 'https://umich.edu' },
-    { name: 'Cambridge', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/University_of_Cambridge_logo.svg/1200px-University_of_Cambridge_logo.svg.png', url: 'https://www.cam.ac.uk' },
-    { name: 'Harvard', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Harvard_University_shield.svg/1200px-Harvard_University_shield.svg.png', url: 'https://www.harvard.edu' },
-    { name: 'Oxford', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/University_of_Oxford_Logo.svg/1200px-University_of_Oxford_Logo.svg.png', url: 'https://www.ox.ac.uk' },
-    { name: 'Berkeley', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Seal_of_University_of_California%2C_Berkeley.svg/1200px-Seal_of_University_of_California%2C_Berkeley.svg.png', url: 'https://www.berkeley.edu' },
-    { name: 'Princeton', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Princeton_seal.svg/1200px-Princeton_seal.svg.png', url: 'https://www.princeton.edu' },
-    { name: 'Columbia', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Columbia_University_shield.svg/1200px-Columbia_University_shield.svg.png', url: 'https://www.columbia.edu' },
-];
-
-const FeatureCard = ({ icon, title, description, theme }: { icon: React.ReactElement<any>, title: string, description: string, theme: Theme }) => (
-    <div 
-        className={`shrink-0 w-[350px] p-8 text-center border-r transition-all duration-300 group ${theme === 'dark' ? 'bg-black/40 border-white/10' : 'bg-white border-gray-200'}`}
-    >
-        <div className={`inline-flex items-center justify-center w-14 h-14 mb-6 rounded-2xl transition-transform duration-500 group-hover:scale-110 ${theme === 'dark' ? 'bg-neutral-800/50' : 'bg-gray-100 shadow-sm'}`}>
-            {React.cloneElement(icon, { className: `w-7 h-7 ${theme === 'dark' ? 'text-neutral-400' : 'text-neutral-600'}` })}
-        </div>
-        <div className="relative overflow-hidden">
-            <h3 className={`text-lg font-bold mb-3 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
-                {title}
-            </h3>
-            <p className={`text-sm leading-relaxed ${theme === 'dark' ? 'text-neutral-400' : 'text-neutral-500'}`}>
-                {description}
-            </p>
-        </div>
-    </div>
-);
-
 const RevealSection = ({ children, className = "" }: { children?: React.ReactNode, className?: string }) => (
     <motion.div
-        initial={{ opacity: 0, y: 50 }}
+        initial={{ opacity: 0, y: 35 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: false, amount: 0.3 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
         className={className}
     >
         {children}
     </motion.div>
 );
-
-const Marquee = ({ children, direction = 'left', speed = 20 }: { children?: React.ReactNode, direction?: 'left' | 'right', speed?: number }) => {
-    return (
-        <div className="relative flex overflow-hidden w-full mask-gradient">
-            <motion.div
-                className="flex flex-nowrap min-w-full"
-                animate={{ x: direction === 'left' ? "-50%" : "0%" }}
-                initial={{ x: direction === 'left' ? "0%" : "-50%" }}
-                transition={{ repeat: Infinity, ease: "linear", duration: speed }}
-            >
-                {children}
-                {children}
-            </motion.div>
-            <style>{`
-                .mask-gradient {
-                    mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-                    -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-                }
-            `}</style>
-        </div>
-    );
-};
-
-const DustText = ({ text, theme }: { text: string, theme: Theme }) => {
-    const letters = Array.from(text);
-    
-    const container = {
-        hidden: { opacity: 0 },
-        visible: (i = 1) => ({
-            opacity: 1,
-            transition: { staggerChildren: 0.03, delayChildren: 0.04 * i },
-        }),
-    };
-
-    const child = {
-        visible: {
-            opacity: 1,
-            filter: "blur(0px)",
-            scale: 1,
-            x: 0,
-            y: 0,
-            transition: {
-                type: "spring",
-                damping: 12,
-                stiffness: 100,
-            },
-        },
-        hidden: {
-            opacity: 0,
-            filter: "blur(10px)",
-            scale: 1.5,
-            x: (Math.random() - 0.5) * 50,
-            y: (Math.random() - 0.5) * 50,
-        },
-    };
-
-    return (
-        <motion.div
-            style={{ display: "inline-block", overflow: "hidden" }}
-            variants={container}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-        >
-            {letters.map((letter, index) => (
-                <motion.span 
-                    key={index} 
-                    variants={child} 
-                    style={{ display: "inline-block" }}
-                    className={`${theme === 'dark' ? 'text-neutral-400' : 'text-neutral-600'}`}
-                >
-                    {letter === " " ? "\u00A0" : letter}
-                </motion.span>
-            ))}
-        </motion.div>
-    );
-};
 
 const LandingPage: React.FC<LandingPageProps> = ({ 
     onStartLearning, 
@@ -155,6 +68,16 @@ const LandingPage: React.FC<LandingPageProps> = ({
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+    const [disputeApproved, setDisputeApproved] = useState(false);
+
+    const navigateTo = (path: string) => {
+        if (onNavigate) {
+            onNavigate(path);
+        } else {
+            window.history.pushState({}, '', path);
+            window.dispatchEvent(new PopStateEvent('popstate'));
+        }
+    };
 
     const handleInstitutionLogin = () => {
         if (onNavigateInstitutionLogin) {
@@ -251,18 +174,17 @@ const LandingPage: React.FC<LandingPageProps> = ({
         visible: {
             opacity: 1,
             transition: {
-                staggerChildren: 0.15,
-                delayChildren: 0.2
+                staggerChildren: 0.12,
+                delayChildren: 0.1
             },
         },
     };
 
     const itemVariants: Variants = {
-        hidden: { y: 60, opacity: 0, rotateX: -10 },
+        hidden: { y: 40, opacity: 0 },
         visible: {
             y: 0,
             opacity: 1,
-            rotateX: 0,
             transition: { 
                 type: 'spring', 
                 stiffness: 70,
@@ -300,243 +222,637 @@ const LandingPage: React.FC<LandingPageProps> = ({
     const dropdownItemClasses = "px-5 py-3 text-left hover:bg-neutral-100 dark:hover:bg-white/10 transition-all duration-200 group-hover/list:opacity-40 hover:!opacity-100";
 
     const renderHomeView = () => (
-        <>
-            <style>{`
-                @keyframes text-shine-unified {
-                    0% { background-position: -150vw 0; }
-                    100% { background-position: 50vw 0; }
-                }
-                @keyframes shimmer {
-                    0% { transform: translateX(-100%); }
-                    100% { transform: translateX(100%); }
-                }
-                @keyframes stroke-anim {
-                    0% { stroke-dashoffset: 100%; opacity: 0; }
-                    50% { opacity: 1; }
-                    100% { stroke-dashoffset: 0%; opacity: 1; }
-                }
-                .stroke-text {
-                    fill: transparent;
-                    stroke: currentColor;
-                    stroke-width: 1px;
-                    stroke-dasharray: 100%;
-                    stroke-dashoffset: 100%;
-                    animation: stroke-anim 3s ease-out forwards;
-                }
-            `}</style>
-            
-            {/* Hero Section */}
+        <div className="relative w-full overflow-hidden">
+            {/* Ambient Background Glows */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-rose-950/15 rounded-full blur-[160px] pointer-events-none -z-10" />
+            <div className="absolute top-2/3 right-10 w-[600px] h-[500px] bg-neutral-900/40 rounded-full blur-[140px] pointer-events-none -z-10" />
+
+            {/* Phase 2: Refined Hero Section */}
             <motion.section 
-                className="relative text-center min-h-[90vh] flex flex-col justify-center items-center px-4 overflow-hidden pt-32"
+                className="relative text-center min-h-[82vh] flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto pt-32 pb-16"
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
             >
-                <div className="flex flex-col items-center justify-center max-w-[95vw]">
-                    <motion.div variants={itemVariants}>
-                        <h1 
-                            className={`font-display leading-[0.9] text-center bg-clip-text text-transparent`}
-                            style={{ 
-                                fontSize: 'clamp(4rem, 14vw, 12rem)',
-                                backgroundImage: theme === 'dark' 
-                                    ? 'linear-gradient(to right, #525252 0%, #525252 40%, #ffffff 50%, #525252 60%, #525252 100%)' 
-                                    : 'linear-gradient(to right, #9ca3af 0%, #9ca3af 40%, #000000 50%, #9ca3af 60%, #9ca3af 100%)',
-                                backgroundSize: '200vw auto',
-                                backgroundAttachment: 'fixed',
-                                animation: 'text-shine-unified 5s linear infinite'
-                            }}
-                        >
-                            Your gateway to
-                        </h1>
-                    </motion.div>
-                    <motion.div variants={itemVariants} className="mb-10">
-                        <h1 
-                            className="font-display leading-[0.9] text-center" 
-                            style={{ 
-                                fontSize: 'clamp(4rem, 14vw, 12rem)',
-                            }}
-                        >
-                            <span 
-                                className={`bg-clip-text text-transparent`}
-                                style={{ 
-                                    backgroundImage: theme === 'dark' 
-                                        ? 'linear-gradient(to right, #525252 0%, #525252 40%, #ffffff 50%, #525252 60%, #525252 100%)' 
-                                        : 'linear-gradient(to right, #9ca3af 0%, #9ca3af 40%, #000000 50%, #9ca3af 60%, #9ca3af 100%)',
-                                    backgroundSize: '200vw auto',
-                                    backgroundAttachment: 'fixed',
-                                    animation: 'text-shine-unified 5s linear infinite'
-                                }}
-                            >
-                                world-class{' '}
-                            </span>
-                            <span 
-                                className={`inline-block bg-clip-text text-transparent`}
-                                style={{ 
-                                    backgroundImage: theme === 'dark'
-                                        ? 'linear-gradient(to right, #FF5A1A 0%, #FF5A1A 40%, #ffffff 50%, #FF5A1A 60%, #FF5A1A 100%)'
-                                        : 'linear-gradient(to right, #FF5A1A 0%, #FF5A1A 40%, #000000 50%, #FF5A1A 60%, #FF5A1A 100%)',
-                                    backgroundSize: '200vw auto',
-                                    backgroundAttachment: 'fixed',
-                                    animation: 'text-shine-unified 5s linear infinite'
-                                }}
-                            >
-                                {"learning.".split("").map((char, i) => (
-                                    <span
-                                        key={i}
-                                        className={`transition-colors duration-300 cursor-default ${
-                                            theme === 'dark'
-                                            ? 'hover:text-white'
-                                            : 'hover:text-black'
-                                        }`}
-                                    >
-                                        {char}
-                                    </span>
-                                ))}
-                            </span>
-                        </h1>
-                    </motion.div>
-                </div>
+                {/* 1. Header Badge: Obsidian monospace status pill */}
+                <motion.div variants={itemVariants} className="mb-8">
+                    <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full font-mono text-xs sm:text-sm tracking-wider uppercase border shadow-inner backdrop-blur-xl bg-black/80 border-neutral-800 text-neutral-300">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_12px_rgba(16,185,129,0.9)]" />
+                        <span>🟢 PRODUCTION READY // CAMBRIDGE 7–21 MULTIMODAL EVALUATION</span>
+                    </div>
+                </motion.div>
 
+                {/* 2. Hero Title */}
+                <motion.h1 
+                    variants={itemVariants}
+                    className="font-display font-black tracking-tight leading-[1.06] text-center max-w-5xl mx-auto mb-6 text-4xl sm:text-6xl md:text-7xl lg:text-8xl"
+                >
+                    <span className={theme === 'dark' 
+                        ? 'text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-100 to-neutral-400' 
+                        : 'text-neutral-900'
+                    }>
+                        Autonomous AI Infrastructure for High-Stakes IELTS Assessment.
+                    </span>
+                </motion.h1>
+
+                {/* 3. Hero Subtitle */}
                 <motion.p 
                     variants={itemVariants} 
-                    className={`max-w-xl mx-auto text-lg md:text-xl mb-12 ${theme === 'dark' ? 'text-neutral-400' : 'text-neutral-600'} font-light`}
+                    className={`max-w-3xl mx-auto text-base sm:text-lg md:text-xl font-normal leading-relaxed mb-12 ${theme === 'dark' ? 'text-neutral-400' : 'text-neutral-600'}`}
                 >
-                    Personalized, scientific, real-world learning — at your pace.
+                    Eliminate human grading bottlenecks with full-duplex conversational voice examiners, paper essay vision OCR, and institutional cohort telemetry. Built for candidate mastery and enterprise scale.
                 </motion.p>
                 
-                <motion.div variants={itemVariants} className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
+                {/* 4. Primary CTAs */}
+                <motion.div variants={itemVariants} className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 w-full max-w-md sm:max-w-none">
                     <button
-                        onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-                        className={`font-semibold px-8 py-3.5 rounded-full border transition-all text-base ${theme === 'dark' ? 'border-neutral-700 bg-black text-white hover:bg-neutral-800' : 'border-neutral-300 bg-white text-black hover:bg-neutral-100'}`}
+                        onClick={() => {
+                            if (userEmail) onStartLearning('reading_hub');
+                            else onAuth('signup');
+                        }}
+                        className="w-full sm:w-auto font-bold px-8 py-4 rounded-xl text-base text-white bg-rose-600 hover:bg-rose-500 shadow-[0_0_35px_rgba(244,63,94,0.45)] hover:shadow-[0_0_45px_rgba(244,63,94,0.65)] transition-all duration-300 flex items-center justify-center gap-2.5 cursor-pointer border border-rose-400/40 group"
                     >
-                        See Features
+                        <Play className="w-4 h-4 fill-white group-hover:scale-110 transition-transform" />
+                        <span>Launch Cambridge Mock Exam</span>
                     </button>
                     <button
-                        onClick={() => userEmail ? onStartLearning() : onAuth('signup')}
-                        className={`group relative font-semibold px-8 py-3.5 rounded-full text-base overflow-hidden border ${theme === 'dark' ? 'text-white border-white/20' : 'text-black border-black/20'}`}
+                        onClick={() => {
+                            const el = document.getElementById('enterprise-telemetry');
+                            if (el) {
+                                el.scrollIntoView({ behavior: 'smooth' });
+                            } else {
+                                navigateTo('/business');
+                            }
+                        }}
+                        className="w-full sm:w-auto font-semibold px-8 py-4 rounded-xl text-base border border-neutral-700 bg-neutral-900/80 hover:bg-neutral-800 text-neutral-200 hover:text-white transition-all duration-300 flex items-center justify-center gap-2 backdrop-blur-md cursor-pointer shadow-lg hover:border-neutral-500 group"
                     >
-                        <div className={`absolute inset-0 w-full h-full bg-gradient-to-r ${theme === 'dark' ? 'from-transparent via-white/20 to-transparent' : 'from-transparent via-black/10 to-transparent'} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`} />
-                        <span className="relative z-10">Start Learning</span>
-                        <div className={`absolute inset-0 rounded-full opacity-50 group-hover:opacity-100 transition-opacity duration-300 ${theme === 'dark' ? 'shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'shadow-[0_0_15px_rgba(0,0,0,0.1)]'}`} />
+                        <span>Institutional Telemetry Demo</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </button>
                 </motion.div>
             </motion.section>
 
-            {/* University Logos Marquee */}
-            <div className="py-24 mt-20 relative z-10">
-                <div className="text-center mb-12 opacity-60 text-sm font-semibold tracking-widest uppercase dark:text-gray-400 text-gray-600">Trusted by top students all over the world</div>
-                <Marquee direction="right" speed={25}>
-                    <div className="flex items-center gap-12 mx-12">
-                        {universities.map((uni, idx) => (
-                            <a 
-                                key={idx} 
-                                href={uni.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="group relative flex items-center justify-center p-4 rounded-xl bg-white shadow-sm border border-gray-100 hover:scale-105 transition-transform duration-300 w-24 h-24"
-                            >
-                                <img 
-                                    src={uni.logo} 
-                                    alt={uni.name} 
-                                    className="w-full h-full object-contain filter"
-                                    loading="eager"
-                                />
-                            </a>
-                        ))}
+            {/* Phase 3: Product Bento Grid (Migrated from Features View) */}
+            <RevealSection className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+                <div className="text-center max-w-3xl mx-auto mb-14">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold tracking-wide uppercase mb-3">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        Core Multimodal Architecture
                     </div>
-                </Marquee>
-            </div>
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white mb-4">
+                        Autonomous Examination Suite
+                    </h2>
+                    <p className="text-sm sm:text-base text-neutral-400 leading-relaxed">
+                        Enterprise-grade machine intelligence calibrated strictly to official Cambridge, British Council, and IDP assessment rubrics.
+                    </p>
+                </div>
 
-            {/* Features Section */}
-            <RevealSection className={`py-32 ${theme === 'dark' ? 'bg-black/50' : 'bg-white'}`}>
-                <div className="container mx-auto">
-                    <div className="text-center mb-20 px-6">
-                        <h2 className={`text-4xl md:text-5xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'}`} style={{ fontFamily: "'Lora', serif" }}>Unlock Your Learning Potential</h2>
-                        <p className={`${theme === 'dark' ? 'text-neutral-400' : 'text-neutral-500'} mt-6 text-xl max-w-2xl mx-auto font-light`}>
-                            From lectures to articles, Stephen provides a suite of powerful tools to help you master any subject.
+                {/* 4-Cell Bento Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Card 1 (Full Width / Featured): Mohona Conversational Speaking Examiner */}
+                    <div className="lg:col-span-2 rounded-3xl bg-[#12151B]/95 border border-[#222732] p-6 sm:p-8 md:p-10 shadow-2xl relative overflow-hidden backdrop-blur-xl group hover:border-rose-500/40 transition-all duration-300">
+                        {/* Radial Accent Glow */}
+                        <div className="absolute -right-24 -top-24 w-80 h-80 bg-rose-600/10 rounded-full blur-3xl pointer-events-none" />
+
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+                            {/* Left Description Column */}
+                            <div className="lg:col-span-6 space-y-5">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="px-3 py-1 rounded-md bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-bold uppercase tracking-wider">
+                                        Full-Duplex Voice Engine
+                                    </span>
+                                    <span className="px-2.5 py-1 rounded-md bg-neutral-900 border border-neutral-800 text-neutral-300 font-mono text-[11px]">
+                                        Sub-second turn-taking
+                                    </span>
+                                    <span className="px-2.5 py-1 rounded-md bg-neutral-900 border border-neutral-800 text-neutral-300 font-mono text-[11px]">
+                                        16kHz Little-Endian Int16
+                                    </span>
+                                </div>
+
+                                <h3 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+                                    Mohona: Conversational Speaking Examiner
+                                </h3>
+
+                                <p className="text-sm sm:text-base text-neutral-400 leading-relaxed">
+                                    Practice all 3 IELTS speaking parts with an adaptive AI examiner. Mohona listens, responds naturally with human acoustic modulation, and evaluates fluency, lexical resource, and grammatical accuracy.
+                                </p>
+
+                                <div className="grid grid-cols-2 gap-3 text-xs text-neutral-300 pt-2">
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                        <span>Zero audio collision disarming</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                        <span>WebSocket streaming architecture</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                        <span>Sub-420ms acoustic turnaround</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                        <span>Band 9 criterion scorecard</span>
+                                    </div>
+                                </div>
+
+                                <div className="pt-2">
+                                    <button
+                                        onClick={() => onStartLearning('speaking_partner')}
+                                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-rose-600/30 transition-all cursor-pointer"
+                                    >
+                                        <span>Launch Speaking Simulator</span>
+                                        <ArrowRight className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Right Live Waveform & Prompt Demo */}
+                            <div className="lg:col-span-6 rounded-2xl bg-[#0D0F12] border border-[#222732] p-6 shadow-inner flex flex-col items-center text-center space-y-5">
+                                <div className="flex items-center justify-between w-full border-b border-[#222732] pb-3 text-xs">
+                                    <span className="flex items-center gap-2 font-mono text-emerald-400 font-semibold">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                        16kHz PCM Little-Endian Stream
+                                    </span>
+                                    <span className="font-mono text-neutral-400 bg-neutral-900 px-2 py-0.5 rounded border border-neutral-800 text-[11px]">
+                                        Latency: 380ms
+                                    </span>
+                                </div>
+
+                                {/* Examiner Avatar with Halo Rings */}
+                                <div className="relative flex items-center justify-center my-2">
+                                    <div className="absolute w-24 h-24 rounded-full bg-rose-500/20 animate-ping" />
+                                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-rose-600 to-rose-900 flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-rose-950/60 ring-4 ring-rose-500/30 relative z-10">
+                                        M
+                                    </div>
+                                </div>
+
+                                <div className="text-center">
+                                    <div className="text-white font-bold text-base">Mohona • Certified IELTS Examiner Mode</div>
+                                    <div className="text-xs text-rose-400 font-medium">Part 2 Cue Card Discussion Active</div>
+                                </div>
+
+                                {/* Live Animated PCM Waveform Visualization */}
+                                <div className="flex items-center justify-center gap-1.5 h-14 w-full max-w-sm px-4 py-2 bg-[#15181E] rounded-xl border border-[#222732]">
+                                    {[35, 65, 45, 90, 75, 40, 85, 95, 60, 40, 80, 50, 70, 35, 88, 55, 78, 62, 92, 48, 68, 82].map((height, i) => (
+                                        <div
+                                            key={i}
+                                            className="w-1.5 bg-gradient-to-t from-rose-600 via-rose-500 to-amber-400 rounded-full animate-pulse"
+                                            style={{
+                                                height: `${height}%`,
+                                                animationDelay: `${i * 0.06}s`,
+                                                animationDuration: '1.2s'
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+
+                                {/* Examiner Prompt Demo Card */}
+                                <div className="p-4 rounded-xl bg-[#15181E] border border-[#222732] text-xs text-left w-full space-y-1.5 shadow-md">
+                                    <div className="flex items-center justify-between">
+                                        <span className="font-bold text-rose-400 flex items-center gap-1">
+                                            <Mic className="w-3.5 h-3.5" />
+                                            Examiner Prompt Demo:
+                                        </span>
+                                        <span className="text-[10px] font-mono text-neutral-400">TURN 04 // ACTIVE</span>
+                                    </div>
+                                    <p className="italic text-neutral-300 leading-relaxed font-serif">
+                                        "Let's move on to Part 2. I'm going to give you a topic, and I'd like you to speak for one to two minutes on it. Before you begin, you have one minute to prepare notes..."
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Card 2: Vision OCR & Band 9 Writing Rubric */}
+                    <div className="col-span-1 rounded-3xl bg-[#12151B]/95 border border-[#222732] p-6 sm:p-8 shadow-2xl relative overflow-hidden backdrop-blur-xl hover:border-rose-500/40 transition-all duration-300 flex flex-col justify-between space-y-6">
+                        <div>
+                            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-rose-500/20 text-rose-400 text-xs font-bold uppercase mb-3">
+                                Multi-Agent Vision OCR
+                            </div>
+                            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
+                                Vision OCR & Band 9 Writing Rubric
+                            </h3>
+                            <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">
+                                Upload a photo of handwritten exam sheets. The engine transcribes cursive handwriting and outputs official IELTS 4-criterion diagnostic scores.
+                            </p>
+                        </div>
+
+                        {/* Split-View Mockup: Handwritten Paper -> Interactive Criterion Scorecard */}
+                        <div className="space-y-3">
+                            {/* Top Split: Uploaded handwritten paper script snippet */}
+                            <div className="p-3.5 rounded-xl bg-[#0D0F12] border border-[#222732] relative overflow-hidden">
+                                <div className="flex items-center justify-between text-[11px] mb-2 font-mono text-neutral-400 border-b border-[#222732] pb-1.5">
+                                    <span className="flex items-center gap-1.5 text-sky-400">
+                                        <FileText className="w-3.5 h-3.5" />
+                                        Handwritten Paper Script OCR
+                                    </span>
+                                    <span className="text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                                        Conf: 99.4%
+                                    </span>
+                                </div>
+                                <div className="text-xs font-serif italic text-neutral-300 bg-[#161a22] p-2.5 rounded border border-dashed border-neutral-700 leading-relaxed">
+                                    "In recent years, the exponential growth of technological automation has sparked contentious debate regarding workforce obsolescence..."
+                                </div>
+                            </div>
+
+                            {/* Bottom Split: Criterion Scorecard */}
+                            <div className="p-4 rounded-xl bg-[#0D0F12] border border-[#222732] space-y-3 shadow-inner">
+                                <div className="flex items-center justify-between border-b border-[#222732] pb-2.5">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">Predicted Rubric Score</span>
+                                    <span className="text-2xl font-black text-rose-400">Band 7.5</span>
+                                </div>
+                                <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                                    <div className="p-2 rounded-lg bg-[#15181E] border border-[#222732]">
+                                        <div className="text-[10px] text-neutral-400 font-semibold">TR</div>
+                                        <div className="text-base font-black text-white mt-0.5">8.0</div>
+                                    </div>
+                                    <div className="p-2 rounded-lg bg-[#15181E] border border-[#222732]">
+                                        <div className="text-[10px] text-neutral-400 font-semibold">CC</div>
+                                        <div className="text-base font-black text-white mt-0.5">7.5</div>
+                                    </div>
+                                    <div className="p-2 rounded-lg bg-[#15181E] border border-[#222732]">
+                                        <div className="text-[10px] text-neutral-400 font-semibold">LR</div>
+                                        <div className="text-base font-black text-white mt-0.5">7.0</div>
+                                    </div>
+                                    <div className="p-2 rounded-lg bg-[#15181E] border border-[#222732]">
+                                        <div className="text-[10px] text-neutral-400 font-semibold">GRA</div>
+                                        <div className="text-base font-black text-white mt-0.5">7.5</div>
+                                    </div>
+                                </div>
+                                <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-300 leading-snug">
+                                    <span className="font-bold">Band 9 Rewrite Tip:</span> Upgrade informal transitions ("On the other hand") to academic discourse markers ("Conversely, empirical observations indicate...").
+                                </div>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => onStartLearning('writing_hub')}
+                            className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#15181E] hover:bg-[#1a1f28] border border-[#222732] hover:border-rose-500/50 text-white font-bold text-xs transition-all cursor-pointer"
+                        >
+                            <span>Evaluate Handwritten Essay</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+
+                    {/* Card 3: Cambridge 7–21 Reading & Listening Engine */}
+                    <div className="col-span-1 rounded-3xl bg-[#12151B]/95 border border-[#222732] p-6 sm:p-8 shadow-2xl relative overflow-hidden backdrop-blur-xl hover:border-rose-500/40 transition-all duration-300 flex flex-col justify-between space-y-6">
+                        <div>
+                            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-rose-500/20 text-rose-400 text-xs font-bold uppercase mb-3">
+                                Authentic Simulation
+                            </div>
+                            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
+                                Cambridge 7–21 Reading & Listening Engine
+                            </h3>
+                            <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">
+                                Complete Cambridge computer-delivered test environment with synchronized audio playback and split-screen passage annotations.
+                            </p>
+                        </div>
+
+                        {/* Active Test Card Preview */}
+                        <div className="p-4 rounded-xl bg-[#0D0F12] border border-[#222732] space-y-3 shadow-inner text-xs">
+                            <div className="flex items-center justify-between text-neutral-400 border-b border-[#222732] pb-2 font-mono">
+                                <span className="flex items-center gap-1.5 text-white font-semibold">
+                                    <Headphones className="w-3.5 h-3.5 text-rose-400" />
+                                    Section 4 • Master Audio
+                                </span>
+                                <span className="text-rose-400 font-bold">⏱ 28:45 / 30:00</span>
+                            </div>
+
+                            {/* Audio Stream Bar Mockup */}
+                            <div className="p-2.5 rounded-lg bg-[#15181E] border border-[#222732] space-y-1.5">
+                                <div className="flex justify-between text-[11px] text-neutral-400">
+                                    <span>Cambridge 18 Academic Lecture Stream</span>
+                                    <span className="text-emerald-400 font-mono">128kbps Synced</span>
+                                </div>
+                                <div className="w-full h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+                                    <div className="w-3/4 h-full bg-gradient-to-r from-rose-500 to-amber-400 rounded-full" />
+                                </div>
+                            </div>
+
+                            {/* Split-Screen Passage Preview */}
+                            <div className="p-3 rounded-lg bg-[#15181E] border border-[#222732] space-y-2">
+                                <div className="flex items-center justify-between text-[11px]">
+                                    <span className="font-bold text-white">Passage 3: Environmental Feedback Loops</span>
+                                    <span className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[10px] font-mono">Q27–32 Active</span>
+                                </div>
+                                <p className="text-[11px] text-neutral-300 leading-relaxed">
+                                    <span className="bg-amber-400/20 text-amber-200 px-1 rounded">"Polar albedo reduction triggers positive feedback..."</span> — Candidates test with official Cambridge highlight & notepad tools.
+                                </p>
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[11px]">
+                                <span>Cambridge 18 Academic • 40 Questions Calibrated</span>
+                                <span className="font-bold font-mono">Full Test Active</span>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => onStartLearning('reading_hub')}
+                            className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#15181E] hover:bg-[#1a1f28] border border-[#222732] hover:border-rose-500/50 text-white font-bold text-xs transition-all cursor-pointer"
+                        >
+                            <span>Launch Cambridge Mock Engine</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+
+                    {/* Card 4: Student Dispute & Teacher Arbitration Pipeline */}
+                    <div className="lg:col-span-2 rounded-3xl bg-[#12151B]/95 border border-[#222732] p-6 sm:p-8 md:p-10 shadow-2xl relative overflow-hidden backdrop-blur-xl hover:border-rose-500/40 transition-all duration-300">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                            {/* Left Text */}
+                            <div className="lg:col-span-5 space-y-4">
+                                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-rose-500/20 text-rose-400 text-xs font-bold uppercase">
+                                    <ShieldAlert className="w-3.5 h-3.5" />
+                                    Institutional Governance
+                                </div>
+                                <h3 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+                                    Student Dispute & Teacher Arbitration Pipeline
+                                </h3>
+                                <p className="text-sm text-neutral-400 leading-relaxed">
+                                    Zero black-box AI grading. Candidates can appeal any automated criterion with full teacher arbitration, audio audit replays, and administrative override logs.
+                                </p>
+                                <ul className="space-y-2.5 text-xs text-neutral-300 pt-1">
+                                    <li className="flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                        <span>Instant 1-click teacher score override controls</span>
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                        <span>Timestamped audio waveform replay audits for Speaking</span>
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                        <span>Immutable institutional audit logs for student trust</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            {/* Right Live Dispute Ticket Preview (#GSP-408) */}
+                            <div className="lg:col-span-7 rounded-2xl bg-[#0D0F12] border border-[#222732] p-6 shadow-inner space-y-4 text-xs">
+                                <div className="flex items-center justify-between border-b border-[#222732] pb-3">
+                                    <div>
+                                        <span className="font-mono font-bold text-white text-sm">Dispute Ticket #GSP-408</span>
+                                        <div className="text-[11px] text-neutral-400">Candidate: Ayesha Khan • Academic Writing Task 2</div>
+                                    </div>
+                                    <span className={`px-2.5 py-1 rounded-full font-semibold font-mono text-[11px] border ${
+                                        disputeApproved 
+                                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' 
+                                            : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                                    }`}>
+                                        {disputeApproved ? '🟢 Override Finalized' : '🟡 Teacher Review Pending'}
+                                    </span>
+                                </div>
+
+                                <div className="p-3.5 rounded-xl bg-[#15181E] border border-[#222732] space-y-1.5">
+                                    <div className="text-neutral-400 text-[11px] font-semibold">Candidate Appeal Statement:</div>
+                                    <p className="italic text-neutral-200 leading-relaxed font-serif">
+                                        "My Task 2 response included three balanced paragraphs addressing both views with specific demographic data. The AI under-penalized Lexical Resource for domain-specific terminology."
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div className="p-3 rounded-xl bg-[#15181E] border border-[#222732] flex items-center justify-between">
+                                        <span className="text-neutral-400">AI Initial Score:</span>
+                                        <span className="text-base font-bold text-neutral-300 font-mono">Band 6.5</span>
+                                    </div>
+                                    <div className={`p-3 rounded-xl border flex items-center justify-between transition-colors ${
+                                        disputeApproved 
+                                            ? 'bg-emerald-950/30 border-emerald-500/40' 
+                                            : 'bg-rose-950/20 border-rose-500/30'
+                                    }`}>
+                                        <span className="text-neutral-300 font-semibold">Instructor Override:</span>
+                                        <span className="text-base font-extrabold text-emerald-400 font-mono">Band 7.5</span>
+                                    </div>
+                                </div>
+
+                                <div className="p-3 rounded-xl bg-[#15181E] border border-[#222732] text-[11px] text-neutral-300 flex items-center justify-between flex-wrap gap-2">
+                                    <span className="text-neutral-400">
+                                        Verified by Senior Examiner (ID: EX-891). Vocabulary calibrated.
+                                    </span>
+                                    <button
+                                        onClick={() => setDisputeApproved(!disputeApproved)}
+                                        className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all cursor-pointer ${
+                                            disputeApproved 
+                                                ? 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700' 
+                                                : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-700/30'
+                                        }`}
+                                    >
+                                        {disputeApproved ? 'Score Finalized (Undo)' : '✅ Confirm Band 7.5 Override'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </RevealSection>
+
+            {/* Phase 4: Enterprise Proof & Metric Strip (Migrated from Business View) */}
+            <RevealSection className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    {/* Metric 1 */}
+                    <div className="p-7 rounded-2xl bg-[#12151B]/90 border border-[#222732] shadow-xl backdrop-blur-md relative overflow-hidden group hover:border-rose-500/40 transition-all">
+                        <div className="text-4xl md:text-5xl font-black text-white tracking-tight mb-2 flex items-baseline gap-1">
+                            <span>&lt; 15</span>
+                            <span className="text-rose-500 text-2xl font-bold">Sec</span>
+                        </div>
+                        <div className="text-sm font-bold text-rose-400 mb-1.5 uppercase tracking-wide">
+                            Diagnostic Grading Turnaround
+                        </div>
+                        <div className="text-xs text-neutral-400 leading-relaxed">
+                            From candidate submission to comprehensive 4-criteria rubric and Band 9 rewrites.
+                        </div>
+                    </div>
+
+                    {/* Metric 2 */}
+                    <div className="p-7 rounded-2xl bg-[#12151B]/90 border border-[#222732] shadow-xl backdrop-blur-md relative overflow-hidden group hover:border-rose-500/40 transition-all">
+                        <div className="text-4xl md:text-5xl font-black text-white tracking-tight mb-2 flex items-baseline gap-1">
+                            <span>75%</span>
+                        </div>
+                        <div className="text-sm font-bold text-rose-400 mb-1.5 uppercase tracking-wide">
+                            Instructor Grading Overhead Saved
+                        </div>
+                        <div className="text-xs text-neutral-400 leading-relaxed">
+                            Automating repetitive diagnostic scoring to liberate teaching faculty for 1-on-1 strategy.
+                        </div>
+                    </div>
+
+                    {/* Metric 3 */}
+                    <div className="p-7 rounded-2xl bg-[#12151B]/90 border border-[#222732] shadow-xl backdrop-blur-md relative overflow-hidden group hover:border-rose-500/40 transition-all">
+                        <div className="text-4xl md:text-5xl font-black text-white tracking-tight mb-2 flex items-baseline gap-1">
+                            <span>99.4%</span>
+                        </div>
+                        <div className="text-sm font-bold text-rose-400 mb-1.5 uppercase tracking-wide">
+                            Cambridge Scoring Rubric Consistency
+                        </div>
+                        <div className="text-xs text-neutral-400 leading-relaxed">
+                            Calibrated against official Cambridge, British Council, and IDP standard assessment scales.
+                        </div>
+                    </div>
+
+                    {/* Metric 4 */}
+                    <div className="p-7 rounded-2xl bg-[#12151B]/90 border border-[#222732] shadow-xl backdrop-blur-md relative overflow-hidden group hover:border-rose-500/40 transition-all">
+                        <div className="text-4xl md:text-5xl font-black text-white tracking-tight mb-2 flex items-baseline gap-1">
+                            <span>1,000+</span>
+                        </div>
+                        <div className="text-sm font-bold text-rose-400 mb-1.5 uppercase tracking-wide">
+                            Concurrent Batch Session Scalability
+                        </div>
+                        <div className="text-xs text-neutral-400 leading-relaxed">
+                            Simultaneous high-throughput mock exam streaming nodes across distributed academies.
+                        </div>
+                    </div>
+                </div>
+            </RevealSection>
+
+            {/* Phase 5: Multi-Campus Academy Command Operations Section */}
+            <RevealSection className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+                <div id="enterprise-telemetry" className="scroll-mt-32">
+                    <div className="text-center max-w-3xl mx-auto mb-16">
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-300 font-mono text-xs tracking-wider uppercase mb-4 shadow-inner">
+                            <Building2 className="w-3.5 h-3.5 text-rose-500" />
+                            INSTITUTIONAL B2B INFRASTRUCTURE
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white mb-4">
+                            Multi-Campus Academy Command Operations
+                        </h2>
+                        <p className="text-base sm:text-lg text-neutral-400 leading-relaxed">
+                            Empower branch directors, head trainers, and educational networks with real-time cohort visibility, AI-assisted coaching dossiers, and bespoke white-label deployments.
                         </p>
                     </div>
-                    
-                    <Marquee direction="left" speed={10}>
-                        <div className="flex items-stretch">
-                            <FeatureCard 
-                                theme={theme}
-                                icon={<UploadIcon />}
-                                title="Flexible Content"
-                                description="Upload files, paste links from YouTube or articles, or record lectures directly."
-                            />
-                            <FeatureCard 
-                                theme={theme}
-                                icon={<BrainIcon />}
-                                title="AI-Powered Tutor"
-                                description="Engage in dynamic conversations with an AI that understands your material."
-                            />
-                            <FeatureCard 
-                                theme={theme}
-                                icon={<FlashcardIcon />}
-                                title="Smart Study Tools"
-                                description="Automatically generate flashcards, quizzes, podcasts, and summaries."
-                            />
-                            <FeatureCard 
-                                theme={theme}
-                                icon={<TrophyIcon />}
-                                title="Competitions"
-                                description="Test your skills and knowledge against peers in exciting competitions."
-                            />
-                            <FeatureCard 
-                                theme={theme}
-                                icon={<EdgramIcon />}
-                                title="Edgram Social"
-                                description="Share your learning journey, discover what others are studying, and connect."
-                            />
-                            <FeatureCard 
-                                theme={theme}
-                                icon={<DebatePodiumIcon />}
-                                title="Debate Arena"
-                                description="Sharpen your critical thinking by debating complex topics with AI."
-                            />
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                        {/* Pillar 1: Multi-Branch Telemetry */}
+                        <div className="p-8 rounded-3xl bg-[#12151B]/90 border border-[#222732] shadow-xl hover:border-rose-500/40 transition-all flex flex-col justify-between">
+                            <div>
+                                <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mb-6 shadow-inner">
+                                    <BarChart3 className="w-6 h-6" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-3">Multi-Branch Telemetry</h3>
+                                <p className="text-sm text-neutral-400 leading-relaxed mb-6">
+                                    Real-time cohort score progression and drop-off prevention alerts across all global branches.
+                                </p>
+                                <ul className="space-y-3 text-xs text-neutral-300 mb-6">
+                                    <li className="flex items-start gap-2.5">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                                        <span>Cross-campus performance analytics (London, Dubai, Dhaka, Toronto)</span>
+                                    </li>
+                                    <li className="flex items-start gap-2.5">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                                        <span>Automated dropout risk flagging for candidates plateauing below target band</span>
+                                    </li>
+                                    <li className="flex items-start gap-2.5">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                                        <span>Exportable institutional audit transcripts and accreditation-ready PDFs</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div className="p-3.5 rounded-xl bg-[#0D0F12] border border-[#222732] text-[11px] font-mono text-emerald-400 flex items-center justify-between">
+                                <span>Cohort Delta (6 Wk):</span>
+                                <span className="font-bold">+1.2 Band Avg</span>
+                            </div>
                         </div>
-                    </Marquee>
-                </div>
-            </RevealSection>
-            
-            {/* CTA Section */}
-            <RevealSection className="py-40 text-center px-6 relative overflow-hidden">
-                <div className={`absolute inset-0 opacity-20 ${theme === 'dark' ? 'bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-neutral-700 via-black to-black' : 'bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-neutral-200 via-white to-white'}`} />
-                <div className="relative z-10 flex flex-col items-center">
-                    <svg viewBox="0 0 400 120" className="h-24 md:h-32 w-auto mb-6">
-                        <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className={`text-6xl md:text-8xl font-bold stroke-text ${theme === 'dark' ? 'text-white' : 'text-black'}`} style={{ fontFamily: "'Lora', serif" }}>
-                            Stephen
-                        </text>
-                    </svg>
-                    
-                    <div className={`text-2xl md:text-3xl font-light mb-12`}>
-                        <DustText text="Ready to Transform your Learning?" theme={theme} />
+
+                        {/* Pillar 2: Teacher Co-Pilot */}
+                        <div className="p-8 rounded-3xl bg-[#12151B]/90 border border-[#222732] shadow-xl hover:border-rose-500/40 transition-all flex flex-col justify-between">
+                            <div>
+                                <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mb-6 shadow-inner">
+                                    <Zap className="w-6 h-6" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-3">Teacher Co-Pilot</h3>
+                                <p className="text-sm text-neutral-400 leading-relaxed mb-6">
+                                    Instant Band 9 sentence rewrites and acoustic fluency analytics for 1-on-1 consultations.
+                                </p>
+                                <ul className="space-y-3 text-xs text-neutral-300 mb-6">
+                                    <li className="flex items-start gap-2.5">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                                        <span>Pre-session diagnostic dossiers ready in seconds before student calls</span>
+                                    </li>
+                                    <li className="flex items-start gap-2.5">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                                        <span>Acoustic pause distribution, hesitation metrics & speech rate (WPM)</span>
+                                    </li>
+                                    <li className="flex items-start gap-2.5">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                                        <span>1-click instructor voice annotations and targeted homework assignment</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div className="p-3.5 rounded-xl bg-[#0D0F12] border border-[#222732] text-[11px] font-mono text-rose-400 flex items-center justify-between">
+                                <span>Prep Time / Student:</span>
+                                <span className="font-bold">45m → 3m</span>
+                            </div>
+                        </div>
+
+                        {/* Pillar 3: White-Label Deployment */}
+                        <div className="p-8 rounded-3xl bg-[#12151B]/90 border border-[#222732] shadow-xl hover:border-rose-500/40 transition-all flex flex-col justify-between">
+                            <div>
+                                <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mb-6 shadow-inner">
+                                    <ShieldCheck className="w-6 h-6" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-3">White-Label Deployment</h3>
+                                <p className="text-sm text-neutral-400 leading-relaxed mb-6">
+                                    Custom subdomain hosting for partner coaching centers with enterprise compliance.
+                                </p>
+                                <ul className="space-y-3 text-xs text-neutral-300 mb-6">
+                                    <li className="flex items-start gap-2.5">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                                        <span>Custom domain (ielts.youracademy.edu) with bespoke theme matching</span>
+                                    </li>
+                                    <li className="flex items-start gap-2.5">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                                        <span>SAML / SSO integration and FERPA & GDPR compliant student data isolation</span>
+                                    </li>
+                                    <li className="flex items-start gap-2.5">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                                        <span>Dedicated multi-node API cluster with guaranteed 99.9% uptime SLA</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div className="p-3.5 rounded-xl bg-[#0D0F12] border border-[#222732] text-[11px] font-mono text-sky-400 flex items-center justify-between">
+                                <span>Uptime SLA:</span>
+                                <span className="font-bold">99.95% Guaranteed</span>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <button
-                        onClick={() => userEmail ? onStartLearning() : onAuth('signup')}
-                        className={`group relative px-10 py-4 rounded-full flex items-center space-x-2 transition-all duration-300 border ${
-                            theme === 'dark' 
-                            ? 'bg-black text-white border-white/20 hover:border-white/40' 
-                            : 'bg-white text-black border-black/10 hover:border-black/30'
-                        }`}
-                    >
-                        <span className="text-lg font-medium relative z-10">Sign up and get started</span>
-                        <ArrowUpRightIcon className="w-5 h-5 opacity-70 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform relative z-10" />
-                        
-                        <div className="absolute inset-0 rounded-full overflow-hidden">
-                            <div className="absolute top-0 left-0 w-[50px] h-full bg-gradient-to-r from-transparent via-gray-400/40 to-transparent -skew-x-12 -translate-x-[150%] group-hover:animate-[shimmer_1.5s_infinite]" />
+
+                    {/* Institutional Access Callout Banner */}
+                    <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-r from-[#15181E] via-[#1A1F28] to-[#15181E] border border-[#222732] shadow-2xl flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden">
+                        <div className="relative z-10 max-w-2xl text-center lg:text-left">
+                            <div className="inline-flex items-center gap-2 text-rose-400 text-xs font-mono uppercase tracking-wider mb-2">
+                                <Sparkles className="w-3.5 h-3.5" />
+                                PARTNER NETWORK INTEGRATION
+                            </div>
+                            <h3 className="text-2xl sm:text-3xl font-extrabold text-white mb-2">
+                                Ready to deploy institutional AI for your academy?
+                            </h3>
+                            <p className="text-sm text-neutral-400 leading-relaxed">
+                                Connect your teaching faculty with the central command portal or request an enterprise pilot with simulated cohort benchmark tests.
+                            </p>
                         </div>
-                    </button>
+                        <div className="relative z-10 flex flex-col sm:flex-row items-center gap-4 shrink-0 w-full sm:w-auto">
+                            <button
+                                onClick={handleInstitutionLogin}
+                                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#0D0F12] border border-rose-500/50 hover:border-rose-400 text-white font-bold text-sm transition-all shadow-lg shadow-rose-950/20 cursor-pointer text-center"
+                            >
+                                Institution Command Portal
+                            </button>
+                            <button
+                                onClick={() => navigateTo('/business/contact')}
+                                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm transition-all shadow-lg shadow-rose-600/30 cursor-pointer text-center flex items-center justify-center gap-2"
+                            >
+                                <span>Book Telemetry Demo</span>
+                                <ArrowRight className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </RevealSection>
-        </>
+        </div>
     );
 
     return (
         <div style={{ zoom: 0.9, width: '100%', height: '100%' }}>
-            <div className={`w-full min-h-screen flex flex-col ${theme === 'dark' ? 'text-neutral-200 bg-[#111]' : 'text-neutral-800 bg-white'}`}>
+            <div className={`w-full min-h-screen flex flex-col ${theme === 'dark' ? 'text-neutral-200 bg-[#0D0F12]' : 'text-neutral-800 bg-slate-50'}`}>
                 {/* Fixed Navbar with Glassmorphism */}
                 <Navbar
                     theme={theme}

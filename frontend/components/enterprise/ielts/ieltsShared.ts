@@ -3,9 +3,10 @@ import { recordExamAttempt } from '@/lib/telemetryEgress';
 export type IeltsSkill = 'listening' | 'reading' | 'writing' | 'speaking';
 
 export interface IeltsAttempt {
-    id: number;
+    id: number | string;
     skill: IeltsSkill;
     module?: IeltsSkill;
+    module_type?: string;
     band: number;
     title?: string;
     score?: number;
@@ -18,9 +19,16 @@ export interface IeltsAttempt {
     test_number?: number;
     is_general?: boolean;
     exam_type?: 'academic' | 'general';
+    category?: 'academic' | 'general';
+    test_id?: string;
+    source_type?: string;
     status?: string;
     answers_payload?: Record<string, string>;
     raw_answers?: Record<string, string>;
+    evaluation_payload_json?: any;
+    essayText?: string;
+    prompt?: string;
+    wordCount?: number;
 }
 
 export const ATTEMPTS_UPDATED_EVENT = 'ielts-attempts-updated';
@@ -69,13 +77,21 @@ export const addAttempt = (attempt: IeltsAttempt) => {
 
     // Asynchronously replicate attempt into Supabase telemetry table
     try {
+        const resolvedCategory = attempt.category || (attempt.is_general ? 'general' : (attempt.exam_type || 'academic'));
+        const canonicalTitle = attempt.title || formatCanonicalExamName(attempt);
         recordExamAttempt({
-            testId: attempt.bundle || attempt.title || `test-${attempt.id}`,
-            module: attempt.skill,
+            testId: attempt.test_id || attempt.bundle || attempt.title || `test-${attempt.id}`,
+            module: attempt.skill || attempt.module || 'listening',
             bandScore: attempt.band,
             correctCount: attempt.score || 0,
             totalQuestions: 40,
             timeSpentSeconds: (attempt.timeSpent || 0) * 60,
+            answersPayload: attempt.answers_payload || attempt.raw_answers || {},
+            bookNumber: attempt.book_number ? Number(attempt.book_number) : undefined,
+            testNumber: attempt.test_number ? Number(attempt.test_number) : undefined,
+            category: resolvedCategory,
+            title: canonicalTitle,
+            sourceType: attempt.source_type || 'cambridge',
         }).catch((err) => {
             console.warn('[Telemetry] async recordExamAttempt error:', err);
         });
@@ -133,10 +149,13 @@ export const createDemoAttempt = (skill: IeltsSkill): IeltsAttempt => {
 };
 
 export const isGeneralAttempt = (attempt: IeltsAttempt): boolean => {
+    if (attempt.category === 'general') return true;
+    if (attempt.category === 'academic') return false;
     if (attempt.is_general != null) return Boolean(attempt.is_general);
     if (attempt.exam_type === 'general') return true;
     const title = (attempt.title || '').toLowerCase();
-    if (title.includes('general training') || title.includes('(gt)') || title.includes(' gt') || title.includes('general')) {
+    const testId = (attempt.test_id || '').toLowerCase();
+    if (title.includes('general training') || title.includes('(gt)') || title.includes(' gt') || title.includes('general') || testId.includes('-gt-') || testId.includes('general')) {
         return true;
     }
     if (attempt.taskType === 'task1' && (title.includes('letter') || title.includes('general'))) {
@@ -145,30 +164,52 @@ export const isGeneralAttempt = (attempt: IeltsAttempt): boolean => {
     return false;
 };
 
-export const resolveExamTitle = (attempt: IeltsAttempt): string => {
+export function formatCanonicalExamName(attempt: {
+    test_id?: string;
+    title?: string;
+    book_number?: number;
+    test_number?: number;
+    category?: 'academic' | 'general';
+    is_general?: boolean;
+    exam_type?: 'academic' | 'general';
+    source_type?: string;
+}): string {
+    const isGT = attempt.category === 'general' || attempt.is_general === true || attempt.exam_type === 'general';
+
+    // 1. If explicit book and test numbers exist:
     if (attempt.book_number && attempt.test_number) {
-        return `Cambridge ${attempt.book_number} — Test ${attempt.test_number}`;
+        const hasGT = isGT || (attempt.title || attempt.test_id || '').toLowerCase().includes('gt');
+        return `Cambridge ${attempt.book_number}${hasGT ? ' GT' : ''} — Test ${attempt.test_number}`;
     }
-    const book = parseInt((attempt.title || '').match(/Cambridge\s*(\d+)/i)?.[1] || '0', 10);
-    const test = attempt.test_number || parseInt((attempt.title || '').match(/Test\s*(\d+)/i)?.[1] || '0', 10);
-    if (book && test) {
-        return `Cambridge ${book} — Test ${test}`;
+
+    // 2. Parse from deterministic slugs or titles (e.g., 'cambridge-8-test-2', 'c0800000-...')
+    const identifier = (attempt.title || attempt.test_id || '').toLowerCase();
+    const cambridgeMatch = identifier.match(/cambridge[-_\s—–]*(\d+)[-_\s—–]*(?:gt[-_\s—–]*)?(?:test[-_\s—–]*)?(\d+)?/i);
+    if (cambridgeMatch) {
+        const book = cambridgeMatch[1];
+        const test = cambridgeMatch[2] || '1';
+        const parsedGT = isGT || identifier.includes('gt');
+        return `Cambridge ${book}${parsedGT ? ' GT' : ''} — Test ${test}`;
     }
-    const series = parseInt((attempt.title || '').match(/Series\s*(\d+)|Set\s*(\d+)/i)?.[1] || '0', 10);
-    if (series && test) {
-        return `IELTSly Mock Series ${series} — Test ${test}`;
+
+    const cSlugMatch = identifier.match(/^c0?(\d{1,2})[-_\s—–]*(?:gt[-_\s—–]*)?(?:test[-_\s—–]*)?(\d+)?/i);
+    if (cSlugMatch) {
+        const book = cSlugMatch[1];
+        const test = cSlugMatch[2] || '1';
+        const parsedGT = isGT || identifier.includes('gt');
+        return `Cambridge ${book}${parsedGT ? ' GT' : ''} — Test ${test}`;
     }
-    if (
-        attempt.title &&
-        !/^(reading|listening|writing|speaking)\s*practice$/i.test(attempt.title.trim()) &&
-        !/^(reading|listening|writing|speaking)\s*attempt$/i.test(attempt.title.trim())
-    ) {
-        return attempt.title;
+
+    // 3. Fallback to existing title or clean fallback
+    const rawTitle = attempt.title?.replace(/practice/i, '').trim();
+    if (rawTitle && rawTitle.toLowerCase() !== 'official cambridge test') {
+        return rawTitle;
     }
-    if (attempt.skill === 'reading') return 'Reading Practice';
-    if (attempt.skill === 'listening') return 'Listening Practice';
-    if (attempt.skill === 'writing') return 'Writing Practice';
-    return 'Academic Practice';
+    return 'Cambridge Practice Test';
+}
+
+export const resolveExamTitle = (attempt: IeltsAttempt): string => {
+    return formatCanonicalExamName(attempt);
 };
 
 export const formatTestTopic = (a: IeltsAttempt): string => {
@@ -332,35 +373,75 @@ export const formatClock = (s: number) => {
     return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
 };
 
-export const rawToBandGT = (score: number): number => {
-    if (score >= 40) return 9;
+export const rawToBandGT = (rawScore: number): number => {
+    const score = Math.max(0, Math.min(40, Math.round(rawScore || 0)));
+    if (score >= 40) return 9.0;
     if (score >= 39) return 8.5;
-    if (score >= 37) return 8;
+    if (score >= 37) return 8.0;
     if (score >= 36) return 7.5;
-    if (score >= 34) return 7;
+    if (score >= 34) return 7.0;
     if (score >= 32) return 6.5;
-    if (score >= 30) return 6;
+    if (score >= 30) return 6.0;
     if (score >= 27) return 5.5;
-    if (score >= 23) return 5;
+    if (score >= 23) return 5.0;
     if (score >= 19) return 4.5;
-    if (score >= 15) return 4;
-    return 3.5;
+    if (score >= 15) return 4.0;
+    if (score >= 12) return 3.5;
+    if (score >= 9)  return 3.0;
+    if (score >= 6)  return 2.5;
+    if (score >= 4)  return 2.0;
+    if (score >= 2)  return 1.5;
+    if (score >= 1)  return 1.0;
+    return 0.0;
 };
 
-export const rawToBand = (score: number, category?: string): number => {
-    if (category === 'general') {
+export const rawToBand = (rawScore: number, moduleOrCategory: 'listening' | 'reading' | 'academic' | 'general' | string = 'listening'): number => {
+    const score = Math.max(0, Math.min(40, Math.round(rawScore || 0)));
+
+    if (moduleOrCategory === 'general') {
         return rawToBandGT(score);
     }
-    if (score >= 39) return 9;
+
+    if (moduleOrCategory === 'listening') {
+        if (score >= 39) return 9.0;
+        if (score >= 37) return 8.5;
+        if (score >= 35) return 8.0;
+        if (score >= 32) return 7.5;
+        if (score >= 30) return 7.0;
+        if (score >= 26) return 6.5;
+        if (score >= 23) return 6.0;
+        if (score >= 18) return 5.5;
+        if (score >= 16) return 5.0;
+        if (score >= 13) return 4.5;
+        if (score >= 10) return 4.0;
+        if (score >= 8)  return 3.5;
+        if (score >= 6)  return 3.0;
+        if (score >= 4)  return 2.5;
+        if (score >= 3)  return 2.0;
+        if (score >= 2)  return 1.5;
+        if (score >= 1)  return 1.0;
+        return 0.0;
+    }
+
+    // Academic Reading
+    if (score >= 39) return 9.0;
     if (score >= 37) return 8.5;
-    if (score >= 35) return 8;
+    if (score >= 35) return 8.0;
     if (score >= 33) return 7.5;
-    if (score >= 30) return 7;
+    if (score >= 30) return 7.0;
     if (score >= 27) return 6.5;
-    if (score >= 23) return 6;
+    if (score >= 23) return 6.0;
     if (score >= 20) return 5.5;
-    if (score >= 16) return 5;
-    return 4;
+    if (score >= 16) return 5.0;
+    if (score >= 13) return 4.5;
+    if (score >= 10) return 4.0;
+    if (score >= 8)  return 3.5;
+    if (score >= 6)  return 3.0;
+    if (score >= 4)  return 2.5;
+    if (score >= 3)  return 2.0;
+    if (score >= 2)  return 1.5;
+    if (score >= 1)  return 1.0;
+    return 0.0;
 };
 
 export const TASK1_PROMPTS = [
@@ -514,3 +595,60 @@ export const skillDotColors: Record<IeltsSkill, string> = {
     writing: 'bg-amber-400',
     speaking: 'bg-violet-400',
 };
+
+export function transformExamAttemptRow(row: any, defaultSkill: IeltsSkill = 'reading'): IeltsAttempt {
+    const skill = (row.module || defaultSkill) as IeltsSkill;
+
+    let book = row.book_number ? Number(row.book_number) : undefined;
+    if (!book) {
+        const titleMatch = (row.title || '').match(/Cambridge\s*(\d+)/i);
+        const testIdMatch = (row.test_id || '').match(/c(?:ambridge)?[-_]?0?(\d+)/i);
+        if (titleMatch) {
+            book = parseInt(titleMatch[1], 10);
+        } else if (testIdMatch) {
+            book = parseInt(testIdMatch[1], 10);
+        }
+    }
+
+    let test = row.test_number ? Number(row.test_number) : undefined;
+    if (!test) {
+        const titleTestMatch = (row.title || '').match(/Test\s*(\d+)/i);
+        const testIdTestMatch = (row.test_id || '').match(/test[-_]?0?(\d+)/i);
+        if (titleTestMatch) {
+            test = parseInt(titleTestMatch[1], 10);
+        } else if (testIdTestMatch) {
+            test = parseInt(testIdTestMatch[1], 10);
+        }
+    }
+
+    const isGen = row.is_general != null
+        ? Boolean(row.is_general)
+        : (row.category === 'general' || (row.title || '').toLowerCase().includes('general') || (row.title || '').toLowerCase().includes('(gt)') || (row.test_id || '').toLowerCase().includes('-gt-'));
+
+    let title = row.title;
+    if (!title || title.trim() === '' || title.toLowerCase() === 'reading practice' || title.toLowerCase() === 'listening practice' || title.toLowerCase() === 'writing practice') {
+        if (book && test) {
+            title = `Cambridge ${book} — Test ${test}`;
+        } else if (row.title) {
+            title = row.title;
+        } else {
+            title = `${skillLabels[skill] || 'IELTS'} Practice`;
+        }
+    }
+
+    return {
+        id: row.id,
+        skill,
+        module: skill,
+        band: Number(row.band_score || 0),
+        score: row.correct_count,
+        book_number: book,
+        test_number: test,
+        is_general: isGen,
+        title,
+        date: new Date(row.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        timeSpent: Math.max(1, Math.round((row.time_spent_seconds || 0) / 60)),
+        answers_payload: row.answers_payload,
+        raw_answers: row.answers_payload,
+    };
+}

@@ -44,32 +44,89 @@ export const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ modu
         const loadAttempts = async () => {
             const local = readAttempts();
             try {
-                const { data: dbAttempts } = await supabase
-                    .from('exam_attempts')
-                    .select('*')
-                    .eq('module', 'writing')
-                    .order('created_at', { ascending: false })
-                    .limit(50);
+                let dbRows: any[] = [];
 
-                if (dbAttempts && dbAttempts.length > 0 && mounted) {
-                    const mappedDb: IeltsAttempt[] = dbAttempts.map((row: any) => {
-                        const book = row.book_number || parseInt((row.title || '').match(/Cambridge\s*(\d+)/i)?.[1] || '0', 10);
-                        const test = row.test_number || parseInt((row.title || '').match(/Test\s*(\d+)/i)?.[1] || '0', 10);
-                        const isGen = row.is_general != null ? Boolean(row.is_general) : (row.category === 'general' || (row.title || '').toLowerCase().includes('general') || (row.title || '').toLowerCase().includes('(gt)'));
+                // 1. Query Supabase writing_attempts table (primary single-pass persistent store)
+                try {
+                    const { data: attData } = await (supabase as any)
+                        .from('writing_attempts')
+                        .select('*')
+                        .order('created_at', { ascending: false })
+                        .limit(50);
+                    if (attData && attData.length > 0) {
+                        dbRows = [...dbRows, ...attData];
+                    }
+                } catch {
+                    // non-blocking
+                }
+
+                // 2. Query Supabase writing_submissions table
+                try {
+                    const { data: subData } = await (supabase as any)
+                        .from('writing_submissions')
+                        .select('*')
+                        .order('created_at', { ascending: false })
+                        .limit(50);
+                    if (subData && subData.length > 0) {
+                        dbRows = [...dbRows, ...subData];
+                    }
+                } catch {
+                    // non-blocking
+                }
+
+                // 3. Query Supabase exam_attempts table
+                try {
+                    const { data: examData } = await (supabase as any)
+                        .from('exam_attempts')
+                        .select('*')
+                        .eq('module', 'writing')
+                        .order('created_at', { ascending: false })
+                        .limit(50);
+                    if (examData && examData.length > 0) {
+                        dbRows = [...dbRows, ...examData];
+                    }
+                } catch {
+                    // non-blocking
+                }
+
+                if (dbRows.length > 0 && mounted) {
+                    const mappedDb: IeltsAttempt[] = dbRows.map((row: any) => {
+                        const book = row.book_number
+                            ? Number(row.book_number)
+                            : (row.book_or_set_number ? Number(row.book_or_set_number) : undefined);
+                        const test = row.test_number ? Number(row.test_number) : 1;
+                        const isGen = row.is_general != null
+                            ? Boolean(row.is_general)
+                            : (row.module_type === 'general' || row.category === 'general' || (row.task1_prompt || '').toLowerCase().includes('letter'));
+                        const band = Number(row.overall_band || row.band_score || 6.5);
+                        const essay = row.task2_response || row.task1_response || row.essay_text || '';
+                        const wordCount = row.word_count || row.task2_word_count || row.task1_word_count || (essay ? essay.trim().split(/\s+/).filter(Boolean).length : 285);
+                        const title = (book && test)
+                            ? `Cambridge ${book} — Test ${test}`
+                            : (row.title && !row.title.toLowerCase().includes('official cambridge test') ? row.title : 'Cambridge Practice Test');
+
                         return {
                             id: row.id,
                             skill: 'writing',
                             module: 'writing',
-                            band: Number(row.band_score || 0),
-                            score: row.correct_count,
-                            book_number: book || undefined,
-                            test_number: test || undefined,
+                            band,
+                            book_number: book,
+                            test_number: test,
+                            title,
                             is_general: isGen,
-                            title: row.title || (book && test ? `Cambridge ${book} — Test ${test}` : 'Writing Practice'),
+                            taskType: row.task_type || (row.task2_response ? 'task2' : 'task1'),
+                            timeSpent: row.time_spent_seconds ? Math.round(row.time_spent_seconds / 60) : (row.timeSpent || 40),
                             date: new Date(row.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                            timeSpent: Math.max(1, Math.round((row.time_spent_seconds || 0) / 60)),
-                            answers_payload: row.answers_payload,
-                            raw_answers: row.answers_payload,
+                            wordCount,
+                            evaluation_payload_json: row.evaluation_payload_json || row.evaluation,
+                            prompt: row.task2_prompt || row.task1_prompt || row.prompt_text,
+                            essayText: essay,
+                            criteria: row.evaluation?.criteria || [
+                                { label: 'Task Response', band },
+                                { label: 'Coherence', band },
+                                { label: 'Lexical Range', band },
+                                { label: 'Grammar', band },
+                            ],
                         };
                     });
 
@@ -197,6 +254,16 @@ export const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ modu
                             {filteredAttempts.map((a) => {
                                 const status = attemptStatus(a.band);
                                 const isGen = isGeneralAttempt(a);
+
+                                // Dynamic Cambridge formatting with clean fallback
+                                const examName = (a.book_number && a.test_number)
+                                    ? `Cambridge ${a.book_number} — Test ${a.test_number}`
+                                    : (a.title && !a.title.toLowerCase().includes('official cambridge test')
+                                        ? a.title
+                                        : resolveExamTitle(a) !== 'Official Cambridge Test'
+                                            ? resolveExamTitle(a)
+                                            : 'Cambridge Practice Test');
+
                                 return (
                                     <tr key={String(a.id)} className="border-b border-[#222732]/60 hover:bg-[#1A1E26]/80 transition-colors duration-150 group">
                                         {/* 1. DATE */}
@@ -217,9 +284,9 @@ export const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ modu
                                             )}
                                         </td>
 
-                                        {/* 3. EXAM NAME (NEW COLUMN) */}
+                                        {/* 3. EXAM NAME (DYNAMIC CAMBRIDGE FORMATTING) */}
                                         <td className="px-4 py-3.5 text-xs font-semibold text-slate-100 align-middle">
-                                            <span>{resolveExamTitle(a)}</span>
+                                            <span>{examName}</span>
                                         </td>
 
                                         {/* 4. TIME SPENT */}
@@ -276,7 +343,7 @@ export const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ modu
                 </div>
             )}
 
-            {/* Writing Analysis Modal */}
+            {/* Writing Analysis Modal (Zero-Pass Persisted Hydration) */}
             {analysisId !== null && (() => {
                 const attempt = filteredAttempts.find((a) => String(a.id) === String(analysisId));
                 if (!attempt) return null;

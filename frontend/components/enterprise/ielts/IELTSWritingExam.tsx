@@ -12,6 +12,10 @@ import {
     type SimulationProps,
     type WritingCriteria,
 } from './ieltsShared';
+import {
+    saveWritingEvaluation,
+    buildSynthesizedEvaluation,
+} from '@/services/writing/writingEvaluationService';
 import IELTSLobbyCard from './IELTSLobbyCard';
 import IELTSExitModal from './IELTSExitModal';
 import IeltsExamOptionsModal from '../../exam/IeltsExamOptionsModal';
@@ -414,12 +418,51 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
             };
             setResult(evalResult);
 
+            const primaryTask = evalResult.task2 || evalResult.task1;
+            const primaryPrompt = showT2 ? t2Prompt : t1Prompt;
+            const primaryEssay = showT2 ? t2Text : t1Text;
+            const primaryWords = showT2 ? t2WordCount : t1WordCount;
+            const attemptId = submission?.id || `writing-${Date.now()}`;
+
+            const evalPayload = buildSynthesizedEvaluation({
+                attemptId,
+                essayText: primaryEssay,
+                promptText: primaryPrompt,
+                overallBand: evalResult.overallBand,
+                bookNumber,
+                testNumber,
+                taskType: showT1 && showT2 ? 'full_mock' : showT1 ? 'task1' : 'task2',
+                timeSpentMinutes: timeSpent,
+                wordCount: primaryWords,
+                criteriaScores: primaryTask ? {
+                    'TR/TA': primaryTask.criteria.taskAchievement,
+                    'CC': primaryTask.criteria.coherence,
+                    'LR': primaryTask.criteria.lexical,
+                    'GRA': primaryTask.criteria.grammar,
+                } : undefined,
+            });
+
+            // Single-pass persistence to Supabase
+            saveWritingEvaluation(evalPayload, {
+                id: attemptId,
+                userId: session?.user?.id,
+                userEmail: candidateEmail || session?.user?.email,
+                bookNumber,
+                testNumber,
+                taskType: showT1 && showT2 ? 'full_mock' : showT1 ? 'task1' : 'task2',
+                title: bookNumber && testNumber ? `Cambridge ${bookNumber} — Test ${testNumber}` : 'Academic Writing Attempt',
+            }).catch((err) => console.warn('[WritingExam] saveWritingEvaluation warning:', err));
+
             addAttempt({
-                id: Date.now(),
+                id: attemptId,
                 skill: 'writing',
                 band: evalResult.overallBand,
                 taskType: showT1 && showT2 ? 'full_mock' : showT1 ? 'task1' : 'task2',
                 timeSpent,
+                book_number: bookNumber,
+                test_number: testNumber,
+                title: bookNumber && testNumber ? `Cambridge ${bookNumber} — Test ${testNumber}` : 'Academic Writing Attempt',
+                evaluation_payload_json: evalPayload,
                 criteria: [
                     ...(evalResult.task1 ? [{ label: 'Task 1', band: evalResult.task1.band }] : []),
                     ...(evalResult.task2 ? [{ label: 'Task 2', band: evalResult.task2.band }] : []),
@@ -462,12 +505,48 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
                 date: new Date().toLocaleString(),
             });
 
+            const fbTask = t2Result || t1Result;
+            const fbPrompt = showT2 ? t2Prompt : t1Prompt;
+            const fbEssay = showT2 ? t2Text : t1Text;
+            const fbWords = showT2 ? t2WordCount : t1WordCount;
+            const fbId = submissionId || `writing-${Date.now()}`;
+
+            const fbPayload = buildSynthesizedEvaluation({
+                attemptId: fbId,
+                essayText: fbEssay,
+                promptText: fbPrompt,
+                overallBand,
+                bookNumber,
+                testNumber,
+                taskType: showT1 && showT2 ? 'full_mock' : showT1 ? 'task1' : 'task2',
+                timeSpentMinutes: timeSpent,
+                wordCount: fbWords,
+                criteriaScores: fbTask ? {
+                    'TR/TA': fbTask.criteria.taskAchievement,
+                    'CC': fbTask.criteria.coherence,
+                    'LR': fbTask.criteria.lexical,
+                    'GRA': fbTask.criteria.grammar,
+                } : undefined,
+            });
+
+            saveWritingEvaluation(fbPayload, {
+                id: fbId,
+                bookNumber,
+                testNumber,
+                taskType: showT1 && showT2 ? 'full_mock' : showT1 ? 'task1' : 'task2',
+                title: bookNumber && testNumber ? `Cambridge ${bookNumber} — Test ${testNumber}` : 'Academic Writing Attempt',
+            }).catch(() => {});
+
             addAttempt({
-                id: Date.now(),
+                id: fbId,
                 skill: 'writing',
                 band: overallBand,
                 taskType: showT1 && showT2 ? 'full_mock' : showT1 ? 'task1' : 'task2',
                 timeSpent,
+                book_number: bookNumber,
+                test_number: testNumber,
+                title: bookNumber && testNumber ? `Cambridge ${bookNumber} — Test ${testNumber}` : 'Academic Writing Attempt',
+                evaluation_payload_json: fbPayload,
                 criteria: [
                     ...(t1Result ? [{ label: 'Task 1', band: t1Result.band }] : []),
                     ...(t2Result ? [{ label: 'Task 2', band: t2Result.band }] : []),

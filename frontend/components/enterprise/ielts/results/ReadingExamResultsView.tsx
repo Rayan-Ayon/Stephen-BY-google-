@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { ExamResultsPayload, PassageReviewData, ResultQuestionItem } from './readingResultsTypes';
 import StudentDisputeButtonAndModal from '../StudentDisputeButtonAndModal';
 import { useReadingExamData } from '@/hooks/useExamData';
+import PerformanceBreakdown from '../../analysis/PerformanceBreakdown';
 
 interface ReadingExamResultsViewProps {
   results: ExamResultsPayload;
@@ -335,145 +336,17 @@ export default function ReadingExamResultsView({ results, onBack, onRetake }: Re
 
       {/* ── MAIN CONTENT CONTAINER ── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
-        {/* ════ SECTION 1: TOP ANALYTICS KPI ROW ════ */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Card 1: Band Score */}
-          <div className={styles.kpiCard}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Band Score</span>
-              <span className="bg-rose-950/60 text-rose-400 border border-rose-800/50 text-[11px] font-bold px-2 py-0.5 rounded-md">
-                Official Scale
-              </span>
-            </div>
-            <div className="my-1">
-              <div className={styles.kpiScoreText}>
-                {results.bandScore.toFixed(1)}
-              </div>
-              <div className="text-base font-bold text-white mt-1">
-                {results.bandLabel}
-              </div>
-            </div>
-            <p className="text-xs text-slate-400 pt-2 border-t border-[#222732]">
-              {results.correctCount} of {results.totalQuestions} questions correct
-            </p>
-          </div>
-
-          {/* Card 2: Accuracy */}
-          <div className={styles.kpiCard}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Accuracy Rate</span>
-              <div className="p-1.5 rounded-lg bg-indigo-950/60 border border-indigo-800/50 text-indigo-400">
-                <Target className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="my-1">
-              <div className="text-4xl font-extrabold text-white">
-                {accuracyPct}%
-              </div>
-              <div className="text-base font-medium text-slate-300 mt-1">
-                Overall Accuracy
-              </div>
-            </div>
-            <p className="text-xs text-slate-400 pt-2 border-t border-[#222732]">
-              {results.correctCount}/{results.totalQuestions} correct responses
-            </p>
-          </div>
-
-          {/* Card 3: Time Spent */}
-          <div className={styles.kpiCard}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Duration</span>
-              <div className="p-1.5 rounded-lg bg-purple-950/60 border border-purple-800/50 text-purple-400">
-                <Clock className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="my-1">
-              <div className="text-4xl font-extrabold text-white">
-                {formatDuration(results.timeSpentSeconds)}
-              </div>
-              <div className="text-base font-medium text-slate-300 mt-1">
-                Time Elapsed
-              </div>
-            </div>
-            <p className="text-xs text-slate-400 pt-2 border-t border-[#222732]">
-              Exam time limit: 60 minutes
-            </p>
-          </div>
-        </section>
-
-        {/* ════ SECTION 2: PERFORMANCE BREAKDOWN ════ */}
-        <section className="bg-[#15181E] rounded-2xl p-5 sm:p-6 border border-[#222732] shadow-sm space-y-5">
-          <div className="border-b border-[#222732] pb-3 flex items-center justify-between flex-wrap gap-2">
-            <div>
-              <h2 className="text-base sm:text-lg font-bold text-white">Performance Breakdown</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Granular performance by question typology and individual passage sections</p>
-            </div>
-            {supabaseLoading && (
-              <span className="text-xs text-indigo-400 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 animate-spin" />
-                Syncing Supabase Cambridge data...
-              </span>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Col: Question Type Breakdown */}
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Performance by Question Type</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {results.questionTypeBreakdown.map((item) => (
-                  <div key={item.typeLabel} className="bg-[#0D0F12] border border-[#222732] rounded-xl p-3.5 flex flex-col justify-between space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-xs text-slate-200">{item.typeLabel}</span>
-                      <span className={item.status === 'Mastered' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 font-semibold text-[10px] px-2 py-0.5 rounded-full' : styles.needsWorkBadge}>
-                        {item.status}
-                      </span>
-                    </div>
-                    <div className="flex items-baseline justify-between">
-                      <span className="text-xl font-extrabold text-white">{item.correct}/{item.total}</span>
-                      <span className="text-xs text-slate-400 font-medium">
-                        {Math.round((item.correct / (item.total || 1)) * 100)}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right Col: Passage Breakdown Progress Bars */}
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Breakdown by Passage</h3>
-              <div className="space-y-3">
-                {results.passageBreakdown.map((item) => {
-                  const pct = Math.round((item.correct / (item.total || 1)) * 100);
-                  return (
-                    <div key={item.passageNumber} className="bg-[#0D0F12] border border-[#222732] rounded-xl p-3.5 space-y-2">
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="font-bold text-white">
-                          Passage {item.passageNumber}: <span className="font-normal text-indigo-300 ml-1">{item.title}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-white">{item.correct}/{item.total}</span>
-                          <span className={item.status === 'Needs Focus' ? styles.needsFocusBadge : 'text-emerald-400 font-bold text-xs flex items-center gap-1'}>
-                            {item.status === 'Needs Focus' ? '❌ Needs Focus' : '✓ Good'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="w-full bg-[#1E232E] h-2 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full transition-all duration-500 ${
-                            item.status === 'Needs Focus' ? 'bg-rose-500' : 'bg-emerald-500'
-                          }`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* ════ SECTION 1 & SECTION 2: TOP ANALYTICS & PERFORMANCE BREAKDOWN ════ */}
+        <PerformanceBreakdown
+          bandScore={results.bandScore}
+          bandLabel={results.bandLabel}
+          correctCount={results.correctCount}
+          totalQuestions={results.totalQuestions}
+          timeSpentSeconds={results.timeSpentSeconds}
+          questionTypeBreakdown={results.questionTypeBreakdown}
+          passageBreakdown={results.passageBreakdown}
+          isLoading={supabaseLoading}
+        />
 
         {/* ════ SECTION 3: UNIFIED DUAL-PANE SCROLLING ENGINE & STICKY HEADER ════ */}
         <div className="w-full flex flex-col h-[calc(100vh-140px)] overflow-hidden">

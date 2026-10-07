@@ -23,14 +23,17 @@ def get_client() -> genai.Client:
 
 
 async def generate(
-    prompt: str,
+    prompt: str = "",
+    contents: Any = None,
     response_mime_type: str | None = None,
     system_instruction: str | None = None,
 ) -> dict:
     start_time = time.time()
 
-    fallback_models = [GEMINI_MODEL, "gemini-3.5-flash", "gemini-3.1-flash-lite"]
+    fallback_models = [GEMINI_MODEL, "gemini-2.0-flash", "gemini-1.5-flash"]
     last_error = None
+
+    input_contents = contents if contents is not None else prompt
 
     for model_name in fallback_models:
         try:
@@ -41,12 +44,12 @@ async def generate(
 
             response = await get_client().aio.models.generate_content(
                 model=model_name,
-                contents=prompt,
+                contents=input_contents,
                 config=config,
             )
 
             duration = time.time() - start_time
-            text = response.text
+            text = response.text or ""
 
             logger.info(f"Generated content in {duration:.2f}s | model={model_name}")
             logger.info(f"Raw response: {text[:200]}...")
@@ -75,12 +78,14 @@ async def generate(
 
 
 async def generate_json(
-    prompt: str,
+    prompt: str = "",
+    contents: Any = None,
     system_instruction: str | None = None,
 ) -> dict:
     """Generate structured JSON response from Gemini."""
     result = await generate(
-        prompt,
+        prompt=prompt,
+        contents=contents,
         response_mime_type="application/json",
         system_instruction=system_instruction,
     )

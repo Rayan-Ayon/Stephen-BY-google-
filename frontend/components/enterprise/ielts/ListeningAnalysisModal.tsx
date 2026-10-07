@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import StudentDisputeButtonAndModal from './StudentDisputeButtonAndModal';
+import { rawToBand } from './ieltsShared';
+import tapescriptsData from '../../../data/listening_tapescripts.json';
 
 export interface ListeningQuestionResult {
   id: number;
@@ -375,8 +377,19 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
     return () => window.removeEventListener('keydown', onKey);
   }, [isModal, handleClose]);
 
-  const parsedBook = bookNumber ?? parseInt(testTitle.match(/Cambridge\s*(\d+)/i)?.[1] || '18', 10);
-  const parsedTest = testNumber ?? parseInt(testTitle.match(/Test\s*(\d+)/i)?.[1] || '1', 10);
+  const numBook = Number(bookNumber ?? parseInt(testTitle.match(/Cambridge\s*(\d+)/i)?.[1] || '18', 10)) || 18;
+  const numTest = Number(testNumber ?? parseInt(testTitle.match(/Test\s*(\d+)/i)?.[1] || '1', 10)) || 1;
+  const parsedBook = numBook;
+  const parsedTest = numTest;
+
+  const registryKey = `cambridge-${numBook}-test-${numTest}`;
+  const currentTestRegistry = (tapescriptsData as Record<string, any>)[registryKey] || (tapescriptsData as Record<string, any>)['cambridge-18-test-1'];
+  const testPartMarkers: Record<string, number> = currentTestRegistry?.part_markers || { "1": 0, "2": 372, "3": 745, "4": 1180 };
+  const testQuestionsRegistry: Record<string, any> = currentTestRegistry?.questions || {};
+
+  // Deterministic Supabase Audio URL fallback
+  const defaultStorageAudioUrl = `https://hucadzqsqsfqgmwnpipp.supabase.co/storage/v1/object/public/listening-audio/cambridge-${numBook}/test-${numTest}/full_audio.mp3`;
+  const effectiveAudioUrl = (audioUrl && !audioUrl.includes('coffee_shop')) ? audioUrl : defaultStorageAudioUrl;
 
   const initialAnswers = useMemo(() => {
     let raw: any = answersPayload || userAnswers || {};
@@ -401,7 +414,7 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
   const [expandedScripts, setExpandedScripts] = useState<Record<number, boolean>>({});
   const [scoreViewMode, setScoreViewMode] = useState<'ai' | 'teacher'>('ai');
   const [activeAnswers, setActiveAnswers] = useState<Record<number, string>>(initialAnswers);
-  const [dbQuestions, setDbQuestions] = useState<Record<number, { prompt?: string; correct?: string; excerpt?: string; explanation?: string }>>({});
+  const [dbQuestions, setDbQuestions] = useState<Record<number, { prompt?: string; correct?: string; excerpt?: string; explanation?: string; timestamp?: string }>>({});
   const [fetchedScore, setFetchedScore] = useState<number | null>(null);
 
   // Audio Player State
@@ -410,14 +423,20 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
   const [duration, setDuration] = useState(1680); // ~28 minutes default
   const [volume, setVolume] = useState(0.85);
   const [isMuted, setIsMuted] = useState(false);
+  const [hoverTime, setHoverTime] = useState<number | null>(null);
+  const [hoverX, setHoverX] = useState<number>(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const scrubberRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch real candidate attempt & exam questions from Supabase
   useEffect(() => {
     let isMounted = true;
     const fetchSupabaseListeningData = async () => {
       try {
-        const testKey = `cambridge-${parsedBook}-test-${parsedTest}`;
+        const paddedBook = String(numBook).padStart(2, '0');
+        const paddedTest = String(numTest).padStart(12, '0');
+        const standardUuid = `c${paddedBook}00000-0000-0000-0000-${paddedTest}`;
+
         let attemptRow: any = null;
 
         if (attemptId) {
@@ -437,15 +456,27 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
             .from('exam_attempts')
             .select('*')
             .eq('module', 'listening')
-            .ilike('test_id', `%${testKey}%`)
+            .eq('test_id', standardUuid)
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();
           attemptRow = data;
         }
 
+        // Resilient fallback from localStorage if Supabase attempt is unpopulated
+        if (!attemptRow) {
+          try {
+            const cached = (attemptId ? localStorage.getItem(`listening_attempt_${attemptId}`) : null) ||
+                           localStorage.getItem(`latest_listening_attempt_${standardUuid}`) ||
+                           localStorage.getItem('latest_listening_attempt');
+            if (cached) attemptRow = JSON.parse(cached);
+          } catch {}
+        }
+
         if (attemptRow && isMounted) {
-          if (attemptRow.correct_count != null) {
+          if (attemptRow.raw_score != null) {
+            setFetchedScore(Number(attemptRow.raw_score));
+          } else if (attemptRow.correct_count != null) {
             setFetchedScore(Number(attemptRow.correct_count));
           }
           if (attemptRow.answers_payload) {
@@ -461,25 +492,36 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
           }
         }
 
-        // Fetch official sections and questions from Supabase
-        const { data: sections } = await (supabase as any)
+        // Fetch official sections and questions from Supabase using deterministic standard UUID
+        let { data: sections } = await (supabase as any)
           .from('sections')
           .select('*, question_groups(*, questions(*))')
-          .or(`test_id.ilike.%${testKey}%,exam_id.ilike.%${testKey}%`)
+          .eq('test_id', standardUuid)
           .order('part_number', { ascending: true });
 
+        if (!sections || sections.length === 0) {
+          const { data: secByExam } = await (supabase as any)
+            .from('sections')
+            .select('*, question_groups(*, questions(*))')
+            .eq('exam_id', standardUuid)
+            .order('part_number', { ascending: true });
+          sections = secByExam;
+        }
+
         if (sections && sections.length > 0 && isMounted) {
-          const qDict: Record<number, { prompt?: string; correct?: string; excerpt?: string; explanation?: string }> = {};
+          const qDict: Record<number, { prompt?: string; correct?: string; excerpt?: string; explanation?: string; timestamp?: string }> = {};
           sections.forEach((sec: any) => {
             (sec.question_groups || []).forEach((grp: any) => {
               (grp.questions || []).forEach((q: any) => {
                 const num = q.question_number;
                 if (num) {
+                  const regItem = testQuestionsRegistry[String(num)];
                   qDict[num] = {
-                    prompt: q.prompt,
-                    correct: q.correct_answer,
-                    excerpt: sec.passage_title ? `${sec.passage_title}: ${q.prompt}` : q.prompt,
-                    explanation: q.explanation || grp.instructions || 'Official Cambridge verified response.'
+                    prompt: q.question_text || regItem?.prompt,
+                    correct: q.correct_answer || regItem?.correct_answer,
+                    excerpt: q.evidence_quote || regItem?.evidence_quote || (sec.passage_title ? `${sec.passage_title}: ${q.question_text}` : q.question_text),
+                    explanation: q.explanation || regItem?.explanation || 'Official Cambridge verified response.',
+                    timestamp: q.timestamp_str || regItem?.timestamp || '00:00'
                   };
                 }
               });
@@ -496,30 +538,21 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
 
     fetchSupabaseListeningData();
     return () => { isMounted = false; };
-  }, [attemptId, parsedBook, parsedTest]);
+  }, [attemptId, numBook, numTest]);
 
   const score = fetchedScore ?? propScore ?? 0;
   const totalQuestions = propTotalQuestions;
 
   // Derived metrics
-  const calculatedBand = propBandScore ?? (
-    score >= 39 ? 9.0 :
-    score >= 37 ? 8.5 :
-    score >= 35 ? 8.0 :
-    score >= 32 ? 7.5 :
-    score >= 30 ? 7.0 :
-    score >= 26 ? 6.5 :
-    score >= 23 ? 6.0 :
-    score >= 18 ? 5.5 :
-    score >= 16 ? 5.0 : 4.5
-  );
-  const teacherVerifiedBand = Math.min(9.0, calculatedBand + 0.5);
+  const calculatedBand = propBandScore ?? rawToBand(score, 'listening');
+  // Guard: 0 correct answers must never receive an artificial teacher boost
+  const teacherVerifiedBand = score === 0 ? 0.0 : Math.min(9.0, calculatedBand + 0.5);
   const displayedBand = scoreViewMode === 'teacher' ? teacherVerifiedBand : calculatedBand;
-  const accuracyPct = Math.round((score / totalQuestions) * 100);
+  const accuracyPct = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
 
   // Audio setup
   useEffect(() => {
-    const audio = new Audio(audioUrl);
+    const audio = new Audio(effectiveAudioUrl);
     audioRef.current = audio;
     audio.volume = volume;
 
@@ -535,7 +568,7 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
       audio.pause();
       audio.src = '';
     };
-  }, [audioUrl]);
+  }, [effectiveAudioUrl]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
@@ -554,7 +587,8 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
   };
 
   const jumpToPart = (part: 1 | 2 | 3 | 4) => {
-    seekTo(PART_TIMESTAMPS[part]);
+    const sec = Number(testPartMarkers[String(part)] ?? testPartMarkers[part] ?? PART_TIMESTAMPS[part] ?? 0);
+    seekTo(sec);
     if (!isPlaying && audioRef.current) {
       audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
     }
@@ -585,34 +619,93 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
   // Build question results list (1 to 40)
   const questionResults = useMemo<ListeningQuestionResult[]>(() => {
     const list: ListeningQuestionResult[] = [];
+    const checkAnswerMatch = (user: string, exp: string) => {
+      const normalize = (val: string) => val.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const u = normalize(user);
+      const e = normalize(exp);
+      if (!u || !e) return false;
+      if (u === e) return true;
+      const alts = exp.split('/').map((v) => normalize(v));
+      if (alts.includes(u)) return true;
+      return false;
+    };
+
     for (let i = 1; i <= 40; i++) {
       const part: 1 | 2 | 3 | 4 = i <= 10 ? 1 : i <= 20 ? 2 : i <= 30 ? 3 : 4;
       const userRaw = (activeAnswers[i] ?? '').trim();
       const dbQ = dbQuestions[i];
-      const official = (dbQ?.correct || OFFICIAL_ANSWERS[i] || '').trim();
-      const transcriptInfo = OFFICIAL_TRANSCRIPTS[i] ?? {
-        excerpt: dbQ?.excerpt || 'Transcript recording aligned with official Cambridge listening audio track.',
-        explanation: dbQ?.explanation || 'Key information provided in spoken dialogue.',
-        timestamp: '00:00'
+      const regQ = testQuestionsRegistry[String(i)] || testQuestionsRegistry[i];
+      const official = (dbQ?.correct || regQ?.correct_answer || OFFICIAL_ANSWERS[i] || '').trim();
+      const prompt = dbQ?.prompt || regQ?.prompt || PROMPT_TITLES[i] || `Question ${i}`;
+      const transcriptInfo = {
+        excerpt: dbQ?.excerpt || regQ?.evidence_quote || OFFICIAL_TRANSCRIPTS[i]?.excerpt || 'Transcript recording aligned with official Cambridge listening audio track.',
+        explanation: dbQ?.explanation || regQ?.explanation || OFFICIAL_TRANSCRIPTS[i]?.explanation || 'Key information provided in spoken dialogue.',
+        timestamp: dbQ?.timestamp || regQ?.timestamp || OFFICIAL_TRANSCRIPTS[i]?.timestamp || '00:00'
       };
 
-      const normalize = (val: string) => val.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const isCorrect = userRaw ? normalize(userRaw) === normalize(official) : false;
+      const isCorrect = userRaw ? checkAnswerMatch(userRaw, official) : false;
 
       list.push({
         id: i,
         part,
-        prompt: dbQ?.prompt || (PROMPT_TITLES[i] ?? `Question ${i}`),
+        prompt,
         userAnswer: userRaw || '(No answer provided)',
         correctAnswer: official,
         isCorrect,
         timestamp: transcriptInfo.timestamp,
-        tapeScriptExcerpt: dbQ?.excerpt || transcriptInfo.excerpt,
-        explanation: dbQ?.explanation || transcriptInfo.explanation
+        tapeScriptExcerpt: transcriptInfo.excerpt,
+        explanation: transcriptInfo.explanation
       });
     }
     return list;
-  }, [activeAnswers, dbQuestions]);
+  }, [activeAnswers, dbQuestions, testQuestionsRegistry]);
+
+  // Dynamic AI Error Diagnostic & Pattern Analysis
+  const aiDiagnostics = useMemo(() => {
+    const wrongItems = questionResults.filter((q) => !q.isCorrect);
+    const unAnsweredItems = questionResults.filter((q) => !q.userAnswer || q.userAnswer === '(No answer provided)');
+
+    const distractorTripped: string[] = [];
+    const spellingAcousticErrors: string[] = [];
+    const partErrorCounts: Record<1 | 2 | 3 | 4, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
+
+    wrongItems.forEach((w) => {
+      partErrorCounts[w.part]++;
+      const u = w.userAnswer.toLowerCase().trim();
+      const c = w.correctAnswer.toLowerCase().trim();
+
+      if (u && u !== '(no answer provided)') {
+        if (u + 's' === c || c + 's' === u || u + 'es' === c || c + 'es' === u) {
+          spellingAcousticErrors.push(`Q${w.id}: Suffix omission ('${w.userAnswer}' vs '${w.correctAnswer}')`);
+        } else if (w.correctAnswer.length === 1 && /^[a-f]$/i.test(w.correctAnswer)) {
+          distractorTripped.push(`Q${w.id}: Selected distractor option ${w.userAnswer.toUpperCase()} instead of key ${w.correctAnswer.toUpperCase()}`);
+        } else if (Math.abs(u.length - c.length) <= 2 && (u.includes(c.slice(0, 3)) || c.includes(u.slice(0, 3)))) {
+          spellingAcousticErrors.push(`Q${w.id}: Acoustic spelling nuance ('${w.userAnswer}' for '${w.correctAnswer}')`);
+        } else {
+          distractorTripped.push(`Q${w.id}: Spoken pivot/distractor trap (Expected: '${w.correctAnswer}')`);
+        }
+      }
+    });
+
+    const partsList: (1 | 2 | 3 | 4)[] = [1, 2, 3, 4];
+    const worstPart = partsList.reduce((maxP, p) => (partErrorCounts[p] > partErrorCounts[maxP] ? p : maxP), 1);
+
+    const drillRecommendations: Record<1 | 2 | 3 | 4, string> = {
+      1: `Cambridge ${numBook} Part 1 — Intensive drill on numerical corrections, surnames, and date transcription.`,
+      2: `Cambridge ${numBook} Part 2 — Facility map labelling & community orientation options.`,
+      3: `Cambridge ${numBook} Part 3 — Multi-speaker academic tutorials with conversational mind changes.`,
+      4: `Cambridge ${numBook} Part 4 — Academic lecture monologue note-completion without audio pauses.`
+    };
+
+    return {
+      totalErrors: wrongItems.length,
+      unansweredCount: unAnsweredItems.length,
+      distractorTripped: distractorTripped.slice(0, 3),
+      spellingAcousticErrors: spellingAcousticErrors.slice(0, 3),
+      recommendedDrill: drillRecommendations[worstPart],
+      worstPart
+    };
+  }, [questionResults, numBook]);
 
   const filteredQuestions = useMemo(() => {
     if (activePartFilter === 'all') return questionResults;
@@ -660,7 +753,7 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
                 <span className="text-rose-400 font-semibold">Post-Exam Analysis Canvas</span>
               </div>
               <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                Listening Attempt — Performance Analytics (Cambridge {parsedBook} Test {parsedTest})
+                Listening Attempt — Performance Analytics (Cambridge {numBook} Test {numTest})
               </h1>
             </div>
           </div>
@@ -684,8 +777,8 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
               originalBand={calculatedBand}
               rawAnswers={activeAnswers}
               sourceType="cambridge"
-              bookNumber={parsedBook}
-              testNumber={parsedTest}
+              bookNumber={numBook}
+              testNumber={numTest}
               scoreViewMode={scoreViewMode}
               onScoreViewModeChange={setScoreViewMode}
             />
@@ -816,36 +909,35 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
               </button>
               <div>
                 <p className="text-sm font-bold text-white flex items-center gap-2">
-                  <span>Cambridge 18 Official Listening Track</span>
+                  <span>{`Cambridge ${numBook} Official Listening Track`}</span>
                   <span className="px-2 py-0.5 rounded-full bg-rose-950/60 text-rose-400 border border-rose-800/40 text-[10px] font-mono">
                     Synchronized Audio
                   </span>
                 </p>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Click any Part timestamp below to jump directly to that section in the audio recording
+                  Click any Part timestamp below to jump directly to that section in the official Cambridge recording
                 </p>
               </div>
             </div>
 
             {/* Part Jump Buttons (Timestamp Anchors) */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              {(
-                [
-                  { part: 1, label: 'Part 1 (00:00)', desc: 'Furniture & Delivery' },
-                  { part: 2, label: 'Part 2 (06:00)', desc: 'Camp Facilities & Map' },
-                  { part: 3, label: 'Part 3 (12:30)', desc: 'Fossils & Planetary Rover' },
-                  { part: 4, label: 'Part 4 (19:10)', desc: 'Learner Persistence' },
-                ] as const
-              ).map((p) => (
-                <button
-                  key={p.part}
-                  onClick={() => jumpToPart(p.part)}
-                  className="px-3 py-1.5 rounded-xl bg-[#0D0F12] border border-[#222732] hover:border-rose-500 text-xs font-bold text-slate-300 hover:text-white transition-all cursor-pointer flex items-center gap-1.5"
-                >
-                  <Clock className="w-3.5 h-3.5 text-rose-500" />
-                  <span>{p.label}</span>
-                </button>
-              ))}
+              {([1, 2, 3, 4] as const).map((partNum) => {
+                const partSec = Number(testPartMarkers[String(partNum)] ?? testPartMarkers[partNum] ?? PART_TIMESTAMPS[partNum] ?? 0);
+                const mm = Math.floor(partSec / 60);
+                const ss = partSec % 60;
+                const timeLabel = `${mm < 10 ? '0' : ''}${mm}:${ss < 10 ? '0' : ''}${ss}`;
+                return (
+                  <button
+                    key={partNum}
+                    onClick={() => jumpToPart(partNum)}
+                    className="px-3 py-1.5 rounded-xl bg-[#0D0F12] border border-[#222732] hover:border-rose-500 text-xs font-bold text-slate-300 hover:text-white transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Clock className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Part {partNum} ({timeLabel})</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Volume Control */}
@@ -870,20 +962,149 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
 
           {/* Audio Seekbar Track */}
           <div className="space-y-1">
-            <input
-              type="range"
-              min="0"
-              max={duration || 1680}
-              value={currentTime}
-              onChange={(e) => seekTo(parseInt(e.target.value))}
-              className="w-full h-2 bg-[#0D0F12] rounded-lg appearance-none cursor-pointer accent-rose-500 border border-[#222732]"
-            />
+            <div 
+              ref={scrubberRef}
+              className="relative w-full py-3 flex items-center cursor-pointer group"
+              onMouseMove={(e) => {
+                if (!scrubberRef.current || !duration) return;
+                const rect = scrubberRef.current.getBoundingClientRect();
+                const clampX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+                const pct = clampX / rect.width;
+                setHoverX(clampX);
+                setHoverTime(Math.round(pct * duration));
+              }}
+              onMouseLeave={() => setHoverTime(null)}
+            >
+              {/* Floating Hover/Drag Timestamp Tooltip */}
+              {hoverTime !== null && (
+                <div 
+                  className="absolute -top-7 px-2 py-0.5 rounded bg-rose-600 text-[11px] font-mono font-bold text-white shadow-xl pointer-events-none -translate-x-1/2 z-30 transition-transform duration-75"
+                  style={{ left: `${hoverX}px` }}
+                >
+                  {formatTime(hoverTime)}
+                </div>
+              )}
+
+              {/* Unplayed Track Background */}
+              <div className="relative w-full h-2 bg-[#0D0F12] border border-[#222732] rounded-full overflow-hidden">
+                {/* Active Red Progress Fill */}
+                <div 
+                  className="h-full bg-rose-600 transition-all duration-75"
+                  style={{ width: `${Math.min(100, Math.max(0, (currentTime / (duration || 1)) * 100))}%` }}
+                />
+              </div>
+
+              {/* Native Input Range for Accessible Scrubbing */}
+              <input
+                type="range"
+                min={0}
+                max={duration || 1680}
+                value={currentTime}
+                onChange={(e) => seekTo(parseInt(e.target.value))}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+              />
+
+              {/* Draggable Red Thumb Visual */}
+              <div 
+                className="absolute w-4 h-4 bg-white border-2 border-rose-600 rounded-full shadow-md pointer-events-none -translate-x-1/2 z-10 transition-transform group-hover:scale-125"
+                style={{ left: `${Math.min(100, Math.max(0, (currentTime / (duration || 1)) * 100))}%` }}
+              />
+            </div>
+
             <div className="flex justify-between text-[10px] font-mono text-slate-500 px-1">
-              <span>Part 1: 00:00</span>
-              <span>Part 2: 06:00</span>
-              <span>Part 3: 12:30</span>
-              <span>Part 4: 19:10</span>
+              <span>Part 1: {formatTime(Number(testPartMarkers['1'] ?? 0))}</span>
+              <span>Part 2: {formatTime(Number(testPartMarkers['2'] ?? 360))}</span>
+              <span>Part 3: {formatTime(Number(testPartMarkers['3'] ?? 750))}</span>
+              <span>Part 4: {formatTime(Number(testPartMarkers['4'] ?? 1150))}</span>
               <span>End: {formatTime(duration)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ════ AI EXAMINER DIAGNOSTIC & ERROR PATTERN ANALYSIS PANEL ════ */}
+        <div className="bg-[#15181E] border border-rose-900/40 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 border-b border-[#222732] pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <span>AI Examiner Diagnostic & Error Pattern Analysis</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 text-[10px] font-mono">
+                    Deep Diagnostic
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Automated acoustic nuance, distractor trap, and singular/plural error detection for Cambridge {numBook} Test {numTest}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+              <span className="px-2.5 py-1 rounded-lg bg-[#0D0F12] border border-[#222732]">
+                Total Errors: <strong className="text-rose-400">{aiDiagnostics.totalErrors}</strong>
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#0D0F12] border border-[#222732]">
+                Unanswered: <strong className="text-amber-400">{aiDiagnostics.unansweredCount}</strong>
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+            {/* 1. Distractor Traps */}
+            <div className="bg-[#0D0F12] border border-[#222732] rounded-xl p-3.5 space-y-2">
+              <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5" />
+                <span>Distractor Traps Tripped</span>
+              </span>
+              {aiDiagnostics.distractorTripped.length > 0 ? (
+                <ul className="space-y-1.5 text-xs text-slate-300">
+                  {aiDiagnostics.distractorTripped.map((d, idx) => (
+                    <li key={idx} className="flex items-start gap-1.5 font-mono text-[11px] leading-tight text-slate-300">
+                      <span className="text-rose-400 shrink-0">•</span>
+                      <span>{d}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-slate-400">No major conversational pivot traps detected in candidate answers.</p>
+              )}
+            </div>
+
+            {/* 2. Spelling & Acoustic Nuances */}
+            <div className="bg-[#0D0F12] border border-[#222732] rounded-xl p-3.5 space-y-2">
+              <span className="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Headphones className="w-3.5 h-3.5" />
+                <span>Spelling & Acoustic Nuance</span>
+              </span>
+              {aiDiagnostics.spellingAcousticErrors.length > 0 ? (
+                <ul className="space-y-1.5 text-xs text-slate-300">
+                  {aiDiagnostics.spellingAcousticErrors.map((s, idx) => (
+                    <li key={idx} className="flex items-start gap-1.5 font-mono text-[11px] leading-tight text-slate-300">
+                      <span className="text-purple-400 shrink-0">•</span>
+                      <span>{s}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-slate-400">Word endings and singular/plural suffixes recorded with high acoustic fidelity.</p>
+              )}
+            </div>
+
+            {/* 3. Targeted Drill Recommendation */}
+            <div className="bg-[#0D0F12] border border-[#222732] rounded-xl p-3.5 space-y-2">
+              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Award className="w-3.5 h-3.5" />
+                <span>Targeted Drill Recommendation</span>
+              </span>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                {aiDiagnostics.recommendedDrill}
+              </p>
+              <div className="pt-1">
+                <span className="inline-block px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 text-[10px] font-semibold text-rose-300">
+                  Focus: Part {aiDiagnostics.worstPart}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -960,10 +1181,14 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
                             Part {q.part}
                           </span>
                           <button
+                            type="button"
                             onClick={() => {
                               const [mins, secs] = q.timestamp.split(':').map(Number);
-                              seekTo((mins || 0) * 60 + (secs || 0));
-                              if (!isPlaying && audioRef.current) audioRef.current.play().then(() => setIsPlaying(true));
+                              const targetSec = (mins || 0) * 60 + (secs || 0);
+                              seekTo(targetSec);
+                              if (audioRef.current) {
+                                audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+                              }
                             }}
                             className="px-2 py-0.5 rounded-md bg-purple-950/40 border border-purple-800/40 text-[10px] font-mono text-purple-300 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
                             title="Play audio from this question's timestamp"
@@ -997,7 +1222,9 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
                         <span className="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
                           Correct Answer
                         </span>
-                        <span className="font-mono text-xs font-bold text-white">
+                        <span
+                          className="font-mono text-xs font-bold text-white"
+                        >
                           {q.correctAnswer}
                         </span>
                       </div>
@@ -1024,9 +1251,22 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
                           <Headphones className="w-3.5 h-3.5" />
                           <span>Exact Spoken Audio Tape Script Excerpt</span>
                         </span>
-                        <span className="text-[11px] font-mono text-slate-500">
-                          Timestamp: {q.timestamp}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const [mins, secs] = q.timestamp.split(':').map(Number);
+                            const targetSec = (mins || 0) * 60 + (secs || 0);
+                            seekTo(targetSec);
+                            if (audioRef.current) {
+                              audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+                            }
+                          }}
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-[11px] font-mono text-rose-300 hover:text-white transition-all cursor-pointer group"
+                          title="Jump audio to this spoken line"
+                        >
+                          <Play className="w-3 h-3 fill-current text-rose-400 group-hover:scale-110 transition-transform" />
+                          <span>Jump to Audio: {q.timestamp}</span>
+                        </button>
                       </div>
 
                       {/* Quoted Audio Transcript with styling */}

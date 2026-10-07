@@ -180,7 +180,7 @@ const STR_QUESTIONS = ['T/F/NG', 'Matching Headings', 'Multiple Choice', 'Senten
 const LISTEN_QUESTIONS = ['Form Completion', 'Multiple Choice', 'Map Labelling', 'Matching'];
 
 export const buildObjective = (attempt: IeltsAttempt): ObjectiveAnalysis => {
-    const rnd = seeded(attempt.id);
+    const rnd = seeded(typeof attempt.id === 'number' ? attempt.id : (Number(attempt.id) || 1));
     const skill = attempt.skill;
     const band = attempt.band;
     const total = 40;
@@ -311,7 +311,8 @@ const genCriteria = (
     attempt: IeltsAttempt,
     defaults: { code: string; name: string }[],
 ): { code: string; name: string; band: number; note: string }[] => {
-    const rnd = seeded(attempt.id + defaults.length);
+    const numId = typeof attempt.id === 'number' ? attempt.id : (Number(attempt.id) || 1);
+    const rnd = seeded(numId + defaults.length);
     const present = attempt.criteria && attempt.criteria.length >= 4 ? attempt.criteria : null;
     return defaults.map((d, i) => {
         const band = present ? present[i].band : Math.round(clamp(attempt.band + (rnd() * 1.4 - 0.7), 4, 9) * 2) / 2;
@@ -369,7 +370,8 @@ export const buildWriting = (attempt: IeltsAttempt): WritingAnalysis => {
 /* ───────────────────────── Speaking ───────────────────────── */
 
 export const buildSpeaking = (attempt: IeltsAttempt): SpeakingAnalysis => {
-    const rnd = seeded(attempt.id + 7);
+    const numId = typeof attempt.id === 'number' ? attempt.id : (Number(attempt.id) || 1);
+    const rnd = seeded(numId + 7);
     const band = attempt.band;
 
     const criteria = genCriteria(attempt, [
