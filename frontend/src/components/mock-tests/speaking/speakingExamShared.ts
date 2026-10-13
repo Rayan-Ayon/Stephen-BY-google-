@@ -48,6 +48,8 @@ export interface SpeakingEvaluation {
     targetGap?: number;
     wpm?: number;
     pronunciationAccuracy?: number;
+    phonemeCollisionsCount?: number;
+    cadenceRating?: string;
     fluency?: {
         score: number;
         relevance?: any[];

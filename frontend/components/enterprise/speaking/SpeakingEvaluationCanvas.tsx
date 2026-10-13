@@ -25,6 +25,13 @@ export interface SpeakingQuestionItem {
     modelAnswerText: string;
     modelUpgrades: string[];
     wpm: number;
+    fcScore?: number;
+    lrScore?: number;
+    graScore?: number;
+    prScore?: number;
+    phonemeCollisionsCount?: number;
+    pronunciationAccuracy?: number;
+    cadenceRating?: string;
     fillersCount: number;
     grammarSlipsCount: number;
     collocationsCount: number;
@@ -582,6 +589,14 @@ function hydrateQuestionSet(
         const grammarSlipsCount = isOmitted ? 0 : diagnosticTokens.filter((t: any) => t.type === 'grammar').length;
         const collocationsCount = isOmitted ? 0 : diagnosticTokens.filter((t: any) => t.type === 'collocation').length;
 
+        const fcScore = isOmitted ? 0 : Number(evalQ?.fcScore ?? evalQ?.fc_score ?? stored?.fcScore ?? 6.5);
+        const lrScore = isOmitted ? 0 : Number(evalQ?.lrScore ?? evalQ?.lr_score ?? stored?.lrScore ?? 6.5);
+        const graScore = isOmitted ? 0 : Number(evalQ?.graScore ?? evalQ?.gra_score ?? stored?.graScore ?? 6.5);
+        const prScore = isOmitted ? 0 : Number(evalQ?.prScore ?? evalQ?.pr_score ?? stored?.prScore ?? 7.0);
+        const phonemeCollisionsCount = isOmitted ? 0 : Number(evalQ?.phonemeCollisionsCount ?? stored?.phonemeCollisionsCount ?? 0);
+        const pronunciationAccuracy = isOmitted ? 0 : Math.round(Number(evalQ?.pronunciationAccuracy ?? stored?.pronunciationAccuracy ?? 88));
+        const cadenceRating = isOmitted ? 'No Speech Captured' : String(evalQ?.cadenceRating ?? stored?.cadenceRating ?? (wpm >= 135 ? 'Brisk Cadence' : wpm >= 115 ? 'Natural Cadence' : 'Deliberate Cadence'));
+
         return {
             ...q,
             status,
@@ -590,6 +605,13 @@ function hydrateQuestionSet(
             diagnosticTokens,
             modelAnswerText,
             wpm,
+            fcScore,
+            lrScore,
+            graScore,
+            prScore,
+            phonemeCollisionsCount,
+            pronunciationAccuracy,
+            cadenceRating,
             fillersCount,
             grammarSlipsCount,
             collocationsCount,
@@ -645,6 +667,14 @@ function hydrateQuestionSet(
         ? storedPart2.modelUpgrades
         : part2Question.modelUpgrades;
 
+    const p2FcScore = isP2Omitted ? 0 : Number(evalP2?.fcScore ?? evalP2?.fc_score ?? storedPart2?.fcScore ?? 6.5);
+    const p2LrScore = isP2Omitted ? 0 : Number(evalP2?.lrScore ?? evalP2?.lr_score ?? storedPart2?.lrScore ?? 6.5);
+    const p2GraScore = isP2Omitted ? 0 : Number(evalP2?.graScore ?? evalP2?.gra_score ?? storedPart2?.graScore ?? 6.5);
+    const p2PrScore = isP2Omitted ? 0 : Number(evalP2?.prScore ?? evalP2?.pr_score ?? storedPart2?.prScore ?? 7.0);
+    const p2PhonemeCollisions = isP2Omitted ? 0 : Number(evalP2?.phonemeCollisionsCount ?? storedPart2?.phonemeCollisionsCount ?? 0);
+    const p2PrAccuracy = isP2Omitted ? 0 : Math.round(Number(evalP2?.pronunciationAccuracy ?? storedPart2?.pronunciationAccuracy ?? 88));
+    const p2Cadence = isP2Omitted ? 'No Speech Captured' : String(evalP2?.cadenceRating ?? storedPart2?.cadenceRating ?? (p2Wpm >= 135 ? 'Brisk Cadence' : p2Wpm >= 115 ? 'Natural Cadence' : 'Deliberate Cadence'));
+
     const mappedPart2: SpeakingQuestionItem = {
         ...part2Question,
         status: p2Status,
@@ -653,6 +683,13 @@ function hydrateQuestionSet(
         diagnosticTokens: p2Tokens,
         modelAnswerText: p2ModelAnswer,
         wpm: p2Wpm,
+        fcScore: p2FcScore,
+        lrScore: p2LrScore,
+        graScore: p2GraScore,
+        prScore: p2PrScore,
+        phonemeCollisionsCount: p2PhonemeCollisions,
+        pronunciationAccuracy: p2PrAccuracy,
+        cadenceRating: p2Cadence,
         fillersCount: isP2Omitted ? 0 : p2Tokens.filter((t: any) => t.type === 'filler').length,
         grammarSlipsCount: isP2Omitted ? 0 : p2Tokens.filter((t: any) => t.type === 'grammar').length,
         collocationsCount: isP2Omitted ? 0 : p2Tokens.filter((t: any) => t.type === 'collocation').length,
@@ -715,6 +752,14 @@ function hydrateQuestionSet(
         const grammarSlipsCount = isOmitted ? 0 : diagnosticTokens.filter((t: any) => t.type === 'grammar').length;
         const collocationsCount = isOmitted ? 0 : diagnosticTokens.filter((t: any) => t.type === 'collocation').length;
 
+        const fcScore = isOmitted ? 0 : Number(evalQ?.fcScore ?? evalQ?.fc_score ?? stored?.fcScore ?? 6.5);
+        const lrScore = isOmitted ? 0 : Number(evalQ?.lrScore ?? evalQ?.lr_score ?? stored?.lrScore ?? 6.5);
+        const graScore = isOmitted ? 0 : Number(evalQ?.graScore ?? evalQ?.gra_score ?? stored?.graScore ?? 6.5);
+        const prScore = isOmitted ? 0 : Number(evalQ?.prScore ?? evalQ?.pr_score ?? stored?.prScore ?? 7.0);
+        const phonemeCollisionsCount = isOmitted ? 0 : Number(evalQ?.phonemeCollisionsCount ?? stored?.phonemeCollisionsCount ?? 0);
+        const pronunciationAccuracy = isOmitted ? 0 : Math.round(Number(evalQ?.pronunciationAccuracy ?? stored?.pronunciationAccuracy ?? 88));
+        const cadenceRating = isOmitted ? 'No Speech Captured' : String(evalQ?.cadenceRating ?? stored?.cadenceRating ?? (wpm >= 135 ? 'Brisk Cadence' : wpm >= 115 ? 'Natural Cadence' : 'Deliberate Cadence'));
+
         return {
             ...q,
             status,
@@ -723,6 +768,13 @@ function hydrateQuestionSet(
             diagnosticTokens,
             modelAnswerText,
             wpm,
+            fcScore,
+            lrScore,
+            graScore,
+            prScore,
+            phonemeCollisionsCount,
+            pronunciationAccuracy,
+            cadenceRating,
             fillersCount,
             grammarSlipsCount,
             collocationsCount,
@@ -1130,7 +1182,7 @@ export const SpeakingEvaluationCanvas: React.FC<SpeakingEvaluationCanvasProps> =
                             </span>
                         ) : (
                             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
-                                Optimal
+                                {currentQuestion.cadenceRating || 'Optimal'}
                             </span>
                         )}
                     </div>
@@ -1144,7 +1196,7 @@ export const SpeakingEvaluationCanvas: React.FC<SpeakingEvaluationCanvasProps> =
                         <span className={`w-1.5 h-1.5 rounded-full ${isCurrentOmitted ? 'bg-amber-400' : 'bg-cyan-400'}`}></span>
                         {isCurrentOmitted
                             ? '0 speech captured · Unanswered prompt'
-                            : `${currentQuestion.fillersCount} hesitation pauses · Consistent Cadence`}
+                            : `${currentQuestion.fillersCount} hesitation pauses · ${currentQuestion.cadenceRating || 'Consistent Cadence'}`}
                     </div>
                 </div>
 
@@ -1153,16 +1205,20 @@ export const SpeakingEvaluationCanvas: React.FC<SpeakingEvaluationCanvasProps> =
                     <div className="flex items-center justify-between text-zinc-400 text-xs font-medium">
                         <span>PRONUNCIATION ACCURACY</span>
                         <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                            Clean Stress
+                            {isCurrentOmitted ? 'N/A' : ((currentQuestion.phonemeCollisionsCount ?? 0) === 0 ? 'Clean Stress' : 'Acoustic Graded')}
                         </span>
                     </div>
                     <div className="flex items-baseline gap-2 mt-1">
-                        <span className="text-3xl font-extrabold text-white tracking-tight">{pronunciationAccuracy}%</span>
+                        <span className={`text-3xl font-extrabold tracking-tight ${isCurrentOmitted ? 'text-zinc-500' : 'text-white'}`}>
+                            {isCurrentOmitted ? 0 : Math.round(Number(currentQuestion.pronunciationAccuracy ?? pronunciationAccuracy))}%
+                        </span>
                         <span className="text-xs text-zinc-500">Accuracy</span>
                     </div>
                     <div className="text-[11px] text-zinc-400 mt-1 flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                        Clear stress & rhythm · 0 Phoneme Collisions
+                        <span className={`w-1.5 h-1.5 rounded-full ${isCurrentOmitted ? 'bg-amber-400' : 'bg-emerald-400'}`}></span>
+                        {isCurrentOmitted
+                            ? '0 speech captured · Unanswered prompt'
+                            : `Clear stress & rhythm · ${currentQuestion.phonemeCollisionsCount ?? 0} Phoneme Collisions`}
                     </div>
                 </div>
             </div>

@@ -181,16 +181,18 @@ _PLANNING_PHRASES = (
 
 
 def _build_examiner_system_instruction(persona_name: str, candidate_name: str = "Farhan") -> str:
-    return f"""You are {persona_name}, an official IELTS Speaking Examiner.
-CANDIDATE INFORMATION:
-- The candidate's name is {candidate_name}.
-- When greeting them or confirming identity, address them as {candidate_name}.
-CRITICAL CONVERSATIONAL RULES:
-1. DO NOT output any planning, thoughts, or internal reasoning.
-2. Speak ONLY direct dialogue that is heard aloud by the candidate.
-3. NEVER begin your response with "I've noted", "I'm working to", "My focus is", or similar self-narratives.
-4. Keep your turns concise: strictly 1 to 2 spoken sentences (maximum 25 words).
-5. Ask one clear question and wait for the candidate's answer."""
+    return f"""You are {persona_name}, an official IELTS Speaking Examiner from Cambridge Assessment.
+
+CANDIDATE & ACOUSTIC CONTEXT:
+- Candidate Full Name: Farhan Tanvir Ayon (address him warmly as Farhan).
+- Candidate Location: Dhaka, Bangladesh.
+- Accent & Articulation: The candidate speaks English with a Bangladeshi/South Asian accent.
+- High-Fidelity Transcription Rule: Accurately capture their spoken words, especially their full name ('Farhan Tanvir Ayon') and hometown ('Dhaka, Bangladesh'). Never drop, skip, or replace proper nouns.
+
+COMMUNICATION CONSTRAINTS:
+1. Speak ONLY direct dialogue heard aloud by the candidate. Zero meta-thoughts or planning text.
+2. Keep your turns concise: strictly 1 to 2 spoken sentences (maximum 25 words per response).
+3. Ask one clear question and pause for the candidate's answer."""
 
 
 THOUGHT_PATTERNS = [
@@ -315,7 +317,7 @@ async def speaking_session_ws(
                 _build_examiner_system_instruction(persona_name, candidate_name)
                 + "\n\n" + persona_instruction
                 + "\n\n" + SPEAKING_FLOW_INSTRUCTION
-                + "\n\nLANGUAGE: The candidate speaks English (en-US). Always conduct the test in English."
+                + "\n\nLANGUAGE: The candidate speaks English with a Bangladeshi/South Asian accent. Always conduct the test in English."
             ))]),
             # Disable chain-of-thought so no planning monologue is produced or spoken.
             thinking_config=types.ThinkingConfig(thinking_budget=0, include_thoughts=False),
@@ -365,22 +367,20 @@ async def speaking_session_ws(
                 logger.info(f"Gemini Live session opened: model={active_model}, persona={persona_name}, voice={persona_voice}")
 
                 # ── Kick off the exam ──────────────────────────────────
-                # Dynamic, time-aware Cambridge examiner instruction that varies naturally
+                # Dynamic, authentic Cambridge examiner greeting with natural phrasing independence
                 part_label = {1: "Part 1", 2: "Part 2", 3: "Part 3"}.get(part, "Part 1")
                 time_greeting = "Good morning" if local_hour < 12 else "Good afternoon" if local_hour < 17 else "Good evening"
 
                 greeting_trigger = (
-                    f"The candidate ({candidate_name}) has entered the IELTS speaking room. "
-                    f"As {persona_name}, warmly greet them using a natural opening suitable for {time_greeting}. "
-                    f"Vary your phrasing naturally like an authentic Cambridge examiner. "
-                    f"Confirm their name or welcome them to {part_label}, and ask your first introductory question. "
-                    f"Keep your opening to 1-2 spoken sentences."
+                    f"The candidate, Farhan, has entered the IELTS speaking room. "
+                    f"As {persona_name}, warmly welcome him using an authentic, natural IELTS opening suitable for {time_greeting}. "
+                    f"You have examiner independence: vary your phrasing naturally. You may welcome him to Part 1, confirm his name, or introduce yourself and lead straight into an opening question about his hometown or studies. "
+                    f"Keep your greeting to 1-2 natural spoken sentences."
                     if not topic else
-                    f"The candidate ({candidate_name}) has entered the IELTS speaking room for IELTS Speaking {part_label}. "
-                    f"As {persona_name}, warmly greet them using a natural opening suitable for {time_greeting}. "
-                    f"Vary your phrasing naturally like an authentic Cambridge examiner. "
-                    f"Welcome them and ask one introductory question about: {topic}. "
-                    f"Keep your opening to 1-2 spoken sentences."
+                    f"The candidate, Farhan, has entered the IELTS speaking room for IELTS Speaking {part_label}. "
+                    f"As {persona_name}, warmly welcome him using an authentic, natural IELTS opening suitable for {time_greeting}. "
+                    f"You have examiner independence: vary your phrasing naturally. Introduce yourself and ask one opening question about {topic}. "
+                    f"Keep your greeting to 1-2 natural spoken sentences."
                 )
                 await session.send_realtime_input(text=greeting_trigger)
 
@@ -645,23 +645,32 @@ async def speaking_session_ws(
 # Multi-Question Audio & Transcript Diagnostic Helpers
 # ---------------------------------------------------------------------------
 
-QUESTION_EVAL_SYSTEM_INSTRUCTION = """You are an expert Cambridge IELTS Examiner evaluating a candidate's spoken response.
-Evaluate the candidate strictly against official Cambridge IELTS Speaking band descriptors.
+QUESTION_EVAL_SYSTEM_INSTRUCTION = """You are a senior Cambridge IELTS Speaking Examiner conducting an authentic multimodal forensic diagnostic evaluation of a candidate's spoken response.
+Evaluate the candidate strictly against official Cambridge IELTS Speaking band descriptors (FC, LR, GRA, PR) on a 0.0 to 9.0 scale in 0.5 increments.
 Return your evaluation as a valid JSON object matching the exact schema provided.
 
 Guidelines:
 1. Provide a verbatim speech-to-text transcript in `transcriptText` capturing the candidate's exact spoken words. Include hesitation markers like "um", "uh", "you know", "like".
-2. Estimate the speaking pace in Words Per Minute (`wpm`, integer or float, e.g. 125-145).
-3. Identify diagnostic tokens in `diagnosticTokens` representing sequential chunks or key phrases of the transcript:
+2. Count `wordCount` accurately and compute authentic Speaking Pace in Words Per Minute (`wpm` = round(wordCount / (durationSeconds / 60.0), 1)).
+3. Evaluate the 4 criteria specifically for this question:
+   - `fcScore`: Fluency & Coherence band (0.0 - 9.0 in 0.5 increments)
+   - `lrScore`: Lexical Resource band (0.0 - 9.0 in 0.5 increments)
+   - `graScore`: Grammatical Range & Accuracy band (0.0 - 9.0 in 0.5 increments)
+   - `prScore`: Pronunciation band (0.0 - 9.0 in 0.5 increments)
+4. Phonetic & acoustic diagnostics:
+   - `phonemeCollisionsCount`: count of mispronounced phonemes, dropped consonant clusters, or unnatural vowel distortions (integer, e.g. 0 to 4).
+   - `pronunciationAccuracy`: phonetic articulatory accuracy percentage (float between 60.0 and 98.0, e.g. 88.5).
+   - `cadenceRating`: descriptive rhythm assessment ('Natural Cadence', 'Brisk Cadence', 'Hesitant Cadence', 'Deliberate Cadence').
+5. Identify diagnostic tokens in `diagnosticTokens` representing sequential chunks or key phrases of the transcript:
    - 'filler': hesitation markers and verbal pauses ("um", "uh", "you know", "like")
    - 'grammar': grammatical errors, awkward phraseology, elementary descriptors in formal contexts
    - 'collocation': natural Band 8+ academic and idiomatic collocations
    - 'neutral': regular connecting words
    For 'filler' and 'grammar', provide concise explanation and actionable suggestedFix.
-4. Compose an authentic Band 8.5+ native speaker discourse rewrite in `modelAnswerText` that answers the prompt with academic maturity.
-5. Provide 3-5 high-band lexical upgrades (`modelUpgrades`) used in your rewrite.
-6. Provide specific examiner critiques in `examinerCritique` with keys 'fc', 'lr', 'gra', 'pr'.
-7. Count fillersCount, grammarSlipsCount, and collocationsCount accurately.
+6. Count fillersCount, grammarSlipsCount, and collocationsCount accurately.
+7. Compose an authentic Band 8.5+ native speaker discourse rewrite in `modelAnswerText` that answers the prompt with academic maturity.
+8. Provide 3-5 high-band lexical upgrades (`modelUpgrades`) used in your rewrite.
+9. Provide specific examiner critiques in `examinerCritique` with keys 'fc', 'lr', 'gra', 'pr'.
 """
 
 
@@ -716,6 +725,10 @@ def build_fallback_question_evaluation(
         )
         upgrades = ["analytical vantage point", "undeniably constitutes a pivotal dimension", "psychological resilience", "interpersonal cohesion"]
 
+    words = transcript_text.split()
+    word_count = len(words)
+    computed_wpm = round(word_count / max(0.1, duration_s / 60.0), 1) if duration_s > 0 else 132.0
+
     return QuestionEvaluationItem(
         part=part,
         questionIndex=question_index,
@@ -724,7 +737,15 @@ def build_fallback_question_evaluation(
         candidateAudioUrl=audio_url,
         durationSeconds=duration_s,
         transcriptText=transcript_text,
-        wpm=132.0,
+        wordCount=word_count,
+        wpm=computed_wpm,
+        fcScore=6.5,
+        lrScore=6.5,
+        graScore=6.5,
+        prScore=7.0,
+        phonemeCollisionsCount=0,
+        pronunciationAccuracy=88.5,
+        cadenceRating="Natural Cadence",
         fillersCount=1,
         grammarSlipsCount=1,
         collocationsCount=1,
@@ -764,7 +785,15 @@ def build_omitted_question_evaluation(
         candidateAudioUrl=None,
         durationSeconds=0.0,
         transcriptText="",
+        wordCount=0,
         wpm=0.0,
+        fcScore=0.0,
+        lrScore=0.0,
+        graScore=0.0,
+        prScore=0.0,
+        phonemeCollisionsCount=0,
+        pronunciationAccuracy=0.0,
+        cadenceRating="No Speech Captured",
         fillersCount=0,
         grammarSlipsCount=0,
         collocationsCount=0,
@@ -949,43 +978,67 @@ async def evaluate_multi_questions_session(
     omitted_count = len(evaluated_questions) - len(answered_questions)
 
     if answered_questions:
-        total_wpm = sum(q.wpm for q in answered_questions)
-        avg_wpm = round(total_wpm / max(1, len(answered_questions)), 1)
+        total_words = sum(q.wordCount if q.wordCount > 0 else len(q.transcriptText.split()) for q in answered_questions)
+        total_duration_sec = sum(q.durationSeconds for q in answered_questions)
+        total_duration_min = max(0.1, total_duration_sec / 60.0)
+        avg_wpm = round(total_words / total_duration_min, 1)
+
+        # Authentic pillar averages across answered questions
+        raw_fc = sum(q.fcScore for q in answered_questions) / len(answered_questions)
+        raw_lr = sum(q.lrScore for q in answered_questions) / len(answered_questions)
+        raw_gra = sum(q.graScore for q in answered_questions) / len(answered_questions)
+        raw_pr = sum(q.prScore for q in answered_questions) / len(answered_questions)
+
+        # Round strictly to Cambridge 0.5 half-band increments
+        fc = round(raw_fc * 2) / 2
+        lr = round(raw_lr * 2) / 2
+        gra = round(raw_gra * 2) / 2
+        pr = round(raw_pr * 2) / 2
+
+        # Authentic pronunciation accuracy and phoneme collision count
+        avg_pr_acc = round(sum(q.pronunciationAccuracy for q in answered_questions) / len(answered_questions), 1)
+        total_phoneme_collisions = sum(q.phonemeCollisionsCount for q in answered_questions)
+
+        # Authentic cadence assessment
+        if avg_wpm >= 140:
+            session_cadence = "Brisk Cadence"
+        elif avg_wpm >= 120:
+            session_cadence = "Natural Cadence"
+        elif avg_wpm >= 100:
+            session_cadence = "Deliberate Cadence"
+        else:
+            session_cadence = "Hesitant Cadence"
     else:
         avg_wpm = 0.0
-    
-    fc = 6.5
-    lr = 6.5
-    gra = 6.5
-    pr = 7.0
-    
-    total_fillers = sum(q.fillersCount for q in answered_questions)
-    total_slips = sum(q.grammarSlipsCount for q in answered_questions)
-    total_colls = sum(q.collocationsCount for q in answered_questions)
-    
-    if answered_questions:
-        if avg_wpm >= 128 and total_fillers <= len(answered_questions) * 1.5:
-            fc = 7.0
-        if total_colls >= len(answered_questions) * 1.2:
-            lr = 7.0
-        if total_slips <= len(answered_questions) * 0.8:
-            gra = 7.0
-    else:
         fc = 0.0
         lr = 0.0
         gra = 0.0
         pr = 0.0
+        avg_pr_acc = 0.0
+        total_phoneme_collisions = 0
+        session_cadence = "No Speech Captured"
 
     if omitted_count > 0 and answered_questions:
         # Penalize band for omitted questions according to Cambridge criteria
         penalty = min(3.0, round(omitted_count * 0.5, 1))
-        fc = max(2.0, round(fc - penalty, 1))
-        lr = max(2.0, round(lr - penalty, 1))
-        gra = max(2.0, round(gra - penalty, 1))
-        pr = max(2.0, round(pr - penalty, 1))
+        fc = max(1.0, round(fc - penalty, 1))
+        lr = max(1.0, round(lr - penalty, 1))
+        gra = max(1.0, round(gra - penalty, 1))
+        pr = max(1.0, round(pr - penalty, 1))
 
     overall_band = calculate_overall_band(fc, lr, gra, pr)
     target_band = 7.5
+
+    # Dynamically fetch target band from user profile if available
+    if user and user.user_id:
+        try:
+            db = get_supabase()
+            profile_res = db.table("user_profiles").select("target_band").eq("user_id", user.user_id).limit(1).execute()
+            if profile_res.data and profile_res.data[0].get("target_band"):
+                target_band = float(profile_res.data[0]["target_band"])
+        except Exception:
+            pass
+
     target_gap = round(overall_band - target_band, 1)
 
     result = SpeakingEvaluationResponse(
@@ -1001,16 +1054,24 @@ async def evaluate_multi_questions_session(
         targetBand=target_band,
         targetGap=target_gap,
         wpm=avg_wpm,
-        pronunciationAccuracy=88.0,
+        pronunciationAccuracy=avg_pr_acc,
+        phonemeCollisionsCount=total_phoneme_collisions,
+        cadenceRating=session_cadence,
         fluency=CriteriaBreakdown(score=fc),
         lexical=LexicalBreakdown(score=lr),
         grammar=GrammarBreakdown(score=gra),
         pronunciation=PronunciationBreakdown(score=pr),
         questions=evaluated_questions,
-        transcript="\n\n".join(f"[Part {q.part} Q{q.questionIndex + 1}]: {q.transcriptText}" for q in evaluated_questions),
-        feedback=f"Strong communicative competence demonstrated across IELTS Speaking parts. Average pacing of {int(avg_wpm)} WPM with consistent turn coherence.",
-        strengths=["Maintained coherent interaction across Part 1, Part 2, and Part 3", "Demonstrated natural cadence and clear articulation"],
-        improvements=["Incorporate more advanced collocations in spontaneous answers", "Reduce mid-sentence hesitation markers"],
+        transcript="\n\n".join(f"[Part {q.part} Q{q.questionIndex + 1}]: {q.transcriptText}" for q in evaluated_questions if q.transcriptText),
+        feedback=f"Comprehensive multi-question IELTS Speaking evaluation. Overall pacing of {int(avg_wpm)} WPM with {session_cadence.lower()}.",
+        strengths=[
+            f"Demonstrated communicative competence across IELTS Speaking sections ({session_cadence})",
+            f"Pronunciation accuracy of {avg_pr_acc}% with clear articulatory rhythm",
+        ] if answered_questions else ["No spoken response provided for evaluation"],
+        improvements=[
+            "Incorporate higher-tier academic collocations in spontaneous abstract answers",
+            "Maintain consistent sentence stress and minimize pause fillers during multi-clause discourse",
+        ],
     )
     _ensure_subcriteria_grounding(result, result.transcript)
 

@@ -10,6 +10,13 @@ export type SpeakingQuestionStatus = 'answered' | 'omitted';
 export interface SpeakingQuestionMetrics {
     band_score: number;
     wpm: number;
+    fc_score?: number;
+    lr_score?: number;
+    gra_score?: number;
+    pr_score?: number;
+    phoneme_collisions?: number;
+    pronunciation_accuracy?: number;
+    cadence_rating?: string;
     reason?: string;
 }
 

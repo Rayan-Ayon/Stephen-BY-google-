@@ -18,7 +18,15 @@ class QuestionEvaluationItem(BaseModel):
     candidateAudioUrl: str | None = None
     durationSeconds: float = 0.0
     transcriptText: str = ""
+    wordCount: int = 0
     wpm: float = 130.0
+    fcScore: float = 6.5
+    lrScore: float = 6.5
+    graScore: float = 6.5
+    prScore: float = 6.5
+    phonemeCollisionsCount: int = 0
+    pronunciationAccuracy: float = 88.0
+    cadenceRating: str = "Natural Cadence"
     fillersCount: int = 0
     grammarSlipsCount: int = 0
     collocationsCount: int = 0
@@ -40,6 +48,8 @@ class ComprehensiveSpeakingEvaluationResponse(BaseModel):
     prScore: float = 6.5
     wpm: float = 130.0
     pronunciationAccuracy: float = 88.0
+    phonemeCollisionsCount: int = 0
+    cadenceRating: str = "Natural Cadence"
     questions: list[QuestionEvaluationItem] = []
     summaryFeedback: str = ""
     strengths: list[str] = []
@@ -149,6 +159,8 @@ class SpeakingEvaluationResponse(BaseModel):
     targetGap: float | None = None
     wpm: float | None = None
     pronunciationAccuracy: float | None = None
+    phonemeCollisionsCount: int | None = 0
+    cadenceRating: str | None = "Natural Cadence"
     fluency: CriteriaBreakdown | None = None
     lexical: LexicalBreakdown | None = None
     grammar: GrammarBreakdown | None = None

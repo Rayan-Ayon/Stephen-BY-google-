@@ -848,7 +848,6 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
     const [turnState, setTurnState] = useState<ConversationTurnState>('AI_SPEAKING');
     const [transcript, setTranscript] = useState<ChatMessage[]>([]);
     const [userDraftText, setUserDraftText] = useState<string>('');
-    const [isUserSpeaking, setIsUserSpeaking] = useState<boolean>(false);
     const userDraftRef = useRef<string>('');
     const commitUserTurnRef = useRef<() => void>(() => {});
     const [sessionElapsed, setSessionElapsed] = useState(0);
@@ -868,6 +867,7 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
     const micSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
     const micCompressorRef = useRef<DynamicsCompressorNode | null>(null);
     const isMicActiveRef = useRef(false);
+    const isSpeakingMicRef = useRef(false);
     // Playback queue for 24kHz PCM audio from Gemini
     const playbackQueueRef = useRef<ArrayBuffer[]>([]);
     const nextPlayTimeRef = useRef(0);
@@ -999,7 +999,29 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
     const commitUserTurn = useCallback(() => {
         const raw = userDraftRef.current.trim();
         if (!raw) {
-            setIsUserSpeaking(false);
+            return;
+        }
+
+        // 🛑 GUARD: If raw draft is only punctuation (e.g., "." or "," or "!"), do NOT create a new bubble!
+        if (/^[.,?!:;\s]+$/.test(raw)) {
+            // Attach to the last user message if missing ending punctuation, otherwise discard
+            setTranscript(prev => {
+                const lastIdx = prev.length - 1;
+                if (lastIdx >= 0 && prev[lastIdx].sender === 'user' && !/[.?!]$/.test(prev[lastIdx].text)) {
+                    const updated = [...prev];
+                    updated[lastIdx] = { ...updated[lastIdx], text: `${updated[lastIdx].text}${raw}` };
+                    return updated;
+                }
+                return prev;
+            });
+            const turns = liveTranscriptTurnsRef.current;
+            const lastTurnIdx = turns.length - 1;
+            if (lastTurnIdx >= 0 && turns[lastTurnIdx].role === 'user' && !/[.?!]$/.test(turns[lastTurnIdx].text)) {
+                turns[lastTurnIdx].text = `${turns[lastTurnIdx].text}${raw}`;
+            }
+            userDraftRef.current = '';
+            setUserDraftText('');
+            userTurnOpenRef.current = false;
             return;
         }
 
@@ -1022,7 +1044,6 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
         userDraftRef.current = '';
         setUserDraftText('');
         userTurnOpenRef.current = false;
-        setIsUserSpeaking(false);
     }, []);
 
     useEffect(() => {
@@ -1033,6 +1054,11 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
     const _teardownAudioPipeline = () => {
         // 1. Gate the mic flag
         isMicActiveRef.current = false;
+        isSpeakingMicRef.current = false;
+        if (userSilenceTimerRef.current) {
+            clearTimeout(userSilenceTimerRef.current);
+            userSilenceTimerRef.current = null;
+        }
 
         // 2. Disconnect and port-close worklet node
         if (workletNodeRef.current) {
@@ -1201,19 +1227,17 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
                         const chunk: string = msg.text;
                         // Buffer raw BPE tokens silently into active draft ref (NO live chat pop-in)
                         userDraftRef.current = appendBpeToken(userDraftRef.current, chunk);
-                        setIsUserSpeaking(true);
                         userTurnOpenRef.current = true;
 
-                        if (userSilenceTimerRef.current) {
-                            clearTimeout(userSilenceTimerRef.current);
-                            userSilenceTimerRef.current = null;
+                        // Fallback: Arm silence timer once if not already running via hardware amplitude
+                        // (Do NOT clear/reset on every late token so network packet lag never extends user turn delay)
+                        if (!userSilenceTimerRef.current) {
+                            userSilenceTimerRef.current = setTimeout(() => {
+                                isSpeakingMicRef.current = false;
+                                commitUserTurnRef.current();
+                                userSilenceTimerRef.current = null;
+                            }, SILENCE_TIMEOUT_MS);
                         }
-
-                        // Allow candidate thinking pause (2.0s) before committing clean bubble
-                        userSilenceTimerRef.current = setTimeout(() => {
-                            commitUserTurnRef.current();
-                            userSilenceTimerRef.current = null;
-                        }, SILENCE_TIMEOUT_MS);
                         return;
                     }
 
@@ -1226,10 +1250,10 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
                             clearTimeout(userSilenceTimerRef.current);
                             userSilenceTimerRef.current = null;
                         }
+                        isSpeakingMicRef.current = false;
                         // Candidate turn is officially over once AI speaks; commit any pending user draft
                         commitUserTurnRef.current();
                         userTurnOpenRef.current = false;
-                        setIsUserSpeaking(false);
 
                         setTurnState('AI_SPEAKING');
                         setIsPartnerSpeaking(true);
@@ -1263,10 +1287,14 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
 
                     if (msg.type === 'turn_complete' || msg.type === 'user_turn_end') {
                         console.log('[STEPHEN][UI] Turn complete received. Unlocking user mic.');
+                        if (userSilenceTimerRef.current) {
+                            clearTimeout(userSilenceTimerRef.current);
+                            userSilenceTimerRef.current = null;
+                        }
+                        isSpeakingMicRef.current = false;
                         commitUserTurnRef.current();
                         userTurnOpenRef.current = false;
                         aiTurnOpenRef.current = false;
-                        setIsUserSpeaking(false);
                         // Seal the last AI bubble — stop cursor animation
                         setTranscript(prev => prev.map((m, i) =>
                             i === prev.length - 1 && m.sender === 'ai'
@@ -1354,6 +1382,27 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
                 }
                 console.log('[MIC DEBUG] Chunk size:', e.data?.byteLength, 'Peak Amplitude:', maxAmp, 'WS State:', activeWs.readyState, 'isMicActive:', isMicActiveRef.current);
                 activeWs.send(e.data);
+
+                // Voice Activity Detection & Hardware Amplitude Silence Tracking
+                const VAD_VOICE_THRESHOLD = 1500;
+                if (maxAmp > VAD_VOICE_THRESHOLD) {
+                    isSpeakingMicRef.current = true;
+                    userTurnOpenRef.current = true;
+                    if (userSilenceTimerRef.current) {
+                        clearTimeout(userSilenceTimerRef.current);
+                        userSilenceTimerRef.current = null;
+                    }
+                } else if (isSpeakingMicRef.current && userTurnOpenRef.current) {
+                    // Amplitude dropped below threshold (candidate stopped speaking into microphone)
+                    // Trigger commit after 2.0s without waiting for trailing packet latency
+                    if (!userSilenceTimerRef.current) {
+                        userSilenceTimerRef.current = setTimeout(() => {
+                            isSpeakingMicRef.current = false;
+                            commitUserTurnRef.current();
+                            userSilenceTimerRef.current = null;
+                        }, SILENCE_TIMEOUT_MS);
+                    }
+                }
             };
 
             const source = ctx.createMediaStreamSource(stream);
@@ -2592,12 +2641,6 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
                                 </button>
                             </div>
                             <div className="flex items-center gap-3">
-                                {isUserSpeaking && (
-                                    <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60 animate-pulse">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                                        Listening to your response...
-                                    </span>
-                                )}
                                 <span className="text-xs text-gray-400">{transcript.length} messages</span>
                                 <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">You</span>
                                 <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{activePartner.name}</span>
