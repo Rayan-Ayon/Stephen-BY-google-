@@ -54,6 +54,8 @@ export interface WritingEvaluationPayload {
     lexicalIndex?: number;
     complexityRatio?: number;
     highYieldCollocations?: string[];
+    tasks_data?: any;
+    evaluation?: any;
     createdAt?: string;
 }
 
@@ -179,8 +181,8 @@ export const buildSynthesizedEvaluation = (params: {
     wordCount?: number;
     criteriaScores?: Record<string, number>;
 }): WritingEvaluationPayload => {
-    const rawText = params.essayText?.trim() || `Education plays a pivotal role in modern society, and a substantial number of people contend that tertiary education ought to be free. This is compelling because it yields an equitable playing field for all segments of society. Governments stand to derive significant long-term benefit from a well-educated populace. In conclusion, state-subsidized education underscores national development and economic resilience.`;
-    const words = params.wordCount || rawText.split(/\s+/).filter(Boolean).length || 285;
+    const rawText = params.essayText?.trim() || '';
+    const words = params.wordCount || (rawText ? rawText.split(/\s+/).filter(Boolean).length : 0);
     const band = params.overallBand || 6.5;
 
     const criteriaList: WritingCriterion[] = ['TR/TA', 'CC', 'LR', 'GRA'].map((code) => {
@@ -209,22 +211,9 @@ export const buildSynthesizedEvaluation = (params: {
         };
     });
 
-    const segments = buildEssaySegments(rawText);
+    const segments = rawText ? buildEssaySegments(rawText) : [];
 
-    const rewrites: WritingRewrite[] = [
-        {
-            original: 'Education is a very important thing in modern society, and many peoples believe that university should be free.',
-            upgraded: 'Education plays a pivotal role in modern society, and a substantial number of people contend that tertiary education ought to be free.',
-        },
-        {
-            original: 'This is a very good thing because it creates a level playing field for everyone.',
-            upgraded: 'This is compelling because it yields a more equitable playing field for all segments of society.',
-        },
-        {
-            original: 'Governments can get a big benefit from an educated population.',
-            upgraded: 'Governments stand to derive significant long-term benefit from a well-educated populace.',
-        },
-    ];
+    const rewrites: WritingRewrite[] = [];
 
     const book = params.bookNumber;
     const test = params.testNumber;
@@ -275,15 +264,38 @@ export async function fetchWritingEvaluation(
     cachedAttemptObject?: any
 ): Promise<WritingEvaluationPayload> {
     // 1. Direct object inspection (Zero latency)
+    if (cachedAttemptObject?.tasks_data || cachedAttemptObject?.evaluation_payload_json?.tasks_data) {
+        const tasks_data = cachedAttemptObject.tasks_data || cachedAttemptObject.evaluation_payload_json?.tasks_data;
+        const evaluation = cachedAttemptObject.evaluation || cachedAttemptObject.evaluation_payload_json?.evaluation;
+        const payload: WritingEvaluationPayload = {
+            attemptId,
+            overallBand: cachedAttemptObject.overall_band || cachedAttemptObject.band || evaluation?.overallBand || 6.5,
+            examTitle: cachedAttemptObject.exam_name || cachedAttemptObject.title || 'Cambridge Writing Test',
+            examDate: cachedAttemptObject.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            wordCount: cachedAttemptObject.wordCount || 285,
+            timeSpentMinutes: cachedAttemptObject.timeSpent || 40,
+            essayText: cachedAttemptObject.essayText || tasks_data?.task2?.essayText || tasks_data?.task1?.essayText || '',
+            promptText: cachedAttemptObject.prompt || tasks_data?.task2?.prompt || tasks_data?.task1?.prompt || '',
+            criteria: cachedAttemptObject.criteria || [],
+            segments: [],
+            rewrites: [],
+            teacher: { verified: true, remark: '', audioNote: false },
+            tasks_data,
+            evaluation,
+        };
+        setCachedEvaluation(attemptId, payload);
+        return payload;
+    }
+
     if (cachedAttemptObject?.evaluation_payload_json && typeof cachedAttemptObject.evaluation_payload_json === 'object') {
         const payload = cachedAttemptObject.evaluation_payload_json as WritingEvaluationPayload;
-        if (payload.overallBand && payload.criteria) {
+        if (payload.overallBand && (payload.criteria || payload.tasks_data)) {
             setCachedEvaluation(attemptId, payload);
             return payload;
         }
     }
 
-    if (cachedAttemptObject?.evaluation && typeof cachedAttemptObject.evaluation === 'object' && cachedAttemptObject.evaluation.criteria) {
+    if (cachedAttemptObject?.evaluation && typeof cachedAttemptObject.evaluation === 'object' && (cachedAttemptObject.evaluation.criteria || cachedAttemptObject.evaluation.task1)) {
         const payload = cachedAttemptObject.evaluation as WritingEvaluationPayload;
         setCachedEvaluation(attemptId, payload);
         return payload;

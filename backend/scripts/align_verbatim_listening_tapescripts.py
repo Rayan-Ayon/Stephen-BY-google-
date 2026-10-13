@@ -12,6 +12,7 @@ import os
 import sys
 import json
 import re
+from typing import Dict, Any
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
@@ -340,33 +341,8 @@ C18_T1_DATA = {
 def clean_label(text: str) -> str:
     return re.sub(r'\[\d+\]', '', text).strip()
 
-def generate_natural_dialogue(part: int, q_num: int, prompt: str, answer: str) -> dict:
-    clean_ans = answer.strip()
-    clean_prompt = clean_label(prompt)
-    clean_prompt = re.sub(r'^(Q\d+:|Question \d+:|Part \d+[^:]+:)\s*', '', clean_prompt).strip()
-
-    if part == 1:
-        main_spk = "CALLER"
-        quote = f'AGENT: "Could you confirm the detail for {clean_prompt}?" / CALLER: "Yes, that would be {clean_ans}."'
-        exp = f"The speaker explicitly confirms '{clean_ans}' as the required answer for {clean_prompt}."
-    elif part == 2:
-        main_spk = "GUIDE"
-        quote = f'GUIDE: "Visitors should note that regarding {clean_prompt}, the official detail is {clean_ans}."'
-        exp = f"The guide provides clear information confirming '{clean_ans}' for {clean_prompt}."
-    elif part == 3:
-        main_spk = "STUDENT" if q_num % 2 == 0 else "TUTOR"
-        quote = f'TUTOR: "In your project, what did you observe concerning {clean_prompt}?" / STUDENT: "Our analysis verified {clean_ans}."'
-        exp = f"In the research tutorial, the participants conclude '{clean_ans}' for {clean_prompt}."
-    else:
-        main_spk = "LECTURER"
-        quote = f'LECTURER: "Field observations examining {clean_prompt} demonstrate that the decisive factor is {clean_ans}."'
-        exp = f"The academic lecture highlights '{clean_ans}' in relation to {clean_prompt}."
-
-    return {
-        "speaker": main_spk,
-        "quote": quote,
-        "exp": exp
-    }
+# Synthetic dialogue generation is strictly prohibited per Corpus Integrity Directive.
+# Every question must be grounded in verified acoustic dialogue.
 
 def align_all_tapescripts():
     print("=" * 70)
@@ -482,17 +458,10 @@ def align_all_tapescripts():
                 )
 
                 if is_synthetic or (book in range(8, 13) and ans in ['WS6 2YH', '1.30', 'Christmas Day', 'car park']):
-                    dialogue = generate_natural_dialogue(part_num, q_num, prompt, ans)
-                    base_sec = part_markers.get(str(part_num), 0)
-                    offset_sec = 60 + ((q_num - 1) % 10) * 28 + ((q_num * 7) % 15)
-                    actual_sec = base_sec + offset_sec
-
-                    q_info['speaker'] = dialogue['speaker']
-                    q_info['seconds'] = actual_sec
-                    q_info['timestamp'] = format_time(actual_sec)
-                    q_info['evidence_quote'] = dialogue['quote']
-                    q_info['explanation'] = dialogue['exp']
-                    total_qs_updated += 1
+                    raise RuntimeError(
+                        f"[Corpus Integrity Violation] Cambridge {book} Test {test} Question {q_num} lacks verified verbatim acoustic dialogue. "
+                        f"Automated synthetic placeholder generation has been purged. Authentic transcript must be supplied."
+                    )
 
         updated_tests += 1
 

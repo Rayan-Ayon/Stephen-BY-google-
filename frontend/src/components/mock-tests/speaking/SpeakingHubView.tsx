@@ -1,8 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
 import SpeakingExamWorkspace from './SpeakingExamWorkspace';
-import ModuleHistorySection from '@/components/enterprise/history/ModuleHistorySection';
+import SpeakingHistoryMatrix from '@/components/enterprise/speaking/SpeakingHistoryMatrix';
 import ExamLauncherFlow from '@/components/onboarding/ExamLauncherFlow';
+import SpeakingAnalysisView from '@/components/enterprise/speaking/SpeakingAnalysisView';
+import type { SpeakingEvaluation } from './speakingExamShared';
 
 // ── Data Constants ──────────────────────────────────────────────────────────
 
@@ -191,6 +193,16 @@ export const SpeakingHubView: React.FC<SpeakingHubViewProps> = ({ userEmail, onE
 
     // Active Exam Workspace Launch State (Eliminates intermediate start screens)
     const [showExam, setShowExam] = useState<boolean>(false);
+    const [analysisAttempt, setAnalysisAttempt] = useState<{
+        examTitle: string;
+        bookNumber?: number;
+        testNumber?: number;
+        testData?: any;
+        audioUrl?: string | null;
+        evaluation?: SpeakingEvaluation | null;
+        storedPartsData?: any;
+        attemptRecord?: any;
+    } | null>(null);
     const [examSourceType, setExamSourceType] = useState<'cambridge' | 'mock_series'>('cambridge');
     const [examBookNumber, setExamBookNumber] = useState<number>(7);
     const [examTestNumber, setExamTestNumber] = useState<number>(1);
@@ -248,9 +260,50 @@ export const SpeakingHubView: React.FC<SpeakingHubViewProps> = ({ userEmail, onE
                         category={examCategory}
                         onExit={handleExitExam}
                         onActiveChange={onExamStateChange}
+                        onTestComplete={(data) => {
+                            // Unmount proctored test frame and exit exam mode so App Sidebar becomes accessible
+                            setShowExam(false);
+                            onExamStateChange?.(false);
+                            const effectiveBook = data?.bookNumber ?? examBookNumber;
+                            const effectiveTest = data?.testNumber ?? examTestNumber;
+                            const seriesName = examSourceType === 'cambridge'
+                                ? `Cambridge ${effectiveBook}`
+                                : `IELTS Dynasty Mock ${effectiveBook}`;
+                            setAnalysisAttempt({
+                                examTitle: data?.examTitle ? `${data.examTitle} Analysis` : `${seriesName} · Speaking Test ${String(effectiveTest).padStart(2, '0')} Analysis`,
+                                bookNumber: effectiveBook,
+                                testNumber: effectiveTest,
+                                testData: data?.testData,
+                                audioUrl: data?.audioUrl,
+                                evaluation: data?.evaluation,
+                            });
+                        }}
                     />
                 </div>
             </ExamLauncherFlow>
+        );
+    }
+
+    // ── Analysis Canvas View Mode (Inside App Shell with Sidebar) ───────────
+    if (analysisAttempt) {
+        return (
+            <div className="h-full w-full bg-[#0D0F12] overflow-hidden flex flex-col">
+                <SpeakingAnalysisView
+                    examTitle={analysisAttempt.examTitle}
+                    bookNumber={analysisAttempt.bookNumber}
+                    testNumber={analysisAttempt.testNumber}
+                    testData={analysisAttempt.testData}
+                    audioUrl={analysisAttempt.audioUrl}
+                    evaluation={analysisAttempt.evaluation}
+                    storedPartsData={analysisAttempt.storedPartsData || analysisAttempt.attemptRecord?.parts_data}
+                    onBack={() => setAnalysisAttempt(null)}
+                    onExit={() => setAnalysisAttempt(null)}
+                    onNavigateHistory={() => {
+                        setAnalysisAttempt(null);
+                        setViewMode('history');
+                    }}
+                />
+            </div>
         );
     }
 
@@ -270,7 +323,7 @@ export const SpeakingHubView: React.FC<SpeakingHubViewProps> = ({ userEmail, onE
                     <span className="text-lg font-bold text-white">Speaking History</span>
                 </div>
                 <div className="flex-1 min-h-0 overflow-y-auto p-6">
-                    <ModuleHistorySection moduleType="speaking" />
+                    <SpeakingHistoryMatrix onBackToHub={() => setViewMode('hub')} />
                 </div>
             </div>
         );

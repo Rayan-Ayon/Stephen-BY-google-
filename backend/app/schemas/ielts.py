@@ -11,22 +11,24 @@ class TaskCriteria(BaseModel):
 
 class GrammarCorrection(BaseModel):
     original: str
-    correction: str
+    correction: str = ""
+    corrected: str | None = None
+    explanation: str | None = None
 
 
 class ModelAnswer(BaseModel):
-    en: str
-    bn: str
+    en: str = ""
+    bn: str = ""
 
 
 class TaskEvaluation(BaseModel):
     band: float
-    criteria: TaskCriteria
-    strengths: list[str]
-    improvements: list[str]
-    grammarCorrections: list[GrammarCorrection]
+    criteria: Any
+    strengths: list[str] = []
+    improvements: list[str] = []
+    grammarCorrections: list[GrammarCorrection] = []
     modelAnswer: ModelAnswer
-    summary: str
+    summary: str = ""
 
 
 class EvaluationRequest(BaseModel):

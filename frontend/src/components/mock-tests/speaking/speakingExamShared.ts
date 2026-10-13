@@ -35,229 +35,56 @@ export interface SpeakingTestData {
 
 export interface SpeakingEvaluation {
     overallBand: number;
-    fluency: {
+    overall_band?: number;
+    fcScore?: number;
+    lrScore?: number;
+    graScore?: number;
+    prScore?: number;
+    fc_score?: number;
+    lr_score?: number;
+    gra_score?: number;
+    pr_score?: number;
+    targetBand?: number;
+    targetGap?: number;
+    wpm?: number;
+    pronunciationAccuracy?: number;
+    fluency?: {
         score: number;
         relevance?: any[];
         logical_sequencing?: any[];
         topic_development?: any[];
     };
-    lexical: {
+    lexical?: {
         score: number;
         diversity_and_advanced_words?: string[];
         accuracy?: string[];
     };
-    grammar: {
+    grammar?: {
         score: number;
         sentence_complexity?: string[];
         errors?: string[];
     };
-    pronunciation: {
+    pronunciation?: {
         score: number;
         individual_sounds?: string[];
         word_stress?: string[];
         rhythm_intonation?: string[];
     };
-    transcript: string;
-    what_you_did_well: string[];
-    areas_to_improve: string[];
+    transcript?: string;
+    what_you_did_well?: string[];
+    areas_to_improve?: string[];
+    strengths?: string[];
+    improvements?: string[];
+    feedback?: string;
+    questions?: any[];
 }
+
+import { CAMBRIDGE_SPEAKING_BANK_EXTENDED } from './cambridgeSpeakingBankData';
 
 // ── Authentic Cambridge & Mock Tests Speaking Question Bank ─────────────────
 
-const CAMBRIDGE_SPEAKING_BANK: Record<string, Omit<SpeakingTestData, 'sourceType' | 'bookNumber' | 'testNumber' | 'category'>> = {
-    // Cambridge 7
-    'cambridge-7-1': {
-        title: 'Cambridge 7 Test 1',
-        part1: {
-            title: 'Hometown & Accommodation',
-            questions: [
-                'What kind of place is your hometown or village?',
-                'What is the most interesting part of your town or village?',
-                'What kind of jobs do the people in your town or village do?',
-                'Would you say it is a good place to live? Why?',
-                'Tell me about the kind of accommodation you live in.',
-                'How long have you lived there?',
-            ],
-        },
-        part2: {
-            title: 'A Teacher Who Influenced You',
-            topic: 'a teacher who has greatly influenced you in your education',
-            prompts: [
-                'where you met them',
-                'what subject they taught',
-                'what was special about them',
-                'and explain why this person influenced you so much',
-            ],
-        },
-        part3: {
-            title: 'Developments in Education',
-            questions: [
-                'How has teaching changed in your country in the last few decades?',
-                'What is the effect of modern technology on education in your opinion?',
-                'What changes do you think there will be in education in the future?',
-                'How can a country improve its education system?',
-            ],
-        },
-    },
-    'cambridge-7-2': {
-        title: 'Cambridge 7 Test 2',
-        part1: {
-            title: 'Laughing & Free Time',
-            questions: [
-                'What kinds of things make you laugh?',
-                'Do you like watching comedies on TV or in cinema?',
-                'Do you think it is important for people to laugh regularly?',
-                'Is comedy popular in your culture?',
-            ],
-        },
-        part2: {
-            title: 'An Electronic Device',
-            topic: 'an electronic device you bought that was very useful',
-            prompts: [
-                'what the device was',
-                'where and when you bought it',
-                'what you used it for',
-                'and explain why it was so useful to you',
-            ],
-        },
-        part3: {
-            title: 'Technology and Daily Life',
-            questions: [
-                'What kinds of electronic devices do people find most essential today?',
-                'Do you think people rely too much on technology nowadays?',
-                'How will domestic appliances change over the next twenty years?',
-                'What problems can arise when technology fails in daily life?',
-            ],
-        },
-    },
-    'cambridge-7-3': {
-        title: 'Cambridge 7 Test 3',
-        part1: {
-            title: 'Cold Weather & Seasons',
-            questions: [
-                'What is your favourite season of the year?',
-                'What do you usually do when the weather is very cold?',
-                'Does cold weather affect people’s mood in your opinion?',
-                'Have you ever seen snow or experienced extreme weather?',
-            ],
-        },
-        part2: {
-            title: 'A Historic Building',
-            topic: 'a historic building or monument you visited',
-            prompts: [
-                'where it was located',
-                'what it looked like',
-                'what happened there historically',
-                'and explain what impressed you most about it',
-            ],
-        },
-        part3: {
-            title: 'Historic Preservation',
-            questions: [
-                'Why is it important to protect historic buildings?',
-                'Should governments spend public money preserving historic sites or building new infrastructure?',
-                'How can old monuments be made attractive to younger generations?',
-                'Does mass tourism pose a threat to historical landmarks?',
-            ],
-        },
-    },
-    'cambridge-7-4': {
-        title: 'Cambridge 7 Test 4',
-        part1: {
-            title: 'Sports & Games',
-            questions: [
-                'Did you enjoy sports when you were in school?',
-                'What games or sports are most popular in your country?',
-                'Do you prefer playing sports or watching them on television?',
-                'What are the health benefits of regular exercise?',
-            ],
-        },
-        part2: {
-            title: 'A Long Journey',
-            topic: 'a long journey you took that you found interesting',
-            prompts: [
-                'where you travelled to',
-                'how you travelled',
-                'who you travelled with',
-                'and explain why this journey was particularly interesting',
-            ],
-        },
-        part3: {
-            title: 'Travel and Public Transport',
-            questions: [
-                'Why do people travel more nowadays than they used to in the past?',
-                'What can governments do to improve public transportation systems?',
-                'How does long-distance commuting affect people’s quality of life?',
-                'Will supersonic or high-speed rail replace air travel in the future?',
-            ],
-        },
-    },
-
-    // Cambridge 8
-    'cambridge-8-1': {
-        title: 'Cambridge 8 Test 1',
-        part1: {
-            title: 'Neighbourhood & Friends',
-            questions: [
-                'Can you describe the neighbourhood where you grew up?',
-                'Do you think your neighbourhood is a friendly place?',
-                'How often do you talk to your neighbours?',
-                'What facilities would make your neighbourhood better?',
-            ],
-        },
-        part2: {
-            title: 'An Artist or Musician',
-            topic: 'an artist, musician, or performer you admire',
-            prompts: [
-                'who this person is',
-                'what kind of work or performance they do',
-                'when you first learned about them',
-                'and explain why you admire their talent',
-            ],
-        },
-        part3: {
-            title: 'Art & Cultural Heritage',
-            questions: [
-                'Why do you think art education is valuable in schools?',
-                'Should art and cultural events be subsidized by the state?',
-                'How has the internet changed the way people experience music and art?',
-                'Does art reflect society or shape society?',
-            ],
-        },
-    },
-
-    // Cambridge 18
-    'cambridge-18-1': {
-        title: 'Cambridge 18 Test 1',
-        part1: {
-            title: 'Reading & Books',
-            questions: [
-                'Do you enjoy reading books in your free time?',
-                'What kinds of books do you prefer reading?',
-                'Did you read many books when you were a child?',
-                'Do you prefer physical printed books or e-books?',
-            ],
-        },
-        part2: {
-            title: 'A Time You Made a Promise',
-            topic: 'a time when you made a promise to someone',
-            prompts: [
-                'whom you made the promise to',
-                'what the promise was about',
-                'why you made this promise',
-                'and explain whether it was easy or difficult to keep it',
-            ],
-        },
-        part3: {
-            title: 'Trust and Commitments',
-            questions: [
-                'Why is keeping promises so crucial in personal relationships?',
-                'What consequences happen when businesses fail to honor their promises to customers?',
-                'Are younger people less likely to make long-term commitments than older generations?',
-                'Should promises made verbally have legal weight?',
-            ],
-        },
-    },
+export const CAMBRIDGE_SPEAKING_BANK: Record<string, Omit<SpeakingTestData, 'sourceType' | 'bookNumber' | 'testNumber' | 'category'>> = {
+    ...CAMBRIDGE_SPEAKING_BANK_EXTENDED,
 
     // Mock Series
     'mock_series-1-1': {

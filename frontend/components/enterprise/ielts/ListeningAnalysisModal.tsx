@@ -30,11 +30,35 @@ export interface ListeningQuestionResult {
   prompt: string;
   userAnswer: string;
   correctAnswer: string;
+  options?: string[];
   isCorrect: boolean;
   timestamp: string; // e.g. "01:24"
   tapeScriptExcerpt: string;
   explanation: string;
 }
+
+const resolveOptionLabel = (val: string | null | undefined, options?: string[]): string => {
+  if (!val) return '(No answer provided)';
+  const trimmed = val.trim();
+  if (!options || options.length === 0) return trimmed;
+
+  const matched = options.find((opt) => {
+    const clean = opt.trim().toUpperCase();
+    const target = trimmed.toUpperCase();
+    return (
+      clean.startsWith(`${target}.`) ||
+      clean.startsWith(`${target} `) ||
+      clean.startsWith(`${target} -`) ||
+      clean.startsWith(`${target} —`)
+    );
+  });
+
+  if (matched) {
+    const optionText = matched.replace(/^[A-Z][.\s—–-]+/i, '').trim();
+    return `${trimmed.toUpperCase()} — ${optionText}`;
+  }
+  return trimmed;
+};
 
 export interface ListeningAnalysisModalProps {
   isModal?: boolean; // true when opened from History Matrix, false when embedded in post-submission
@@ -414,7 +438,7 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
   const [expandedScripts, setExpandedScripts] = useState<Record<number, boolean>>({});
   const [scoreViewMode, setScoreViewMode] = useState<'ai' | 'teacher'>('ai');
   const [activeAnswers, setActiveAnswers] = useState<Record<number, string>>(initialAnswers);
-  const [dbQuestions, setDbQuestions] = useState<Record<number, { prompt?: string; correct?: string; excerpt?: string; explanation?: string; timestamp?: string }>>({});
+  const [dbQuestions, setDbQuestions] = useState<Record<number, { prompt?: string; correct?: string; options?: string[]; excerpt?: string; explanation?: string; timestamp?: string }>>({});
   const [fetchedScore, setFetchedScore] = useState<number | null>(null);
 
   // Audio Player State
@@ -509,7 +533,7 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
         }
 
         if (sections && sections.length > 0 && isMounted) {
-          const qDict: Record<number, { prompt?: string; correct?: string; excerpt?: string; explanation?: string; timestamp?: string }> = {};
+          const qDict: Record<number, { prompt?: string; correct?: string; options?: string[]; excerpt?: string; explanation?: string; timestamp?: string }> = {};
           sections.forEach((sec: any) => {
             (sec.question_groups || []).forEach((grp: any) => {
               (grp.questions || []).forEach((q: any) => {
@@ -519,6 +543,7 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
                   qDict[num] = {
                     prompt: q.question_text || regItem?.prompt,
                     correct: q.correct_answer || regItem?.correct_answer,
+                    options: Array.isArray(q.options) ? q.options : (regItem?.options || []),
                     excerpt: q.evidence_quote || regItem?.evidence_quote || (sec.passage_title ? `${sec.passage_title}: ${q.question_text}` : q.question_text),
                     explanation: q.explanation || regItem?.explanation || 'Official Cambridge verified response.',
                     timestamp: q.timestamp_str || regItem?.timestamp || '00:00'
@@ -651,6 +676,7 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
         prompt,
         userAnswer: userRaw || '(No answer provided)',
         correctAnswer: official,
+        options: dbQ?.options || regQ?.options,
         isCorrect,
         timestamp: transcriptInfo.timestamp,
         tapeScriptExcerpt: transcriptInfo.excerpt,
@@ -1214,7 +1240,7 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
                             q.isCorrect ? 'text-emerald-400' : 'text-rose-400 line-through'
                           }`}
                         >
-                          {q.userAnswer}
+                          {resolveOptionLabel(q.userAnswer, q.options)}
                         </span>
                       </div>
 
@@ -1225,7 +1251,7 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
                         <span
                           className="font-mono text-xs font-bold text-white"
                         >
-                          {q.correctAnswer}
+                          {resolveOptionLabel(q.correctAnswer, q.options)}
                         </span>
                       </div>
                     </div>

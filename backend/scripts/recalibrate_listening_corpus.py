@@ -343,34 +343,8 @@ def clean_label(text: str) -> str:
     t = re.sub(r'Part \d+ [^:]+:\s*', '', t).strip()
     return t
 
-def build_natural_dialogue(part_num: int, q_num: int, prompt: str, answer: str) -> dict:
-    clean_ans = answer.strip()
-    clean_p = clean_label(prompt)
-    if not clean_p:
-        clean_p = f"item {q_num}"
-
-    if part_num == 1:
-        quote = f"AGENT: Can I confirm the detail for {clean_p}? / CALLER: Yes, that would be {clean_ans}."
-        exp = f"The speaker explicitly confirms '{clean_ans}' as the required answer for {clean_p}."
-        speaker = "CALLER"
-    elif part_num == 2:
-        quote = f"SPEAKER: While touring this section, visitors should observe {clean_p} — the designated feature is {clean_ans}."
-        exp = f"The guide directly points out '{clean_ans}' corresponding to {clean_p}."
-        speaker = "SPEAKER"
-    elif part_num == 3:
-        quote = f"TUTOR: Looking at {clean_p}, how do your findings support this? / STUDENT: In my research, the key outcome was definitely {clean_ans}."
-        exp = f"The speakers collaboratively verify that '{clean_ans}' is the correct response for {clean_p}."
-        speaker = "STUDENT" if q_num % 2 == 0 else "TUTOR"
-    else:
-        quote = f"LECTURER: When we analyze {clean_p}, empirical research demonstrates that {clean_ans} plays a central role."
-        exp = f"The lecturer establishes that '{clean_ans}' represents the determining factor for {clean_p}."
-        speaker = "LECTURER"
-
-    return {
-        "speaker": speaker,
-        "quote": quote,
-        "exp": exp
-    }
+# Synthetic dialogue generation is strictly prohibited per Corpus Integrity Directive.
+# Every question must be grounded in verified acoustic dialogue.
 
 def run_recalibration():
     print("=" * 70)
@@ -440,21 +414,14 @@ def run_recalibration():
                 q_info['evidence_quote'] = cal['quote']
                 q_info['explanation'] = cal['exp']
 
-            # 3. All other Cambridge tests: realistic acoustic pacing
+            # 3. All other Cambridge tests: Must have certified verbatim dialogue
             else:
-                base_sec = part_markers.get(str(part_num), DEFAULT_PART_ANCHORS[str(part_num)])
-                preamble = PREAMBLE_OFFSETS[part_num]
-                q_in_part = (q_num - 1) % 10  # 0 to 9
-                # Staggered natural speech pacing: 24 to 34s between answers
-                variable_gap = 25 * q_in_part + ((q_num * 3) % 11)
-                calculated_sec = base_sec + preamble + variable_gap
-
-                diag = build_natural_dialogue(part_num, q_num, prompt, ans)
-                q_info['speaker'] = diag['speaker']
-                q_info['seconds'] = calculated_sec
-                q_info['timestamp'] = format_time(calculated_sec)
-                q_info['evidence_quote'] = diag['quote']
-                q_info['explanation'] = diag['exp']
+                existing_quote = q_info.get('evidence_quote', '')
+                if not existing_quote or 'While touring this section' in existing_quote or 'Can I confirm the detail' in existing_quote:
+                    raise RuntimeError(
+                        f"[Corpus Integrity Violation] Cambridge {book} Test {test} Question {q_num} lacks verified verbatim acoustic dialogue. "
+                        f"Automated synthetic placeholder generation has been purged. Authentic transcript must be supplied."
+                    )
 
     # Save to frontend and backend JSON registries
     with open(FRONTEND_JSON, 'w', encoding='utf-8') as f:

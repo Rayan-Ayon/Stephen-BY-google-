@@ -42,7 +42,35 @@ export const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ modu
     useEffect(() => {
         let mounted = true;
         const loadAttempts = async () => {
-            const local = readAttempts();
+            let local = readAttempts();
+            try {
+                const raw = localStorage.getItem('writing_attempts_history');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) {
+                        const localMap = new Map(local.map((item) => [String(item.id), item]));
+                        parsed.forEach((p) => {
+                            localMap.set(String(p.id), {
+                                id: p.id,
+                                skill: 'writing',
+                                module: 'writing',
+                                band: p.overall_band || p.band || 6.5,
+                                book_number: p.book_number,
+                                test_number: p.test_number,
+                                title: p.exam_name || p.title || 'Cambridge Writing Test',
+                                timeSpent: p.time_spent ? (typeof p.time_spent === 'number' ? p.time_spent : parseInt(p.time_spent, 10) || 40) : 40,
+                                date: p.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                                wordCount: (p.tasks_data?.task2?.wordCount || 0) + (p.tasks_data?.task1?.wordCount || 0) || 285,
+                                tasks_data: p.tasks_data,
+                                evaluation: p.evaluation,
+                                evaluation_payload_json: p,
+                            });
+                        });
+                        local = Array.from(localMap.values());
+                    }
+                }
+            } catch {}
+
             try {
                 let dbRows: any[] = [];
 
@@ -105,6 +133,29 @@ export const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ modu
                             ? `Cambridge ${book} — Test ${test}`
                             : (row.title && !row.title.toLowerCase().includes('official cambridge test') ? row.title : 'Cambridge Practice Test');
 
+                        const tasks_data = row.tasks_data
+                            || row.details?.tasks_data
+                            || row.evaluation_payload_json?.tasks_data
+                            || (row.evaluation?.tasks_data)
+                            || {
+                                task1: row.task1_response ? {
+                                    prompt: row.task1_prompt,
+                                    essayText: row.task1_response,
+                                    wordCount: row.task1_word_count,
+                                    evaluation: row.evaluation?.task1,
+                                } : undefined,
+                                task2: row.task2_response ? {
+                                    prompt: row.task2_prompt,
+                                    essayText: row.task2_response,
+                                    wordCount: row.task2_word_count,
+                                    evaluation: row.evaluation?.task2,
+                                } : undefined,
+                            };
+
+                        const evaluation = row.evaluation
+                            || row.details?.evaluation
+                            || row.evaluation_payload_json?.evaluation;
+
                         return {
                             id: row.id,
                             skill: 'writing',
@@ -118,14 +169,14 @@ export const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ modu
                             timeSpent: row.time_spent_seconds ? Math.round(row.time_spent_seconds / 60) : (row.timeSpent || 40),
                             date: new Date(row.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                             wordCount,
-                            evaluation_payload_json: row.evaluation_payload_json || row.evaluation,
+                            evaluation_payload_json: row.evaluation_payload_json || row.details || row.evaluation,
+                            tasks_data,
+                            evaluation,
                             prompt: row.task2_prompt || row.task1_prompt || row.prompt_text,
                             essayText: essay,
                             criteria: row.evaluation?.criteria || [
-                                { label: 'Task Response', band },
-                                { label: 'Coherence', band },
-                                { label: 'Lexical Range', band },
-                                { label: 'Grammar', band },
+                                { label: 'Task 1', band: evaluation?.task1?.band || band },
+                                { label: 'Task 2', band: evaluation?.task2?.band || band },
                             ],
                         };
                     });
@@ -147,9 +198,11 @@ export const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ modu
         loadAttempts();
         const refresh = () => loadAttempts();
         window.addEventListener(ATTEMPTS_UPDATED_EVENT, refresh);
+        window.addEventListener('writing_attempts_updated', refresh);
         return () => {
             mounted = false;
             window.removeEventListener(ATTEMPTS_UPDATED_EVENT, refresh);
+            window.removeEventListener('writing_attempts_updated', refresh);
         };
     }, []);
 

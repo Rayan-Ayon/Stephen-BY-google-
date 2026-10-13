@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logger.info(f"[STEPHEN][STARTUP] Live Speaking WebSocket model cascade: {speaking.FALLBACK_LIVE_MODELS}")
     logger.info("Initializing database...")
     await init_db()
     logger.info("Database initialized")

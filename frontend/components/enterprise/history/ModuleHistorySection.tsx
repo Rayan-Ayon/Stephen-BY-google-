@@ -17,6 +17,7 @@ import {
 import WritingAnalysisModal from '../ielts/WritingAnalysisModal';
 import IELTSAnalysisView from '../ielts/IELTSAnalysisView';
 import ListeningAnalysisModal from '../ielts/ListeningAnalysisModal';
+import SpeakingAnalysisView from '../speaking/SpeakingAnalysisView';
 import { supabase } from '@/lib/supabaseClient';
 
 export interface ModuleHistoryProps {
@@ -382,14 +383,15 @@ export const ModuleHistorySection: React.FC<ModuleHistoryProps> = ({ moduleType,
             )}
 
             {selectedAttempt && (selectedAttempt.module === 'speaking' || selectedAttempt.skill === 'speaking') && (
-                <IELTSAnalysisView
-                    isModal={true}
-                    key={`speaking-${selectedAttempt.id}`}
-                    attemptId={selectedAttempt.id}
-                    skillModule="speaking"
-                    title={resolveExamTitle(selectedAttempt)}
-                    onClose={() => setSelectedAttempt(null)}
-                />
+                <div className="fixed inset-0 z-50 bg-[#0D0F12] flex flex-col overflow-hidden animate-fadeIn">
+                    <SpeakingAnalysisView
+                        examTitle={resolveExamTitle(selectedAttempt)}
+                        bookNumber={selectedAttempt.book_number || parseInt((selectedAttempt.title || '').match(/Cambridge\s*(\d+)/i)?.[1] || '7', 10)}
+                        testNumber={selectedAttempt.test_number || parseInt((selectedAttempt.title || '').match(/Test\s*(\d+)/i)?.[1] || '1', 10)}
+                        onBack={() => setSelectedAttempt(null)}
+                        onExit={() => setSelectedAttempt(null)}
+                    />
+                </div>
             )}
         </section>
     );

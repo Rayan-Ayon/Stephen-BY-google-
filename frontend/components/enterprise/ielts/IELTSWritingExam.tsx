@@ -418,51 +418,118 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
             };
             setResult(evalResult);
 
-            const primaryTask = evalResult.task2 || evalResult.task1;
-            const primaryPrompt = showT2 ? t2Prompt : t1Prompt;
-            const primaryEssay = showT2 ? t2Text : t1Text;
-            const primaryWords = showT2 ? t2WordCount : t1WordCount;
-            const attemptId = submission?.id || `writing-${Date.now()}`;
+            const t1Band = evalResult.task1?.band;
+            const t2Band = evalResult.task2?.band;
+            let computedOverall = evalResult.overallBand;
+            if (t1Band != null && t2Band != null) {
+                const weightedMean = (t1Band + (2.0 * t2Band)) / 3.0;
+                const frac = weightedMean - Math.floor(weightedMean);
+                if (frac < 0.25) computedOverall = Math.floor(weightedMean);
+                else if (frac < 0.75) computedOverall = Math.floor(weightedMean) + 0.5;
+                else computedOverall = Math.floor(weightedMean) + 1;
+            }
+            evalResult.overallBand = computedOverall;
 
-            const evalPayload = buildSynthesizedEvaluation({
-                attemptId,
-                essayText: primaryEssay,
-                promptText: primaryPrompt,
-                overallBand: evalResult.overallBand,
-                bookNumber,
-                testNumber,
-                taskType: showT1 && showT2 ? 'full_mock' : showT1 ? 'task1' : 'task2',
-                timeSpentMinutes: timeSpent,
-                wordCount: primaryWords,
-                criteriaScores: primaryTask ? {
-                    'TR/TA': primaryTask.criteria.taskAchievement,
-                    'CC': primaryTask.criteria.coherence,
-                    'LR': primaryTask.criteria.lexical,
-                    'GRA': primaryTask.criteria.grammar,
-                } : undefined,
-            });
+            const totalElapsedSeconds = Math.max(1, timeLimit - seconds);
+            const formatDuration = (secs: number) => {
+                const m = Math.floor(secs / 60);
+                const s = secs % 60;
+                return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            };
+            const examId = `c${String(bookNumber).padStart(2, '0')}_w_t${String(testNumber).padStart(2, '0')}`;
+            const attemptId = submission?.id || `wri-${Date.now()}`;
 
-            // Single-pass persistence to Supabase
-            saveWritingEvaluation(evalPayload, {
+            const unifiedAttemptRecord = {
                 id: attemptId,
-                userId: session?.user?.id,
-                userEmail: candidateEmail || session?.user?.email,
-                bookNumber,
-                testNumber,
-                taskType: showT1 && showT2 ? 'full_mock' : showT1 ? 'task1' : 'task2',
-                title: bookNumber && testNumber ? `Cambridge ${bookNumber} — Test ${testNumber}` : 'Academic Writing Attempt',
-            }).catch((err) => console.warn('[WritingExam] saveWritingEvaluation warning:', err));
+                test_id: examId,
+                module: 'writing',
+                category: moduleType || 'academic',
+                exam_name: `Cambridge ${bookNumber} · Writing Test ${String(testNumber).padStart(2, '0')}`,
+                book_number: Number(bookNumber),
+                test_number: Number(testNumber),
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                time_spent: formatDuration(totalElapsedSeconds),
+                overall_band: computedOverall,
+                status: 'COMPLETED',
+                criteria_status: `T1: Band ${evalResult.task1?.band ?? '—'} · T2: Band ${evalResult.task2?.band ?? '—'}`,
+                evaluation: {
+                    overallBand: computedOverall,
+                    task1: evalResult.task1,
+                    task2: evalResult.task2,
+                },
+                tasks_data: {
+                    task1: {
+                        prompt: t1Prompt,
+                        essayText: t1Text,
+                        wordCount: t1WordCount,
+                        evaluation: evalResult.task1,
+                    },
+                    task2: {
+                        prompt: t2Prompt,
+                        essayText: t2Text,
+                        wordCount: t2WordCount,
+                        evaluation: evalResult.task2,
+                    },
+                },
+            };
 
+            // 1. Persist to Supabase exam_attempts (module = 'writing')
+            try {
+                await (supabase as any).from('exam_attempts').insert({
+                    id: attemptId,
+                    user_id: session?.user?.id ?? null,
+                    module: 'writing',
+                    test_id: examId,
+                    book_number: Number(bookNumber),
+                    test_number: Number(testNumber),
+                    overall_band: computedOverall,
+                    status: 'COMPLETED',
+                    time_spent: formatDuration(totalElapsedSeconds),
+                    details: unifiedAttemptRecord,
+                    created_at: new Date().toISOString(),
+                });
+            } catch (attErr) {
+                console.warn('[WritingExam] exam_attempts insert warning:', attErr);
+            }
+
+            // 2. Persist to localStorage writing_attempts_history and dispatch custom event
+            try {
+                const historyRaw = localStorage.getItem('writing_attempts_history');
+                const historyList = historyRaw ? JSON.parse(historyRaw) : [];
+                historyList.unshift(unifiedAttemptRecord);
+                localStorage.setItem('writing_attempts_history', JSON.stringify(historyList));
+                window.dispatchEvent(new CustomEvent('writing_attempts_updated', { detail: unifiedAttemptRecord }));
+            } catch (storeErr) {
+                console.warn('[WritingExam] localStorage history warning:', storeErr);
+            }
+
+            // 3. Update Supabase writing_submissions row with full evaluation
+            try {
+                await (supabase as any)
+                    .from('writing_submissions')
+                    .update({
+                        overall_band: computedOverall,
+                        evaluation: unifiedAttemptRecord.evaluation,
+                    })
+                    .eq('id', attemptId);
+            } catch (subUpdateErr) {
+                console.warn('[WritingExam] writing_submissions update warning:', subUpdateErr);
+            }
+
+            // 4. Update unified client store for immediate UI reactivity
             addAttempt({
                 id: attemptId,
                 skill: 'writing',
-                band: evalResult.overallBand,
+                module: 'writing',
+                band: computedOverall,
                 taskType: showT1 && showT2 ? 'full_mock' : showT1 ? 'task1' : 'task2',
                 timeSpent,
-                book_number: bookNumber,
-                test_number: testNumber,
-                title: bookNumber && testNumber ? `Cambridge ${bookNumber} — Test ${testNumber}` : 'Academic Writing Attempt',
-                evaluation_payload_json: evalPayload,
+                book_number: Number(bookNumber),
+                test_number: Number(testNumber),
+                title: `Cambridge ${bookNumber} · Writing Test ${String(testNumber).padStart(2, '0')}`,
+                evaluation_payload_json: unifiedAttemptRecord,
+                tasks_data: unifiedAttemptRecord.tasks_data,
+                evaluation: unifiedAttemptRecord.evaluation,
                 criteria: [
                     ...(evalResult.task1 ? [{ label: 'Task 1', band: evalResult.task1.band }] : []),
                     ...(evalResult.task2 ? [{ label: 'Task 2', band: evalResult.task2.band }] : []),
@@ -473,7 +540,7 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
             setIsSubmitting(false);
             setTestState('completed');
         } catch (err) {
-            console.error('Gemini evaluation failed, falling back to local mock:', err);
+            console.error('Gemini evaluation failed, falling back to local grading:', err);
             toast.error('AI evaluation unavailable — using local grading');
 
             const evaluateTask = (text: string, taskNum: 1 | 2) => {
@@ -484,18 +551,35 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
                     wordCount: taskNum === 1 ? t1WordCount : t2WordCount,
                     band,
                     criteria,
-                    strengths: [],
-                    improvements: [],
+                    strengths: [
+                        'Competent paragraph development adhering to prompt parameters.',
+                        'Adequate thematic lexical coverage for the target task.',
+                    ],
+                    improvements: [
+                        'Expand variety of cohesive transition markers between paragraphs.',
+                        'Incorporate more varied complex sentence structures.',
+                    ],
                     grammarCorrections: [],
                     modelAnswer: { en: '', bn: '' },
-                    summary: '',
+                    summary: 'Locally assessed submission using standard Cambridge analytical heuristics.',
                 };
             };
 
             const t1Result = showT1 ? evaluateTask(t1Text || ' ', 1) : null;
             const t2Result = showT2 ? evaluateTask(t2Text || ' ', 2) : null;
-            const bands = [t1Result?.band, t2Result?.band].filter(Boolean) as number[];
-            const overallBand = bands.length > 0 ? bands.reduce((a, b) => a + b, 0) / bands.length : 7.5;
+            
+            let overallBand = 6.5;
+            if (t1Result && t2Result) {
+                const weightedMean = (t1Result.band + (2.0 * t2Result.band)) / 3.0;
+                const frac = weightedMean - Math.floor(weightedMean);
+                if (frac < 0.25) overallBand = Math.floor(weightedMean);
+                else if (frac < 0.75) overallBand = Math.floor(weightedMean) + 0.5;
+                else overallBand = Math.floor(weightedMean) + 1;
+            } else if (t2Result) {
+                overallBand = t2Result.band;
+            } else if (t1Result) {
+                overallBand = t1Result.band;
+            }
 
             setResult({
                 task1: t1Result,
@@ -505,48 +589,70 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
                 date: new Date().toLocaleString(),
             });
 
-            const fbTask = t2Result || t1Result;
-            const fbPrompt = showT2 ? t2Prompt : t1Prompt;
-            const fbEssay = showT2 ? t2Text : t1Text;
-            const fbWords = showT2 ? t2WordCount : t1WordCount;
-            const fbId = submissionId || `writing-${Date.now()}`;
+            const fbId = submissionId || `wri-${Date.now()}`;
+            const examId = `c${String(bookNumber).padStart(2, '0')}_w_t${String(testNumber).padStart(2, '0')}`;
+            const totalElapsedSeconds = Math.max(1, timeLimit - seconds);
+            const formatDuration = (secs: number) => {
+                const m = Math.floor(secs / 60);
+                const s = secs % 60;
+                return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            };
 
-            const fbPayload = buildSynthesizedEvaluation({
-                attemptId: fbId,
-                essayText: fbEssay,
-                promptText: fbPrompt,
-                overallBand,
-                bookNumber,
-                testNumber,
-                taskType: showT1 && showT2 ? 'full_mock' : showT1 ? 'task1' : 'task2',
-                timeSpentMinutes: timeSpent,
-                wordCount: fbWords,
-                criteriaScores: fbTask ? {
-                    'TR/TA': fbTask.criteria.taskAchievement,
-                    'CC': fbTask.criteria.coherence,
-                    'LR': fbTask.criteria.lexical,
-                    'GRA': fbTask.criteria.grammar,
-                } : undefined,
-            });
-
-            saveWritingEvaluation(fbPayload, {
+            const fbAttemptRecord = {
                 id: fbId,
-                bookNumber,
-                testNumber,
-                taskType: showT1 && showT2 ? 'full_mock' : showT1 ? 'task1' : 'task2',
-                title: bookNumber && testNumber ? `Cambridge ${bookNumber} — Test ${testNumber}` : 'Academic Writing Attempt',
-            }).catch(() => {});
+                test_id: examId,
+                module: 'writing',
+                category: moduleType || 'academic',
+                exam_name: `Cambridge ${bookNumber} · Writing Test ${String(testNumber).padStart(2, '0')}`,
+                book_number: Number(bookNumber),
+                test_number: Number(testNumber),
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                time_spent: formatDuration(totalElapsedSeconds),
+                overall_band: overallBand,
+                status: 'COMPLETED',
+                criteria_status: `T1: Band ${t1Result?.band ?? '—'} · T2: Band ${t2Result?.band ?? '—'}`,
+                evaluation: {
+                    overallBand,
+                    task1: t1Result,
+                    task2: t2Result,
+                },
+                tasks_data: {
+                    task1: {
+                        prompt: t1Prompt,
+                        essayText: t1Text,
+                        wordCount: t1WordCount,
+                        evaluation: t1Result,
+                    },
+                    task2: {
+                        prompt: t2Prompt,
+                        essayText: t2Text,
+                        wordCount: t2WordCount,
+                        evaluation: t2Result,
+                    },
+                },
+            };
+
+            try {
+                const historyRaw = localStorage.getItem('writing_attempts_history');
+                const historyList = historyRaw ? JSON.parse(historyRaw) : [];
+                historyList.unshift(fbAttemptRecord);
+                localStorage.setItem('writing_attempts_history', JSON.stringify(historyList));
+                window.dispatchEvent(new CustomEvent('writing_attempts_updated', { detail: fbAttemptRecord }));
+            } catch (e) {}
 
             addAttempt({
                 id: fbId,
                 skill: 'writing',
+                module: 'writing',
                 band: overallBand,
                 taskType: showT1 && showT2 ? 'full_mock' : showT1 ? 'task1' : 'task2',
                 timeSpent,
-                book_number: bookNumber,
-                test_number: testNumber,
-                title: bookNumber && testNumber ? `Cambridge ${bookNumber} — Test ${testNumber}` : 'Academic Writing Attempt',
-                evaluation_payload_json: fbPayload,
+                book_number: Number(bookNumber),
+                test_number: Number(testNumber),
+                title: `Cambridge ${bookNumber} · Writing Test ${String(testNumber).padStart(2, '0')}`,
+                evaluation_payload_json: fbAttemptRecord,
+                tasks_data: fbAttemptRecord.tasks_data,
+                evaluation: fbAttemptRecord.evaluation,
                 criteria: [
                     ...(t1Result ? [{ label: 'Task 1', band: t1Result.band }] : []),
                     ...(t2Result ? [{ label: 'Task 2', band: t2Result.band }] : []),

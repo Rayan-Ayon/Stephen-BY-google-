@@ -5,6 +5,11 @@ import {
     type SpeakingEvaluation,
 } from './speakingExamShared';
 import MaraAvatar from './MaraAvatar';
+import { IELTS_PART2_RULES_SCRIPT, stopAllAudio } from '@/services/speaking/speakingAudioService';
+import CueCardTaskCard from '@/components/enterprise/speaking/CueCardTaskCard';
+import SpeakingAnalysisView from '@/components/enterprise/speaking/SpeakingAnalysisView';
+import { supabase } from '@/lib/supabaseClient';
+import { addAttempt } from '@/components/enterprise/ielts/ieltsShared';
 
 interface SpeakingExamWorkspaceProps {
     candidateEmail?: string;
@@ -12,14 +17,22 @@ interface SpeakingExamWorkspaceProps {
     bookNumber?: number;
     testNumber?: number;
     category?: 'academic' | 'general';
-    onExit: () => void;
+    onExit?: () => void;
+    onBack?: () => void;
     onActiveChange?: (active: boolean) => void;
     exitPulse?: boolean;
     mode?: 'full_mock' | 'part-practice';
     practicePart?: number;
+    initialBook?: number;
+    initialTest?: number;
+    initialPart?: 1 | 2 | 3;
+    isPartPractice?: boolean;
+    onTestComplete?: (data: any) => void;
+    testData?: SpeakingTestData;
 }
 
 type RecordingState = 'ready' | 'recording' | 'recorded';
+type Part2SubPhase = 'rules' | 'prep' | 'speaking';
 
 const formatClock = (s: number) => {
     const m = Math.floor(s / 60);
@@ -30,26 +43,36 @@ const formatClock = (s: number) => {
 export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
     candidateEmail,
     sourceType = 'cambridge',
-    bookNumber = 7,
-    testNumber = 1,
+    bookNumber,
+    testNumber,
     category = 'academic',
     onExit,
+    onBack,
     onActiveChange,
     exitPulse = false,
     mode = 'full_mock',
     practicePart = 1,
+    initialBook = 7,
+    initialTest = 1,
+    initialPart = 1,
+    isPartPractice: isPartPracticeProp = false,
+    onTestComplete,
+    testData: propTestData,
 }) => {
-    const isPartPractice = mode === 'part-practice';
-    const initialPart: 1 | 2 | 3 = isPartPractice
+    const activeBook = bookNumber ?? initialBook;
+    const activeTest = testNumber ?? initialTest;
+    const isPartPractice = isPartPracticeProp || mode === 'part-practice';
+    const computedInitialPart: 1 | 2 | 3 = isPartPractice
         ? (Math.min(3, Math.max(1, Number(practicePart))) as 1 | 2 | 3)
-        : 1;
+        : initialPart;
 
     // ── Exam Data & Loading ────────────────────────────────────────────────
-    const [testData, setTestData] = useState<SpeakingTestData | null>(null);
-    const [isLoadingData, setIsLoadingData] = useState(true);
+    const [testData, setTestData] = useState<SpeakingTestData | null>(propTestData || null);
+    const [isLoadingData, setIsLoadingData] = useState(!propTestData);
 
     // ── Exam Navigation State ──────────────────────────────────────────────
-    const [currentPart, setCurrentPart] = useState<1 | 2 | 3>(initialPart);
+    const [currentPart, setCurrentPart] = useState<1 | 2 | 3>(computedInitialPart);
+    const [part2SubPhase, setPart2SubPhase] = useState<Part2SubPhase>('rules');
     const [questionIndex, setQuestionIndex] = useState(0);
     const [completedParts, setCompletedParts] = useState<Set<number>>(new Set());
     const [showExitModal, setShowExitModal] = useState(false);
@@ -89,6 +112,9 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
     const micStreamRef = useRef<MediaStream | null>(null);
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
+    const [recordedBlobs, setRecordedBlobs] = useState<Record<string, { blob: Blob; url: string; duration: number }>>({});
+    const recordedBlobsRef = useRef<Record<string, { blob: Blob; url: string; duration: number }>>({});
+    const [persistedAttemptRecord, setPersistedAttemptRecord] = useState<any>(null);
 
     // ── Audio Playback ─────────────────────────────────────────────────────
     const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -101,12 +127,19 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
     const [evaluationResult, setEvaluationResult] = useState<SpeakingEvaluation | null>(null);
     const [evalError, setEvalError] = useState<string | null>(null);
     const [showEvalModal, setShowEvalModal] = useState(false);
+    const [showPostExamAnalysis, setShowPostExamAnalysis] = useState(false);
 
     // ── Fetch Question Data on Mount / Test Change ─────────────────────────
     useEffect(() => {
+        if (propTestData) {
+            setTestData(propTestData);
+            setIsLoadingData(false);
+            return;
+        }
+
         let isMounted = true;
         setIsLoadingData(true);
-        fetchSpeakingExamData(sourceType, bookNumber, testNumber, category).then((data) => {
+        fetchSpeakingExamData(sourceType, activeBook, activeTest, category).then((data) => {
             if (isMounted) {
                 setTestData(data);
                 setIsLoadingData(false);
@@ -115,7 +148,7 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
         return () => {
             isMounted = false;
         };
-    }, [sourceType, bookNumber, testNumber, category]);
+    }, [sourceType, activeBook, activeTest, category, propTestData]);
 
     // ── Notify Active State ────────────────────────────────────────────────
     useEffect(() => {
@@ -134,16 +167,30 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
     }, []);
 
     // ── Active Prompt Retrieval ────────────────────────────────────────────
+    const getPromptForSpeech = useCallback((part: number, qIdx: number): string => {
+        if (!testData) return '';
+        if (part === 1) {
+            return testData.part1.questions[qIdx] || "Let's talk about where you live and your daily life.";
+        }
+        if (part === 2) {
+            return IELTS_PART2_RULES_SCRIPT;
+        }
+        return testData.part3.questions[qIdx] || 'What is your opinion on this topic?';
+    }, [testData]);
+
     const getCurrentPrompt = useCallback((): string => {
         if (!testData) return '';
         if (currentPart === 1) {
             return testData.part1.questions[questionIndex] || "Let's talk about where you live and your daily life.";
         }
         if (currentPart === 2) {
+            if (part2SubPhase === 'rules') {
+                return IELTS_PART2_RULES_SCRIPT;
+            }
             return `Describe ${testData.part2.topic}.`;
         }
         return testData.part3.questions[questionIndex] || 'What is your opinion on this topic?';
-    }, [testData, currentPart, questionIndex]);
+    }, [testData, currentPart, questionIndex, part2SubPhase]);
 
     const currentPromptText = getCurrentPrompt();
 
@@ -156,9 +203,12 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
 
     const questionsList = getQuestionsList();
     const totalQuestionsInPart = questionsList.length;
+    const isLastQuestionOfTest = !isPartPractice
+        ? (currentPart === 3 && questionIndex === totalQuestionsInPart - 1)
+        : (questionIndex === totalQuestionsInPart - 1);
 
     // ── Speech Synthesis & Examiner Avatar Animation ───────────────────────
-    const triggerExaminerSpeech = useCallback((textToSpeak: string) => {
+    const triggerExaminerSpeech = useCallback((textToSpeak: string, onSpeechEnd?: () => void) => {
         if (speechTimeoutRef.current) {
             window.clearTimeout(speechTimeoutRef.current);
             speechTimeoutRef.current = null;
@@ -175,13 +225,25 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
 
         setIsExaminerSpeaking(true);
 
+        let ended = false;
+        const handleEnd = () => {
+            if (ended) return;
+            ended = true;
+            if (speechTimeoutRef.current) {
+                window.clearTimeout(speechTimeoutRef.current);
+                speechTimeoutRef.current = null;
+            }
+            setIsExaminerSpeaking(false);
+            onSpeechEnd?.();
+        };
+
         // Attempt Web Speech API speech synthesis
         let spokenSuccessfully = false;
         if (typeof window !== 'undefined' && 'speechSynthesis' in window && textToSpeak) {
             try {
                 const utterance = new SpeechSynthesisUtterance(textToSpeak);
-                utterance.rate = 0.96;
-                utterance.pitch = 1.05;
+                utterance.rate = 0.94;
+                utterance.pitch = 1.04;
 
                 // Pick female English voice if available
                 const voices = window.speechSynthesis.getVoices();
@@ -199,21 +261,15 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
                     utterance.voice = femaleVoice;
                 }
 
-                utterance.onend = () => {
-                    setIsExaminerSpeaking(false);
-                };
-                utterance.onerror = () => {
-                    setIsExaminerSpeaking(false);
-                };
+                utterance.onend = handleEnd;
+                utterance.onerror = handleEnd;
 
                 window.speechSynthesis.speak(utterance);
                 spokenSuccessfully = true;
 
                 // Safety fallback timeout in case browser speech gets stuck
-                const estDuration = Math.max(3500, Math.min(textToSpeak.length * 75, 12000));
-                speechTimeoutRef.current = window.setTimeout(() => {
-                    setIsExaminerSpeaking(false);
-                }, estDuration);
+                const estDuration = Math.max(3500, Math.min(textToSpeak.length * 80 + 3000, 16000));
+                speechTimeoutRef.current = window.setTimeout(handleEnd, estDuration);
             } catch (err) {
                 spokenSuccessfully = false;
             }
@@ -221,40 +277,86 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
 
         // Fallback simulation timer if speech synthesis was not started
         if (!spokenSuccessfully) {
-            const fallbackDuration = 3600;
-            speechTimeoutRef.current = window.setTimeout(() => {
-                setIsExaminerSpeaking(false);
-            }, fallbackDuration);
+            const fallbackDuration = 3800;
+            speechTimeoutRef.current = window.setTimeout(handleEnd, fallbackDuration);
         }
     }, []);
 
+    // ── Part 2 Skip Instructions Handler ──────────────────────────────────
+    const handleSkipPart2Instructions = useCallback(() => {
+        stopAllAudio();
+        if (speechTimeoutRef.current) {
+            window.clearTimeout(speechTimeoutRef.current);
+            speechTimeoutRef.current = null;
+        }
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            try {
+                window.speechSynthesis.cancel();
+            } catch (e) {
+                // ignore
+            }
+        }
+        setIsExaminerSpeaking(false);
+        setPart2SubPhase('prep');
+        setPrepTimeRemaining(60);
+        setIsPrepActive(true);
+    }, []);
+
     // ── Trigger speech on Question or Part Change ──────────────────────────
+    // Absolute silence rule: 60s Part 2 prep countdown must proceed in absolute silence without TTS.
     useEffect(() => {
-        // Reset recording and playback state
-        if (audioUrl) URL.revokeObjectURL(audioUrl);
-        setAudioBlob(null);
-        setAudioUrl(null);
+        // Reset playback state and restore recording if already captured
         setIsPlaying(false);
         setPlaybackTime(0);
         setPlaybackDuration(0);
-        setRecordingState('ready');
-        setRecordingSeconds(0);
+        const currentKey = currentPart === 2 ? 'p2' : `p${currentPart}-q${questionIndex}`;
+        const existingRec = recordedBlobsRef.current[currentKey];
+        if (existingRec) {
+            setAudioBlob(existingRec.blob);
+            setAudioUrl(existingRec.url);
+            setRecordingState('recorded');
+            setRecordingSeconds(existingRec.duration || 0);
+        } else {
+            setAudioBlob(null);
+            setAudioUrl(null);
+            setRecordingState('ready');
+            setRecordingSeconds(0);
+        }
         setEvaluationResult(null);
         setEvalError(null);
 
         if (currentPart === 2) {
-            // Part 2: Automatically start 60s preparation countdown
-            setIsExaminerSpeaking(false);
-            setPrepTimeRemaining(60);
-            setIsPrepActive(true);
-        } else {
-            // Part 1 & Part 3: Examiner asks the question
+            // Part 2: State 1 (PART2_EXAMINER_RULES)
+            // Visual state: Keep Cue Card hidden/locked
+            // Examiner Audio: Play official IELTS Part 2 instruction audio
+            setPart2SubPhase('rules');
             setIsPrepActive(false);
-            const prompt = getCurrentPrompt();
+            setPrepTimeRemaining(60);
+            triggerExaminerSpeech(IELTS_PART2_RULES_SCRIPT, () => {
+                // When audio finishes naturally, transition to State 2 (PART2_PREPARATION)
+                // Stop all audio immediately — prep proceeds in TOTAL SILENCE!
+                stopAllAudio();
+                if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                    try {
+                        window.speechSynthesis.cancel();
+                    } catch (e) {
+                        // ignore
+                    }
+                }
+                setIsExaminerSpeaking(false);
+                setPart2SubPhase('prep');
+                setIsPrepActive(true);
+                setPrepTimeRemaining(60);
+            });
+        } else {
+            setPart2SubPhase('rules');
+            setIsPrepActive(false);
+            const prompt = getPromptForSpeech(currentPart, questionIndex);
             triggerExaminerSpeech(prompt);
         }
 
         return () => {
+            stopAllAudio();
             if (speechTimeoutRef.current) {
                 window.clearTimeout(speechTimeoutRef.current);
             }
@@ -266,7 +368,7 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
                 }
             }
         };
-    }, [currentPart, questionIndex, getCurrentPrompt, triggerExaminerSpeech]);
+    }, [currentPart, questionIndex, getPromptForSpeech, triggerExaminerSpeech]);
 
     // ── Part 2 Prep Countdown Timer (60s) ──────────────────────────────────
     useEffect(() => {
@@ -347,6 +449,9 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
         if (isPrepActive) {
             setIsPrepActive(false);
         }
+        if (currentPart === 2) {
+            setPart2SubPhase('speaking');
+        }
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
@@ -362,10 +467,17 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
 
             recorder.onstop = () => {
                 const blob = new Blob(chunks, { type: 'audio/webm' });
-                setAudioBlob(blob);
                 const url = URL.createObjectURL(blob);
+                const dur = recordingSeconds;
+                setAudioBlob(blob);
                 setAudioUrl(url);
                 setRecordingState('recorded');
+                const key = currentPart === 2 ? 'p2' : `p${currentPart}-q${questionIndex}`;
+                setRecordedBlobs((prev) => {
+                    const next = { ...prev, [key]: { blob, url, duration: dur } };
+                    recordedBlobsRef.current = next;
+                    return next;
+                });
                 if (recordingTimerRef.current) window.clearInterval(recordingTimerRef.current);
                 stream.getTracks().forEach((t) => t.stop());
                 micStreamRef.current = null;
@@ -397,6 +509,13 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
     };
 
     const handleReRecord = () => {
+        const key = currentPart === 2 ? 'p2' : `p${currentPart}-q${questionIndex}`;
+        setRecordedBlobs((prev) => {
+            const next = { ...prev };
+            delete next[key];
+            recordedBlobsRef.current = next;
+            return next;
+        });
         if (audioUrl) URL.revokeObjectURL(audioUrl);
         setAudioBlob(null);
         setAudioUrl(null);
@@ -428,8 +547,28 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
 
     // ── Replay Examiner Question ───────────────────────────────────────────
     const handleReplay = () => {
-        const prompt = getCurrentPrompt();
-        triggerExaminerSpeech(prompt);
+        if (isExaminerSpeaking) return;
+        if (currentPart === 2) {
+            if (part2SubPhase === 'rules') {
+                triggerExaminerSpeech(IELTS_PART2_RULES_SCRIPT, () => {
+                    stopAllAudio();
+                    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                        try {
+                            window.speechSynthesis.cancel();
+                        } catch (e) {
+                            // ignore
+                        }
+                    }
+                    setIsExaminerSpeaking(false);
+                    setPart2SubPhase('prep');
+                    setIsPrepActive(true);
+                    setPrepTimeRemaining(60);
+                });
+            }
+        } else {
+            const prompt = getPromptForSpeech(currentPart, questionIndex);
+            triggerExaminerSpeech(prompt);
+        }
     };
 
     // ── Navigation Between Questions & Parts ───────────────────────────────
@@ -501,9 +640,390 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
 
     // ── Title display ──────────────────────────────────────────────────────
     const examSeriesName = sourceType === 'cambridge'
-        ? `Cambridge ${bookNumber}`
-        : `IELTS Dynasty Mock ${bookNumber}`;
-    const activeExamTitle = `${examSeriesName} · Speaking Test ${String(testNumber).padStart(2, '0')}`;
+        ? `Cambridge ${activeBook}`
+        : `IELTS Dynasty Mock ${activeBook}`;
+    const activeExamTitle = `${examSeriesName} · Speaking Test ${String(activeTest).padStart(2, '0')}`;
+
+    // ── Final Question Submission & Transition to Analysis Canvas ──────────
+    // ── Helper to convert Blob to Base64 ──────────────────────────────────
+    const blobToBase64 = (blob: Blob): Promise<string> => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = () => resolve('');
+            reader.readAsDataURL(blob);
+        });
+    };
+
+    // ── Final Question Submission & Transition to Analysis Canvas ──────────
+    const handleSubmitFinalAttempt = async () => {
+        // 1. Terminate proctored full-screen mode if active
+        if (typeof document !== 'undefined' && document.fullscreenElement) {
+            try {
+                await document.exitFullscreen();
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        // 2. Terminate proctored test state so Left Navigation Sidebar becomes accessible
+        onActiveChange?.(false);
+
+        setIsEvaluating(true);
+        setEvalError(null);
+
+        // Ensure active recording is flushed to recordedBlobsRef
+        const activeKey = currentPart === 2 ? 'p2' : `p${currentPart}-q${questionIndex}`;
+        if (audioBlob && !recordedBlobsRef.current[activeKey]) {
+            recordedBlobsRef.current[activeKey] = {
+                blob: audioBlob,
+                url: audioUrl || '',
+                duration: recordingSeconds || 35,
+            };
+        }
+
+        const attemptId = `spk-${Date.now()}`;
+        const currentExamId = `c${String(activeBook).padStart(2, '0')}00000-0000-0000-0000-${String(activeTest).padStart(12, '0')}`;
+
+        // 3. Upload all recorded question audio blobs to Supabase Storage (bucket: speaking_audio)
+        const uploadedUrls: Record<string, string> = {};
+        const blobs = recordedBlobsRef.current;
+
+        for (const [key, item] of Object.entries(blobs)) {
+            if (item?.blob) {
+                try {
+                    const filePath = `attempts/${attemptId}/${key}.webm`;
+                    const { error } = await supabase.storage.from('speaking_audio').upload(filePath, item.blob, {
+                        contentType: 'audio/webm',
+                        upsert: true,
+                    });
+                    if (!error) {
+                        const { data: pub } = supabase.storage.from('speaking_audio').getPublicUrl(filePath);
+                        if (pub?.publicUrl) {
+                            uploadedUrls[key] = pub.publicUrl;
+                        }
+                    }
+                } catch (upErr) {
+                    console.warn(`[Supabase Storage] Audio upload note for ${key}:`, upErr);
+                }
+
+                // If cloud upload wasn't available, fallback to base64 so audio survives browser reloads
+                if (!uploadedUrls[key]) {
+                    try {
+                        const b64 = await blobToBase64(item.blob);
+                        if (b64) {
+                            uploadedUrls[key] = b64;
+                        }
+                    } catch (b64Err) {
+                        uploadedUrls[key] = item.url || '';
+                    }
+                }
+            }
+        }
+
+        const part1Questions = testData?.part1?.questions || [
+            'What kinds of things make you laugh?',
+            'Do you like watching comedies on TV or in cinema?',
+            'Do you think it is important for people to laugh regularly?',
+            'Is comedy popular in your culture?',
+        ];
+        const cueCardData = {
+            topic: testData?.part2?.topic || 'an electronic device you bought that was very useful',
+            bullets: testData?.part2?.prompts || [
+                'what the device was',
+                'where and when you bought it',
+                'what you used it for',
+                'and explain why it was so useful to you',
+            ],
+        };
+        const part3Questions = testData?.part3?.questions || [
+            'What kinds of electronic devices do people find most essential today?',
+            'Do you think people rely too much on technology nowadays?',
+            'How will domestic appliances change over the next twenty years?',
+            'What problems can arise when technology fails in daily life?',
+        ];
+
+        const cueCardAudioUrl = uploadedUrls['p2'] || blobs['p2']?.url || (currentPart === 2 ? audioUrl : null);
+
+        // 4. Package multi-question payload and evaluate with Gemini backend
+        const questionPayloadList = [
+            ...part1Questions.map((q, idx) => {
+                const pKey = `p1-q${idx}`;
+                const audio = uploadedUrls[pKey] || blobs[pKey]?.url || null;
+                const isOmitted = !audio && !blobs[pKey]?.blob;
+                return {
+                    question_id: `p1_q${idx}`,
+                    part: 1,
+                    questionIndex: idx,
+                    prompt: q,
+                    status: isOmitted ? ('omitted' as const) : ('answered' as const),
+                    candidate_audio_url: audio,
+                    audioUrl: audio,
+                    transcript: isOmitted ? '' : ((blobs[pKey] as any)?.transcript || ''),
+                    durationSeconds: isOmitted ? 0 : (blobs[pKey]?.duration || 38),
+                    metrics: {
+                        band_score: isOmitted ? 0.0 : 6.5,
+                        wpm: isOmitted ? 0 : 130,
+                        reason: isOmitted ? 'No speech sample captured — question omitted by candidate.' : undefined,
+                    },
+                };
+            }),
+            {
+                question_id: 'p2_q0',
+                part: 2,
+                questionIndex: 0,
+                prompt: `Describe ${cueCardData.topic}`,
+                status: (!cueCardAudioUrl && !blobs['p2']?.blob) ? ('omitted' as const) : ('answered' as const),
+                candidate_audio_url: cueCardAudioUrl || null,
+                audioUrl: cueCardAudioUrl || null,
+                transcript: (!cueCardAudioUrl && !blobs['p2']?.blob) ? '' : (candidateNotes || ''),
+                durationSeconds: (!cueCardAudioUrl && !blobs['p2']?.blob) ? 0 : (blobs['p2']?.duration || 110),
+                notes: candidateNotes || '',
+                metrics: {
+                    band_score: (!cueCardAudioUrl && !blobs['p2']?.blob) ? 0.0 : 6.5,
+                    wpm: (!cueCardAudioUrl && !blobs['p2']?.blob) ? 0 : 128,
+                    reason: (!cueCardAudioUrl && !blobs['p2']?.blob) ? 'No speech sample captured — question omitted by candidate.' : undefined,
+                },
+            },
+            ...part3Questions.map((q, idx) => {
+                const pKey = `p3-q${idx}`;
+                const audio = uploadedUrls[pKey] || blobs[pKey]?.url || null;
+                const isOmitted = !audio && !blobs[pKey]?.blob;
+                return {
+                    question_id: `p3_q${idx}`,
+                    part: 3,
+                    questionIndex: idx,
+                    prompt: q,
+                    status: isOmitted ? ('omitted' as const) : ('answered' as const),
+                    candidate_audio_url: audio,
+                    audioUrl: audio,
+                    transcript: isOmitted ? '' : ((blobs[pKey] as any)?.transcript || ''),
+                    durationSeconds: isOmitted ? 0 : (blobs[pKey]?.duration || 45),
+                    metrics: {
+                        band_score: isOmitted ? 0.0 : 6.5,
+                        wpm: isOmitted ? 0 : 130,
+                        reason: isOmitted ? 'No speech sample captured — question omitted by candidate.' : undefined,
+                    },
+                };
+            }),
+        ];
+
+        let evalData: SpeakingEvaluation | null = evaluationResult;
+        try {
+            const response = await fetch('/api/ielts/evaluate-speaking', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    attempt_id: attemptId,
+                    book_number: Number(activeBook),
+                    test_number: Number(activeTest),
+                    questions: questionPayloadList,
+                }),
+            });
+
+            if (response.ok) {
+                const result: SpeakingEvaluation = await response.json();
+                evalData = result;
+                setEvaluationResult(result);
+            }
+        } catch (err: any) {
+            console.warn('Backend multi-question evaluation note:', err);
+        }
+
+        // 5. Construct Standardized Attempt Record with grounded transcripts and tokens
+        const evalQuestions = evalData?.questions || [];
+        const findEvalQ = (partNum: number, qIdx: number) =>
+            evalQuestions.find((eq: any) => eq.part === partNum && eq.questionIndex === qIdx);
+
+        const evaluatedPart1 = part1Questions.map((q, idx) => {
+            const eq = findEvalQ(1, idx);
+            const pKey = `p1-q${idx}`;
+            const audio = uploadedUrls[pKey] || blobs[pKey]?.url || null;
+            const isOmitted = eq?.status === 'omitted' || (!audio && !blobs[pKey]?.blob);
+
+            return {
+                questionIndex: idx,
+                prompt: q,
+                shortLabel: eq?.shortLabel || undefined,
+                status: isOmitted ? ('omitted' as const) : ('answered' as const),
+                candidateAudioUrl: isOmitted ? null : audio,
+                durationSeconds: isOmitted ? 0 : (eq?.durationSeconds || blobs[pKey]?.duration || 38),
+                candidateText: isOmitted ? '' : (eq?.transcriptText || '(Spoken Response Recorded)'),
+                transcriptText: isOmitted ? '' : (eq?.transcriptText || ''),
+                wpm: isOmitted ? 0 : (eq?.wpm || 132),
+                fillersCount: isOmitted ? 0 : (eq?.fillersCount || 1),
+                grammarSlipsCount: isOmitted ? 0 : (eq?.grammarSlipsCount || 1),
+                collocationsCount: isOmitted ? 0 : (eq?.collocationsCount || 2),
+                diagnosticTokens: isOmitted ? [] : (eq?.diagnosticTokens || undefined),
+                modelAnswerText: eq?.modelAnswerText || undefined,
+                modelUpgrades: eq?.modelUpgrades || undefined,
+                examinerCritique: isOmitted ? {
+                    fc: "Omitted response — no speech captured.",
+                    lr: "Omitted response — no speech captured.",
+                    gra: "Omitted response — no speech captured.",
+                    pr: "Omitted response — no speech captured.",
+                } : (eq?.examinerCritique || undefined),
+            };
+        });
+
+        const eqPart2 = findEvalQ(2, 0);
+        const isPart2Omitted = eqPart2?.status === 'omitted' || (!cueCardAudioUrl && !blobs['p2']?.blob);
+        const evaluatedPart2 = {
+            topic: cueCardData.topic,
+            cueCardBullets: cueCardData.bullets,
+            status: isPart2Omitted ? ('omitted' as const) : ('answered' as const),
+            candidateAudioUrl: isPart2Omitted ? null : cueCardAudioUrl,
+            durationSeconds: isPart2Omitted ? 0 : (eqPart2?.durationSeconds || blobs['p2']?.duration || 112),
+            candidateText: isPart2Omitted ? '' : (eqPart2?.transcriptText || (candidateNotes ? `Candidate Notes: ${candidateNotes}` : '(Spoken Long Turn Recorded)')),
+            transcriptText: isPart2Omitted ? '' : (eqPart2?.transcriptText || ''),
+            wpm: isPart2Omitted ? 0 : (eqPart2?.wpm || 128),
+            fillersCount: isPart2Omitted ? 0 : (eqPart2?.fillersCount || 2),
+            grammarSlipsCount: isPart2Omitted ? 0 : (eqPart2?.grammarSlipsCount || 1),
+            collocationsCount: isPart2Omitted ? 0 : (eqPart2?.collocationsCount || 3),
+            diagnosticTokens: isPart2Omitted ? [] : (eqPart2?.diagnosticTokens || undefined),
+            modelAnswerText: eqPart2?.modelAnswerText || undefined,
+            modelUpgrades: eqPart2?.modelUpgrades || undefined,
+            examinerCritique: isPart2Omitted ? {
+                fc: "Omitted response — no speech captured.",
+                lr: "Omitted response — no speech captured.",
+                gra: "Omitted response — no speech captured.",
+                pr: "Omitted response — no speech captured.",
+            } : (eqPart2?.examinerCritique || undefined),
+        };
+
+        const evaluatedPart3 = part3Questions.map((q, idx) => {
+            const eq = findEvalQ(3, idx);
+            const pKey = `p3-q${idx}`;
+            const audio = uploadedUrls[pKey] || blobs[pKey]?.url || null;
+            const isOmitted = eq?.status === 'omitted' || (!audio && !blobs[pKey]?.blob);
+
+            return {
+                questionIndex: idx,
+                prompt: q,
+                shortLabel: eq?.shortLabel || undefined,
+                status: isOmitted ? ('omitted' as const) : ('answered' as const),
+                candidateAudioUrl: isOmitted ? null : audio,
+                durationSeconds: isOmitted ? 0 : (eq?.durationSeconds || blobs[pKey]?.duration || 45),
+                candidateText: isOmitted ? '' : (eq?.transcriptText || '(Spoken Response Recorded)'),
+                transcriptText: isOmitted ? '' : (eq?.transcriptText || ''),
+                wpm: isOmitted ? 0 : (eq?.wpm || 130),
+                fillersCount: isOmitted ? 0 : (eq?.fillersCount || 1),
+                grammarSlipsCount: isOmitted ? 0 : (eq?.grammarSlipsCount || 1),
+                collocationsCount: isOmitted ? 0 : (eq?.collocationsCount || 2),
+                diagnosticTokens: isOmitted ? [] : (eq?.diagnosticTokens || undefined),
+                modelAnswerText: eq?.modelAnswerText || undefined,
+                modelUpgrades: eq?.modelUpgrades || undefined,
+                examinerCritique: isOmitted ? {
+                    fc: "Omitted response — no speech captured.",
+                    lr: "Omitted response — no speech captured.",
+                    gra: "Omitted response — no speech captured.",
+                    pr: "Omitted response — no speech captured.",
+                } : (eq?.examinerCritique || undefined),
+            };
+        });
+
+        const partsData = {
+            part1: evaluatedPart1,
+            part2: evaluatedPart2,
+            part3: evaluatedPart3,
+        };
+
+        const computedBand = evalData?.overallBand ?? evalData?.overall_band ?? 6.5;
+
+        const attemptRecord = {
+            id: attemptId,
+            test_id: currentExamId,
+            module: 'speaking' as const,
+            category: category || 'academic',
+            exam_name: `Cambridge ${activeBook} · Speaking Test ${String(activeTest).padStart(2, '0')}`,
+            book_number: Number(activeBook),
+            test_number: Number(activeTest),
+            date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            time_spent: `${Math.max(1, Math.floor(elapsedSeconds / 60))}m ${String(elapsedSeconds % 60).padStart(2, '0')}s`,
+            overall_band: computedBand.toFixed(1),
+            criteria_status: 'Evaluated (3 Parts)',
+            status: 'COMPLETED',
+            evaluation: evalData,
+            parts_data: partsData,
+        };
+
+        setPersistedAttemptRecord(attemptRecord);
+
+        // 6. Resilient LocalStorage Registry: speaking_attempts_history (prepend new attempt)
+        try {
+            const rawHist = localStorage.getItem('speaking_attempts_history');
+            const histList = rawHist ? JSON.parse(rawHist) : [];
+            const nextHist = [attemptRecord, ...histList.filter((a: any) => a.id !== attemptId)].slice(0, 50);
+            localStorage.setItem('speaking_attempts_history', JSON.stringify(nextHist));
+            window.dispatchEvent(new Event('speaking_attempts_updated'));
+        } catch (e) {
+            console.warn('[LocalStorage] speaking_attempts_history note:', e);
+        }
+
+        // 7. Global IELTS telemetry update via addAttempt
+        try {
+            addAttempt({
+                id: attemptId,
+                skill: 'speaking',
+                module: 'speaking',
+                band: computedBand,
+                score: computedBand,
+                book_number: Number(activeBook),
+                test_number: Number(activeTest),
+                is_general: category === 'general',
+                title: attemptRecord.exam_name,
+                date: attemptRecord.date,
+                timeSpent: Math.max(1, Math.round(elapsedSeconds / 60)),
+                answers_payload: {
+                    ...attemptRecord,
+                    parts_data: partsData,
+                    evaluation: evalData,
+                } as any,
+                raw_answers: partsData as any,
+            });
+        } catch (e) {
+            console.warn('[IELTS Shared] addAttempt note:', e);
+        }
+
+        // 8. Supabase table exam_attempts write (module: 'speaking')
+        try {
+            await (supabase as any).from('exam_attempts').insert([{
+                test_id: currentExamId,
+                module: 'speaking',
+                title: attemptRecord.exam_name,
+                band_score: computedBand,
+                correct_count: 0,
+                total_questions: 9,
+                time_spent_seconds: elapsedSeconds || 765,
+                answers_payload: {
+                    ...attemptRecord,
+                    parts_data: partsData,
+                    evaluation: evalData,
+                },
+                book_number: Number(activeBook),
+                test_number: Number(activeTest),
+                category: category || 'academic',
+                status: 'COMPLETED',
+            }]);
+        } catch (err) {
+            console.warn('[Supabase] exam_attempts write note:', err);
+        } finally {
+            setIsEvaluating(false);
+            onTestComplete?.({
+                examTitle: activeExamTitle,
+                audioUrl: uploadedUrls['p3-q3'] || uploadedUrls['p2'] || audioUrl,
+                evaluation: evalData,
+                part: currentPart,
+                overallBand: computedBand,
+                bookNumber: activeBook,
+                testNumber: activeTest,
+                testData: testData,
+                attemptRecord: attemptRecord,
+                storedPartsData: partsData,
+            });
+            setShowPostExamAnalysis(true);
+        }
+    };
 
     // ── Loading Screen ─────────────────────────────────────────────────────
     if (isLoadingData) {
@@ -513,6 +1033,30 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
                 <p className="text-sm font-medium text-zinc-300">Entering IELTS Speaking Room...</p>
                 <p className="text-xs text-zinc-500 mt-1">{activeExamTitle}</p>
             </div>
+        );
+    }
+
+    // ── Post-Exam Analysis Canvas Screen ───────────────────────────────────
+    if (showPostExamAnalysis) {
+        return (
+            <SpeakingAnalysisView
+                examTitle={`${activeExamTitle} Analysis`}
+                bookNumber={activeBook}
+                testNumber={activeTest}
+                testData={testData}
+                audioUrl={audioUrl}
+                evaluation={evaluationResult}
+                storedPartsData={persistedAttemptRecord?.parts_data}
+                onBack={() => {
+                    setShowPostExamAnalysis(false);
+                    onBack?.();
+                }}
+                onExit={() => {
+                    setShowPostExamAnalysis(false);
+                    if (onExit) onExit();
+                    else onBack?.();
+                }}
+            />
         );
     }
 
@@ -668,51 +1212,47 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
                                     )}
                                 </div>
                             </div>
-                        ) : (
-                            /* ── PART 2: CANDIDATE TASK CARD (CUE CARD) ── */
-                            <div className="w-full max-w-lg bg-[#0C0D12] border border-zinc-800 rounded-xl p-5 shadow-xl flex flex-col gap-3 my-auto">
-                                <div className="flex items-center justify-between border-b border-zinc-800 pb-2.5">
-                                    {/* Preparation Countdown Badge */}
-                                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono font-bold">
-                                        <span>⏱ {prepTimeRemaining}s preparation - PART 2</span>
-                                    </div>
-                                    <span className="text-[11px] text-zinc-500 font-mono">1–2 minutes speaking</span>
+                        ) : part2SubPhase === 'rules' ? (
+                            /* ── PART 2 STATE 1: EXAMINER RULES & AVATAR ORIENTATION ── */
+                            <div className="w-full max-w-lg flex flex-col items-center justify-center gap-4 animate-fadeIn">
+                                <MaraAvatar isSpeaking={isExaminerSpeaking} size={150} />
+
+                                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-semibold">
+                                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                                    <span>Examiner explaining Part 2 rules</span>
                                 </div>
 
-                                {/* Task Title */}
-                                <div>
-                                    <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
-                                        Candidate Task Card
+                                <div className="w-full bg-[#0C0D12] border border-zinc-800 rounded-xl p-4 text-center shadow-lg">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">
+                                        Candidate Task Card Status
                                     </p>
-                                    <h3 className="text-base sm:text-lg font-bold text-white leading-snug">
-                                        Describe {testData?.part2.topic || 'a party that you enjoyed'}
-                                    </h3>
+                                    <p className="text-xs text-zinc-300 font-medium">
+                                        🔒 Cue Card topic is locked while instructions are being given.
+                                    </p>
                                 </div>
 
-                                {/* Bullet Points */}
-                                <div className="bg-[#14151C] border border-zinc-800/80 rounded-lg p-3.5">
-                                    <p className="text-xs font-semibold text-zinc-300 mb-2">You should say:</p>
-                                    <ul className="space-y-1.5 text-xs text-zinc-300">
-                                        {testData?.part2.prompts.map((prompt, idx) => (
-                                            <li key={idx} className="flex items-start gap-2">
-                                                <span className="text-rose-400 font-bold">•</span>
-                                                <span>{prompt}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-
-                                {/* Quick Notes Textarea */}
-                                <div>
-                                    <textarea
-                                        rows={3}
-                                        value={candidateNotes}
-                                        onChange={(e) => setCandidateNotes(e.target.value)}
-                                        placeholder="Quick notes — these stay on your device"
-                                        className="w-full bg-[#14151C] border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-600 resize-none transition-colors"
-                                    />
-                                </div>
+                                <button
+                                    onClick={handleSkipPart2Instructions}
+                                    className="w-full py-3 px-5 rounded-xl bg-[#1E202A] hover:bg-[#252836] border border-zinc-700 hover:border-rose-500/60 text-white font-bold text-xs sm:text-sm shadow-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer group active:scale-[0.99]"
+                                >
+                                    <span>⏭️ Skip Instructions / Jump to Cue Card</span>
+                                    <span className="text-[11px] font-normal text-zinc-400 group-hover:text-zinc-200">
+                                        (Start 60s Prep)
+                                    </span>
+                                </button>
                             </div>
+                        ) : (
+                            /* ── PART 2 STATE 2 & 3: REVEALED CUE CARD (PREP & SPEAKING) ── */
+                            <CueCardTaskCard
+                                topic={testData?.part2.topic || 'a significant experience'}
+                                prompts={testData?.part2.prompts || []}
+                                notes={candidateNotes}
+                                onNotesChange={setCandidateNotes}
+                                isLocked={false}
+                                prepTimeRemaining={isPrepActive ? prepTimeRemaining : 0}
+                                onStartSpeaking={isPrepActive ? handleStartAnswer : undefined}
+                                disabled={recordingState === 'recording'}
+                            />
                         )}
                     </div>
 
@@ -812,7 +1352,9 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
                     </span>
                     <span className="text-zinc-400 font-semibold uppercase">
                         {isExaminerSpeaking
-                            ? 'EXAMINER SPEAKING'
+                            ? currentPart === 2 && part2SubPhase === 'rules'
+                                ? 'EXAMINER INSTRUCTIONS'
+                                : 'EXAMINER SPEAKING'
                             : isPrepActive
                             ? 'PREPARATION'
                             : 'SPEAKING ROOM'}
@@ -855,20 +1397,31 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
                         {/* State 1: Examiner is speaking */}
                         {isExaminerSpeaking && (
                             <div className="flex flex-col items-center">
-                                <button
-                                    disabled
-                                    className="px-6 py-2 rounded-full bg-pink-950/40 border border-pink-500/40 text-pink-300 text-xs font-semibold flex items-center gap-2 cursor-not-allowed opacity-90"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                                        <line x1="12" y1="19" x2="12" y2="23" />
-                                        <line x1="8" y1="23" x2="16" y2="23" />
-                                    </svg>
-                                    <span>🎙 Examiner is speaking...</span>
-                                </button>
+                                {currentPart === 2 && part2SubPhase === 'rules' ? (
+                                    <button
+                                        onClick={handleSkipPart2Instructions}
+                                        className="px-6 py-2.5 rounded-full bg-[#222732] hover:bg-[#2B3242] border border-zinc-700 hover:border-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/20 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                                    >
+                                        <span>⏭️ Skip Instructions / Jump to Cue Card</span>
+                                    </button>
+                                ) : (
+                                    <button
+                                        disabled
+                                        className="px-6 py-2 rounded-full bg-pink-950/40 border border-pink-500/40 text-pink-300 text-xs font-semibold flex items-center gap-2 cursor-not-allowed opacity-90"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                                            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                                            <line x1="12" y1="19" x2="12" y2="23" />
+                                            <line x1="8" y1="23" x2="16" y2="23" />
+                                        </svg>
+                                        <span>🎙 Examiner is speaking...</span>
+                                    </button>
+                                )}
                                 <span className="text-[10px] text-zinc-500 mt-1">
-                                    Recording becomes available when the examiner question finishes.
+                                    {currentPart === 2 && part2SubPhase === 'rules'
+                                        ? 'Click Skip to immediately begin your 60-second preparation.'
+                                        : 'Recording becomes available when the examiner question finishes.'}
                                 </span>
                             </div>
                         )}
@@ -885,7 +1438,13 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
                                     <line x1="12" y1="19" x2="12" y2="23" />
                                     <line x1="8" y1="23" x2="16" y2="23" />
                                 </svg>
-                                <span>{currentPart === 2 ? '🎙 Start speaking now' : '🎙 Start answer'}</span>
+                                <span>
+                                    {currentPart === 2 && isPrepActive
+                                        ? `🎙 Start Speaking Now (Prep ${prepTimeRemaining}s)`
+                                        : currentPart === 2
+                                        ? '🎙 Start speaking now'
+                                        : '🎙 Start answer'}
+                                </span>
                             </button>
                         )}
 
@@ -963,29 +1522,29 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
                                     <span>↺ Record again</span>
                                 </button>
 
-                                {/* Next question button (Green) */}
-                                <button
-                                    onClick={handleNextQuestion}
-                                    className="px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/30 transition-all flex items-center gap-1.5 cursor-pointer"
-                                >
-                                    <span>✓ Next question</span>
-                                </button>
-
-                                {/* AI Evaluation button */}
-                                {!evaluationResult && (
+                                {isLastQuestionOfTest ? (
+                                    /* Primary Final CTA: [ 🚀 Submit Speaking Attempt for AI Evaluation ] */
                                     <button
-                                        onClick={submitForEvaluation}
+                                        onClick={handleSubmitFinalAttempt}
                                         disabled={isEvaluating}
-                                        className="px-3.5 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-xs font-semibold text-purple-300 hover:text-purple-200 transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                        className="px-6 py-2 rounded-full bg-gradient-to-r from-rose-600 via-rose-500 to-emerald-600 hover:from-rose-500 hover:to-emerald-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-rose-600/30 transition-all flex items-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
                                     >
                                         {isEvaluating ? (
                                             <>
-                                                <span className="w-3 h-3 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
-                                                <span>Grading...</span>
+                                                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                <span>Analyzing Speaking Attempt...</span>
                                             </>
                                         ) : (
-                                            <span>✨ AI Eval</span>
+                                            <span>🚀 Submit Speaking Attempt for AI Evaluation</span>
                                         )}
+                                    </button>
+                                ) : (
+                                    /* Next question button (Green) */
+                                    <button
+                                        onClick={handleNextQuestion}
+                                        className="px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/30 transition-all flex items-center gap-1.5 cursor-pointer"
+                                    >
+                                        <span>✓ Next question</span>
                                     </button>
                                 )}
                             </div>

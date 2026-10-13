@@ -26,6 +26,8 @@ export interface IeltsAttempt {
     answers_payload?: Record<string, string>;
     raw_answers?: Record<string, string>;
     evaluation_payload_json?: any;
+    tasks_data?: any;
+    evaluation?: any;
     essayText?: string;
     prompt?: string;
     wordCount?: number;

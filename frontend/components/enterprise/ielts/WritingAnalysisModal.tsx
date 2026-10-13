@@ -62,7 +62,7 @@ export const WritingAnalysisModal: React.FC<WritingAnalysisModalProps> = ({
 
     const canvas = (
         <WritingEvaluationCanvas
-            isModal={isModal}
+            isModal={false}
             attempt={attempt}
             attemptId={attempt?.id}
             evaluationProp={evaluationProp}
@@ -74,10 +74,12 @@ export const WritingAnalysisModal: React.FC<WritingAnalysisModalProps> = ({
         if (typeof document === 'undefined') return null;
         return createPortal(
             <div
-                className="fixed inset-0 z-[9999] w-screen h-screen bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-hidden"
+                className="fixed inset-0 z-50 flex flex-col bg-[#08090C]/90 backdrop-blur-md text-slate-100 overflow-y-auto antialiased p-2 sm:p-6 custom-scrollbar"
                 onClick={onClose}
             >
-                {canvas}
+                <div className="w-full max-w-[1600px] mx-auto min-h-screen flex flex-col justify-center py-4">
+                    {canvas}
+                </div>
             </div>,
             document.body
         );
