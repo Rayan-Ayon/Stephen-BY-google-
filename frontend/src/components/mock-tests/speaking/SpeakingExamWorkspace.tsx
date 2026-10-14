@@ -617,8 +617,14 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
             formData.append('file', audioBlob, `speaking-part${currentPart}-q${questionIndex}.webm`);
             formData.append('question_prompt', currentPromptText);
 
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
             const response = await fetch('/api/ielts/evaluate-speaking', {
                 method: 'POST',
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
                 body: formData,
             });
 
@@ -810,9 +816,15 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
 
         let evalData: SpeakingEvaluation | null = evaluationResult;
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
             const response = await fetch('/api/ielts/evaluate-speaking', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
                 body: JSON.stringify({
                     attempt_id: attemptId,
                     book_number: Number(activeBook),
@@ -987,7 +999,9 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
 
         // 8. Supabase table exam_attempts write (module: 'speaking')
         try {
+            const { data: { session } } = await supabase.auth.getSession();
             await (supabase as any).from('exam_attempts').insert([{
+                user_id: session?.user?.id ?? null,
                 test_id: currentExamId,
                 module: 'speaking',
                 title: attemptRecord.exam_name,

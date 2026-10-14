@@ -3,6 +3,22 @@ import IELTSReadingExam from './enterprise/ielts/IELTSReadingExam';
 import IELTSListeningExam from './enterprise/ielts/IELTSListeningExam';
 import IELTSWritingExam from './enterprise/ielts/IELTSWritingExam';
 import SpeakingExamWorkspace from './mock-tests/speaking/SpeakingExamWorkspace';
+import PartPracticeHistoryMatrix from './enterprise/part-practice/PartPracticeHistoryMatrix';
+import { WritingEvaluationCanvas } from './enterprise/writing/WritingEvaluationCanvas';
+import { IELTSAnalysisView } from './enterprise/ielts/IELTSAnalysisView';
+import { ListeningAnalysisModal } from './enterprise/ielts/ListeningAnalysisModal';
+import { SpeakingEvaluationCanvas } from './enterprise/speaking/SpeakingEvaluationCanvas';
+import {
+    adaptWritingPartPractice,
+    adaptReadingPartPractice,
+    adaptListeningPartPractice,
+    adaptSpeakingPartPractice,
+} from '@/services/part-practice/partPracticeCanvasAdapter';
+import {
+    PART_PRACTICE_UPDATED_EVENT,
+    type PartPracticeAttempt,
+    recordPartPracticeAttempt,
+} from '@/services/part-practice/partPracticeHistoryService';
 
 /* ─── Types ─── */
 type PracticeTab = 'parts' | 'question_types';
@@ -185,7 +201,23 @@ const PartPracticeHub: React.FC<PartPracticeHubProps> = ({ userEmail }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedBookId, setExpandedBookId] = useState<string | null>(null);
     const [selectedTest, setSelectedTest] = useState<{ bookId: string; testIndex: number } | null>(null);
+    const [showHistory, setShowHistory] = useState<boolean>(false);
     const [activeExam, setActiveExam] = useState<PracticeItem | QuestionTypeDrill | null>(null);
+    const [submittedAttempt, setSubmittedAttempt] = useState<PartPracticeAttempt | null>(null);
+
+    React.useEffect(() => {
+        const handlePracticeUpdate = (e: any) => {
+            if (activeExam && e.detail && Array.isArray(e.detail) && e.detail.length > 0) {
+                const latest = e.detail[0];
+                if (latest) {
+                    setActiveExam(null);
+                    setSubmittedAttempt(latest);
+                }
+            }
+        };
+        window.addEventListener(PART_PRACTICE_UPDATED_EVENT, handlePracticeUpdate);
+        return () => window.removeEventListener(PART_PRACTICE_UPDATED_EVENT, handlePracticeUpdate);
+    }, [activeExam]);
 
     const books = useMemo(() => examMode === 'academic' ? ACADEMIC_BOOKS : GT_BOOKS, [examMode]);
 
@@ -245,6 +277,34 @@ const PartPracticeHub: React.FC<PartPracticeHubProps> = ({ userEmail }) => {
     const handleDrillClick = (drill: QuestionTypeDrill) => {
         setActiveExam(drill);
     };
+
+    /* ─── Post-Submit Inline Canvas ─── */
+    if (submittedAttempt) {
+        return (
+            <div className="w-full min-h-screen bg-[#0D0F12]">
+                {submittedAttempt.module === 'writing' && (
+                    <WritingEvaluationCanvas
+                        {...adaptWritingPartPractice(submittedAttempt, () => setSubmittedAttempt(null), false)}
+                    />
+                )}
+                {submittedAttempt.module === 'reading' && (
+                    <IELTSAnalysisView
+                        {...adaptReadingPartPractice(submittedAttempt, () => setSubmittedAttempt(null), false)}
+                    />
+                )}
+                {submittedAttempt.module === 'listening' && (
+                    <ListeningAnalysisModal
+                        {...adaptListeningPartPractice(submittedAttempt, () => setSubmittedAttempt(null), false)}
+                    />
+                )}
+                {submittedAttempt.module === 'speaking' && (
+                    <SpeakingEvaluationCanvas
+                        {...adaptSpeakingPartPractice(submittedAttempt, () => setSubmittedAttempt(null), false)}
+                    />
+                )}
+            </div>
+        );
+    }
 
     /* ─── Exam Runner ─── */
     if (activeExam) {
@@ -325,6 +385,16 @@ const PartPracticeHub: React.FC<PartPracticeHubProps> = ({ userEmail }) => {
         );
     }
 
+    if (showHistory) {
+        return (
+            <PartPracticeHistoryMatrix
+                onBack={() => setShowHistory(false)}
+                userEmail={userEmail}
+                initialTab={activeTab}
+            />
+        );
+    }
+
     /* ─── Main Hub View ─── */
     return (
         <div className="min-h-screen h-auto overflow-y-auto bg-[#0B0C0E] p-6 pb-24">
@@ -335,20 +405,31 @@ const PartPracticeHub: React.FC<PartPracticeHubProps> = ({ userEmail }) => {
                         <h1 className="text-xl font-bold text-white">Part Practice</h1>
                         <p className="text-xs text-zinc-400 mt-1">Choose any section, book, and individual part</p>
                     </div>
-                    {/* Mode Switcher */}
-                    <div className="bg-[#141519] border border-zinc-800 p-1 rounded-xl flex gap-1">
+                    {/* Header Controls: History Button & Mode Switcher */}
+                    <div className="flex items-center gap-3">
                         <button
-                            onClick={() => setExamMode('academic')}
-                            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${examMode === 'academic' ? 'bg-white text-black' : 'text-zinc-400 hover:text-white'}`}
+                            onClick={() => setShowHistory(true)}
+                            className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-[#141519] text-zinc-200 hover:text-white border border-zinc-800 hover:border-zinc-700 transition-all flex items-center gap-2 shadow-sm"
+                            title="View comprehensive part practice telemetry and attempt logs"
                         >
-                            Academic
+                            <span>📜</span>
+                            Part Practice History
                         </button>
-                        <button
-                            onClick={() => setExamMode('general')}
-                            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${examMode === 'general' ? 'bg-white text-black' : 'text-zinc-400 hover:text-white'}`}
-                        >
-                            General Training
-                        </button>
+                        {/* Mode Switcher */}
+                        <div className="bg-[#141519] border border-zinc-800 p-1 rounded-xl flex gap-1">
+                            <button
+                                onClick={() => setExamMode('academic')}
+                                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${examMode === 'academic' ? 'bg-white text-black' : 'text-zinc-400 hover:text-white'}`}
+                            >
+                                Academic
+                            </button>
+                            <button
+                                onClick={() => setExamMode('general')}
+                                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${examMode === 'general' ? 'bg-white text-black' : 'text-zinc-400 hover:text-white'}`}
+                            >
+                                General Training
+                            </button>
+                        </div>
                     </div>
                 </div>
 

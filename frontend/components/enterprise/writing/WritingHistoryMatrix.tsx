@@ -72,6 +72,14 @@ export const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ modu
             } catch {}
 
             try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const userId = session?.user?.id;
+
+                if (!userId) {
+                    if (mounted) setAttempts([]);
+                    return;
+                }
+
                 let dbRows: any[] = [];
 
                 // 1. Query Supabase writing_attempts table (primary single-pass persistent store)
@@ -79,6 +87,7 @@ export const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ modu
                     const { data: attData } = await (supabase as any)
                         .from('writing_attempts')
                         .select('*')
+                        .eq('user_id', userId)
                         .order('created_at', { ascending: false })
                         .limit(50);
                     if (attData && attData.length > 0) {
@@ -93,6 +102,7 @@ export const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ modu
                     const { data: subData } = await (supabase as any)
                         .from('writing_submissions')
                         .select('*')
+                        .eq('user_id', userId)
                         .order('created_at', { ascending: false })
                         .limit(50);
                     if (subData && subData.length > 0) {
@@ -108,6 +118,7 @@ export const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ modu
                         .from('exam_attempts')
                         .select('*')
                         .eq('module', 'writing')
+                        .eq('user_id', userId)
                         .order('created_at', { ascending: false })
                         .limit(50);
                     if (examData && examData.length > 0) {

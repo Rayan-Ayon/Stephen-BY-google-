@@ -461,26 +461,33 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
         const paddedTest = String(numTest).padStart(12, '0');
         const standardUuid = `c${paddedBook}00000-0000-0000-0000-${paddedTest}`;
 
+        const { data: { session } } = await supabase.auth.getSession();
+        const currentUserId = session?.user?.id;
+
         let attemptRow: any = null;
 
         if (attemptId) {
           const isUuid = typeof attemptId === 'string' && attemptId.includes('-');
           if (isUuid) {
-            const { data } = await (supabase as any)
+            let attQuery = (supabase as any)
               .from('exam_attempts')
               .select('*')
-              .eq('id', attemptId)
-              .maybeSingle();
+              .eq('id', attemptId);
+            if (currentUserId) {
+              attQuery = attQuery.eq('user_id', currentUserId);
+            }
+            const { data } = await attQuery.maybeSingle();
             attemptRow = data;
           }
         }
 
-        if (!attemptRow) {
+        if (!attemptRow && currentUserId) {
           const { data } = await (supabase as any)
             .from('exam_attempts')
             .select('*')
             .eq('module', 'listening')
             .eq('test_id', standardUuid)
+            .eq('user_id', currentUserId)
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();

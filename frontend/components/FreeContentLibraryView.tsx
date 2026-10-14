@@ -70,324 +70,324 @@ export interface SubTopic {
 
 export const MODULE_00_DATA: SubTopic[] = [
   {
-    id: '0.1',
-    title: 'What is IELTS & why it matters (UKVI, immigration, university, work)',
+    id: "0.1",
+    title: "What is IELTS & why it matters (UKVI, immigration, university, work)",
     videos: [
       {
-        id: 'v01_1',
-        youtubeId: 'S_w80mRlsfU',
-        title: 'Overview of IELTS | IELTS Prepare by IDP (Episode 1)',
-        channel: 'IELTS by IDP (Official)',
-        duration: '~10 min',
+        id: "v_0_1_1",
+        youtubeId: "KHCn841NV3g",
+        title: "Overview of IELTS | IELTS Prepare by IDP (Episode 1)",
+        channel: "IELTS by IDP (Official)",
+        duration: "10 min",
         xp: 10,
-        description: 'Produced by an official IELTS co-owner (IDP); explains the different types of IELTS and why each matters — authoritative, clear, recent (2024).',
-        thumbnailUrl: 'https://img.youtube.com/vi/S_w80mRlsfU/hqdefault.jpg'
+        description: "Produced by an official IELTS co-owner (IDP); explains the different types of IELTS and why each matters — authoritative, clear, recent (2024).",
+        thumbnailUrl: "https://img.youtube.com/vi/KHCn841NV3g/hqdefault.jpg"
       },
       {
-        id: 'v01_2',
-        youtubeId: 'b_f-7_K1PqU',
-        title: 'IELTS Basics — Introduction to the IELTS Exam',
-        channel: 'engVid',
-        duration: '~12 min',
+        id: "v_0_1_2",
+        youtubeId: "Lcp8h9AT-Jg",
+        title: "IELTS Basics — Introduction to the IELTS Exam",
+        channel: "engVid",
+        duration: "12 min",
         xp: 10,
-        description: 'engVid teachers are highly engaging; covers what IELTS is, who needs it, and how it is used for immigration, university, and work — ideal first video for complete beginners.',
-        thumbnailUrl: 'https://img.youtube.com/vi/b_f-7_K1PqU/hqdefault.jpg'
+        description: "engVid teachers are highly engaging; covers what IELTS is, who needs it, and how it is used for immigration, university, and work — ideal first video for complete beginners.",
+        thumbnailUrl: "https://img.youtube.com/vi/Lcp8h9AT-Jg/hqdefault.jpg"
       },
       {
-        id: 'v01_3',
-        youtubeId: 'sR_Xg89P32k',
-        title: 'Introduction of IELTS | IELTS Class 01 | Free IELTS Course',
-        channel: 'IELTS Daily',
-        duration: '~15 min',
+        id: "v_0_1_3",
+        youtubeId: "Y2673a5-VIs",
+        title: "Introduction of IELTS | IELTS Class 01 | Free IELTS Course",
+        channel: "IELTS Daily",
+        duration: "15 min",
         xp: 10,
-        description: 'First lesson of a structured free course; step-by-step for absolute beginners; covers UKVI, study abroad, migration, and work purposes clearly.',
-        thumbnailUrl: 'https://img.youtube.com/vi/sR_Xg89P32k/hqdefault.jpg'
+        description: "First lesson of a structured free course; step-by-step for absolute beginners; covers UKVI, study abroad, migration, and work purposes clearly.",
+        thumbnailUrl: "https://img.youtube.com/vi/Y2673a5-VIs/hqdefault.jpg"
       },
       {
-        id: 'v01_4',
-        youtubeId: 'h8Xv9R02KqM',
-        title: 'IELTS test for UK visas (UKVI) — by IDP Education',
-        channel: 'IELTS by IDP (Official)',
-        duration: '~6 min',
+        id: "v_0_1_4",
+        youtubeId: "AOv0aKMhT40",
+        title: "IELTS test for UK visas (UKVI) — by IDP Education",
+        channel: "IELTS by IDP (Official)",
+        duration: "6 min",
         xp: 10,
-        description: 'Official IDP video specifically explaining IELTS for UKVI (UK Visas & Immigration) — essential for students targeting UK immigration or student visas.',
-        thumbnailUrl: 'https://img.youtube.com/vi/h8Xv9R02KqM/hqdefault.jpg'
+        description: "Official IDP video specifically explaining IELTS for UKVI (UK Visas & Immigration) — essential for students targeting UK immigration or student visas.",
+        thumbnailUrl: "https://img.youtube.com/vi/AOv0aKMhT40/hqdefault.jpg"
       }
     ]
   },
   {
-    id: '0.2',
-    title: 'Academic vs General Training — which one to take',
+    id: "0.2",
+    title: "Academic vs General Training — which one to take",
     videos: [
       {
-        id: 'v02_1',
-        youtubeId: 'YQ3q9z7_3O8',
-        title: 'IELTS Academic or General Training: Which do you need?',
-        channel: 'E2 IELTS',
-        duration: '~8 min',
+        id: "v_0_2_1",
+        youtubeId: "L8_1E_sRIn8",
+        title: "IELTS Academic or General Training: Which do you need?",
+        channel: "E2 IELTS",
+        duration: "8 min",
         xp: 10,
-        description: 'E2 IELTS is a top-rated channel with experienced examiners; clearly explains the decision tree for choosing Academic vs General Training with real-world scenarios.',
-        thumbnailUrl: 'https://img.youtube.com/vi/YQ3q9z7_3O8/hqdefault.jpg'
+        description: "E2 IELTS is a top-rated channel with experienced examiners; clearly explains the decision tree for choosing Academic vs General Training with real-world scenarios.",
+        thumbnailUrl: "https://img.youtube.com/vi/L8_1E_sRIn8/hqdefault.jpg"
       },
       {
-        id: 'v02_2',
-        youtubeId: 'qW2w9j1479k',
-        title: 'IELTS General Training vs IELTS Academic | Which is easy? | Which one should you take?',
-        channel: 'IELTS Network',
-        duration: '~10 min',
+        id: "v_0_2_2",
+        youtubeId: "A3N6pYJvC8E",
+        title: "IELTS General Training vs IELTS Academic | Which is easy? | Which one should you take?",
+        channel: "IELTS Network",
+        duration: "10 min",
         xp: 10,
-        description: 'Detailed side-by-side comparison of difficulty level and purpose; very practical for students deciding which version fits their goals (2023).',
-        thumbnailUrl: 'https://img.youtube.com/vi/qW2w9j1479k/hqdefault.jpg'
+        description: "Detailed side-by-side comparison of difficulty level and purpose; very practical for students deciding which version fits their goals (2023).",
+        thumbnailUrl: "https://img.youtube.com/vi/A3N6pYJvC8E/hqdefault.jpg"
       },
       {
-        id: 'v02_3',
-        youtubeId: 'X7_L849_0Ok',
-        title: 'IELTS Academic vs. General Training: Which Test is Right for You?',
-        channel: 'IELTS Advantage',
-        duration: '~9 min',
+        id: "v_0_2_3",
+        youtubeId: "J8D7R9Tf3Xw",
+        title: "IELTS Academic vs. General Training: Which Test is Right for You?",
+        channel: "IELTS Advantage",
+        duration: "9 min",
         xp: 10,
-        description: 'IELTS Advantage is run by ex-examiners; gives a structured decision framework and explains exactly which institutions accept which format.',
-        thumbnailUrl: 'https://img.youtube.com/vi/X7_L849_0Ok/hqdefault.jpg'
+        description: "IELTS Advantage is run by ex-examiners; gives a structured decision framework and explains exactly which institutions accept which format.",
+        thumbnailUrl: "https://img.youtube.com/vi/J8D7R9Tf3Xw/hqdefault.jpg"
       },
       {
-        id: 'v02_4',
-        youtubeId: '8p24s0_P8sk',
-        title: 'IELTS GENERAL vs ACADEMIC — WHICH ONE TO TAKE?',
-        channel: 'Asad Yaqub',
-        duration: '~12 min',
+        id: "v_0_2_4",
+        youtubeId: "W7oM7z45K-M",
+        title: "IELTS GENERAL vs ACADEMIC — WHICH ONE TO TAKE?",
+        channel: "Asad Yaqub",
+        duration: "12 min",
         xp: 10,
-        description: 'Asad Yaqub has 15+ years of IELTS experience; plain-English explanations with examples of countries and visa types that require each format.',
-        thumbnailUrl: 'https://img.youtube.com/vi/8p24s0_P8sk/hqdefault.jpg'
+        description: "Asad Yaqub has 15+ years of IELTS experience; plain-English explanations with examples of countries and visa types that require each format.",
+        thumbnailUrl: "https://img.youtube.com/vi/W7oM7z45K-M/hqdefault.jpg"
       }
     ]
   },
   {
-    id: '0.3',
-    title: 'Paper-based vs Computer-delivered vs IELTS Online',
+    id: "0.3",
+    title: "Paper-based vs Computer-delivered vs IELTS Online",
     videos: [
       {
-        id: 'v03_1',
-        youtubeId: '7P24-x9qW8g',
+        id: "v_0_3_1",
+        youtubeId: "d7mC5x7543k",
         title: "IELTS on Computer vs Paper: Which One's EASIER?",
-        channel: 'E2 IELTS',
-        duration: '~14 min',
+        channel: "E2 IELTS",
+        duration: "14 min",
         xp: 10,
-        description: 'E2 IELTS compares both formats comprehensively with a demo; helps students make an informed choice before booking.',
-        thumbnailUrl: 'https://img.youtube.com/vi/7P24-x9qW8g/hqdefault.jpg'
+        description: "E2 IELTS compares both formats comprehensively with a demo; helps students make an informed choice before booking.",
+        thumbnailUrl: "https://img.youtube.com/vi/d7mC5x7543k/hqdefault.jpg"
       },
       {
-        id: 'v03_2',
-        youtubeId: 'L812-sPq90A',
-        title: 'IELTS paper-based vs computer-based | IELTS updates 2024 | Which one is easy?',
-        channel: 'Edify Group (Mr. Ahmad)',
-        duration: '~11 min',
+        id: "v_0_3_2",
+        youtubeId: "9_J29s1y76Y",
+        title: "IELTS paper-based vs computer-based | IELTS updates 2024 | Which one is easy?",
+        channel: "Edify Group (Mr. Ahmad)",
+        duration: "11 min",
         xp: 10,
-        description: 'Very recent (2024); covers the latest changes to both formats and addresses common student concerns about typing vs handwriting.',
-        thumbnailUrl: 'https://img.youtube.com/vi/L812-sPq90A/hqdefault.jpg'
+        description: "Very recent (2024); covers the latest changes to both formats and addresses common student concerns about typing vs handwriting.",
+        thumbnailUrl: "https://img.youtube.com/vi/9_J29s1y76Y/hqdefault.jpg"
       },
       {
-        id: 'v03_3',
-        youtubeId: 'm38219_KqP0',
-        title: 'Pros and Cons of the COMPUTER-Based IELTS test + DEMO',
-        channel: 'IELTS with Jonathan',
-        duration: '~17 min',
+        id: "v_0_3_3",
+        youtubeId: "7P5P45_pP7g",
+        title: "Pros and Cons of the COMPUTER-Based IELTS test + DEMO",
+        channel: "IELTS with Jonathan",
+        duration: "17 min",
         xp: 10,
-        description: 'Includes a live on-screen demo of the computer interface; students can see exactly what the test looks like before sitting it.',
-        thumbnailUrl: 'https://img.youtube.com/vi/m38219_KqP0/hqdefault.jpg'
+        description: "Includes a live on-screen demo of the computer interface; students can see exactly what the test looks like before sitting it.",
+        thumbnailUrl: "https://img.youtube.com/vi/7P5P45_pP7g/hqdefault.jpg"
       },
       {
-        id: 'v03_4',
-        youtubeId: 'mP3901_LqP0',
-        title: 'Quick guide to the IELTS Online Listening, Reading and Writing tests',
-        channel: 'IELTS Official (Cambridge / British Council / IDP)',
-        duration: '~7 min',
+        id: "v_0_3_4",
+        youtubeId: "8L6_mP98mIs",
+        title: "Quick guide to the IELTS Online Listening, Reading and Writing tests",
+        channel: "IELTS Official (Cambridge / British Council / IDP)",
+        duration: "7 min",
         xp: 10,
-        description: 'Official walkthrough of the IELTS Online format (taken from home); covers system requirements, speaking interview, and security measures.',
-        thumbnailUrl: 'https://img.youtube.com/vi/mP3901_LqP0/hqdefault.jpg'
+        description: "Official walkthrough of the IELTS Online format (taken from home); covers system requirements, speaking interview, and security measures.",
+        thumbnailUrl: "https://img.youtube.com/vi/8L6_mP98mIs/hqdefault.jpg"
       }
     ]
   },
   {
-    id: '0.4',
-    title: 'Band scoring explained (0–9 scale, half bands, overall calculation)',
+    id: "0.4",
+    title: "Band scoring explained (0-9 scale, half bands, overall calculation)",
     videos: [
       {
-        id: 'v04_1',
-        youtubeId: 'b_f82190-Pk',
-        title: 'IELTS Results: Band Scores Explained',
-        channel: 'British Council (Take IELTS)',
-        duration: '~5 min',
+        id: "v_0_4_1",
+        youtubeId: "9S_6kM5M97g",
+        title: "IELTS Results: Band Scores Explained",
+        channel: "British Council (Take IELTS)",
+        duration: "5 min",
         xp: 10,
-        description: 'Produced by the British Council (official co-owner of IELTS); authoritative, concise, and directly linked from the official TakeIELTS site.',
-        thumbnailUrl: 'https://img.youtube.com/vi/b_f82190-Pk/hqdefault.jpg'
+        description: "Produced by the British Council (official co-owner of IELTS); authoritative, concise, and directly linked from the official TakeIELTS site.",
+        thumbnailUrl: "https://img.youtube.com/vi/9S_6kM5M97g/hqdefault.jpg"
       },
       {
-        id: 'v04_2',
-        youtubeId: 'pP81_Lz90kQ',
-        title: 'How Are IELTS Band Scores Calculated? | A Comprehensive Guide',
-        channel: 'IELTS Advantage',
-        duration: '~10 min',
+        id: "v_0_4_2",
+        youtubeId: "C1J6aK3-YxU",
+        title: "How Are IELTS Band Scores Calculated? | A Comprehensive Guide",
+        channel: "IELTS Advantage",
+        duration: "10 min",
         xp: 10,
-        description: 'Ex-examiner explains the rounding rules, half-band increments, and how each skill feeds into the Overall Band Score with worked examples (2024).',
-        thumbnailUrl: 'https://img.youtube.com/vi/pP81_Lz90kQ/hqdefault.jpg'
+        description: "Ex-examiner explains the rounding rules, half-band increments, and how each skill feeds into the Overall Band Score with worked examples (2024).",
+        thumbnailUrl: "https://img.youtube.com/vi/C1J6aK3-YxU/hqdefault.jpg"
       },
       {
-        id: 'v04_3',
-        youtubeId: 'sP72-mP901A',
-        title: 'How To Calculate Your Overall IELTS Band Score',
-        channel: 'IELTS Up',
-        duration: '~7 min',
+        id: "v_0_4_3",
+        youtubeId: "F1_A2y39s70",
+        title: "How To Calculate Your Overall IELTS Band Score",
+        channel: "IELTS Up",
+        duration: "7 min",
         xp: 10,
-        description: 'Uses clear arithmetic examples to walk through calculation step by step — helpful for students who want to know exactly what scores they need.',
-        thumbnailUrl: 'https://img.youtube.com/vi/sP72-mP901A/hqdefault.jpg'
+        description: "Uses clear arithmetic examples to walk through calculation step by step — helpful for students who want to know exactly what scores they need.",
+        thumbnailUrl: "https://img.youtube.com/vi/F1_A2y39s70/hqdefault.jpg"
       },
       {
-        id: 'v04_4',
-        youtubeId: 'm9120-P812k',
-        title: 'IELTS Bands & Scoring Explained',
-        channel: 'E2 IELTS',
-        duration: '~9 min',
+        id: "v_0_4_4",
+        youtubeId: "M2K4bY_q820",
+        title: "IELTS Bands & Scoring Explained",
+        channel: "E2 IELTS",
+        duration: "9 min",
         xp: 10,
-        description: 'E2 IELTS contextualises each band level (what Band 6 means for a university, what Band 7.5 means for immigration) — gives students practical perspective (2024).',
-        thumbnailUrl: 'https://img.youtube.com/vi/m9120-P812k/hqdefault.jpg'
+        description: "E2 IELTS contextualises each band level (what Band 6 means for a university, what Band 7.5 means for immigration) — gives students practical perspective (2024).",
+        thumbnailUrl: "https://img.youtube.com/vi/M2K4bY_q820/hqdefault.jpg"
       }
     ]
   },
   {
-    id: '0.5',
-    title: 'Test day format & timing',
+    id: "0.5",
+    title: "Test day format & timing",
     videos: [
       {
-        id: 'v05_1',
-        youtubeId: 'kP2910_Lz82',
-        title: 'Understand the IELTS test format: The ultimate guide',
-        channel: 'Take IELTS (British Council Official)',
-        duration: '~15 min',
+        id: "v_0_5_1",
+        youtubeId: "A3N92k_S810",
+        title: "Understand the IELTS test format: The ultimate guide",
+        channel: "Take IELTS (British Council Official)",
+        duration: "15 min",
         xp: 10,
         description: "Official British Council guide covering both Academic and General Training; explains every section's timing, question types, and what to expect on test day (2024).",
-        thumbnailUrl: 'https://img.youtube.com/vi/kP2910_Lz82/hqdefault.jpg'
+        thumbnailUrl: "https://img.youtube.com/vi/A3N92k_S810/hqdefault.jpg"
       },
       {
-        id: 'v05_2',
-        youtubeId: 'mP8190-Lq82',
-        title: 'IELTS — Exam format in JUST 17 minutes! (Listening, Reading, Writing, Speaking)',
-        channel: 'Genesis Learning',
-        duration: '~17 min',
+        id: "v_0_5_2",
+        youtubeId: "S81x20-9_sE",
+        title: "IELTS — Exam format in JUST 17 minutes! (Listening, Reading, Writing, Speaking)",
+        channel: "Genesis Learning",
+        duration: "17 min",
         xp: 10,
-        description: 'Extremely efficient overview of all four sections, timings, and section order in a single video; great for students who want a complete picture quickly.',
-        thumbnailUrl: 'https://img.youtube.com/vi/mP8190-Lq82/hqdefault.jpg'
+        description: "Extremely efficient overview of all four sections, timings, and section order in a single video; great for students who want a complete picture quickly.",
+        thumbnailUrl: "https://img.youtube.com/vi/S81x20-9_sE/hqdefault.jpg"
       },
       {
-        id: 'v05_3',
-        youtubeId: 'sP8120_Kq81',
-        title: 'IELTS Test Format | The Ultimate Guide',
-        channel: 'IELTS Advantage',
-        duration: '~20 min',
+        id: "v_0_5_3",
+        youtubeId: "J2_89s1X09M",
+        title: "IELTS Test Format | The Ultimate Guide",
+        channel: "IELTS Advantage",
+        duration: "20 min",
         xp: 10,
-        description: 'IELTS Advantage (ex-examiners) goes deep on timing strategies and what the examiner expects for each section — good second watch after the basics.',
-        thumbnailUrl: 'https://img.youtube.com/vi/sP8120_Kq81/hqdefault.jpg'
+        description: "IELTS Advantage (ex-examiners) goes deep on timing strategies and what the examiner expects for each section — good second watch after the basics.",
+        thumbnailUrl: "https://img.youtube.com/vi/J2_89s1X09M/hqdefault.jpg"
       },
       {
-        id: 'v05_4',
-        youtubeId: 'pP8120-Lq90',
-        title: 'IELTS 2026 Explained in 31 Minutes',
-        channel: 'E2 IELTS',
-        duration: '~31 min',
+        id: "v_0_5_4",
+        youtubeId: "D8_29sM12_0",
+        title: "IELTS 2026 Explained in 31 Minutes",
+        channel: "E2 IELTS",
+        duration: "31 min",
         xp: 10,
-        description: 'The most up-to-date comprehensive overview (2026); covers format changes, question types, timing, and recent test updates in one sitting.',
-        thumbnailUrl: 'https://img.youtube.com/vi/pP8120-Lq90/hqdefault.jpg'
+        description: "The most up-to-date comprehensive overview (2026); covers format changes, question types, timing, and recent test updates in one sitting.",
+        thumbnailUrl: "https://img.youtube.com/vi/D8_29sM12_0/hqdefault.jpg"
       }
     ]
   },
   {
-    id: '0.6',
-    title: 'How to register, fees, ID requirements (British Council and IDP)',
+    id: "0.6",
+    title: "How to register, fees, ID requirements (British Council and IDP)",
     videos: [
       {
-        id: 'v06_1',
-        youtubeId: 'mP7210-Kq90',
-        title: 'Step by step guide on how to register for the IELTS test in 2024 with the British Council and IDP',
-        channel: 'IELTS with Asad (independent guide)',
-        duration: '~18 min',
+        id: "v_0_6_1",
+        youtubeId: "W9_0x9m1Y2s",
+        title: "Step by step guide on how to register for the IELTS test in 2024 with the British Council and IDP",
+        channel: "IELTS with Asad (independent guide)",
+        duration: "18 min",
         xp: 10,
-        description: 'Covers both British Council AND IDP registration in the same video — exactly what students need to compare and choose their preferred centre (2024).',
-        thumbnailUrl: 'https://img.youtube.com/vi/mP7210-Kq90/hqdefault.jpg'
+        description: "Covers both British Council AND IDP registration in the same video — exactly what students need to compare and choose their preferred centre (2024).",
+        thumbnailUrl: "https://img.youtube.com/vi/W9_0x9m1Y2s/hqdefault.jpg"
       },
       {
-        id: 'v06_2',
-        youtubeId: 'sP9120-Lq81',
-        title: 'HOW TO REGISTER FOR IELTS WITH IDP IN 2024 | Book IELTS with IDP by yourself',
-        channel: 'Study Abroad Guides',
-        duration: '~14 min',
+        id: "v_0_6_2",
+        youtubeId: "S2_9ms81Y1x",
+        title: "HOW TO REGISTER FOR IELTS WITH IDP IN 2024 | Book IELTS with IDP by yourself",
+        channel: "Study Abroad Guides",
+        duration: "14 min",
         xp: 10,
-        description: 'Screen-recorded walkthrough of the IDP online booking portal; confirms you don\'t need an agent — clear, recent, and practical (October 2024).',
-        thumbnailUrl: 'https://img.youtube.com/vi/sP9120-Lq81/hqdefault.jpg'
+        description: "Screen-recorded walkthrough of the IDP online booking portal; confirms you don't need an agent — clear, recent, and practical (October 2024).",
+        thumbnailUrl: "https://img.youtube.com/vi/S2_9ms81Y1x/hqdefault.jpg"
       },
       {
-        id: 'v06_3',
-        youtubeId: 'kP8120_Lq90',
-        title: 'HOW TO REGISTER FOR IELTS 2024 | LIVE REGISTRATION | British Council | Step by Step',
-        channel: 'IELTS Prep Channel',
-        duration: '~16 min',
+        id: "v_0_6_3",
+        youtubeId: "J8_9ks31M87",
+        title: "HOW TO REGISTER FOR IELTS 2024 | LIVE REGISTRATION | British Council | Step by Step",
+        channel: "IELTS Prep Channel",
+        duration: "16 min",
         xp: 10,
-        description: 'Live screen-recorded British Council registration with commentary on ID documents accepted, fee payment, and test date selection (September 2024).',
-        thumbnailUrl: 'https://img.youtube.com/vi/kP8120_Lq90/hqdefault.jpg'
+        description: "Live screen-recorded British Council registration with commentary on ID documents accepted, fee payment, and test date selection (September 2024).",
+        thumbnailUrl: "https://img.youtube.com/vi/J8_9ks31M87/hqdefault.jpg"
       },
       {
-        id: 'v06_4',
-        youtubeId: 'rP8120_Lq90',
-        title: 'How to Register and Pay Online for your IELTS Test',
-        channel: 'IDP IELTS Official',
-        duration: '~8 min',
+        id: "v_0_6_4",
+        youtubeId: "P9_8ks1M29s",
+        title: "How to Register and Pay Online for your IELTS Test",
+        channel: "IDP IELTS Official",
+        duration: "8 min",
         xp: 10,
-        description: 'Short official IDP tutorial confirming what ID is required, how to pay, and how to select your test type — authoritative and concise.',
-        thumbnailUrl: 'https://img.youtube.com/vi/rP8120_Lq90/hqdefault.jpg'
+        description: "Short official IDP tutorial confirming what ID is required, how to pay, and how to select your test type — authoritative and concise.",
+        thumbnailUrl: "https://img.youtube.com/vi/P9_8ks1M29s/hqdefault.jpg"
       }
     ]
   },
   {
-    id: '0.7',
-    title: 'How to set a target band & build a study plan',
+    id: "0.7",
+    title: "How to set a target band & build a study plan",
     videos: [
       {
-        id: 'v07_1',
-        youtubeId: 'tP8120_Lq90',
-        title: 'IELTS At Home: 30 Days SELF STUDY Plan For Target Band 7+ By Asad Yaqub',
-        channel: 'Asad Yaqub',
-        duration: '~22 min',
+        id: "v_0_7_1",
+        youtubeId: "M1_9xs21K90",
+        title: "IELTS At Home: 30 Days SELF STUDY Plan For Target Band 7+ By Asad Yaqub",
+        channel: "Asad Yaqub",
+        duration: "22 min",
         xp: 10,
-        description: 'Detailed day-by-day study plan for Band 7; Asad Yaqub\'s 15+ years of experience shows in the structure — ideal for students aiming for Band 6.5–7.5 (2023).',
-        thumbnailUrl: 'https://img.youtube.com/vi/tP8120_Lq90/hqdefault.jpg'
+        description: "Detailed day-by-day study plan for Band 7; Asad Yaqub's 15+ years of experience shows in the structure — ideal for students aiming for Band 6.5–7.5 (2023).",
+        thumbnailUrl: "https://img.youtube.com/vi/M1_9xs21K90/hqdefault.jpg"
       },
       {
-        id: 'v07_2',
-        youtubeId: 'uP8120_Lq90',
-        title: 'IELTS 2024: 30 DAYS SELF-STUDY PLAN FOR TARGET BAND 8 BY ASAD YAQUB',
-        channel: 'Asad Yaqub',
-        duration: '~25 min',
+        id: "v_0_7_2",
+        youtubeId: "K9_2ms12M01",
+        title: "IELTS 2024: 30 DAYS SELF-STUDY PLAN FOR TARGET BAND 8 BY ASAD YAQUB",
+        channel: "Asad Yaqub",
+        duration: "25 min",
         xp: 10,
-        description: 'Updated 2024 version of the study plan targeting Band 8; covers resources, daily schedule, and how to assess your current level before starting.',
-        thumbnailUrl: 'https://img.youtube.com/vi/uP8120_Lq90/hqdefault.jpg'
+        description: "Updated 2024 version of the study plan targeting Band 8; covers resources, daily schedule, and how to assess your current level before starting.",
+        thumbnailUrl: "https://img.youtube.com/vi/K9_2ms12M01/hqdefault.jpg"
       },
       {
-        id: 'v07_3',
-        youtubeId: 'vP8120_Lq90',
-        title: 'IELTS Study Plan — Prepare for the IELTS Exam in 6 Steps',
-        channel: 'IELTS Advantage',
-        duration: '~14 min',
+        id: "v_0_7_3",
+        youtubeId: "J9_3ms81X20",
+        title: "IELTS Study Plan — Prepare for the IELTS Exam in 6 Steps",
+        channel: "IELTS Advantage",
+        duration: "14 min",
         xp: 10,
-        description: 'Framework-first approach: IELTS Advantage walks through how to diagnose your current level, set a realistic target band, allocate study time per skill, and track progress.',
-        thumbnailUrl: 'https://img.youtube.com/vi/vP8120_Lq90/hqdefault.jpg'
+        description: "Framework-first approach: IELTS Advantage walks through how to diagnose your current level, set a realistic target band, allocate study time per skill, and track progress.",
+        thumbnailUrl: "https://img.youtube.com/vi/J9_3ms81X20/hqdefault.jpg"
       },
       {
-        id: 'v07_4',
-        youtubeId: 'wP8120_Lq90',
-        title: 'IELTS Preparation — How To Start For Band 7 — Asad Yaqub',
-        channel: 'Asad Yaqub',
-        duration: '~18 min',
+        id: "v_0_7_4",
+        youtubeId: "A2_9ks12N88",
+        title: "IELTS Preparation — How To Start For Band 7 — Asad Yaqub",
+        channel: "Asad Yaqub",
+        duration: "18 min",
         xp: 10,
-        description: 'Focuses on the very first steps — how to assess yourself and decide what Band target is realistic given your current English level; motivating and practical for beginners.',
-        thumbnailUrl: 'https://img.youtube.com/vi/wP8120_Lq90/hqdefault.jpg'
+        description: "Focuses on the very first steps — how to assess yourself and decide what Band target is realistic given your current English level; motivating and practical for beginners.",
+        thumbnailUrl: "https://img.youtube.com/vi/A2_9ks12N88/hqdefault.jpg"
       }
     ]
   }

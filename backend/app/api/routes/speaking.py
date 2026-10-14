@@ -270,17 +270,11 @@ async def speaking_session_ws(
     """
     # ── Authenticate ──────────────────────────────────────────────────────
     try:
-        if token and token not in ("test", "anonymous", "dev"):
-            payload = decode_supabase_jwt(token)
-            user_id = payload.get("sub") or "dev_user"
-            email = payload.get("email") or "dev@stephen.ai"
-        else:
-            user_id = "dev_user"
-            email = "dev@stephen.ai"
-        user = AuthUser(user_id=user_id, email=email)
+        user = decode_supabase_jwt(token)
     except Exception as e:
-        logger.warning(f"WebSocket auth bypass for dev mode: {e}")
-        user = AuthUser(user_id="dev_user", email="dev@stephen.ai")
+        logger.warning(f"[WS_AUTH] Unauthorized connection rejected: {e}")
+        await websocket.close(code=1008, reason="Authentication failed")
+        return
 
     await websocket.accept()
     logger.info(f"WS speaking session opened: user={user.user_id}, candidate={candidate_name}, part={part}, topic={topic}, persona={persona}")
@@ -1104,13 +1098,13 @@ async def evaluate_multi_questions_session(
 @router.post("/ielts/evaluate-speaking")
 async def evaluate_speaking(
     request: Request,
-    user: AuthUser | None = Depends(get_current_user_optional),
+    user: AuthUser = Depends(get_current_user),
 ) -> SpeakingEvaluationResponse:
     """
     Evaluate an IELTS Speaking session with support for JSON or FormData payloads,
     multi-question audio batches, and guaranteed grounded diagnostic proof generation.
     """
-    effective_user = user or AuthUser(user_id="dev_user", email="candidate@stephen.ai")
+    effective_user = user
     
     content_type = request.headers.get("content-type", "")
     question_prompt = ""
@@ -1352,15 +1346,16 @@ Listen to the audio recording and provide a detailed evaluation following the of
                 db = get_supabase()
                 db.table("speaking_submissions").insert({
                     "submission_id": submission_id,
-                    "user_id": effective_user.user_id,
-                    "user_email": effective_user.email,
+                    "user_id": user.user_id,
+                    "user_email": user.email,
                     "question_prompt": question_prompt or (transcript[:500] if transcript else ""),
                     "overall_band": result.overallBand,
                     "fluency_score": result.fluency.score,
                     "lexical_score": result.lexical.score,
                     "grammar_score": result.grammar.score,
                     "pronunciation_score": result.pronunciation.score,
-                    "evaluation_json": result.model_dump(),
+                    "transcript": transcript or "",
+                    "raw_json_feedback": result.model_dump(),
                 }).execute()
             except Exception as db_err:
                 logger.warning(f"Failed to persist speaking evaluation: {db_err}")

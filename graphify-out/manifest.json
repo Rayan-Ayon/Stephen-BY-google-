@@ -460,8 +460,8 @@
     "semantic_hash": ""
   },
   "everything-claude-code/.opencode/opencode.json": {
-    "mtime": 1781258227.9323795,
-    "ast_hash": "1df75e67a64d92d8afb4fe20abd86f39",
+    "mtime": 1791891771.6055984,
+    "ast_hash": "abbf196fbc8c6a1c7be2bfa06af39d57",
     "semantic_hash": ""
   },
   "everything-claude-code/.opencode/package.json": {
@@ -2820,8 +2820,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSListeningExam.tsx": {
-    "mtime": 1791305979.231468,
-    "ast_hash": "da92d19f0ad03c90b7f4396bc0075524",
+    "mtime": 1791929674.495586,
+    "ast_hash": "b04132369c71090cbc0275414e54b3b8",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSReadingExam.tsx": {
@@ -2885,8 +2885,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/IELTSAnalysisView.tsx": {
-    "mtime": 1791311453.3942463,
-    "ast_hash": "a2b8bcd33e58c99ee366a7ec087724f5",
+    "mtime": 1791991731.9651275,
+    "ast_hash": "d5075013783b3294f4c22b66e072562c",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/analysisMockData.ts": {
@@ -2945,8 +2945,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/writing/WritingHistoryMatrix.tsx": {
-    "mtime": 1791749574.591828,
-    "ast_hash": "0ecacb9b5acd6922ed4127a9028ff2f8",
+    "mtime": 1791929762.1318922,
+    "ast_hash": "f4c7994115471d759678188f20951fd1",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/curriculum/InstituteKnowledgeBase.tsx": {
@@ -2985,8 +2985,8 @@
     "semantic_hash": ""
   },
   "frontend/components/FreeContentLibraryView.tsx": {
-    "mtime": 1790973623.9911463,
-    "ast_hash": "0383f779599d7a18464fbc3b6ed2a1c7",
+    "mtime": 1791991964.8613498,
+    "ast_hash": "d54ec44ad9bfe6bb9b5d3966829a2014",
     "semantic_hash": ""
   },
   "frontend/components/StudyPlanView.tsx": {
@@ -3015,8 +3015,8 @@
     "semantic_hash": ""
   },
   "frontend/components/PartPracticeHub.tsx": {
-    "mtime": 1790451163.0879636,
-    "ast_hash": "082a4887d322e4bcd08f7381f0315aed",
+    "mtime": 1791991635.137344,
+    "ast_hash": "5d372b1bbf8c5d29a19b1ca9c1f77f9f",
     "semantic_hash": ""
   },
   "frontend/components/SpeakingHubView.tsx": {
@@ -3050,8 +3050,8 @@
     "semantic_hash": ""
   },
   "backend/app/core/auth.py": {
-    "mtime": 1789847075.1616087,
-    "ast_hash": "ee4aae6fe618e2d86123652248125fa1",
+    "mtime": 1791929535.1639228,
+    "ast_hash": "932e7aa627c57e103cee37e6d29068a9",
     "semantic_hash": ""
   },
   "frontend/authContext.tsx": {
@@ -3115,8 +3115,8 @@
     "semantic_hash": ""
   },
   "backend/app/api/routes/ielts.py": {
-    "mtime": 1791751480.1981525,
-    "ast_hash": "9c46646f0b2163dc4e89fa354353849c",
+    "mtime": 1791929625.266889,
+    "ast_hash": "1dfb60d77c08963338ae1e358f94910c",
     "semantic_hash": ""
   },
   "backend/app/schemas/ielts.py": {
@@ -3135,8 +3135,8 @@
     "semantic_hash": ""
   },
   "backend/app/api/routes/speaking.py": {
-    "mtime": 1791886492.2420218,
-    "ast_hash": "8ebebf342e466ba5876ba943aad48051",
+    "mtime": 1791929598.4860082,
+    "ast_hash": "cb88a7e2cca4960f39d46d4199e0956b",
     "semantic_hash": ""
   },
   "backend/app/schemas/speaking.py": {
@@ -3170,8 +3170,8 @@
     "semantic_hash": ""
   },
   "backend/debug_gemini_audio.wav": {
-    "mtime": 1791886187.6481261,
-    "ast_hash": "1e8486889dab36dacfdade4e0a21545f",
+    "mtime": 1791892013.0581162,
+    "ast_hash": "e3fb7b2b61262e213e34c944006bdeb1",
     "semantic_hash": ""
   },
   "backend/app/api/routes/chatbot.py": {
@@ -3235,7 +3235,7 @@
     "semantic_hash": ""
   },
   "frontend/src/components/ai-speaking-partner/AISpeakingPartnerView.tsx": {
-    "mtime": 1791885890.7184467,
+    "mtime": 1791891750.799584,
     "ast_hash": "72c36d0cfeaea1a810cd7fdc5fb705a9",
     "semantic_hash": ""
   },
@@ -3245,8 +3245,8 @@
     "semantic_hash": ""
   },
   "frontend/src/components/mock-tests/speaking/SpeakingExamWorkspace.tsx": {
-    "mtime": 1791880216.3251,
-    "ast_hash": "ab1351267a53b1d32853d9e0fb9adb6e",
+    "mtime": 1791929703.903006,
+    "ast_hash": "4bea1e05d4f5b4a55e337e4f0e365cce",
     "semantic_hash": ""
   },
   "frontend/src/components/mock-tests/speaking/SpeakingHubView.tsx": {
@@ -3470,8 +3470,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/telemetryEgress.ts": {
-    "mtime": 1791213198.9103558,
-    "ast_hash": "81957cad972076e670091630545c60d9",
+    "mtime": 1791929656.015775,
+    "ast_hash": "4a77b3db68a9f443f2e84dd863d69c0a",
     "semantic_hash": ""
   },
   "supabase/migrations/20261001_telemetry_pipeline.sql": {
@@ -3575,8 +3575,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/ListeningAnalysisModal.tsx": {
-    "mtime": 1791386720.2989428,
-    "ast_hash": "e44544c24ebd4dc7a5cec8b27d97321a",
+    "mtime": 1791929794.7557795,
+    "ast_hash": "79e3ae9cbdb3e30105886a5392f4d5df",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/ielts/StudentDisputeButtonAndModal.tsx": {
@@ -3695,13 +3695,13 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/history/ListeningHistoryMatrix.tsx": {
-    "mtime": 1791305098.4833317,
-    "ast_hash": "f4cfef6bfdc26b5ac24e92770a38be66",
+    "mtime": 1791929734.405723,
+    "ast_hash": "54ed6c4812ca9790ee0b8b6dc0024ffb",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/history/ReadingHistoryMatrix.tsx": {
-    "mtime": 1791311527.9328256,
-    "ast_hash": "c7c9c57bdc95cb16c6141d7b6889f33b",
+    "mtime": 1791929721.2868452,
+    "ast_hash": "c28d8325c1f540116b9457d91e66ff35",
     "semantic_hash": ""
   },
   "supabase/migrations/20261005_reading_gt_category.sql": {
@@ -3925,8 +3925,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/speaking/SpeakingEvaluationCanvas.tsx": {
-    "mtime": 1791886656.2499633,
-    "ast_hash": "14e864154d7e44930870063866dc9666",
+    "mtime": 1791991459.689819,
+    "ast_hash": "40c4cffef386cc348727bfa64e496a9c",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/speaking/index.ts": {
@@ -3935,8 +3935,8 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/speaking/SpeakingHistoryMatrix.tsx": {
-    "mtime": 1791752416.4996772,
-    "ast_hash": "c58e204fedda49032d20e3dd04995b02",
+    "mtime": 1791929801.489849,
+    "ast_hash": "430f1e3275d9299bd5ffda254b101ec5",
     "semantic_hash": ""
   },
   "frontend/components/enterprise/speaking/AISpeakingPartnerView.tsx": {
@@ -3967,6 +3967,41 @@
   "frontend/services/speaking/speakingEvaluationService.ts": {
     "mtime": 1791886673.881003,
     "ast_hash": "f13a3969ddad7a99a5500489bf17026e",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/part-practice/PartPracticeAnalysisCanvas.tsx": {
+    "mtime": 1791991656.0094185,
+    "ast_hash": "fc912582a1dd0a1a8dc1cfd144cb34a7",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/part-practice/PartPracticeHistoryMatrix.tsx": {
+    "mtime": 1791991559.7503657,
+    "ast_hash": "6daa0dddeeb53b9d0529411e6fd06201",
+    "semantic_hash": ""
+  },
+  "frontend/components/enterprise/part-practice/index.ts": {
+    "mtime": 1791991647.7533603,
+    "ast_hash": "8751bb36e0b5ac7ce2c62ba6e24281da",
+    "semantic_hash": ""
+  },
+  "frontend/services/part-practice/partPracticeHistoryService.ts": {
+    "mtime": 1791929882.7414317,
+    "ast_hash": "fd45b8488f789cd0c0847b1206edf5ba",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20261014_enforce_strict_multi_tenant_rls.sql": {
+    "mtime": 1791929522.2609515,
+    "ast_hash": "245db7b4e607f482a2b6f8f8ff240f2f",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20261014_part_practice_attempts.sql": {
+    "mtime": 1791929777.518511,
+    "ast_hash": "17abe355f936d75fad25a32f4b44e072",
+    "semantic_hash": ""
+  },
+  "frontend/services/part-practice/partPracticeCanvasAdapter.ts": {
+    "mtime": 1791991496.3484085,
+    "ast_hash": "d4776c5bdeffc47234f8ccbd9d4b5a9b",
     "semantic_hash": ""
   }
 }

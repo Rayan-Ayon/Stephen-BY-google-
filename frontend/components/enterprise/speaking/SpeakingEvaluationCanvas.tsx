@@ -67,6 +67,7 @@ export interface SpeakingEvaluationCanvasProps {
     onExit?: () => void;
     onNavigateHistory?: () => void;
     className?: string;
+    isModal?: boolean;
 }
 
 // ── Helpers to Extract Short Pill Labels ────────────────────────────────────
@@ -834,6 +835,7 @@ export const SpeakingEvaluationCanvas: React.FC<SpeakingEvaluationCanvasProps> =
     onExit,
     onNavigateHistory,
     className = '',
+    isModal = true,
 }) => {
     // If modal is explicitly marked closed, unmount cleanly
     if (isOpen !== undefined && !isOpen) return null;
@@ -1056,7 +1058,7 @@ export const SpeakingEvaluationCanvas: React.FC<SpeakingEvaluationCanvasProps> =
 
     return (
         <div
-            className={`fixed inset-0 z-50 flex flex-col bg-[#08090C] text-slate-100 overflow-y-auto antialiased select-none custom-scrollbar ${className}`}
+            className={`${isModal ? 'fixed inset-0 z-50' : 'w-full min-h-screen'} flex flex-col bg-[#08090C] text-slate-100 overflow-y-auto antialiased select-none custom-scrollbar ${className}`}
         >
             {/* Inner constrained container matching enterprise layout */}
             <div className="w-full max-w-[1680px] mx-auto min-h-screen px-4 sm:px-8 py-6 flex flex-col gap-6">

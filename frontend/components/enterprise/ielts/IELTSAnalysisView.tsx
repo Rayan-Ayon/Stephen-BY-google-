@@ -1251,23 +1251,30 @@ const IELTSAnalysisView: React.FC<IELTSAnalysisViewProps> = ({
         let isMounted = true;
         const fetchRealExamData = async () => {
             try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const currentUserId = session?.user?.id;
+
                 let attemptRow: any = null;
                 if (attemptId) {
                     const isUuid = typeof attemptId === 'string' && attemptId.includes('-');
                     if (isUuid) {
-                        const { data: att } = await (supabase as any)
+                        let attQuery = (supabase as any)
                             .from('exam_attempts')
                             .select('*')
-                            .eq('id', attemptId)
-                            .maybeSingle();
+                            .eq('id', attemptId);
+                        if (currentUserId) {
+                            attQuery = attQuery.eq('user_id', currentUserId);
+                        }
+                        const { data: att } = await attQuery.maybeSingle();
                         attemptRow = att;
                     }
                 }
-                if (!attemptRow && (rawData.skill === 'reading' || rawData.skill === 'listening')) {
+                if (!attemptRow && currentUserId && (rawData.skill === 'reading' || rawData.skill === 'listening')) {
                     const { data: latest } = await (supabase as any)
                         .from('exam_attempts')
                         .select('*')
                         .eq('module', rawData.skill)
+                        .eq('user_id', currentUserId)
                         .order('created_at', { ascending: false })
                         .limit(1)
                         .maybeSingle();
@@ -1642,5 +1649,6 @@ const IELTSAnalysisView: React.FC<IELTSAnalysisViewProps> = ({
     );
 };
 
+export { IELTSAnalysisView };
 export default IELTSAnalysisView;
 

@@ -69,10 +69,10 @@ export async function recordExamAttempt(payload: ExamAttemptPayload) {
 
     if (!resolvedUserId) {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          resolvedUserId = user.id;
-          resolvedName = resolvedName || user.user_metadata?.full_name || user.email?.split('@')[0];
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          resolvedUserId = session.user.id;
+          resolvedName = resolvedName || session.user.user_metadata?.full_name || session.user.email?.split('@')[0];
         }
       } catch {
         // guest fallback
@@ -248,11 +248,11 @@ export async function uploadSpeakingSession(payload: SpeakingSessionPayload) {
 
     if (!resolvedUserId || !resolvedEmail) {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          resolvedUserId = resolvedUserId || user.id;
-          resolvedEmail = user.email;
-          resolvedName = resolvedName || user.user_metadata?.full_name || user.email?.split('@')[0];
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          resolvedUserId = resolvedUserId || session.user.id;
+          resolvedEmail = resolvedEmail || session.user.email;
+          resolvedName = resolvedName || session.user.user_metadata?.full_name || session.user.email?.split('@')[0];
         }
       } catch {
         // guest fallback

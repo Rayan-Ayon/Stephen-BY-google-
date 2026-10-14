@@ -1111,12 +1111,18 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
                 localStorage.setItem('latest_listening_attempt', JSON.stringify(attemptRecord));
             } catch {}
 
-            // Attempt async insert to Supabase exam_attempts
-            (supabase as any)
-                .from('exam_attempts')
-                .insert([attemptRecord])
-                .then(() => {})
-                .catch(() => {});
+            // Attempt async insert to Supabase exam_attempts with authenticated user_id
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                const rowToInsert = {
+                    ...attemptRecord,
+                    ...(session?.user?.id ? { user_id: session.user.id } : {}),
+                };
+                (supabase as any)
+                    .from('exam_attempts')
+                    .insert([rowToInsert])
+                    .then(() => {})
+                    .catch((err: any) => console.warn('[ListeningExam] Insert note:', err));
+            });
 
             if (simulation) {
                 simulation.onComplete({ skill: 'listening', band: computedBand, score: correct, timeSpent });

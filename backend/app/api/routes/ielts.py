@@ -456,9 +456,9 @@ async def evaluate_writing(
                     db.table("writing_submissions").update({
                         **update_payload,
                         "status": "COMPLETED"
-                    }).eq("id", request.submissionId).execute()
+                    }).eq("id", request.submissionId).eq("user_id", user.user_id).execute()
                 except Exception:
-                    db.table("writing_submissions").update(update_payload).eq("id", request.submissionId).execute()
+                    db.table("writing_submissions").update(update_payload).eq("id", request.submissionId).eq("user_id", user.user_id).execute()
 
                 logger.info(f"Persisted evaluation for submission {request.submissionId}")
             except Exception as e:
@@ -565,3 +565,34 @@ def _parse_task_eval(data: dict | None, task_type: str = "task2"):
         modelAnswer=model_answer,
         summary=data.get("summary", ""),
     )
+
+
+@router.get("/user/diagnostic-summary")
+@router.get("/ielts/user/diagnostic-summary")
+async def get_user_diagnostic_summary(user: AuthUser = Depends(get_current_user)):
+    """Fetch aggregated performance statistics strictly for the authenticated user."""
+    db = get_supabase()
+
+    # 1. Fetch user's recent exam attempts
+    attempts = db.table("exam_attempts").select(
+        "id, module, band_score, correct_count, total_questions, time_spent_seconds, title, created_at"
+    ).eq("user_id", user.user_id).order("created_at", desc=True).limit(20).execute()
+
+    # 2. Fetch user's recent writing submissions
+    writing = db.table("writing_submissions").select(
+        "id, overall_band, module_type, evaluation, created_at"
+    ).eq("user_id", user.user_id).order("created_at", desc=True).limit(5).execute()
+
+    # 3. Fetch user's recent speaking submissions
+    speaking = db.table("speaking_submissions").select(
+        "id, overall_band, fluency_score, lexical_score, grammar_score, pronunciation_score, raw_json_feedback, created_at"
+    ).eq("user_id", user.user_id).order("created_at", desc=True).limit(5).execute()
+
+    return {
+        "user_id": user.user_id,
+        "email": user.email,
+        "recent_attempts": attempts.data or [],
+        "recent_writing": writing.data or [],
+        "recent_speaking": speaking.data or [],
+    }
+

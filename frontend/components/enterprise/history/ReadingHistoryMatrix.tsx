@@ -39,22 +39,25 @@ export const ReadingHistoryMatrix: React.FC<ReadingHistoryMatrixProps> = ({ book
         const loadAttempts = async () => {
             const local = readAttempts();
             try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const userId = session?.user?.id;
+
+                if (!userId) {
+                    if (mounted) setAttempts([]);
+                    return;
+                }
+
                 const { data: dbAttempts } = await supabase
                     .from('exam_attempts')
                     .select('*')
                     .eq('module', 'reading')
+                    .eq('user_id', userId)
                     .order('created_at', { ascending: false })
                     .limit(50);
 
-                if (dbAttempts && dbAttempts.length > 0 && mounted) {
+                if (dbAttempts && mounted) {
                     const mappedDb: IeltsAttempt[] = dbAttempts.map((row: any) => transformExamAttemptRow(row, 'reading'));
-
-                    const seen = new Set(mappedDb.map((d) => String(d.id)));
-                    const merged = [...mappedDb];
-                    local.forEach((loc) => {
-                        if (!seen.has(String(loc.id))) merged.push(loc);
-                    });
-                    setAttempts(merged);
+                    setAttempts(mappedDb);
                     return;
                 }
             } catch {

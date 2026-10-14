@@ -158,12 +158,17 @@ export const SpeakingHistoryMatrix: React.FC<SpeakingHistoryMatrixProps> = ({
 
         // 2. Read from Supabase exam_attempts (module = 'speaking')
         try {
-            const { data: dbAttempts, error } = await supabase
-                .from('exam_attempts')
-                .select('*')
-                .eq('module', 'speaking')
-                .order('created_at', { ascending: false })
-                .limit(50);
+            const { data: { session } } = await supabase.auth.getSession();
+            const userId = session?.user?.id;
+
+            if (userId) {
+                const { data: dbAttempts, error } = await supabase
+                    .from('exam_attempts')
+                    .select('*')
+                    .eq('module', 'speaking')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false })
+                    .limit(50);
 
             if (!error && dbAttempts && dbAttempts.length > 0) {
                 const mappedDb: SpeakingAttempt[] = dbAttempts.map((row: any) => {
@@ -238,6 +243,7 @@ export const SpeakingHistoryMatrix: React.FC<SpeakingHistoryMatrixProps> = ({
                 setAttempts(merged);
                 setIsLoading(false);
                 return;
+            }
             }
         } catch (dbErr) {
             console.warn('[SpeakingHistoryMatrix] Supabase fetch error:', dbErr);
