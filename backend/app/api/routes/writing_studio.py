@@ -18,7 +18,8 @@ from app.schemas.ielts import (
     OCRTranscribeResponse,
 )
 from app.services.llm_service import generate_json, generate
-from app.core.auth import get_current_user_optional, AuthUser
+from app.services.supabase_service import get_supabase
+from app.core.auth import get_current_user, get_current_user_optional, AuthUser
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ielts/writing", tags=["IELTS Writing Studio"])
@@ -106,7 +107,7 @@ Return ONLY valid JSON matching this schema:
 @router.post("/diagnostic", response_model=WritingDiagnosticResponse)
 async def evaluate_writing_diagnostic(
     req: WritingDiagnosticRequest,
-    user: AuthUser | None = Depends(get_current_user_optional),
+    user: AuthUser = Depends(get_current_user),
 ):
     """
     Evaluates student writing against Cambridge 4-pillar criteria and produces
@@ -165,7 +166,7 @@ Student Essay Submission:
                 DiffChunk(type="unchanged", text=req.essay_text)
             ]
 
-        return WritingDiagnosticResponse(
+        resp_obj = WritingDiagnosticResponse(
             overall_band=float(data.get("overall_band", 7.0)),
             criteria_scores=criteria,
             diff_chunks=diff_chunks,
@@ -175,16 +176,59 @@ Student Essay Submission:
             complexity_ratio=float(data.get("complexity_ratio", 68.0)),
         )
 
+        # Persist to public.rewriter_history
+        if user and user.user_id:
+            try:
+                db = get_supabase()
+                db.table("rewriter_history").insert({
+                    "user_id": user.user_id,
+                    "task_type": req.task_type,
+                    "target_band": float(req.target_band),
+                    "prompt_text": req.prompt_text,
+                    "original_text": req.essay_text,
+                    "rewritten_text": resp_obj.band_9_full_text,
+                    "overall_band": resp_obj.overall_band,
+                    "criteria_scores": resp_obj.criteria_scores.model_dump(),
+                    "diff_chunks": [dc.model_dump() for dc in resp_obj.diff_chunks],
+                    "high_yield_collocations": resp_obj.high_yield_collocations,
+                    "lexical_index": resp_obj.lexical_index,
+                    "complexity_ratio": resp_obj.complexity_ratio,
+                }).execute()
+            except Exception as save_err:
+                logger.warning(f"Failed to persist rewriter history: {save_err}")
+
+        return resp_obj
+
     except Exception as e:
         logger.error(f"Writing diagnostic generation failed: {e}", exc_info=True)
         # Return robust fallback diagnostic matching Cambridge rubric
-        return _fallback_diagnostic(req.essay_text, req.task_type)
+        fallback_resp = _fallback_diagnostic(req.essay_text, req.task_type)
+        if user and user.user_id:
+            try:
+                db = get_supabase()
+                db.table("rewriter_history").insert({
+                    "user_id": user.user_id,
+                    "task_type": req.task_type,
+                    "target_band": float(req.target_band),
+                    "prompt_text": req.prompt_text,
+                    "original_text": req.essay_text,
+                    "rewritten_text": fallback_resp.band_9_full_text,
+                    "overall_band": fallback_resp.overall_band,
+                    "criteria_scores": fallback_resp.criteria_scores.model_dump(),
+                    "diff_chunks": [dc.model_dump() for dc in fallback_resp.diff_chunks],
+                    "high_yield_collocations": fallback_resp.high_yield_collocations,
+                    "lexical_index": fallback_resp.lexical_index,
+                    "complexity_ratio": fallback_resp.complexity_ratio,
+                }).execute()
+            except Exception as save_err:
+                logger.warning(f"Failed to persist fallback rewriter history: {save_err}")
+        return fallback_resp
 
 
 @router.post("/generate-model", response_model=GenerateModelAnswerResponse)
 async def generate_model_answer(
     req: GenerateModelAnswerRequest,
-    user: AuthUser | None = Depends(get_current_user_optional),
+    user: AuthUser = Depends(get_current_user),
 ):
     """
     Generates an official Band 9 model response with structured blueprint breakdown
@@ -250,7 +294,7 @@ Analyze all trend lines, bars, categories, or philosophical perspectives and syn
         full_text = data.get("full_text") or "\n\n".join([s.text for s in sections])
         word_count = len(full_text.split())
 
-        return GenerateModelAnswerResponse(
+        resp = GenerateModelAnswerResponse(
             task_type=req.task_type,
             prompt_summary=data.get("prompt_summary", req.prompt_text[:100] if req.prompt_text else "Visual Data Analysis"),
             extracted_data_trends=list(data.get("extracted_data_trends", [])),
@@ -261,9 +305,74 @@ Analyze all trend lines, bars, categories, or philosophical perspectives and syn
             word_count=word_count,
         )
 
+        # Persist to public.rewriter_history
+        if user and user.user_id:
+            try:
+                db = get_supabase()
+                db.table("rewriter_history").insert({
+                    "user_id": user.user_id,
+                    "task_type": req.task_type,
+                    "target_band": float(req.target_band),
+                    "prompt_text": req.prompt_text or resp.prompt_summary,
+                    "original_text": req.prompt_text or "Visual Chart Analysis",
+                    "rewritten_text": resp.full_text,
+                    "overall_band": float(req.target_band),
+                    "criteria_scores": {
+                        "tr": {"score": float(req.target_band), "feedback": "Band 9.0 model benchmark.", "fixes": []},
+                        "cc": {"score": float(req.target_band), "feedback": "Band 9.0 model benchmark.", "fixes": []},
+                        "lr": {"score": float(req.target_band), "feedback": "Band 9.0 model benchmark.", "fixes": []},
+                        "gra": {"score": float(req.target_band), "feedback": "Band 9.0 model benchmark.", "fixes": []},
+                    },
+                    "diff_chunks": [{"type": "added", "text": resp.full_text, "explanation": "Band 9.0 generated benchmark."}],
+                    "high_yield_collocations": resp.key_collocations,
+                    "lexical_index": 92.0,
+                    "complexity_ratio": 88.0,
+                }).execute()
+            except Exception as save_err:
+                logger.warning(f"Failed to persist generated model answer to rewriter history: {save_err}")
+
+        return resp
+
     except Exception as e:
         logger.error(f"Model answer generation failed: {e}", exc_info=True)
-        return _fallback_model_answer(req.task_type, req.prompt_text)
+        fallback_model = _fallback_model_answer(req.task_type, req.prompt_text)
+        if user and user.user_id:
+            try:
+                db = get_supabase()
+                db.table("rewriter_history").insert({
+                    "user_id": user.user_id,
+                    "task_type": req.task_type,
+                    "target_band": float(req.target_band),
+                    "prompt_text": req.prompt_text or fallback_model.prompt_summary,
+                    "original_text": req.prompt_text or "Visual Chart Analysis",
+                    "rewritten_text": fallback_model.full_text,
+                    "overall_band": float(req.target_band),
+                    "criteria_scores": {
+                        "tr": {"score": float(req.target_band), "feedback": "Band 9.0 fallback benchmark.", "fixes": []},
+                        "cc": {"score": float(req.target_band), "feedback": "Band 9.0 fallback benchmark.", "fixes": []},
+                        "lr": {"score": float(req.target_band), "feedback": "Band 9.0 fallback benchmark.", "fixes": []},
+                        "gra": {"score": float(req.target_band), "feedback": "Band 9.0 fallback benchmark.", "fixes": []},
+                    },
+                    "diff_chunks": [{"type": "added", "text": fallback_model.full_text, "explanation": "Band 9.0 fallback benchmark."}],
+                    "high_yield_collocations": fallback_model.key_collocations,
+                    "lexical_index": 90.0,
+                    "complexity_ratio": 85.0,
+                }).execute()
+            except Exception as save_err:
+                logger.warning(f"Failed to persist fallback model to rewriter history: {save_err}")
+        return fallback_model
+
+
+@router.get("/history")
+async def get_rewriter_history(user: AuthUser = Depends(get_current_user)):
+    """Fetch past rewritten essays and diagnostics for the authenticated student."""
+    try:
+        db = get_supabase()
+        res = db.table("rewriter_history").select("*").eq("user_id", user.user_id).order("created_at", desc=True).limit(50).execute()
+        return res.data or []
+    except Exception as e:
+        logger.warning(f"[REWRITER_HISTORY] Failed to query rewriter_history: {e}")
+        return []
 
 
 @router.post("/ocr-transcribe", response_model=OCRTranscribeResponse)

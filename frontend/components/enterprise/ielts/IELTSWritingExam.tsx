@@ -16,6 +16,7 @@ import {
     saveWritingEvaluation,
     buildSynthesizedEvaluation,
 } from '@/services/writing/writingEvaluationService';
+import { recordPartPracticeAttempt } from '@/services/part-practice/partPracticeHistoryService';
 import IELTSLobbyCard from './IELTSLobbyCard';
 import IELTSExitModal from './IELTSExitModal';
 import IeltsExamOptionsModal from '../../exam/IeltsExamOptionsModal';
@@ -473,6 +474,53 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
                 },
             };
 
+            // Check mode === 'part-practice'. If true, bypass direct exam_attempts insertion and execute recordPartPracticeAttempt
+            if (isPartPractice) {
+                const isTask1 = (practicePart === 1) || (showT1 && !showT2);
+                const taskEval = isTask1 ? evalResult.task1 : evalResult.task2;
+                await recordPartPracticeAttempt({
+                    book_number: bookNumber || 17,
+                    test_number: testNumber || 1,
+                    module: 'writing',
+                    part_number: isTask1 ? 1 : 2,
+                    scoped_target: isTask1 ? 'Task 1 (Academic Report)' : 'Task 2 (Discursive Essay)',
+                    exam_title: `Cambridge ${bookNumber || 17} Test ${testNumber || 1} — ${isTask1 ? 'Task 1' : 'Task 2'}`,
+                    drill_name: isTask1 ? 'Writing Task 1' : 'Writing Task 2',
+                    source_exam: `Cambridge ${bookNumber || 17} Test ${testNumber || 1} Writing`,
+                    category: moduleType || 'academic',
+                    source_type: sourceType || 'cambridge',
+                    band_score: taskEval?.band || computedOverall || 6.5,
+                    raw_score: 0,
+                    total_questions: 1,
+                    accuracy_percentage: 100,
+                    time_spent_seconds: totalElapsedSeconds,
+                    status: 'TARGET',
+                    user_responses: {
+                        essay: isTask1 ? t1Text : t2Text,
+                        wordCount: isTask1 ? t1WordCount : t2WordCount,
+                    },
+                    detailed_results: {
+                        evaluation: taskEval,
+                        taskResponse: taskEval?.criteria?.taskAchievement ?? taskEval?.band,
+                        coherenceCohesion: taskEval?.criteria?.coherence ?? taskEval?.band,
+                        lexicalResource: taskEval?.criteria?.lexical ?? taskEval?.band,
+                        grammaticalRange: taskEval?.criteria?.grammar ?? taskEval?.band,
+                        feedback: taskEval?.summary || 'Single-part practice evaluation completed.',
+                        corrections: taskEval?.grammarCorrections || [],
+                        candidate_essay: isTask1 ? t1Text : t2Text,
+                        four_pillars: {
+                            ta: taskEval?.criteria?.taskAchievement ?? taskEval?.band,
+                            cc: taskEval?.criteria?.coherence ?? taskEval?.band,
+                            lr: taskEval?.criteria?.lexical ?? taskEval?.band,
+                            gra: taskEval?.criteria?.grammar ?? taskEval?.band,
+                        }
+                    },
+                });
+                setIsSubmitting(false);
+                setTestState('completed');
+                return;
+            }
+
             // 1. Persist to Supabase exam_attempts (module = 'writing')
             try {
                 await (supabase as any).from('exam_attempts').insert({
@@ -492,12 +540,16 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
                 console.warn('[WritingExam] exam_attempts insert warning:', attErr);
             }
 
-            // 2. Persist to localStorage writing_attempts_history and dispatch custom event
+            // 2. Persist to user-scoped localStorage and dispatch custom event
             try {
-                const historyRaw = localStorage.getItem('writing_attempts_history');
+                const { data: { session } } = await supabase.auth.getSession();
+                const writingStorageKey = session?.user?.id
+                    ? `stephen_${session.user.id}_writing_attempts`
+                    : 'stephen_guest_writing_attempts';
+                const historyRaw = localStorage.getItem(writingStorageKey);
                 const historyList = historyRaw ? JSON.parse(historyRaw) : [];
                 historyList.unshift(unifiedAttemptRecord);
-                localStorage.setItem('writing_attempts_history', JSON.stringify(historyList));
+                localStorage.setItem(writingStorageKey, JSON.stringify(historyList));
                 window.dispatchEvent(new CustomEvent('writing_attempts_updated', { detail: unifiedAttemptRecord }));
             } catch (storeErr) {
                 console.warn('[WritingExam] localStorage history warning:', storeErr);
@@ -632,11 +684,61 @@ const IELTSWritingExam: React.FC<IELTSWritingExamProps> = ({
                 },
             };
 
+            if (isPartPractice) {
+                const isTask1 = (practicePart === 1) || (showT1 && !showT2);
+                const taskEval = isTask1 ? t1Result : t2Result;
+                await recordPartPracticeAttempt({
+                    book_number: bookNumber || 17,
+                    test_number: testNumber || 1,
+                    module: 'writing',
+                    part_number: isTask1 ? 1 : 2,
+                    scoped_target: isTask1 ? 'Task 1 (Academic Report)' : 'Task 2 (Discursive Essay)',
+                    exam_title: `Cambridge ${bookNumber || 17} Test ${testNumber || 1} — ${isTask1 ? 'Task 1' : 'Task 2'}`,
+                    drill_name: isTask1 ? 'Writing Task 1' : 'Writing Task 2',
+                    source_exam: `Cambridge ${bookNumber || 17} Test ${testNumber || 1} Writing`,
+                    category: moduleType || 'academic',
+                    source_type: sourceType || 'cambridge',
+                    band_score: taskEval?.band || overallBand || 6.5,
+                    raw_score: 0,
+                    total_questions: 1,
+                    accuracy_percentage: 100,
+                    time_spent_seconds: totalElapsedSeconds,
+                    status: 'TARGET',
+                    user_responses: {
+                        essay: isTask1 ? t1Text : t2Text,
+                        wordCount: isTask1 ? t1WordCount : t2WordCount,
+                    },
+                    detailed_results: {
+                        evaluation: taskEval,
+                        taskResponse: taskEval?.criteria?.taskAchievement ?? taskEval?.band,
+                        coherenceCohesion: taskEval?.criteria?.coherence ?? taskEval?.band,
+                        lexicalResource: taskEval?.criteria?.lexical ?? taskEval?.band,
+                        grammaticalRange: taskEval?.criteria?.grammar ?? taskEval?.band,
+                        feedback: taskEval?.summary || 'Single-part practice evaluation completed.',
+                        corrections: taskEval?.grammarCorrections || [],
+                        candidate_essay: isTask1 ? t1Text : t2Text,
+                        four_pillars: {
+                            ta: taskEval?.criteria?.taskAchievement ?? taskEval?.band,
+                            cc: taskEval?.criteria?.coherence ?? taskEval?.band,
+                            lr: taskEval?.criteria?.lexical ?? taskEval?.band,
+                            gra: taskEval?.criteria?.grammar ?? taskEval?.band,
+                        }
+                    },
+                });
+                setIsSubmitting(false);
+                setTestState('completed');
+                return;
+            }
+
             try {
-                const historyRaw = localStorage.getItem('writing_attempts_history');
+                const { data: { session } } = await supabase.auth.getSession();
+                const writingStorageKey = session?.user?.id
+                    ? `stephen_${session.user.id}_writing_attempts`
+                    : 'stephen_guest_writing_attempts';
+                const historyRaw = localStorage.getItem(writingStorageKey);
                 const historyList = historyRaw ? JSON.parse(historyRaw) : [];
                 historyList.unshift(fbAttemptRecord);
-                localStorage.setItem('writing_attempts_history', JSON.stringify(historyList));
+                localStorage.setItem(writingStorageKey, JSON.stringify(historyList));
                 window.dispatchEvent(new CustomEvent('writing_attempts_updated', { detail: fbAttemptRecord }));
             } catch (e) {}
 

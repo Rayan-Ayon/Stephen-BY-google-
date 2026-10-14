@@ -68,6 +68,7 @@ export interface SpeakingEvaluationCanvasProps {
     onNavigateHistory?: () => void;
     className?: string;
     isModal?: boolean;
+    scopedPart?: 1 | 2 | 3; // 1, 2, or 3 (Undefined for full mock tests)
 }
 
 // ── Helpers to Extract Short Pill Labels ────────────────────────────────────
@@ -836,6 +837,7 @@ export const SpeakingEvaluationCanvas: React.FC<SpeakingEvaluationCanvasProps> =
     onNavigateHistory,
     className = '',
     isModal = true,
+    scopedPart,
 }) => {
     // If modal is explicitly marked closed, unmount cleanly
     if (isOpen !== undefined && !isOpen) return null;
@@ -873,10 +875,16 @@ export const SpeakingEvaluationCanvas: React.FC<SpeakingEvaluationCanvasProps> =
     }, [effectiveBook, effectiveTest, testData, storedPartsData, resolvedEvaluation]);
 
     // ── State Management ────────────────────────────────────────────────────
-    const [activePart, setActivePart] = useState<1 | 2 | 3>(1);
+    const [activePart, setActivePart] = useState<1 | 2 | 3>(scopedPart || 1);
     const [activeQuestionIndex, setActiveQuestionIndex] = useState<number>(0);
     const [expandedPillar, setExpandedPillar] = useState<'FC' | 'LR' | 'GRA' | 'PR'>('FC');
     const [selectedToken, setSelectedToken] = useState<DiagnosticToken | null>(null);
+
+    useEffect(() => {
+        if (scopedPart) {
+            setActivePart(scopedPart);
+        }
+    }, [scopedPart]);
 
     // Reset question index if switched to a part with fewer questions
     useEffect(() => {
@@ -1266,51 +1274,57 @@ export const SpeakingEvaluationCanvas: React.FC<SpeakingEvaluationCanvasProps> =
             <div className="bg-[#15181E] border border-[#222732] rounded-2xl p-3 mb-4 shrink-0 flex flex-col gap-3">
                 {/* Part Selector Pills */}
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                    <button
-                        onClick={() => setActivePart(1)}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
-                            activePart === 1
-                                ? 'bg-rose-600 text-white shadow-[0_0_15px_rgba(244,63,94,0.35)]'
-                                : 'bg-[#101216] text-zinc-400 hover:text-white border border-[#222732]'
-                        }`}
-                    >
-                        <span>🎙️ Part 1: Interview</span>
-                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-black/30">
-                            {allPartsData[1].questions.length} Questions
-                        </span>
-                    </button>
-
-                    <button
-                        onClick={() => setActivePart(2)}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
-                            activePart === 2
-                                ? 'bg-rose-600 text-white shadow-[0_0_15px_rgba(244,63,94,0.35)]'
-                                : 'bg-[#101216] text-zinc-400 hover:text-white border border-[#222732]'
-                        }`}
-                    >
-                        <span>📝 Part 2: Cue Card</span>
-                        {allPartsData[2].questions[0]?.status === 'omitted' ? (
-                            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                                🔴 Omitted
+                    {(!scopedPart || scopedPart === 1) && (
+                        <button
+                            onClick={() => setActivePart(1)}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
+                                activePart === 1
+                                    ? 'bg-rose-600 text-white shadow-[0_0_15px_rgba(244,63,94,0.35)]'
+                                    : 'bg-[#101216] text-zinc-400 hover:text-white border border-[#222732]'
+                            }`}
+                        >
+                            <span>🎙️ Part 1: Interview</span>
+                            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-black/30">
+                                {allPartsData[1].questions.length} Questions
                             </span>
-                        ) : (
-                            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-black/30">Long Turn</span>
-                        )}
-                    </button>
+                        </button>
+                    )}
 
-                    <button
-                        onClick={() => setActivePart(3)}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
-                            activePart === 3
-                                ? 'bg-rose-600 text-white shadow-[0_0_15px_rgba(244,63,94,0.35)]'
-                                : 'bg-[#101216] text-zinc-400 hover:text-white border border-[#222732]'
-                        }`}
-                    >
-                        <span>💡 Part 3: Discussion</span>
-                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-black/30">
-                            {allPartsData[3].questions.length} Questions
-                        </span>
-                    </button>
+                    {(!scopedPart || scopedPart === 2) && (
+                        <button
+                            onClick={() => setActivePart(2)}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
+                                activePart === 2
+                                    ? 'bg-rose-600 text-white shadow-[0_0_15px_rgba(244,63,94,0.35)]'
+                                    : 'bg-[#101216] text-zinc-400 hover:text-white border border-[#222732]'
+                            }`}
+                        >
+                            <span>📝 Part 2: Cue Card</span>
+                            {allPartsData[2].questions[0]?.status === 'omitted' ? (
+                                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                    🔴 Omitted
+                                </span>
+                            ) : (
+                                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-black/30">Long Turn</span>
+                            )}
+                        </button>
+                    )}
+
+                    {(!scopedPart || scopedPart === 3) && (
+                        <button
+                            onClick={() => setActivePart(3)}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
+                                activePart === 3
+                                    ? 'bg-rose-600 text-white shadow-[0_0_15px_rgba(244,63,94,0.35)]'
+                                    : 'bg-[#101216] text-zinc-400 hover:text-white border border-[#222732]'
+                            }`}
+                        >
+                            <span>💡 Part 3: Discussion</span>
+                            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-black/30">
+                                {allPartsData[3].questions.length} Questions
+                            </span>
+                        </button>
+                    )}
                 </div>
 
                 {/* Sub-Question Carousel (Part 1 and Part 3) */}

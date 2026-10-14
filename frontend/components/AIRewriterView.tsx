@@ -29,6 +29,8 @@ import {
     Info
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/supabaseClient';
+import AIRewriterHistoryModal, { RewriterHistoryRecord } from './enterprise/writing/AIRewriterHistoryModal';
 
 // ── Types ──
 
@@ -161,6 +163,37 @@ export const AIRewriterView: React.FC<AIRewriterViewProps> = ({ userEmail, onNav
     const [modelResult, setModelResult] = useState<ModelAnswerResult | null>(null);
     const [expandedAnnotation, setExpandedAnnotation] = useState<number | null>(null);
 
+    // History Modal State
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+
+    const handleLoadFromHistory = (item: any) => {
+        if (item.task_type) {
+            setTaskType(item.task_type as TaskType);
+        }
+        if (item.target_band) {
+            setTargetBand(String(item.target_band) as TargetBand);
+        }
+        if (item.original_text) {
+            setInputText(item.original_text);
+        }
+        if (item.prompt_text) {
+            setPromptInput(item.prompt_text);
+        }
+        if (item.criteria_scores && item.rewritten_text) {
+            setDiagnosticResult({
+                overall_band: Number(item.overall_band) || 7.0,
+                criteria_scores: item.criteria_scores,
+                band_9_full_text: item.rewritten_text,
+                diff_chunks: item.diff_chunks || [],
+                high_yield_collocations: item.high_yield_collocations || [],
+                lexical_index: Number(item.lexical_index) || 70,
+                complexity_ratio: Number(item.complexity_ratio) || 65,
+            });
+            setMode('rewrite');
+        }
+        setShowHistoryModal(false);
+    };
+
     // OCR & Upload
     const [isScanningOCR, setIsScanningOCR] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -223,9 +256,14 @@ export const AIRewriterView: React.FC<AIRewriterViewProps> = ({ userEmail, onNav
         setActiveInspectionIndex(null);
 
         try {
-            const res = await fetch("http://localhost:8000/api/ielts/writing/diagnostic", {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            const res = await fetch("/api/ielts/writing/diagnostic", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify({
                     essay_text: inputText,
                     task_type: taskType,
@@ -317,9 +355,14 @@ export const AIRewriterView: React.FC<AIRewriterViewProps> = ({ userEmail, onNav
         setModelResult(null);
 
         try {
-            const res = await fetch("http://localhost:8000/api/ielts/writing/generate-model", {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            const res = await fetch("/api/ielts/writing/generate-model", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify({
                     task_type: taskType,
                     prompt_text: promptInput,
@@ -453,9 +496,14 @@ export const AIRewriterView: React.FC<AIRewriterViewProps> = ({ userEmail, onNav
             toast.loading("Scanning handwritten script via Gemini Vision OCR...");
 
             try {
-                const res = await fetch("http://localhost:8000/api/ielts/writing/ocr-transcribe", {
+                const { data: { session } } = await supabase.auth.getSession();
+                const token = session?.access_token;
+                const res = await fetch("/api/ielts/writing/ocr-transcribe", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+                    },
                     body: JSON.stringify({ image_base64: b64, task_type: taskType })
                 });
 
@@ -607,6 +655,15 @@ export const AIRewriterView: React.FC<AIRewriterViewProps> = ({ userEmail, onNav
                             </button>
                         ))}
                     </div>
+
+                    {/* Rewriter History Button */}
+                    <button
+                        onClick={() => setShowHistoryModal(true)}
+                        className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-[#141519] text-zinc-200 hover:text-white border border-zinc-800 hover:border-zinc-700 transition-all flex items-center gap-2 shadow-sm"
+                    >
+                        <span>📜</span>
+                        Rewriter History
+                    </button>
                 </div>
             </header>
 
@@ -1238,6 +1295,13 @@ export const AIRewriterView: React.FC<AIRewriterViewProps> = ({ userEmail, onNav
                     )}
                 </div>
             )}
+
+            {/* Rewriter History Modal */}
+            <AIRewriterHistoryModal
+                isOpen={showHistoryModal}
+                onClose={() => setShowHistoryModal(false)}
+                onSelectRewrite={handleLoadFromHistory}
+            />
         </div>
     );
 };

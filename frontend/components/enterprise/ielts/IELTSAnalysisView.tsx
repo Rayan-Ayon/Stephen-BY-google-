@@ -117,7 +117,8 @@ const ReadingAnalysisSplitCanvas: React.FC<{
     timeSpentSeconds?: number;
     bandScoreProp?: number;
     scoreProp?: number;
-}> = ({ bookNumber, testNumber, attemptId, rawAnswers, testTitle, timeSpentSeconds = 0, bandScoreProp, scoreProp }) => {
+    scopedPassage?: number;
+}> = ({ bookNumber, testNumber, attemptId, rawAnswers, testTitle, timeSpentSeconds = 0, bandScoreProp, scoreProp, scopedPassage }) => {
     const memoizedAnswers = useMemo(() => {
         if (!rawAnswers) return {};
         if (typeof rawAnswers === 'object') return rawAnswers;
@@ -147,8 +148,15 @@ const ReadingAnalysisSplitCanvas: React.FC<{
     const effectiveBandScore = bandScoreProp !== undefined && bandScoreProp !== null ? bandScoreProp : (hookBandScore || 0);
     const effectiveCorrectCount = scoreProp !== undefined && scoreProp !== null ? scoreProp : (hookCorrectCount || 0);
 
-    const [activePassage, setActivePassage] = useState<1 | 2 | 3>(1);
-    const [activePassageIndex, setActivePassageIndex] = useState(0);
+    const [activePassage, setActivePassage] = useState<1 | 2 | 3>((scopedPassage as 1 | 2 | 3) || 1);
+    const [activePassageIndex, setActivePassageIndex] = useState(scopedPassage ? scopedPassage - 1 : 0);
+
+    useEffect(() => {
+        if (scopedPassage) {
+            setActivePassage(scopedPassage as 1 | 2 | 3);
+            setActivePassageIndex(scopedPassage - 1);
+        }
+    }, [scopedPassage]);
     const [isPassageHidden, setIsPassageHidden] = useState<boolean>(false);
     const [vocabLookupEnabled, setVocabLookupEnabled] = useState<boolean>(false);
     const [selectedWordDef, setSelectedWordDef] = useState<{ word: string; pos: string; def: string } | null>(null);
@@ -380,22 +388,29 @@ const ReadingAnalysisSplitCanvas: React.FC<{
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1 select-none">
                             REVIEW PASSAGE:
                         </span>
-                        {passages.map((p, idx) => {
+                        {(scopedPassage
+                            ? (passages.filter((p, idx) => (p.passage_number || (idx + 1)) === scopedPassage).length > 0
+                                ? passages.filter((p, idx) => (p.passage_number || (idx + 1)) === scopedPassage)
+                                : [{ passage_number: scopedPassage as 1 | 2 | 3, title: `Passage ${scopedPassage}`, passage_text: '', sections: [] }])
+                            : passages
+                        ).map((p, idx) => {
                             const pNum = (p.passage_number || (idx + 1)) as 1 | 2 | 3;
                             return (
                                 <button
                                     key={p.passage_number || idx}
                                     onClick={() => {
-                                        setActivePassageIndex(idx);
-                                        setActivePassage(pNum);
+                                        if (!scopedPassage) {
+                                            setActivePassageIndex(idx);
+                                            setActivePassage(pNum);
+                                        }
                                     }}
                                     className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border flex items-center ${
-                                        activePassage === pNum
+                                        (scopedPassage || activePassage === pNum)
                                             ? 'bg-[#1E232E] border-indigo-500/80 text-white shadow-sm ring-1 ring-indigo-500/50'
                                             : 'bg-[#0D0F12] border-[#222732] text-slate-300 hover:text-white hover:border-slate-700'
                                     }`}
                                 >
-                                    <span className="text-slate-300">Passage {p.passage_number}:</span>
+                                    <span className="text-slate-300">Passage {p.passage_number || scopedPassage}:</span>
                                     <span className="text-indigo-300 font-semibold ml-1.5 truncate max-w-[180px] sm:max-w-none">
                                         {p.title}
                                     </span>
@@ -1196,6 +1211,7 @@ export interface IELTSAnalysisViewProps {
     testNumber?: number;
     answersPayload?: any;
     skillModule?: 'reading' | 'listening' | 'writing' | 'speaking';
+    scopedPassage?: number; // 1, 2, or 3 (Undefined for full mock tests)
     title?: string;
     timeSpent?: number; // seconds
     bandScoreProp?: number;
@@ -1212,6 +1228,7 @@ const IELTSAnalysisView: React.FC<IELTSAnalysisViewProps> = ({
     testNumber,
     answersPayload,
     skillModule,
+    scopedPassage,
     title: propsTitle,
     timeSpent,
     bandScoreProp,
@@ -1605,6 +1622,7 @@ const IELTSAnalysisView: React.FC<IELTSAnalysisViewProps> = ({
                         timeSpentSeconds={timeSpent}
                         bandScoreProp={bandScoreProp}
                         scoreProp={scoreProp}
+                        scopedPassage={scopedPassage}
                     />
                 ) : (
                     <>

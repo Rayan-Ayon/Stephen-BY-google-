@@ -5,7 +5,7 @@ import { ListeningAnalysisModalProps } from '@/components/enterprise/ielts/Liste
 import { SpeakingEvaluationCanvasProps } from '@/components/enterprise/speaking/SpeakingEvaluationCanvas';
 
 /**
- * Maps single-part Writing attempts (Task 1 or Task 2) to WritingEvaluationCanvasProps
+ * Maps single-part Writing attempts (Task 1 or Task 2) to WritingEvaluationCanvasProps with scopedTask
  */
 export function adaptWritingPartPractice(
   attempt: PartPracticeAttempt,
@@ -15,6 +15,7 @@ export function adaptWritingPartPractice(
   const partNum = (attempt as any).part ?? attempt.part_number ?? 1;
   const partTitle = (attempt as any).part_title || attempt.scoped_target || '';
   const isTask1 = partNum === 1 || partTitle.toLowerCase().includes('task 1');
+  const scopedTask: 1 | 2 = isTask1 ? 1 : 2;
 
   const taskEvaluation = (attempt.detailed_results as any)?.evaluation || {
     band: attempt.band_score,
@@ -51,6 +52,7 @@ export function adaptWritingPartPractice(
   return {
     isModal,
     attemptId: attempt.id,
+    scopedTask, // 🛑 STOPS OTHER TASK FROM RENDERING
     attempt: {
       id: attempt.id,
       overall_band: attempt.band_score,
@@ -63,20 +65,28 @@ export function adaptWritingPartPractice(
 }
 
 /**
- * Maps single-passage Reading attempts (Passage 1, 2, or 3) to IELTSAnalysisViewProps
+ * Maps single-passage Reading attempts (Passage 1, 2, or 3) to IELTSAnalysisViewProps with scopedPassage
  */
 export function adaptReadingPartPractice(
   attempt: PartPracticeAttempt,
   onClose: () => void,
   isModal: boolean = true
 ): IELTSAnalysisViewProps {
-  const partTitle = (attempt as any).part_title || attempt.scoped_target || 'Single Passage Practice';
+  let scopedPassage = (attempt as any).part ?? attempt.part_number ?? 1;
+  const match = ((attempt as any).part_title || attempt.scoped_target || '').match(/passage\s*(\d+)/i);
+  if (match) {
+    scopedPassage = parseInt(match[1], 10);
+  }
+
+  const partTitle = (attempt as any).part_title || attempt.scoped_target || `Passage ${scopedPassage}`;
+
   return {
     isModal,
     attemptId: attempt.id,
     bookNumber: attempt.book_number || 17,
     testNumber: attempt.test_number || 1,
     skillModule: 'reading',
+    scopedPassage, // 🛑 STOPS PASSAGE 2 & 3 PILLS FROM RENDERING
     title: `READING — ${partTitle}`,
     bandScoreProp: attempt.band_score,
     scoreProp: attempt.raw_score,
@@ -87,14 +97,21 @@ export function adaptReadingPartPractice(
 }
 
 /**
- * Maps single-part Listening attempts (Part 1, 2, 3, or 4) to ListeningAnalysisModalProps
+ * Maps single-part Listening attempts (Part 1, 2, 3, or 4) to ListeningAnalysisModalProps with scopedPart
  */
 export function adaptListeningPartPractice(
   attempt: PartPracticeAttempt,
   onClose: () => void,
   isModal: boolean = true
 ): ListeningAnalysisModalProps {
-  const partTitle = (attempt as any).part_title || attempt.scoped_target || 'Section Drill';
+  let scopedPart = (attempt as any).part ?? attempt.part_number ?? 1;
+  const match = ((attempt as any).part_title || attempt.scoped_target || '').match(/(?:part|section)\s*(\d+)/i);
+  if (match) {
+    scopedPart = parseInt(match[1], 10);
+  }
+
+  const partTitle = (attempt as any).part_title || attempt.scoped_target || `Part ${scopedPart}`;
+
   return {
     isModal,
     attemptId: attempt.id,
@@ -104,6 +121,7 @@ export function adaptListeningPartPractice(
     bandScore: attempt.band_score,
     score: attempt.raw_score,
     totalQuestions: attempt.total_questions || 10,
+    scopedPart, // 🛑 STOPS OTHER PARTS FROM RENDERING
     userAnswers: attempt.user_responses?.answers || attempt.user_responses || {},
     audioUrl: attempt.detailed_results?.audio_url || undefined,
     onClose,
@@ -112,14 +130,20 @@ export function adaptListeningPartPractice(
 }
 
 /**
- * Maps single-part Speaking attempts (Part 1, 2, or 3) to SpeakingEvaluationCanvasProps
+ * Maps single-part Speaking attempts (Part 1, 2, or 3) to SpeakingEvaluationCanvasProps with scopedPart
  */
 export function adaptSpeakingPartPractice(
   attempt: PartPracticeAttempt,
   onClose: () => void,
   isModal: boolean = true
 ): SpeakingEvaluationCanvasProps {
-  const partNumber = (attempt as any).part ?? attempt.part_number ?? 1;
+  let partNumber: 1 | 2 | 3 = ((attempt as any).part ?? attempt.part_number ?? 1) as 1 | 2 | 3;
+  const match = ((attempt as any).part_title || attempt.scoped_target || '').match(/part\s*(\d+)/i);
+  if (match) {
+    const parsed = parseInt(match[1], 10);
+    if (parsed === 1 || parsed === 2 || parsed === 3) partNumber = parsed;
+  }
+
   const partTitle = (attempt as any).part_title || attempt.scoped_target || `Part ${partNumber}`;
 
   const evaluation = (attempt.detailed_results as any)?.evaluation || {
@@ -163,6 +187,7 @@ export function adaptSpeakingPartPractice(
     attemptId: attempt.id,
     bookNumber: attempt.book_number || 17,
     testNumber: attempt.test_number || 1,
+    scopedPart: partNumber, // 🛑 STOPS OTHER PARTS FROM RENDERING
     examTitle: `Speaking Practice — ${partTitle}`,
     evaluation,
     storedPartsData,

@@ -1105,14 +1105,15 @@ const IELTSListeningExam: React.FC<IELTSListeningExamProps> = ({
                 created_at: new Date().toISOString()
             };
 
-            try {
-                localStorage.setItem(`listening_attempt_${genAttemptId}`, JSON.stringify(attemptRecord));
-                localStorage.setItem(`latest_listening_attempt_${currentExamId}`, JSON.stringify(attemptRecord));
-                localStorage.setItem('latest_listening_attempt', JSON.stringify(attemptRecord));
-            } catch {}
-
             // Attempt async insert to Supabase exam_attempts with authenticated user_id
             supabase.auth.getSession().then(({ data: { session } }) => {
+                const userPrefix = session?.user?.id ? `${session.user.id}_` : '';
+                try {
+                    localStorage.setItem(`listening_attempt_${userPrefix}${genAttemptId}`, JSON.stringify(attemptRecord));
+                    localStorage.setItem(`latest_listening_attempt_${userPrefix}${currentExamId}`, JSON.stringify(attemptRecord));
+                    localStorage.setItem(`latest_listening_attempt_${userPrefix}`, JSON.stringify(attemptRecord));
+                } catch {}
+
                 const rowToInsert = {
                     ...attemptRecord,
                     ...(session?.user?.id ? { user_id: session.user.id } : {}),

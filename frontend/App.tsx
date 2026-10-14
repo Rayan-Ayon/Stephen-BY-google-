@@ -14,6 +14,7 @@ import { FeaturesShowcaseView } from './components/navigation/FeaturesShowcaseVi
 import { LearnHubView } from './components/navigation/LearnHubView';
 import { BusinessPortalView } from './components/navigation/BusinessPortalView';
 import { WorkspaceProvider } from './workspaceContext';
+import { RayanChatProvider } from './context/RayanChatContext';
 import { initMockDb } from './utils/mockDb';
 
 export type Theme = 'light' | 'dark';
@@ -347,16 +348,18 @@ const AppContent: React.FC = () => {
       {showDashboard ? (
         <ErrorBoundary>
           <WorkspaceProvider>
-            <Dashboard
-              toggleTheme={toggleTheme}
-              theme={theme}
-              initialView={initialView}
-              onExit={() => setShowDashboard(false)}
-              userEmail={userEmail}
-              userId={userId}
-              spaceCode={spaceCode}
-              onLogout={handleLogout}
-            />
+            <RayanChatProvider initialEmail={userEmail || ''}>
+              <Dashboard
+                toggleTheme={toggleTheme}
+                theme={theme}
+                initialView={initialView}
+                onExit={() => setShowDashboard(false)}
+                userEmail={userEmail}
+                userId={userId}
+                spaceCode={spaceCode}
+                onLogout={handleLogout}
+              />
+            </RayanChatProvider>
           </WorkspaceProvider>
         </ErrorBoundary>
       ) : (

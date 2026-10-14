@@ -34,7 +34,7 @@ const TASK_LABELS: Record<string, string> = {
 export { resolveExamTitle };
 
 export const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ moduleFilter }) => {
-    const [attempts, setAttempts] = useState<IeltsAttempt[]>(readAttempts);
+    const [attempts, setAttempts] = useState<IeltsAttempt[]>([]);
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
     const [typeFilter, setTypeFilter] = useState<ExamTypeFilter>('all');
     const [analysisId, setAnalysisId] = useState<number | string | null>(null);
@@ -42,9 +42,20 @@ export const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ modu
     useEffect(() => {
         let mounted = true;
         const loadAttempts = async () => {
-            let local = readAttempts();
+            let local: IeltsAttempt[] = [];
             try {
-                const raw = localStorage.getItem('writing_attempts_history');
+                const { data: { session } } = await supabase.auth.getSession();
+                const userId = session?.user?.id;
+
+                if (!userId) {
+                    if (mounted) setAttempts([]);
+                    return;
+                }
+
+                local = readAttempts(userId);
+
+                const writingStorageKey = `stephen_${userId}_writing_attempts`;
+                const raw = localStorage.getItem(writingStorageKey) || localStorage.getItem('writing_attempts_history');
                 if (raw) {
                     const parsed = JSON.parse(raw);
                     if (Array.isArray(parsed)) {
@@ -68,16 +79,6 @@ export const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ modu
                         });
                         local = Array.from(localMap.values());
                     }
-                }
-            } catch {}
-
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                const userId = session?.user?.id;
-
-                if (!userId) {
-                    if (mounted) setAttempts([]);
-                    return;
                 }
 
                 let dbRows: any[] = [];
@@ -295,9 +296,12 @@ export const WritingHistoryMatrix: React.FC<WritingHistoryMatrixProps> = ({ modu
             </div>
 
             {filteredAttempts.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-[#222732] bg-[#0D0F12]/50 p-8 text-center">
-                    <p className="text-sm font-medium text-slate-400">No writing attempts match the selected filters.</p>
-                    <p className="text-xs text-slate-500 mt-1">Adjust your filters or submit an essay/report to populate this matrix.</p>
+                <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-zinc-800 rounded-2xl bg-[#12141a]/50">
+                    <span className="text-3xl mb-3">📋</span>
+                    <h3 className="text-sm font-semibold text-zinc-300">No practice history yet</h3>
+                    <p className="text-xs text-zinc-500 max-w-sm mt-1">
+                        You haven't completed any drills under this account. Complete a practice drill to view detailed diagnostic telemetry.
+                    </p>
                 </div>
             ) : (
                 <div className="overflow-x-auto custom-scrollbar">

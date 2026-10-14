@@ -104,7 +104,8 @@ export async function recordExamAttempt(payload: ExamAttemptPayload) {
 
     // Fallback local cache for instant retrieval & offline resilience
     try {
-      const cacheKey = `exam_attempts_${payload.module}_${payload.testId}`;
+      const userPrefix = resolvedUserId ? `${resolvedUserId}_` : '';
+      const cacheKey = `exam_attempts_${userPrefix}${payload.module}_${payload.testId}`;
       const cachedRecord = {
         id: `local-att-${Date.now()}`,
         ...row,
@@ -114,7 +115,7 @@ export async function recordExamAttempt(payload: ExamAttemptPayload) {
         created_at: new Date().toISOString()
       };
       localStorage.setItem(cacheKey, JSON.stringify(cachedRecord));
-      localStorage.setItem(`latest_${payload.module}_attempt`, JSON.stringify(cachedRecord));
+      localStorage.setItem(`latest_${userPrefix}${payload.module}_attempt`, JSON.stringify(cachedRecord));
     } catch {}
 
     const { data, error } = await (supabase as any)

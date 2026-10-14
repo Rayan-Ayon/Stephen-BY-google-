@@ -1,18 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GoogleGenAI, Chat } from '@google/genai';
 import { 
     ArrowUpIcon, XIcon, PlusIcon, AdjustIcon, ChevronDownIcon,
     MicIcon, ProjectIcon, BookOpenIcon, DebatePodiumIcon,
     MessageCircleIcon, FlashIcon, PresentationIcon, UploadIcon, HeadsetIcon
 } from './icons';
 import { DORMANT_NAV_ENABLED } from './dormantNav';
-
-interface Message {
-    role: 'user' | 'model';
-    text: string;
-    time?: string;
-}
+import { useRayanChat } from '../context/RayanChatContext';
+import RayanMessageFormatter from './chat/RayanMessageFormatter';
 
 interface HawkingFabProps {
     onNavigate: (view: string, data?: any) => void;
@@ -60,10 +55,8 @@ const RayanAvatar: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }) =
 
 const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [messages, setMessages] = useState<Message[]>([]);
+    const { messages, sendMessage, isLoading } = useRayanChat();
     const [inputValue, setInputValue] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [chat, setChat] = useState<Chat | null>(null);
     const [isFocused, setIsFocused] = useState(false);
     
     // Tools & Plus menus
@@ -81,27 +74,6 @@ const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
     const plusMenuRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const inputContainerRef = useRef<HTMLDivElement>(null);
-
-    // Initialize Gemini AI
-    useEffect(() => {
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-        if (!apiKey || apiKey === "YOUR_API_KEY_HERE" || apiKey === "undefined") {
-            return;
-        }
-
-        try {
-            const ai = new GoogleGenAI({ apiKey });
-            const chatInstance = ai.chats.create({
-                model: 'gemini-3-flash-preview',
-                config: {
-                    systemInstruction: "You are Rayan, an elite personal IELTS tutor and mentor. You assist students preparing for the IELTS exam (Academic and General Training). You specialize in Reading diagnostics, Task 1 & Task 2 essay writing, Speaking fluency & mock interviews, and Listening strategies. Keep answers encouraging, structured, practical, and focused on maximizing their band score.",
-                },
-            });
-            setChat(chatInstance);
-        } catch (error) {
-            console.error("Failed to initialize GoogleGenAI in Rayan chatbot:", error);
-        }
-    }, []);
 
     // Speech Recognition Setup
     useEffect(() => {
@@ -215,48 +187,8 @@ const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
             return;
         }
 
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-
         setInputValue('');
-        setMessages(prev => [...prev, { role: 'user', text, time: timeStr }]);
-        setIsLoading(true);
-
-        if (chat) {
-            try {
-                const stream = await chat.sendMessageStream({ message: text });
-                let firstChunk = true;
-                for await (const chunk of stream) {
-                    const chunkText = chunk.text;
-                    if (firstChunk) {
-                        setMessages(prev => [...prev, { role: 'model', text: chunkText, time: timeStr }]);
-                        firstChunk = false;
-                    } else {
-                        setMessages(prev => {
-                            const newMessages = [...prev];
-                            const lastMessage = newMessages[newMessages.length - 1];
-                            if (lastMessage && lastMessage.role === 'model') {
-                                lastMessage.text += chunkText;
-                            }
-                            return newMessages;
-                        });
-                    }
-                }
-            } catch (error) {
-                console.error("Rayan AI Error:", error);
-                const fallback = getRayanFallback(text);
-                setMessages(prev => [...prev, { role: 'model', text: fallback, time: timeStr }]);
-            } finally {
-                setIsLoading(false);
-            }
-        } else {
-            // Offline / Fallback Response
-            setTimeout(() => {
-                const fallback = getRayanFallback(text);
-                setMessages(prev => [...prev, { role: 'model', text: fallback, time: timeStr }]);
-                setIsLoading(false);
-            }, 600);
-        }
+        await sendMessage(text);
     };
 
     const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -350,16 +282,30 @@ const HawkingFab: React.FC<HawkingFabProps> = ({ onNavigate }) => {
                             ) : (
                                 <>
                                     {messages.map((msg, idx) => (
-                                        <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                        <div key={msg.id || idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                             <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed shadow-xs ${
                                                 msg.role === 'user' 
                                                     ? 'bg-red-600 text-white rounded-br-none' 
                                                     : 'bg-white dark:bg-[#171821] border border-gray-100 dark:border-zinc-800 text-gray-800 dark:text-zinc-200 rounded-bl-none'
                                             }`}>
-                                                <div className="whitespace-pre-wrap">{msg.text}</div>
-                                                {msg.time && (
+                                                {msg.role === 'user' ? (
+                                                    <div className="whitespace-pre-wrap">{msg.content}</div>
+                                                ) : (
+                                                    <RayanMessageFormatter
+                                                        content={msg.content}
+                                                        onCitationClick={(href) => {
+                                                            setIsOpen(false);
+                                                            if (href.startsWith('#attempt/')) {
+                                                                onNavigate('ai_ielts_chatbot');
+                                                            } else if (href.startsWith('#rewrite/')) {
+                                                                onNavigate('ai_rewriter');
+                                                            }
+                                                        }}
+                                                    />
+                                                )}
+                                                {msg.timestamp && (
                                                     <div className={`text-[10px] mt-1 text-right ${msg.role === 'user' ? 'text-red-200' : 'text-gray-400'}`}>
-                                                        {msg.time}
+                                                        {msg.timestamp}
                                                     </div>
                                                 )}
                                             </div>

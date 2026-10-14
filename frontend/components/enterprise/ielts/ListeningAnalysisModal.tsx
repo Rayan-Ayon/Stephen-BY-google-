@@ -72,6 +72,7 @@ export interface ListeningAnalysisModalProps {
   attemptId?: string | number;
   bookNumber?: number;
   testNumber?: number;
+  scopedPart?: number; // 1, 2, 3, or 4 (Undefined for full mock tests)
   onExit?: () => void;
   onClose?: () => void;
   onRetake?: () => void;
@@ -386,6 +387,7 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
   attemptId,
   bookNumber,
   testNumber,
+  scopedPart,
   onExit,
   onClose,
   onRetake,
@@ -434,7 +436,15 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
     return res;
   }, [answersPayload, userAnswers]);
 
-  const [activePartFilter, setActivePartFilter] = useState<'all' | 1 | 2 | 3 | 4>('all');
+  const [activePartFilter, setActivePartFilter] = useState<'all' | 1 | 2 | 3 | 4>(
+    scopedPart ? (scopedPart as 1 | 2 | 3 | 4) : 'all'
+  );
+
+  useEffect(() => {
+    if (scopedPart) {
+      setActivePartFilter(scopedPart as 1 | 2 | 3 | 4);
+    }
+  }, [scopedPart]);
   const [expandedScripts, setExpandedScripts] = useState<Record<number, boolean>>({});
   const [scoreViewMode, setScoreViewMode] = useState<'ai' | 'teacher'>('ai');
   const [activeAnswers, setActiveAnswers] = useState<Record<number, string>>(initialAnswers);
@@ -741,9 +751,12 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
   }, [questionResults, numBook]);
 
   const filteredQuestions = useMemo(() => {
+    if (scopedPart) {
+      return questionResults.filter((q) => q.part === scopedPart);
+    }
     if (activePartFilter === 'all') return questionResults;
     return questionResults.filter((q) => q.part === activePartFilter);
-  }, [questionResults, activePartFilter]);
+  }, [questionResults, activePartFilter, scopedPart]);
 
   const toggleScript = (id: number) => {
     setExpandedScripts((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -955,7 +968,7 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
 
             {/* Part Jump Buttons (Timestamp Anchors) */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              {([1, 2, 3, 4] as const).map((partNum) => {
+              {(scopedPart ? [scopedPart as 1 | 2 | 3 | 4] : ([1, 2, 3, 4] as const)).map((partNum) => {
                 const partSec = Number(testPartMarkers[String(partNum)] ?? testPartMarkers[partNum] ?? PART_TIMESTAMPS[partNum] ?? 0);
                 const mm = Math.floor(partSec / 60);
                 const ss = partSec % 60;
@@ -1147,12 +1160,12 @@ export const ListeningAnalysisModal: React.FC<ListeningAnalysisModalProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* Part Filter Tabs */}
             <div className="flex items-center gap-1.5 p-1 bg-[#15181E] border border-[#222732] rounded-2xl w-fit flex-wrap">
-              {(['all', 1, 2, 3, 4] as const).map((tab) => (
+              {(scopedPart ? [scopedPart as 1 | 2 | 3 | 4] : (['all', 1, 2, 3, 4] as const)).map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setActivePartFilter(tab)}
+                  onClick={() => !scopedPart && setActivePartFilter(tab)}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    activePartFilter === tab
+                    (scopedPart ? true : activePartFilter === tab)
                       ? 'bg-rose-600 text-white shadow-sm'
                       : 'text-slate-400 hover:text-white hover:bg-[#181C24]'
                   }`}

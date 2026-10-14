@@ -42,12 +42,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     const signOut = useCallback(async () => {
-        await supabase.auth.signOut();
-        setSession(null);
-        // Clean up any legacy auth keys
-        localStorage.removeItem('stephen_auth_token');
-        localStorage.removeItem('stephen_auth_email');
-    }, []);
+        try {
+            const currentUserId = user?.id;
+            if (currentUserId && typeof window !== 'undefined') {
+                Object.keys(localStorage).forEach(key => {
+                    if (
+                        key.includes(currentUserId) ||
+                        key.startsWith('stephen_') ||
+                        key.startsWith('exam_attempts_') ||
+                        key.startsWith('reading_results_') ||
+                        key.startsWith('listening_attempt_') ||
+                        key.startsWith('writing_attempts_')
+                    ) {
+                        localStorage.removeItem(key);
+                    }
+                });
+            }
+            await supabase.auth.signOut();
+            setSession(null);
+            localStorage.removeItem('stephen_auth_token');
+            localStorage.removeItem('stephen_auth_email');
+        } catch (error) {
+            console.error('Error signing out:', error);
+        }
+    }, [user?.id]);
 
     useEffect(() => {
         // Get initial session

@@ -403,7 +403,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleTheme, theme, initialView, 
             case 'ai_rewriter': return <AIRewriterView userEmail={userEmail} onNavigate={handleNavigate} />;
             case 'ai_ielts_chatbot': return <AIIELTSChatbotView userEmail={userEmail} />;
             case 'free_content_library': return <FreeContentLibraryView userEmail={userEmail} />;
-            case 'study_plan': return <StudyPlanView userEmail={userEmail} />;
+            case 'study_plan': return <StudyPlanView userEmail={userEmail} onNavigate={handleNavigate} />;
             case 'support': return <SupportView userEmail={userEmail} onNavigate={handleNavigate} />;
             case 'spaced_repetition': return <SpacedRepetitionEngine />;
             case 'student_portal': return <StudentPortal />;

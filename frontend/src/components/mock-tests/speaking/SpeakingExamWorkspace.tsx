@@ -10,6 +10,7 @@ import CueCardTaskCard from '@/components/enterprise/speaking/CueCardTaskCard';
 import SpeakingAnalysisView from '@/components/enterprise/speaking/SpeakingAnalysisView';
 import { supabase } from '@/lib/supabaseClient';
 import { addAttempt } from '@/components/enterprise/ielts/ieltsShared';
+import { recordPartPracticeAttempt } from '@/services/part-practice/partPracticeHistoryService';
 
 interface SpeakingExamWorkspaceProps {
     candidateEmail?: string;
@@ -959,7 +960,79 @@ export const SpeakingExamWorkspace: React.FC<SpeakingExamWorkspaceProps> = ({
             parts_data: partsData,
         };
 
-        setPersistedAttemptRecord(attemptRecord);
+        // Check mode === 'part-practice'. If true, record into part_practice_attempts and finish
+        if (isPartPractice) {
+            const pNum = Math.min(3, Math.max(1, Number(practicePart || currentPart))) as 1 | 2 | 3;
+            let currentTranscript = '';
+            let practiceQuestionText = `Speaking Part ${pNum}`;
+            if (pNum === 1) {
+                currentTranscript = evaluatedPart1.map(q => `Q: ${q.prompt}\nA: ${q.transcriptText}`).join('\n\n');
+                practiceQuestionText = evaluatedPart1[0]?.prompt || 'Speaking Part 1';
+            } else if (pNum === 2) {
+                currentTranscript = evaluatedPart2.transcriptText;
+                practiceQuestionText = evaluatedPart2.topic ? `Describe ${evaluatedPart2.topic}` : 'Part 2 Cue Card';
+            } else if (pNum === 3) {
+                currentTranscript = evaluatedPart3.map(q => `Q: ${q.prompt}\nA: ${q.transcriptText}`).join('\n\n');
+                practiceQuestionText = evaluatedPart3[0]?.prompt || 'Speaking Part 3';
+            }
+
+            try {
+                await recordPartPracticeAttempt({
+                    book_number: Number(activeBook) || 17,
+                    test_number: Number(activeTest) || 1,
+                    module: 'speaking',
+                    part_number: pNum,
+                    scoped_target: `Part ${pNum}`,
+                    exam_title: `Cambridge ${activeBook || 17} Test ${activeTest || 1} — Part ${pNum}`,
+                    drill_name: `Speaking Part ${pNum}`,
+                    source_exam: `Cambridge ${activeBook || 17} Test ${activeTest || 1} Speaking`,
+                    category: category || 'academic',
+                    source_type: sourceType || 'cambridge',
+                    band_score: computedBand || 6.5,
+                    raw_score: 0,
+                    total_questions: pNum === 2 ? 1 : 4,
+                    accuracy_percentage: 100,
+                    time_spent_seconds: elapsedSeconds || 180,
+                    status: 'TARGET',
+                    user_responses: {
+                        transcript: currentTranscript || '',
+                    },
+                    detailed_results: {
+                        evaluation: evalData,
+                        fluency: evalData?.fcScore ?? evalData?.fluency?.score ?? computedBand ?? 6.0,
+                        lexical: evalData?.lrScore ?? evalData?.lexical?.score ?? computedBand ?? 6.0,
+                        grammar: evalData?.graScore ?? evalData?.grammar?.score ?? computedBand ?? 6.0,
+                        pronunciation: evalData?.prScore ?? (typeof evalData?.pronunciation === 'object' ? evalData.pronunciation.score : evalData?.pronunciation) ?? computedBand ?? 6.0,
+                        feedback: evalData?.feedback || 'Part practice speaking evaluation completed.',
+                        candidate_transcript: currentTranscript || '',
+                        four_pillars: {
+                            fc: evalData?.fcScore ?? evalData?.fluency?.score ?? computedBand ?? 6.0,
+                            lr: evalData?.lrScore ?? evalData?.lexical?.score ?? computedBand ?? 6.0,
+                            gra: evalData?.graScore ?? evalData?.grammar?.score ?? computedBand ?? 6.0,
+                            pr: evalData?.prScore ?? (typeof evalData?.pronunciation === 'object' ? evalData.pronunciation.score : evalData?.pronunciation) ?? computedBand ?? 6.0,
+                        }
+                    },
+                });
+            } catch (pErr) {
+                console.warn('[SpeakingExamWorkspace] recordPartPracticeAttempt note:', pErr);
+            } finally {
+                setIsEvaluating(false);
+                onTestComplete?.({
+                    examTitle: activeExamTitle,
+                    audioUrl: uploadedUrls['p3-q3'] || uploadedUrls['p2'] || audioUrl,
+                    evaluation: evalData,
+                    part: pNum,
+                    overallBand: computedBand,
+                    bookNumber: activeBook,
+                    testNumber: activeTest,
+                    testData: testData,
+                    attemptRecord: attemptRecord,
+                    storedPartsData: partsData,
+                });
+                setShowPostExamAnalysis(true);
+            }
+            return;
+        }
 
         // 6. Resilient LocalStorage Registry: speaking_attempts_history (prepend new attempt)
         try {

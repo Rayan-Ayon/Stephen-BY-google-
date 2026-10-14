@@ -983,17 +983,22 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
         if (typeof window !== 'undefined' && window.location.pathname.startsWith('/reading/results')) {
             const pathParts = window.location.pathname.split('/reading/results/');
             const sid = pathParts[1]?.split('/')[0] || '';
-            const stored = (sid ? localStorage.getItem('reading_results_' + sid) : null) || localStorage.getItem('latest_reading_results');
-            if (stored) {
-                try {
-                    const parsed = JSON.parse(stored);
-                    setResultsPayload(parsed);
-                    setTestState('results');
-                    return;
-                } catch (e) {
-                    console.error('Error parsing stored reading results', e);
+            const fetchStored = async () => {
+                const { data: { session } } = await supabase.auth.getSession();
+                const userPrefix = session?.user?.id ? `${session.user.id}_` : '';
+                const stored = (sid ? (localStorage.getItem('reading_results_' + userPrefix + sid) || localStorage.getItem('reading_results_' + sid)) : null) || localStorage.getItem('latest_reading_results_' + userPrefix) || localStorage.getItem('latest_reading_results');
+                if (stored) {
+                    try {
+                        const parsed = JSON.parse(stored);
+                        setResultsPayload(parsed);
+                        setTestState('results');
+                        return;
+                    } catch (e) {
+                        console.error('Error parsing stored reading results', e);
+                    }
                 }
-            }
+            };
+            fetchStored();
             const fallbackPayload = generateExamResultsPayload(
                 sid || 'session-initial',
                 `Cambridge IELTS ${bookNumber} — Test ${testNumber}`,
@@ -1388,8 +1393,11 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
 
         // Persist for page refresh & direct navigation
         try {
-            localStorage.setItem('reading_results_' + sessionId, JSON.stringify(payload));
-            localStorage.setItem('latest_reading_results', JSON.stringify(payload));
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                const userPrefix = session?.user?.id ? `${session.user.id}_` : '';
+                localStorage.setItem('reading_results_' + userPrefix + sessionId, JSON.stringify(payload));
+                localStorage.setItem('latest_reading_results_' + userPrefix, JSON.stringify(payload));
+            });
         } catch (err) {
             console.error('Failed to cache reading results payload', err);
         }
@@ -1414,8 +1422,11 @@ const IELTSReadingExam: React.FC<IELTSReadingExamProps> = ({
             if (attemptData?.id) {
                 payload.attemptId = attemptData.id;
                 try {
-                    localStorage.setItem('reading_results_' + sessionId, JSON.stringify(payload));
-                    localStorage.setItem('latest_reading_results', JSON.stringify(payload));
+                    supabase.auth.getSession().then(({ data: { session } }) => {
+                        const userPrefix = session?.user?.id ? `${session.user.id}_` : '';
+                        localStorage.setItem('reading_results_' + userPrefix + sessionId, JSON.stringify(payload));
+                        localStorage.setItem('latest_reading_results_' + userPrefix, JSON.stringify(payload));
+                    });
                 } catch {}
             }
         }).catch((err) => {

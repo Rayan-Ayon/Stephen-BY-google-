@@ -29,7 +29,7 @@ const STATUS_LABEL: Record<StatusFilter, string> = {
 export { resolveExamTitle };
 
 export const ReadingHistoryMatrix: React.FC<ReadingHistoryMatrixProps> = ({ bookFilter }) => {
-    const [attempts, setAttempts] = useState<IeltsAttempt[]>(readAttempts);
+    const [attempts, setAttempts] = useState<IeltsAttempt[]>([]);
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
     const [typeFilter, setTypeFilter] = useState<ExamTypeFilter>('all');
     const [selectedAttempt, setSelectedAttempt] = useState<IeltsAttempt | null>(null);
@@ -37,7 +37,6 @@ export const ReadingHistoryMatrix: React.FC<ReadingHistoryMatrixProps> = ({ book
     useEffect(() => {
         let mounted = true;
         const loadAttempts = async () => {
-            const local = readAttempts();
             try {
                 const { data: { session } } = await supabase.auth.getSession();
                 const userId = session?.user?.id;
@@ -47,6 +46,8 @@ export const ReadingHistoryMatrix: React.FC<ReadingHistoryMatrixProps> = ({ book
                     return;
                 }
 
+                const local = readAttempts(userId);
+
                 const { data: dbAttempts } = await supabase
                     .from('exam_attempts')
                     .select('*')
@@ -55,15 +56,21 @@ export const ReadingHistoryMatrix: React.FC<ReadingHistoryMatrixProps> = ({ book
                     .order('created_at', { ascending: false })
                     .limit(50);
 
-                if (dbAttempts && mounted) {
+                if (dbAttempts && dbAttempts.length > 0 && mounted) {
                     const mappedDb: IeltsAttempt[] = dbAttempts.map((row: any) => transformExamAttemptRow(row, 'reading'));
-                    setAttempts(mappedDb);
+                    const seen = new Set(mappedDb.map(d => String(d.id)));
+                    const merged = [...mappedDb];
+                    local.forEach(l => {
+                        if (!seen.has(String(l.id))) merged.push(l);
+                    });
+                    setAttempts(merged);
                     return;
                 }
+
+                if (mounted) setAttempts(local);
             } catch {
-                // fallback to local
+                if (mounted) setAttempts([]);
             }
-            if (mounted) setAttempts(local);
         };
 
         loadAttempts();
@@ -148,9 +155,12 @@ export const ReadingHistoryMatrix: React.FC<ReadingHistoryMatrixProps> = ({ book
             </div>
 
             {filteredAttempts.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-[#222732] bg-[#0D0F12]/50 p-8 text-center">
-                    <p className="text-sm font-medium text-slate-400">No reading test attempts match the selected filters.</p>
-                    <p className="text-xs text-slate-500 mt-1">Adjust your filters or complete a Cambridge Reading exam to populate this matrix.</p>
+                <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-zinc-800 rounded-2xl bg-[#12141a]/50">
+                    <span className="text-3xl mb-3">📋</span>
+                    <h3 className="text-sm font-semibold text-zinc-300">No practice history yet</h3>
+                    <p className="text-xs text-zinc-500 max-w-sm mt-1">
+                        You haven't completed any drills under this account. Complete a practice drill to view detailed diagnostic telemetry.
+                    </p>
                 </div>
             ) : (
                 <div className="overflow-x-auto custom-scrollbar">

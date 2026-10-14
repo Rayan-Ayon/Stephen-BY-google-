@@ -29,6 +29,7 @@ export interface WritingEvaluationCanvasProps {
     attemptId?: string | number | null;
     attempt?: any;
     evaluationProp?: WritingEvaluationPayload | null;
+    scopedTask?: 1 | 2; // 1 for Task 1, 2 for Task 2 (Undefined for full mock tests)
     onClose?: () => void;
 }
 
@@ -39,6 +40,7 @@ export const WritingEvaluationCanvas: React.FC<WritingEvaluationCanvasProps> = (
     attemptId,
     attempt,
     evaluationProp,
+    scopedTask,
     onClose,
 }) => {
     const { evaluation: fetchedEval, isLoading } = useWritingEvaluation({
@@ -99,10 +101,22 @@ export const WritingEvaluationCanvas: React.FC<WritingEvaluationCanvasProps> = (
     const t1Band = Number(task1?.evaluation?.band ?? attempt?.criteria?.find((c: any) => c.label === 'Task 1')?.band ?? 6.5);
     const t2Band = Number(task2?.evaluation?.band ?? attempt?.criteria?.find((c: any) => c.label === 'Task 2')?.band ?? (data?.overallBand ?? 6.5));
 
-    // Active Tab State (defaults to Task 2 or Task 1 if Task 2 is absent)
-    const [activeTaskTab, setActiveTaskTab] = useState<'task1' | 'task2'>('task2');
+    // Active Tab State (defaults to scopedTask, or Task 2, or Task 1 if Task 2 is absent)
+    const [activeTaskTab, setActiveTaskTab] = useState<'task1' | 'task2'>(
+        scopedTask ? (scopedTask === 1 ? 'task1' : 'task2') : (task2 ? 'task2' : 'task1')
+    );
+
+    useEffect(() => {
+        if (scopedTask) {
+            setActiveTaskTab(scopedTask === 1 ? 'task1' : 'task2');
+            setExpandedCriterion(scopedTask === 1 ? 'TA' : 'TR');
+        }
+    }, [scopedTask]);
+
     const [modelLang, setModelLang] = useState<'en' | 'bn'>('en');
-    const [expandedCriterion, setExpandedCriterion] = useState<string | null>('TR');
+    const [expandedCriterion, setExpandedCriterion] = useState<string | null>(
+        scopedTask === 1 ? 'TA' : 'TR'
+    );
     const [scoreViewMode, setScoreViewMode] = useState<'ai' | 'teacher'>('ai');
 
     const examTitle = useMemo(() => {
@@ -500,42 +514,46 @@ export const WritingEvaluationCanvas: React.FC<WritingEvaluationCanvasProps> = (
 
                 {/* ════ SECTION 2: PRIMARY DUAL-TASK SWITCHER STRIP ════ */}
                 <div className="flex items-center gap-3 p-1.5 bg-[#15181E] border border-[#222732] rounded-2xl w-fit">
-                    <button
-                        onClick={() => {
-                            setActiveTaskTab('task1');
-                            setExpandedCriterion('TA');
-                        }}
-                        className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2.5 ${
-                            activeTaskTab === 'task1'
-                                ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/30'
-                                : 'text-slate-400 hover:text-slate-200 hover:bg-[#1C212B]'
-                        }`}
-                    >
-                        <span>📊 Task 1: Academic Report</span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                            activeTaskTab === 'task1' ? 'bg-black/30 text-white' : 'bg-rose-950/60 text-rose-300 border border-rose-800/40'
-                        }`}>
-                            Band {t1Band.toFixed(1)}
-                        </span>
-                    </button>
-                    <button
-                        onClick={() => {
-                            setActiveTaskTab('task2');
-                            setExpandedCriterion('TR');
-                        }}
-                        className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2.5 ${
-                            activeTaskTab === 'task2'
-                                ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/30'
-                                : 'text-slate-400 hover:text-slate-200 hover:bg-[#1C212B]'
-                        }`}
-                    >
-                        <span>✍️ Task 2: Discursive Essay</span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                            activeTaskTab === 'task2' ? 'bg-black/30 text-white' : 'bg-rose-950/60 text-rose-300 border border-rose-800/40'
-                        }`}>
-                            Band {t2Band.toFixed(1)}
-                        </span>
-                    </button>
+                    {(!scopedTask || scopedTask === 1) && (
+                        <button
+                            onClick={() => {
+                                setActiveTaskTab('task1');
+                                setExpandedCriterion('TA');
+                            }}
+                            className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2.5 ${
+                                activeTaskTab === 'task1'
+                                    ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/30'
+                                    : 'text-slate-400 hover:text-slate-200 hover:bg-[#1C212B]'
+                            }`}
+                        >
+                            <span>📊 Task 1: Academic Report</span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                                activeTaskTab === 'task1' ? 'bg-black/30 text-white' : 'bg-rose-950/60 text-rose-300 border border-rose-800/40'
+                            }`}>
+                                Band {t1Band.toFixed(1)}
+                            </span>
+                        </button>
+                    )}
+                    {(!scopedTask || scopedTask === 2) && (
+                        <button
+                            onClick={() => {
+                                setActiveTaskTab('task2');
+                                setExpandedCriterion('TR');
+                            }}
+                            className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2.5 ${
+                                activeTaskTab === 'task2'
+                                    ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/30'
+                                    : 'text-slate-400 hover:text-slate-200 hover:bg-[#1C212B]'
+                            }`}
+                        >
+                            <span>✍️ Task 2: Discursive Essay</span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                                activeTaskTab === 'task2' ? 'bg-black/30 text-white' : 'bg-rose-950/60 text-rose-300 border border-rose-800/40'
+                            }`}>
+                                Band {t2Band.toFixed(1)}
+                            </span>
+                        </button>
+                    )}
                 </div>
 
                 {/* ════ SECTION 3: 4-PILLAR SCORE CARDS ROW FOR ACTIVE TASK ════ */}

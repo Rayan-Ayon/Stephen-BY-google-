@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 // Local Inline SVG Icon Components
 const PlayIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
@@ -8845,6 +8845,17 @@ interface FreeContentLibraryViewProps {
 }
 
 export default function FreeContentLibraryView({ userEmail, onNavigate }: FreeContentLibraryViewProps) {
+  const leftColumnRef = useRef<HTMLDivElement>(null);
+
+  const handleVideoSelect = (video: VideoItem, subTopicId: string) => {
+    setEmbedFailed(false);
+    setSelectedVideo(video);
+    setActiveSubTopicId(subTopicId);
+    if (leftColumnRef.current) {
+      leftColumnRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const [activeModule, setActiveModule] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10>(0);
   const [selectedVideo, setSelectedVideo] = useState<VideoItem>(MODULE_00_DATA[0].videos[0]);
   const [activeSubTopicId, setActiveSubTopicId] = useState<string>('0.1');
@@ -8913,7 +8924,7 @@ export default function FreeContentLibraryView({ userEmail, onNavigate }: FreeCo
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 flex-1 min-h-0">
         
         {/* LEFT COLUMN: HERO PLAYER & SUBTOPICS */}
-        <div className="flex-1 min-w-0 overflow-y-auto pr-2 space-y-6">
+        <div ref={leftColumnRef} className="flex-1 min-w-0 overflow-y-auto pr-2 space-y-6">
 
           {/* Module Summary Header Card */}
           {currentModuleSummary && (
@@ -9025,8 +9036,18 @@ export default function FreeContentLibraryView({ userEmail, onNavigate }: FreeCo
               {embedFailed ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-900 gap-4">
                   <img
-                    src={selectedVideo.thumbnailUrl}
+                    src={selectedVideo.thumbnailUrl || `https://img.youtube.com/vi/${selectedVideo.youtubeId}/hqdefault.jpg`}
                     alt={selectedVideo.title}
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.dataset.fallbackStep) {
+                        target.dataset.fallbackStep = 'mq';
+                        target.src = `https://img.youtube.com/vi/${selectedVideo.youtubeId}/mqdefault.jpg`;
+                      } else if (target.dataset.fallbackStep === 'mq') {
+                        target.dataset.fallbackStep = 'def';
+                        target.src = `https://img.youtube.com/vi/${selectedVideo.youtubeId}/default.jpg`;
+                      }
+                    }}
                     className="w-full h-full object-cover absolute inset-0 opacity-30"
                   />
                   <div className="relative z-10 flex flex-col items-center gap-3">
@@ -9055,6 +9076,22 @@ export default function FreeContentLibraryView({ userEmail, onNavigate }: FreeCo
               )}
             </div>
 
+            {/* Dynamic Stream Fallback Alert Bar */}
+            <div className="mt-3.5 px-4 py-2.5 rounded-2xl bg-[#15181E] border border-[#222732] flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 text-neutral-300">
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                <span className="text-neutral-400">If external embed playback is restricted by YouTube:</span>
+              </div>
+              <a
+                href={`https://www.youtube.com/watch?v=${selectedVideo.youtubeId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-rose-600 hover:bg-rose-500 text-white transition-all flex items-center gap-2 shadow-md shadow-rose-600/20"
+              >
+                <span>↗</span> Watch Direct Stream on YouTube
+              </a>
+            </div>
+
             {/* Video Details Bar */}
             <div className="mt-4 space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -9062,6 +9099,14 @@ export default function FreeContentLibraryView({ userEmail, onNavigate }: FreeCo
                   {selectedVideo.title}
                 </h2>
                 <div className="flex items-center gap-2">
+                  <a
+                    href={`https://www.youtube.com/watch?v=${selectedVideo.youtubeId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-rose-600 hover:bg-rose-500 text-white transition-all flex items-center gap-1.5 shadow-md shadow-rose-600/20"
+                  >
+                    <span>↗</span> Direct Stream
+                  </a>
                   <button
                     type="button"
                     onClick={() => handleLearnWithAI(selectedVideo)}
@@ -9132,11 +9177,7 @@ export default function FreeContentLibraryView({ userEmail, onNavigate }: FreeCo
                     return (
                       <div
                         key={video.id}
-                        onClick={() => {
-                          setEmbedFailed(false);
-                          setSelectedVideo(video);
-                          setActiveSubTopicId(subTopic.id);
-                        }}
+                        onClick={() => handleVideoSelect(video, subTopic.id)}
                         className={`group flex flex-col sm:flex-row gap-4 bg-neutral-800/60 border rounded-2xl p-3.5 transition cursor-pointer ${
                           isSelected
                             ? 'border-rose-500 ring-2 ring-rose-500/20 shadow-lg bg-rose-500/5'
@@ -9146,8 +9187,18 @@ export default function FreeContentLibraryView({ userEmail, onNavigate }: FreeCo
                         {/* Left Thumbnail */}
                         <div className="w-full sm:w-44 h-28 relative rounded-xl overflow-hidden bg-black flex-shrink-0">
                           <img
-                            src={video.thumbnailUrl}
+                            src={video.thumbnailUrl || `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`}
                             alt={video.title}
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              if (!target.dataset.fallbackStep) {
+                                target.dataset.fallbackStep = 'mq';
+                                target.src = `https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`;
+                              } else if (target.dataset.fallbackStep === 'mq') {
+                                target.dataset.fallbackStep = 'def';
+                                target.src = `https://img.youtube.com/vi/${video.youtubeId}/default.jpg`;
+                              }
+                            }}
                             className="w-full h-full object-cover group-hover:scale-105 transition duration-300 opacity-90 group-hover:opacity-100"
                           />
                           <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition flex items-center justify-center">
@@ -9194,7 +9245,15 @@ export default function FreeContentLibraryView({ userEmail, onNavigate }: FreeCo
                           </p>
 
                           <div className="mt-2.5 pt-2 border-t border-neutral-700/50 flex items-center justify-between">
-                            <span className="text-[11px] text-neutral-400">Interactive AI Analysis ready</span>
+                            <a
+                              href={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-[11px] text-rose-400 hover:text-rose-300 font-medium transition"
+                            >
+                              <span>↗ Watch on YouTube</span>
+                            </a>
                             <button
                               type="button"
                               onClick={(e) => {

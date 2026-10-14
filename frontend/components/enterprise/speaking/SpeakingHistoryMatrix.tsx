@@ -136,39 +136,45 @@ export const SpeakingHistoryMatrix: React.FC<SpeakingHistoryMatrixProps> = ({
         setIsLoading(true);
         const localAttempts: SpeakingAttempt[] = [];
 
-        // 1. Read from speaking_attempts_history in localStorage
-        try {
-            const rawSpeaking = localStorage.getItem('speaking_attempts_history');
-            if (rawSpeaking) {
-                const parsed = JSON.parse(rawSpeaking);
-                if (Array.isArray(parsed)) {
-                    localAttempts.push(...parsed.map((item: any) => {
-                        const hasBand = item.overall_band != null && item.overall_band !== 'Pending' && item.overall_band !== 0 && item.overall_band !== '0' && item.overall_band !== '0.0';
-                        return {
-                            ...item,
-                            overall_band: hasBand ? item.overall_band : (item.evaluation?.overallBand ? Number(item.evaluation.overallBand).toFixed(1) : '6.5'),
-                            criteria_status: 'Evaluated (3 Parts)',
-                        };
-                    }));
-                }
-            }
-        } catch (e) {
-            console.warn('[SpeakingHistoryMatrix] Error reading speaking_attempts_history:', e);
-        }
-
-        // 2. Read from Supabase exam_attempts (module = 'speaking')
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const userId = session?.user?.id;
 
-            if (userId) {
-                const { data: dbAttempts, error } = await supabase
-                    .from('exam_attempts')
-                    .select('*')
-                    .eq('module', 'speaking')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false })
-                    .limit(50);
+            if (!userId) {
+                setAttempts([]);
+                setIsLoading(false);
+                return;
+            }
+
+            // 1. Read from user-scoped speaking attempts in localStorage
+            try {
+                const speakingStorageKey = `stephen_${userId}_speaking_attempts`;
+                const rawSpeaking = localStorage.getItem(speakingStorageKey) || localStorage.getItem('speaking_attempts_history');
+                if (rawSpeaking) {
+                    const parsed = JSON.parse(rawSpeaking);
+                    if (Array.isArray(parsed)) {
+                        localAttempts.push(...parsed.map((item: any) => {
+                            const hasBand = item.overall_band != null && item.overall_band !== 'Pending' && item.overall_band !== 0 && item.overall_band !== '0' && item.overall_band !== '0.0';
+                            return {
+                                ...item,
+                                overall_band: hasBand ? item.overall_band : (item.evaluation?.overallBand ? Number(item.evaluation.overallBand).toFixed(1) : '6.5'),
+                                criteria_status: 'Evaluated (3 Parts)',
+                            };
+                        }));
+                    }
+                }
+            } catch (e) {
+                console.warn('[SpeakingHistoryMatrix] Error reading speaking storage:', e);
+            }
+
+            // 2. Read from Supabase exam_attempts (module = 'speaking')
+            const { data: dbAttempts, error } = await supabase
+                .from('exam_attempts')
+                .select('*')
+                .eq('module', 'speaking')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+                .limit(50);
 
             if (!error && dbAttempts && dbAttempts.length > 0) {
                 const mappedDb: SpeakingAttempt[] = dbAttempts.map((row: any) => {
@@ -243,7 +249,6 @@ export const SpeakingHistoryMatrix: React.FC<SpeakingHistoryMatrixProps> = ({
                 setAttempts(merged);
                 setIsLoading(false);
                 return;
-            }
             }
         } catch (dbErr) {
             console.warn('[SpeakingHistoryMatrix] Supabase fetch error:', dbErr);
@@ -361,12 +366,11 @@ export const SpeakingHistoryMatrix: React.FC<SpeakingHistoryMatrixProps> = ({
                     <p className="text-sm font-medium text-slate-400">Loading speaking attempts archive...</p>
                 </div>
             ) : filteredAttempts.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-[#222732] bg-[#0D0F12]/50 p-8 text-center">
-                    <p className="text-sm font-medium text-slate-400">
-                        No speaking test attempts match the selected filters.
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                        Complete a Cambridge Speaking interview in the Speaking Room to automatically populate this matrix.
+                <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-zinc-800 rounded-2xl bg-[#12141a]/50">
+                    <span className="text-3xl mb-3">📋</span>
+                    <h3 className="text-sm font-semibold text-zinc-300">No practice history yet</h3>
+                    <p className="text-xs text-zinc-500 max-w-sm mt-1">
+                        You haven't completed any drills under this account. Complete a practice drill to view detailed diagnostic telemetry.
                     </p>
                 </div>
             ) : (
@@ -474,7 +478,25 @@ export const SpeakingHistoryMatrix: React.FC<SpeakingHistoryMatrixProps> = ({
         {/* Full Executive Evaluation Canvas Portaled into document.body */}
         {selectedAttempt && typeof document !== 'undefined' && createPortal(
             (() => {
-                const effectiveEvaluation = selectedAttempt.evaluation || buildCalibratedSpeakingEvaluation(selectedAttempt.parts_data);
+                // Extract real AI evaluation payload if present
+                let resolvedEvaluation: any = null;
+
+                if (selectedAttempt.evaluation && typeof selectedAttempt.evaluation === 'object') {
+                    resolvedEvaluation = selectedAttempt.evaluation;
+                } else if (typeof selectedAttempt.evaluation === 'string') {
+                    try {
+                        resolvedEvaluation = JSON.parse(selectedAttempt.evaluation);
+                    } catch (e) {
+                        console.warn('[SPEAKING_MATRIX] Failed to parse evaluation JSON string:', e);
+                    }
+                } else if ((selectedAttempt as any).details?.evaluation) {
+                    resolvedEvaluation = (selectedAttempt as any).details.evaluation;
+                } else if ((selectedAttempt as any).raw_json_feedback) {
+                    resolvedEvaluation = (selectedAttempt as any).raw_json_feedback;
+                }
+
+                // Fall back to calibrated scoring ONLY if attempt has zero evaluation data
+                const effectiveEvaluation = resolvedEvaluation || buildCalibratedSpeakingEvaluation(selectedAttempt.parts_data);
                 return (
                     <SpeakingEvaluationCanvas
                         attemptId={selectedAttempt.id}

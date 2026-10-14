@@ -38,7 +38,9 @@ export interface SpeakingPartnerSessionRecord {
     elapsed?: number;
 }
 
-const STORAGE_KEY = 'stephen_speaking_partner_sessions_v1';
+export const getSpeakingStorageKey = (userId?: string) =>
+    userId ? `stephen_${userId}_speaking_partner_sessions_v1` : 'stephen_guest_speaking_partner_sessions';
+
 const UPDATE_EVENT_NAME = 'speaking_partner_sessions_updated';
 const MAX_SAVED_SESSIONS = 50;
 
@@ -46,10 +48,11 @@ const MAX_SAVED_SESSIONS = 50;
  * Retrieve saved speaking partner sessions from LocalStorage.
  * Gracefully handles parsing errors, missing data, and invalid formats.
  */
-export function getSavedSpeakingSessions(): SpeakingPartnerSessionRecord[] {
+export function getSavedSpeakingSessions(userId?: string): SpeakingPartnerSessionRecord[] {
     if (typeof window === 'undefined') return [];
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const key = getSpeakingStorageKey(userId);
+        const raw = localStorage.getItem(key);
         if (!raw) return [];
         const parsed = JSON.parse(raw);
         if (!Array.isArray(parsed)) return [];
@@ -65,13 +68,14 @@ export function getSavedSpeakingSessions(): SpeakingPartnerSessionRecord[] {
  * Deduplicates by session ID, prepends new sessions, and caps at MAX_SAVED_SESSIONS.
  * Dispatches an event to notify active listeners for cross-tab or component synchronization.
  */
-export function saveSpeakingSession(session: SpeakingPartnerSessionRecord): void {
+export function saveSpeakingSession(session: SpeakingPartnerSessionRecord, userId?: string): void {
     if (typeof window === 'undefined') return;
     try {
-        const existing = getSavedSpeakingSessions();
+        const key = getSpeakingStorageKey(userId);
+        const existing = getSavedSpeakingSessions(userId);
         const updated = [session, ...existing.filter(s => s.id !== session.id)].slice(0, MAX_SAVED_SESSIONS);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        window.dispatchEvent(new CustomEvent(UPDATE_EVENT_NAME, { detail: { sessionId: session.id } }));
+        localStorage.setItem(key, JSON.stringify(updated));
+        window.dispatchEvent(new CustomEvent(UPDATE_EVENT_NAME, { detail: { sessionId: session.id, userId } }));
     } catch (err) {
         console.error('[StephenStorage] Failed to save speaking partner session:', err);
     }
@@ -81,10 +85,11 @@ export function saveSpeakingSession(session: SpeakingPartnerSessionRecord): void
  * Update the cached evaluation and band scores of an existing session in place.
  * Preserves all conversation turns, timing, and persona metadata.
  */
-export function updateSpeakingSessionEvaluation(sessionId: string, evaluation: any): void {
+export function updateSpeakingSessionEvaluation(sessionId: string, evaluation: any, userId?: string): void {
     if (typeof window === 'undefined' || !sessionId) return;
     try {
-        const existing = getSavedSpeakingSessions();
+        const key = getSpeakingStorageKey(userId);
+        const existing = getSavedSpeakingSessions(userId);
         let updatedCount = 0;
         const updated = existing.map(s => {
             if (s.id === sessionId) {
@@ -95,8 +100,8 @@ export function updateSpeakingSessionEvaluation(sessionId: string, evaluation: a
         });
 
         if (updatedCount > 0) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-            window.dispatchEvent(new CustomEvent(UPDATE_EVENT_NAME, { detail: { sessionId, evaluation } }));
+            localStorage.setItem(key, JSON.stringify(updated));
+            window.dispatchEvent(new CustomEvent(UPDATE_EVENT_NAME, { detail: { sessionId, evaluation, userId } }));
         }
     } catch (err) {
         console.error('[StephenStorage] Failed to update session evaluation:', err);
@@ -106,13 +111,14 @@ export function updateSpeakingSessionEvaluation(sessionId: string, evaluation: a
 /**
  * Delete a specific session by ID.
  */
-export function deleteSpeakingSession(sessionId: string): void {
+export function deleteSpeakingSession(sessionId: string, userId?: string): void {
     if (typeof window === 'undefined' || !sessionId) return;
     try {
-        const existing = getSavedSpeakingSessions();
+        const key = getSpeakingStorageKey(userId);
+        const existing = getSavedSpeakingSessions(userId);
         const updated = existing.filter(s => s.id !== sessionId);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        window.dispatchEvent(new CustomEvent(UPDATE_EVENT_NAME, { detail: { sessionId } }));
+        localStorage.setItem(key, JSON.stringify(updated));
+        window.dispatchEvent(new CustomEvent(UPDATE_EVENT_NAME, { detail: { sessionId, userId } }));
     } catch (err) {
         console.error('[StephenStorage] Failed to delete session:', err);
     }
@@ -121,11 +127,12 @@ export function deleteSpeakingSession(sessionId: string): void {
 /**
  * Clear all saved speaking partner sessions (useful for test resets).
  */
-export function clearSpeakingSessions(): void {
+export function clearSpeakingSessions(userId?: string): void {
     if (typeof window === 'undefined') return;
     try {
-        localStorage.removeItem(STORAGE_KEY);
-        window.dispatchEvent(new CustomEvent(UPDATE_EVENT_NAME));
+        const key = getSpeakingStorageKey(userId);
+        localStorage.removeItem(key);
+        window.dispatchEvent(new CustomEvent(UPDATE_EVENT_NAME, { detail: { userId } }));
     } catch (err) {
         console.error('[StephenStorage] Failed to clear speaking sessions:', err);
     }

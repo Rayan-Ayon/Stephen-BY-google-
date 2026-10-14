@@ -1,63 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import {
-    ChatMessage,
-    sendChatMessage,
-    fetchConversations,
-    fetchConversationDetails,
-    deleteConversation,
-} from '../services/chatbotService';
-
-/* ─── Types ─────────────────────────────────────────────────────────── */
-
-interface Message {
-    id: string;
-    sender: 'user' | 'mihu';
-    text: string;
-    time: string;
-}
-
-interface Conversation {
-    id: string;
-    title: string;
-    timestamp: string;
-    messages: Message[];
-}
-
-/* ─── Mock AI Response Engine ───────────────────────────────────────── */
-
-const RAYAN_RESPONSES: Record<string, string> = {
-    default: "Great question! As your IELTS tutor, I'd recommend focusing on structured practice. For Band 7+, you need to demonstrate a wide range of vocabulary and grammatical structures. Let me know which specific skill you'd like to work on — Reading, Writing, Listening, or Speaking — and I'll guide you through targeted exercises.",
-    task2: "For Task 2 essays, aim for a clear thesis statement in your introduction. Band 8 essays typically have:\n\n• A clear position throughout\n• Well-developed main ideas with specific examples\n• Cohesive paragraphing with logical progression\n• A mix of complex and simple sentence structures\n\nTry writing a 250+ word essay on a recent topic. I can review it for band score estimation!",
-    speaking: "For IELTS Speaking, fluency and coherence are key for Band 7+. Here's what examiners look for:\n\n• Speaking at length without noticeable effort\n• Using discourse markers naturally (however, on the other hand)\n• Pronouncing individual sounds clearly\n• Using intonation to convey meaning\n\nShall we practice a Part 1 topic? Try answering: 'Do you enjoy reading? Why or why not?'",
-    grammar: "Common IELTS grammar mistakes that lower your band score:\n\n• Subject-verb agreement errors\n• Incorrect article usage (a/an/the)\n• Run-on sentences and comma splices\n• Overuse of passive voice\n\nFor Band 7+, aim for 'a variety of complex structures' including conditionals, relative clauses, and inversion. Practice with sentence transformation exercises!",
-    task1: "Task 1 (Academic) requires you to describe visual data in 150+ words. Key strategies:\n\n• Overview paragraph with key trends (2-3 sentences)\n• Group data logically, don't describe every data point\n• Use comparative language: 'significantly higher', 'remained stable'\n• Include at least 3 comparisons\n\nTask 1 (General) is a letter — formal, semi-formal, or informal depending on the prompt.",
-    band: "Here's a quick band score breakdown:\n\n• Band 9: Expert user with full operational fluency\n• Band 8: Very good user, occasional inaccuracies\n• Band 7: Good user, generally effective communication\n• Band 6: Competent user, some inaccuracies\n• Band 5: Modest user, partial command of language\n\nMost universities require Band 6.5-7.0. Where are you currently scoring?",
-};
-
-function getRayanResponse(userMessage: string): string {
-    const lower = userMessage.toLowerCase();
-    if (lower.includes('task 2') || lower.includes('essay') || lower.includes('writing')) return RAYAN_RESPONSES.task2;
-    if (lower.includes('speaking') || lower.includes('part 1') || lower.includes('part 2') || lower.includes('cue card')) return RAYAN_RESPONSES.speaking;
-    if (lower.includes('grammar') || lower.includes('tense') || lower.includes('sentence')) return RAYAN_RESPONSES.grammar;
-    if (lower.includes('task 1') || lower.includes('chart') || lower.includes('graph') || lower.includes('diagram')) return RAYAN_RESPONSES.task1;
-    if (lower.includes('band') || lower.includes('score') || lower.includes('grade')) return RAYAN_RESPONSES.band;
-    return RAYAN_RESPONSES.default;
-}
-
-function formatTime(date: Date): string {
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-}
-
-function formatDate(date: Date): string {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
+import { supabase } from '@/supabaseClient';
+import { useRayanChat } from '@/context/RayanChatContext';
+import RayanMessageFormatter from './chat/RayanMessageFormatter';
+import AIRewriterHistoryModal from './enterprise/writing/AIRewriterHistoryModal';
+import SpeakingEvaluationCanvas from './enterprise/speaking/SpeakingEvaluationCanvas';
+import WritingAnalysisModal from './enterprise/ielts/WritingAnalysisModal';
+import HistoryAnalysisModal from './enterprise/history/HistoryAnalysisModal';
 
 /* ─── Inline SVG Icons ──────────────────────────────────────────────── */
 
@@ -108,366 +56,419 @@ const SparkleIcon: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
+const TrashIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+);
+
 /* ─── Owl Avatar (Rayan) ─────────────────────────────────────────────── */
 
 const RayanAvatar: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }) => {
     const sizeClasses = {
-        sm: 'w-7 h-7 text-sm',
-        md: 'w-9 h-9 text-lg',
+        sm: 'w-7 h-7 text-xs',
+        md: 'w-9 h-9 text-base',
         lg: 'w-16 h-16 text-3xl',
     };
     return (
-        <div className={`${sizeClasses[size]} bg-red-100 rounded-full flex items-center justify-center shadow-sm shrink-0`}>
+        <div className={`${sizeClasses[size]} bg-emerald-950/70 border border-emerald-800/60 rounded-full flex items-center justify-center shadow-md shrink-0 select-none`}>
             🦉
         </div>
     );
 };
 
-/* ─── Quick Starter Prompt Card ─────────────────────────────────────── */
+/* ─── 4 Action Starter Prompts ──────────────────────────────────────── */
 
 const QUICK_PROMPTS = [
-    "Help me with Task 2 essay writing",
-    "Practice speaking with me",
-    "Explain IELTS grammar rules",
-    "What's the difference between Task 1 and Task 2?",
+    { title: "Task 2 Writing", prompt: "Help me with Task 2 essay writing", desc: "Essay structure, band descriptors, and cohesive argument flow" },
+    { title: "Speaking Practice", prompt: "Practice speaking with me", desc: "Fluency drills, Part 1 & 2 topics, and lexical scoring feedback" },
+    { title: "Grammar Masterclass", prompt: "Explain IELTS grammar rules", desc: "Complex sentences, conditionals, articles, and band 7+ syntax" },
+    { title: "Task 1 vs Task 2", prompt: "What's the difference between Task 1 and Task 2?", desc: "Data trends vs persuasive essays, timing, and word requirements" },
 ];
 
 /* ─── Main Component ────────────────────────────────────────────────── */
 
 interface AIIELTSChatbotViewProps {
-    userEmail: string;
+    userEmail?: string;
 }
 
 const AIIELTSChatbotView: React.FC<AIIELTSChatbotViewProps> = ({ userEmail: _userEmail }) => {
-    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-    const [conversations, setConversations] = useState<Conversation[]>([]);
-    const [activeChatId, setActiveChatId] = useState<string | null>(null);
+    const {
+        messages,
+        currentSessionId,
+        sessions,
+        isLoading,
+        isHistoryOpen,
+        setIsHistoryOpen,
+        sendMessage,
+        startNewChat,
+        switchSession,
+        deleteSession,
+        setUserEmail,
+    } = useRayanChat();
+
     const [inputText, setInputText] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
-    const [isTyping, setIsTyping] = useState(false);
+    const [selectedAttemptIdForModal, setSelectedAttemptIdForModal] = useState<string | null>(null);
+    const [selectedRewriteIdForModal, setSelectedRewriteIdForModal] = useState<string | null>(null);
+    const [modalAttemptData, setModalAttemptData] = useState<{ type: string; data: any } | null>(null);
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const activeChat = conversations.find(c => c.id === activeChatId) ?? null;
-    const hasMessages = activeChat && activeChat.messages.length > 0;
-
-    /* ── Load conversation history from backend on mount ── */
+    // Sync user email if passed as prop
     useEffect(() => {
-        fetchConversations(_userEmail)
-            .then(list => {
-                if (list && list.length > 0) {
-                    setConversations(list.map(c => ({
-                        id: c.conversation_id,
-                        title: c.title,
-                        timestamp: formatDate(new Date(c.updated_at || c.created_at || Date.now())),
-                        messages: [],
-                    })));
-                }
-            })
-            .catch(err => console.warn('Could not load backend conversations:', err));
-    }, [_userEmail]);
+        if (_userEmail) {
+            setUserEmail(_userEmail);
+        }
+    }, [_userEmail, setUserEmail]);
 
-    /* ── Auto-scroll to bottom ── */
+    // Auto-scroll to bottom on new messages
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [activeChat?.messages.length, isTyping]);
+    }, [messages.length, isLoading]);
 
-    /* ── Focus input on mount and when chat changes ── */
+    // Focus input and check for pre-populated prompt on mount
     useEffect(() => {
-        inputRef.current?.focus();
-    }, [activeChatId]);
-
-    /* ── Send message logic with real backend AI advisor ── */
-    const sendMessage = useCallback(async (text: string) => {
-        if (!text.trim() || isTyping) return;
-
-        const now = new Date();
-        const userMsg: Message = {
-            id: `msg-${Date.now()}-user`,
-            sender: 'user',
-            text: text.trim(),
-            time: formatTime(now),
-        };
-
-        let targetChatId = activeChatId;
-
-        setConversations(prev => {
-            if (targetChatId) {
-                return prev.map(c =>
-                    c.id === targetChatId
-                        ? { ...c, messages: [...c.messages, userMsg] }
-                        : c
-                );
-            } else {
-                const newId = `chat-${Date.now()}`;
-                targetChatId = newId;
-                const newConv: Conversation = {
-                    id: newId,
-                    title: text.trim().length > 30 ? text.trim().substring(0, 30) + '...' : text.trim(),
-                    timestamp: formatTime(now),
-                    messages: [userMsg],
-                };
-                return [newConv, ...prev];
-            }
-        });
-
-        if (!activeChatId) {
-            setActiveChatId(targetChatId);
-        }
-
-        setInputText('');
-        setIsTyping(true);
-
         try {
-            const currentMsgs = activeChat ? [...activeChat.messages, userMsg] : [userMsg];
-            const historyPayload: ChatMessage[] = currentMsgs.map(m => ({
-                id: m.id,
-                role: m.sender === 'user' ? 'user' : 'model',
-                content: m.text,
-            }));
-
-            const isBackendId = targetChatId && targetChatId.startsWith('conv_');
-            const res = await sendChatMessage(
-                text.trim(),
-                isBackendId ? targetChatId : undefined,
-                historyPayload,
-                _userEmail
-            );
-
-            const mihuMsg: Message = {
-                id: `msg-${Date.now()}-mihu`,
-                sender: 'mihu',
-                text: res.response,
-                time: formatTime(new Date(res.timestamp || Date.now())),
-            };
-
-            const finalId = res.conversation_id || targetChatId!;
-
-            setConversations(prev =>
-                prev.map(c =>
-                    c.id === targetChatId
-                        ? {
-                            ...c,
-                            id: finalId,
-                            title: res.title || c.title,
-                            messages: [...c.messages, mihuMsg],
-                          }
-                        : c
-                )
-            );
-            setActiveChatId(finalId);
-        } catch (err) {
-            console.error('Chat error, using fallback:', err);
-            const mihuMsg: Message = {
-                id: `msg-${Date.now()}-mihu`,
-                sender: 'mihu',
-                text: getRayanResponse(text),
-                time: formatTime(new Date()),
-            };
-            setConversations(prev =>
-                prev.map(c =>
-                    c.id === targetChatId
-                        ? { ...c, messages: [...c.messages, mihuMsg] }
-                        : c
-                )
-            );
-        } finally {
-            setIsTyping(false);
-        }
-    }, [activeChatId, activeChat, isTyping, _userEmail]);
-
-    const handleSend = useCallback(() => {
-        sendMessage(inputText);
-    }, [inputText, sendMessage]);
-
-    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSend();
-        }
-    }, [handleSend]);
-
-    const handleQuickPrompt = useCallback((prompt: string) => {
-        sendMessage(prompt);
-    }, [sendMessage]);
-
-    const handleNewChat = useCallback(() => {
-        setActiveChatId(null);
-        setIsHistoryOpen(false);
-    }, []);
-
-    const handleSelectChat = useCallback(async (chatId: string) => {
-        setActiveChatId(chatId);
-        setIsHistoryOpen(false);
-        try {
-            const detail = await fetchConversationDetails(chatId);
-            if (detail && detail.messages) {
-                const loadedMessages: Message[] = detail.messages.map((m, idx) => ({
-                    id: m.id || `msg-${idx}`,
-                    sender: m.role === 'user' ? 'user' : 'mihu',
-                    text: m.content,
-                    time: m.timestamp ? formatTime(new Date(m.timestamp)) : '',
-                }));
-                setConversations(prev =>
-                    prev.map(c => c.id === chatId ? { ...c, messages: loadedMessages } : c)
-                );
+            const pendingPrompt = sessionStorage.getItem('pending_rayan_prompt') || localStorage.getItem('pending_rayan_prompt');
+            if (pendingPrompt) {
+                sessionStorage.removeItem('pending_rayan_prompt');
+                localStorage.removeItem('pending_rayan_prompt');
+                setInputText(pendingPrompt);
             }
         } catch (e) {
-            console.warn('Could not load conversation details from server:', e);
+            // ignore
+        }
+        inputRef.current?.focus();
+    }, [currentSessionId]);
+
+    /* ── Citation Deep-Link Interceptor ── */
+    const handleCitationClick = useCallback((href: string) => {
+        if (href.startsWith('#attempt/')) {
+            const attemptId = href.replace('#attempt/', '');
+            setSelectedAttemptIdForModal(attemptId);
+        } else if (href.startsWith('#rewrite/')) {
+            const rewriteId = href.replace('#rewrite/', '');
+            setSelectedRewriteIdForModal(rewriteId);
         }
     }, []);
 
-    const handleDeleteChat = useCallback(async (e: React.MouseEvent, chatId: string) => {
-        e.stopPropagation();
-        try {
-            await deleteConversation(chatId);
-        } catch (err) {
-            console.warn('Failed to delete on server:', err);
+    /* ── Load Attempt Data when deep link citation is clicked ── */
+    useEffect(() => {
+        if (!selectedAttemptIdForModal) {
+            setModalAttemptData(null);
+            return;
         }
-        setConversations(prev => prev.filter(c => c.id !== chatId));
-        if (activeChatId === chatId) {
-            setActiveChatId(null);
-        }
-    }, [activeChatId]);
+        let cancelled = false;
+        const loadAttempt = async () => {
+            try {
+                // 1. Try exam_attempts
+                const { data: examData } = await (supabase as any)
+                    .from('exam_attempts')
+                    .select('*')
+                    .eq('id', selectedAttemptIdForModal)
+                    .maybeSingle();
 
-    const filteredConversations = conversations.filter(c =>
-        c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.messages.some(m => m.text.toLowerCase().includes(searchQuery.toLowerCase()))
+                if (!cancelled && examData) {
+                    setModalAttemptData({ type: examData.module || 'reading', data: examData });
+                    return;
+                }
+
+                // 2. Try part_practice_attempts
+                const { data: drillData } = await (supabase as any)
+                    .from('part_practice_attempts')
+                    .select('*')
+                    .eq('id', selectedAttemptIdForModal)
+                    .maybeSingle();
+
+                if (!cancelled && drillData) {
+                    setModalAttemptData({ type: drillData.module || 'drill', data: drillData });
+                    return;
+                }
+
+                // 3. Try speaking_submissions
+                const { data: spkData } = await (supabase as any)
+                    .from('speaking_submissions')
+                    .select('*')
+                    .or(`id.eq.${selectedAttemptIdForModal},submission_id.eq.${selectedAttemptIdForModal}`)
+                    .maybeSingle();
+
+                if (!cancelled && spkData) {
+                    setModalAttemptData({ type: 'speaking', data: spkData });
+                    return;
+                }
+
+                // 4. Try writing_submissions
+                const { data: wrtData } = await (supabase as any)
+                    .from('writing_submissions')
+                    .select('*')
+                    .eq('id', selectedAttemptIdForModal)
+                    .maybeSingle();
+
+                if (!cancelled && wrtData) {
+                    setModalAttemptData({ type: 'writing', data: wrtData });
+                    return;
+                }
+            } catch (err) {
+                console.warn('[CHATBOT_INTERCEPTOR] Error fetching attempt detail:', err);
+            }
+        };
+        loadAttempt();
+        return () => {
+            cancelled = true;
+        };
+    }, [selectedAttemptIdForModal]);
+
+    const handleSend = useCallback(async () => {
+        if (!inputText.trim() || isLoading) return;
+        const text = inputText;
+        setInputText('');
+        await sendMessage(text);
+    }, [inputText, isLoading, sendMessage]);
+
+    const handleKeyDown = useCallback(
+        (e: React.KeyboardEvent<HTMLInputElement>) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+            }
+        },
+        [handleSend]
     );
 
+    const handleQuickPrompt = useCallback(
+        (prompt: string) => {
+            sendMessage(prompt);
+        },
+        [sendMessage]
+    );
+
+    const filteredSessions = sessions.filter((s) =>
+        s.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const hasMessages = messages.length > 0;
+
     return (
-        <div className="relative flex h-screen bg-gray-50/50 overflow-hidden">
+        <div className="relative flex h-screen w-full bg-[#0B0C10] text-zinc-100 overflow-hidden font-sans">
             {/* ════════════════════════════════════════════════════════════
-                SECTION B: MAIN CHAT AREA
+                SECTION A: TOP HEADER BAR & HISTORY TOGGLE
             ════════════════════════════════════════════════════════════ */}
-            <div className="flex-1 flex flex-col justify-between items-center px-4 py-6 max-w-4xl mx-auto w-full relative">
-
-                {/* ── Starter Hero Screen ── */}
-                {!hasMessages && (
-                    <div className="flex-1 flex flex-col items-center justify-center">
-                        <div className="mb-4">
-                            <RayanAvatar size="lg" />
+            <header className="absolute top-0 left-0 right-0 h-14 bg-[#0E1017]/80 backdrop-blur-md border-b border-zinc-800/80 px-6 flex items-center justify-between z-20">
+                <div className="flex items-center gap-3">
+                    <RayanAvatar size="sm" />
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm tracking-tight text-white">Rayan</span>
+                            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/50">
+                                AI IELTS Tutor
+                            </span>
                         </div>
-                        <h1 className="text-[28px] font-bold text-gray-900 mb-3">
-                            How can I help you today?
-                        </h1>
-                        <p className="text-gray-500 max-w-md text-center text-sm mb-8 leading-relaxed">
-                            Hello! I'm Rayan, your personalized IELTS tutor. What would you like to work on today?
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
-                            {QUICK_PROMPTS.map((prompt, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => handleQuickPrompt(prompt)}
-                                    className="bg-white border border-gray-200/80 hover:border-red-300 hover:shadow-sm rounded-2xl p-4 text-left text-gray-700 text-sm font-medium transition cursor-pointer"
-                                >
-                                    {prompt}
-                                </button>
-                            ))}
-                        </div>
+                        <p className="text-[11px] text-zinc-400 hidden sm:block">Perplexity-Grade Diagnostic Intelligence</p>
                     </div>
-                )}
+                </div>
 
-                {/* ── Active Message Stream ── */}
-                {hasMessages && (
-                    <div className="w-full flex-1 overflow-y-auto space-y-4 px-2 py-4 mb-20">
-                        {activeChat!.messages.map((msg) => (
-                            <div
-                                key={msg.id}
-                                className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start items-start gap-3'}`}
-                            >
-                                {msg.sender === 'mihu' && <RayanAvatar size="sm" />}
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={startNewChat}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-300 hover:text-white bg-zinc-800/70 hover:bg-zinc-700/80 border border-zinc-700/60 transition cursor-pointer"
+                        title="Start a new chat session"
+                    >
+                        <PlusIcon className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">New Chat</span>
+                    </button>
+
+                    <button
+                        onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+                        className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/70 transition cursor-pointer border border-transparent hover:border-zinc-700/50"
+                        title="Toggle Chat History Drawer"
+                        aria-label="Toggle Chat History"
+                    >
+                        <HamburgerIcon className="w-5 h-5" />
+                    </button>
+                </div>
+            </header>
+
+            {/* ════════════════════════════════════════════════════════════
+                SECTION B: MAIN CHAT CANVAS (PERPLEXITY STYLE)
+            ════════════════════════════════════════════════════════════ */}
+            <main className="flex-1 flex flex-col items-center w-full pt-16 pb-28 px-4 overflow-y-auto">
+                <div className="w-full max-w-3xl flex-1 flex flex-col justify-between py-6">
+                    {/* ── Empty Starter State ── */}
+                    {!hasMessages && (
+                        <div className="flex-1 flex flex-col items-center justify-center text-center my-auto animate-fade-in">
+                            <div className="mb-5 ring-4 ring-emerald-500/10 rounded-full">
+                                <RayanAvatar size="lg" />
+                            </div>
+                            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">
+                                How can I help you today?
+                            </h1>
+                            <p className="text-zinc-400 max-w-lg text-sm sm:text-base mb-10 leading-relaxed">
+                                Hello! I'm Rayan, your personalized IELTS tutor. What would you like to work on today?
+                            </p>
+
+                            {/* 4 Clickable Action Cards */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full">
+                                {QUICK_PROMPTS.map((item, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => handleQuickPrompt(item.prompt)}
+                                        className="group bg-[#12141C] hover:bg-[#181B26] border border-zinc-800/90 hover:border-emerald-500/40 rounded-2xl p-4 text-left transition-all duration-200 cursor-pointer shadow-md hover:shadow-emerald-950/20 flex flex-col justify-between"
+                                    >
+                                        <div className="flex items-center justify-between w-full mb-1.5">
+                                            <span className="text-xs font-semibold text-emerald-400 tracking-wide uppercase">
+                                                {item.title}
+                                            </span>
+                                            <SparkleIcon className="w-3.5 h-3.5 text-zinc-600 group-hover:text-emerald-400 transition-colors" />
+                                        </div>
+                                        <p className="text-sm font-medium text-zinc-200 group-hover:text-white transition-colors mb-1">
+                                            "{item.prompt}"
+                                        </p>
+                                        <p className="text-[11px] text-zinc-400 line-clamp-2">
+                                            {item.desc}
+                                        </p>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── Active Conversation Stream (Perplexity Canvas) ── */}
+                    {hasMessages && (
+                        <div className="w-full space-y-6 py-4">
+                            {messages.map((msg) => (
                                 <div
-                                    className={`${
-                                        msg.sender === 'user'
-                                            ? 'bg-red-600 text-white rounded-2xl rounded-tr-none px-5 py-3 max-w-[80%] ml-auto text-sm shadow-sm'
-                                            : 'bg-white border border-gray-100 text-gray-800 rounded-2xl rounded-tl-none px-5 py-3 max-w-[80%] text-sm shadow-sm leading-relaxed'
+                                    key={msg.id}
+                                    className={`flex flex-col ${
+                                        msg.role === 'user' ? 'items-end' : 'items-start'
                                     }`}
                                 >
-                                    <div className="whitespace-pre-wrap">{msg.text}</div>
-                                    <div className={`text-[10px] mt-1.5 ${msg.sender === 'user' ? 'text-red-200' : 'text-gray-400'}`}>
-                                        {msg.time}
+                                    {msg.role === 'user' ? (
+                                        /* User Message Pill */
+                                        <div className="max-w-[85%] bg-zinc-800/90 border border-zinc-700/60 text-zinc-100 rounded-2xl rounded-tr-sm px-5 py-3 shadow-md">
+                                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                                            <div className="text-[10px] text-zinc-400 mt-1 text-right">{msg.timestamp}</div>
+                                        </div>
+                                    ) : (
+                                        /* Rayan Assistant Card */
+                                        <div className="w-full bg-[#12141C] border border-zinc-800/90 rounded-2xl p-5 shadow-lg relative space-y-3">
+                                            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2.5">
+                                                <div className="flex items-center gap-2.5">
+                                                    <RayanAvatar size="sm" />
+                                                    <span className="text-xs font-bold text-white tracking-wide">Rayan AI Advisor</span>
+                                                </div>
+                                                <span className="text-[11px] text-zinc-500 font-mono">{msg.timestamp}</span>
+                                            </div>
+
+                                            {/* Rich Markdown & Typography Formatter */}
+                                            <RayanMessageFormatter
+                                                content={msg.content}
+                                                onCitationClick={handleCitationClick}
+                                            />
+
+                                            {/* Citation Pills Footer if present */}
+                                            {msg.citations && msg.citations.length > 0 && (
+                                                <div className="pt-2 border-t border-zinc-800/60 flex flex-wrap items-center gap-2">
+                                                    <span className="text-[11px] text-zinc-400 font-semibold uppercase tracking-wider">
+                                                        Sources & Evidence:
+                                                    </span>
+                                                    {msg.citations.map((c, idx) => (
+                                                        <button
+                                                            key={idx}
+                                                            onClick={() => handleCitationClick(c.href)}
+                                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 hover:bg-emerald-900/60 hover:text-emerald-300 transition cursor-pointer shadow-xs"
+                                                        >
+                                                            <span>🔍</span>
+                                                            <span>{c.label}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+
+                            {/* Loading / Generating State */}
+                            {isLoading && (
+                                <div className="w-full bg-[#12141C] border border-zinc-800/90 rounded-2xl p-4 shadow-md flex items-center gap-3">
+                                    <RayanAvatar size="sm" />
+                                    <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium">
+                                        <span>Rayan is synthesizing IELTS diagnostic memory...</span>
+                                        <div className="flex space-x-1">
+                                            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            )}
 
-                        {/* Typing Indicator */}
-                        {isTyping && (
-                            <div className="flex justify-start items-start gap-3">
-                                <RayanAvatar size="sm" />
-                                <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-none px-5 py-3 shadow-sm">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                        <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                        <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        <div ref={messagesEndRef} />
-                    </div>
-                )}
-
-                {/* ════════════════════════════════════════════════════════════
-                    SECTION C: FLOATING BOTTOM INPUT BAR
-                ════════════════════════════════════════════════════════════ */}
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-10">
-                    <div className="bg-white border border-gray-200/80 rounded-full p-2 pl-4 pr-3 shadow-lg flex items-center gap-3">
-                        <button className="text-gray-400 hover:text-gray-600 cursor-pointer transition-colors p-1">
-                            <PlusIcon className="w-5 h-5" />
-                        </button>
-                        <input
-                            ref={inputRef}
-                            type="text"
-                            value={inputText}
-                            onChange={e => setInputText(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Message Rayan..."
-                            className="w-full bg-transparent focus:outline-none text-sm text-gray-800 placeholder-gray-400"
-                        />
-                        <button
-                            onClick={handleSend}
-                            disabled={!inputText.trim()}
-                            className="bg-gray-100 text-gray-500 hover:bg-red-600 hover:text-white p-2 rounded-full transition disabled:opacity-40 disabled:hover:bg-gray-100 disabled:hover:text-gray-500"
-                        >
-                            <SendIcon className="w-4 h-4" />
-                        </button>
-                    </div>
-                    <p className="text-gray-400 text-[11px] text-center mt-2">
-                        Rayan can make mistakes. Verify important information.
-                    </p>
+                            <div ref={messagesEndRef} />
+                        </div>
+                    )}
                 </div>
+            </main>
+
+            {/* ════════════════════════════════════════════════════════════
+                SECTION C: BOTTOM STICKY INPUT BAR (PERPLEXITY STYLE)
+            ════════════════════════════════════════════════════════════ */}
+            <div className="fixed bottom-5 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4 z-20">
+                <div className="bg-[#141720]/95 backdrop-blur-xl border border-zinc-800 hover:border-zinc-700 focus-within:border-emerald-500/60 rounded-2xl p-2.5 pl-4 pr-3 shadow-2xl transition-all flex items-center gap-3">
+                    <button
+                        type="button"
+                        className="text-zinc-400 hover:text-zinc-200 transition p-1.5 rounded-lg hover:bg-zinc-800/60 cursor-pointer"
+                        title="Attach context or diagnostic data"
+                        onClick={() => handleQuickPrompt("Analyze my latest IELTS test scores")}
+                    >
+                        <PlusIcon className="w-4 h-4" />
+                    </button>
+
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        value={inputText}
+                        onChange={(e) => setInputText(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Message Rayan..."
+                        disabled={isLoading}
+                        className="w-full bg-transparent focus:outline-none text-sm text-zinc-100 placeholder-zinc-500"
+                    />
+
+                    <button
+                        type="button"
+                        onClick={handleSend}
+                        disabled={!inputText.trim() || isLoading}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white p-2.5 rounded-xl transition disabled:opacity-40 disabled:hover:bg-emerald-600 cursor-pointer shadow-md disabled:cursor-not-allowed"
+                        title="Send query"
+                    >
+                        <SendIcon className="w-4 h-4" />
+                    </button>
+                </div>
+                <p className="text-zinc-400 text-[11px] text-center mt-2 font-medium">
+                    Rayan AI synthesizes your real Cambridge mock attempts, speaking interviews, and essay rewrites.
+                </p>
             </div>
 
             {/* ════════════════════════════════════════════════════════════
-                SECTION A: TOP BAR & HISTORY TOGGLE BUTTON
+                SECTION D: SLIDE-OUT CHAT HISTORY DRAWER
             ════════════════════════════════════════════════════════════ */}
-            <button
-                onClick={() => setIsHistoryOpen(prev => !prev)}
-                className="absolute top-4 right-6 z-20 hover:bg-gray-100 p-2 rounded-xl transition-colors"
-            >
-                <HamburgerIcon className="w-5 h-5 text-gray-500" />
-            </button>
-
-            {/* ════════════════════════════════════════════════════════════
-                SECTION D: SLIDING CHAT HISTORY DRAWER
-            ════════════════════════════════════════════════════════════ */}
-            <div
-                className={`fixed top-0 right-0 h-full w-80 bg-white border-l border-gray-200/80 shadow-2xl z-30 transform transition-transform duration-300 ease-in-out flex flex-col ${
+            <aside
+                className={`fixed top-0 right-0 h-full w-80 bg-[#10121A] border-l border-zinc-800/90 shadow-2xl z-30 transform transition-transform duration-300 ease-in-out flex flex-col ${
                     isHistoryOpen ? 'translate-x-0' : 'translate-x-full'
                 }`}
             >
                 {/* Drawer Header */}
-                <div className="p-5 border-b border-gray-100">
-                    <div className="flex items-center justify-between mb-1">
+                <div className="p-5 border-b border-zinc-800/80">
+                    <div className="flex items-center justify-between mb-2">
                         <div>
-                            <h2 className="font-bold text-gray-900 text-base">Chat history</h2>
-                            <p className="text-gray-400 text-xs mt-0.5">{conversations.length} conversations</p>
+                            <h2 className="font-bold text-white text-base tracking-tight">Chat History</h2>
+                            <p className="text-zinc-400 text-xs mt-0.5">{sessions.length} sessions saved</p>
                         </div>
                         <button
                             onClick={() => setIsHistoryOpen(false)}
-                            className="text-gray-500 hover:bg-gray-100 p-1.5 rounded-lg transition-colors"
+                            className="text-zinc-400 hover:text-white p-1.5 rounded-lg hover:bg-zinc-800/80 transition cursor-pointer"
                         >
                             <ChevronRightIcon className="w-4 h-4" />
                         </button>
@@ -475,73 +476,140 @@ const AIIELTSChatbotView: React.FC<AIIELTSChatbotViewProps> = ({ userEmail: _use
 
                     {/* New Chat Button */}
                     <button
-                        onClick={handleNewChat}
-                        className="bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-3 px-4 rounded-2xl w-full text-center transition flex items-center justify-center gap-2 mt-4"
+                        onClick={() => {
+                            startNewChat();
+                            setIsHistoryOpen(false);
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-4 rounded-xl w-full text-center transition flex items-center justify-center gap-2 mt-3 text-xs shadow-md cursor-pointer"
                     >
                         <PlusIcon className="w-4 h-4" />
-                        New chat
+                        New Chat
                     </button>
 
                     {/* Search Filter */}
                     <div className="relative mt-3">
-                        <SearchIcon className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <SearchIcon className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
                         <input
                             type="text"
                             value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
-                            placeholder="Search..."
-                            className="bg-gray-100 text-xs rounded-xl pl-9 pr-3 py-2 w-full text-gray-700 focus:outline-none"
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search conversations..."
+                            className="bg-zinc-900 border border-zinc-800 text-xs rounded-xl pl-9 pr-3 py-2 w-full text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700"
                         />
                     </div>
                 </div>
 
-                {/* Drawer Body */}
-                <div className="flex-1 overflow-y-auto p-4">
-                    {/* Empty State */}
-                    {conversations.length === 0 && (
-                        <div className="border border-dashed border-gray-200 rounded-2xl p-6 text-center space-y-3 mt-2 bg-gray-50/50">
-                            <MessageCircleIcon className="w-8 h-8 text-gray-300 mx-auto" />
-                            <p className="font-semibold text-gray-700 text-sm">No chats yet</p>
-                            <p className="text-gray-400 text-xs">Start a conversation and it will appear here.</p>
+                {/* Drawer Session List */}
+                <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+                    {sessions.length === 0 && (
+                        <div className="border border-dashed border-zinc-800 rounded-2xl p-6 text-center space-y-2 mt-4 bg-zinc-900/30">
+                            <MessageCircleIcon className="w-8 h-8 text-zinc-600 mx-auto" />
+                            <p className="font-semibold text-zinc-300 text-xs">No conversations yet</p>
+                            <p className="text-zinc-500 text-[11px]">Start chatting with Rayan to build your history.</p>
                         </div>
                     )}
 
-                    {/* Populated History */}
-                    {filteredConversations.map(chat => (
+                    {filteredSessions.map((s) => (
                         <div
-                            key={chat.id}
-                            onClick={() => handleSelectChat(chat.id)}
-                            className={`group flex items-center justify-between w-full text-left p-3 rounded-xl mb-2 transition-all cursor-pointer ${
-                                activeChatId === chat.id
-                                    ? 'bg-red-50 border border-red-200'
-                                    : 'hover:bg-gray-50 border border-transparent'
+                            key={s.id}
+                            onClick={() => {
+                                switchSession(s.id);
+                                setIsHistoryOpen(false);
+                            }}
+                            className={`group flex items-center justify-between w-full p-3 rounded-xl transition-all cursor-pointer ${
+                                currentSessionId === s.id
+                                    ? 'bg-emerald-950/40 border border-emerald-800/60 text-emerald-300'
+                                    : 'hover:bg-zinc-900 border border-transparent text-zinc-300'
                             }`}
                         >
                             <div className="truncate flex-1 pr-2">
-                                <p className="text-sm font-medium text-gray-800 truncate">{chat.title}</p>
-                                <p className="text-[11px] text-gray-400 mt-1">{chat.timestamp}</p>
+                                <p className="text-xs font-medium truncate">{s.title || 'Untitled Session'}</p>
+                                <p className="text-[10px] text-zinc-500 mt-0.5">
+                                    {s.updated_at ? new Date(s.updated_at).toLocaleDateString() : ''}
+                                </p>
                             </div>
+
                             <button
-                                onClick={(e) => handleDeleteChat(e, chat.id)}
-                                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1 rounded transition-opacity"
-                                title="Delete conversation"
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteSession(s.id);
+                                }}
+                                className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-rose-400 p-1 rounded transition-opacity cursor-pointer"
+                                title="Delete session"
                             >
-                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
+                                <TrashIcon className="w-3.5 h-3.5" />
                             </button>
                         </div>
                     ))}
                 </div>
-            </div>
+            </aside>
 
-            {/* Backdrop overlay when drawer is open */}
+            {/* Backdrop overlay when history drawer is open */}
             {isHistoryOpen && (
                 <div
-                    className="fixed inset-0 bg-black/10 z-20 transition-opacity"
+                    className="fixed inset-0 bg-black/50 backdrop-blur-xs z-20 transition-opacity"
                     onClick={() => setIsHistoryOpen(false)}
                 />
             )}
+
+            {/* ════════════════════════════════════════════════════════════
+                SECTION E: CITATION OVERLAY MODALS
+            ════════════════════════════════════════════════════════════ */}
+
+            {/* Modal 1: Speaking Evaluation Canvas */}
+            {modalAttemptData && modalAttemptData.type === 'speaking' && (
+                <SpeakingEvaluationCanvas
+                    attemptId={selectedAttemptIdForModal || undefined}
+                    isOpen={true}
+                    evaluation={
+                        modalAttemptData.data.raw_json_feedback ||
+                        modalAttemptData.data.evaluation ||
+                        modalAttemptData.data
+                    }
+                    onClose={() => {
+                        setSelectedAttemptIdForModal(null);
+                        setModalAttemptData(null);
+                    }}
+                />
+            )}
+
+            {/* Modal 2: Writing Analysis Modal */}
+            {modalAttemptData && modalAttemptData.type === 'writing' && (
+                <WritingAnalysisModal
+                    isModal={true}
+                    attempt={modalAttemptData.data}
+                    band={modalAttemptData.data.overall_band || modalAttemptData.data.band_score}
+                    onClose={() => {
+                        setSelectedAttemptIdForModal(null);
+                        setModalAttemptData(null);
+                    }}
+                />
+            )}
+
+            {/* Modal 3: Reading / Listening / Generic Mock Analysis */}
+            {modalAttemptData && modalAttemptData.type !== 'speaking' && modalAttemptData.type !== 'writing' && (
+                <HistoryAnalysisModal
+                    isOpen={true}
+                    isModal={true}
+                    attemptId={modalAttemptData.data.id}
+                    bookNumber={modalAttemptData.data.book_number}
+                    testNumber={modalAttemptData.data.test_number}
+                    answersPayload={modalAttemptData.data.answers_payload}
+                    skillModule={modalAttemptData.data.module}
+                    title={modalAttemptData.data.title || modalAttemptData.data.exam_title}
+                    onClose={() => {
+                        setSelectedAttemptIdForModal(null);
+                        setModalAttemptData(null);
+                    }}
+                />
+            )}
+
+            {/* Modal 4: AI Rewriter History */}
+            <AIRewriterHistoryModal
+                isOpen={Boolean(selectedRewriteIdForModal)}
+                onClose={() => setSelectedRewriteIdForModal(null)}
+            />
         </div>
     );
 };

@@ -337,6 +337,18 @@ export const PartPracticeHistoryMatrix: React.FC<PartPracticeHistoryMatrixProps>
                                             Loading drill telemetry...
                                         </td>
                                     </tr>
+                                ) : attempts.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="p-8">
+                                            <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-zinc-800 rounded-2xl bg-[#12141a]/50">
+                                                <span className="text-3xl mb-3">📋</span>
+                                                <h3 className="text-sm font-semibold text-zinc-300">No practice history yet</h3>
+                                                <p className="text-xs text-zinc-500 max-w-sm mt-1">
+                                                    You haven't completed any drills under this account. Complete a practice drill to view detailed diagnostic telemetry.
+                                                </p>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 ) : filteredAttempts.length === 0 ? (
                                     <tr>
                                         <td colSpan={7} className="py-12 text-center text-zinc-500">

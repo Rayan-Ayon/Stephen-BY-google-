@@ -54,7 +54,10 @@ export const clampBand = (v: number) => Math.max(4, Math.min(9, roundToHalf(v)))
 export const ieltsKey = (suffix: string) => `stephen_enterprise_farmgate_ielts_${suffix}`;
 export const ATTEMPTS_KEY = ieltsKey('attempts');
 
+export const getUserAttemptsKey = (userId?: string) => (userId ? `stephen_${userId}_ielts_attempts` : ATTEMPTS_KEY);
+
 export const readJson = <T>(key: string, fallback: T): T => {
+    if (typeof window === 'undefined') return fallback;
     const stored = localStorage.getItem(key);
     if (stored) {
         try {
@@ -66,10 +69,14 @@ export const readJson = <T>(key: string, fallback: T): T => {
     return fallback;
 };
 
-export const readAttempts = (): IeltsAttempt[] => readJson<IeltsAttempt[]>(ATTEMPTS_KEY, SEED_ATTEMPTS);
+export const readAttempts = (userId?: string): IeltsAttempt[] => {
+    const key = getUserAttemptsKey(userId);
+    return readJson<IeltsAttempt[]>(key, []);
+};
 
-export const persistAttempts = (next: IeltsAttempt[]) => {
-    localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(next));
+export const persistAttempts = (next: IeltsAttempt[], userId?: string) => {
+    const key = getUserAttemptsKey(userId);
+    localStorage.setItem(key, JSON.stringify(next));
 };
 
 export const addAttempt = (attempt: IeltsAttempt) => {
@@ -230,22 +237,7 @@ export const formatTimeSpent = (m?: number, s?: number): string => {
     return '—';
 };
 
-export const SEED_ATTEMPTS: IeltsAttempt[] = [
-    { id: 1, skill: 'reading', book_number: 7, test_number: 1, title: 'Cambridge 7 — Test 1', band: 4.0, score: 0, is_general: false, date: 'Oct 5, 2026', timeSpent: 14, criteria: [{ label: 'Skimming', band: 4.0 }, { label: 'TFNG Traps', band: 4.0 }, { label: 'Gap-Fill', band: 4.0 }] },
-    { id: 2, skill: 'reading', book_number: 18, test_number: 2, title: 'Cambridge 18 — Test 2', band: 7.5, score: 32, is_general: true, date: 'Oct 4, 2026', timeSpent: 38, criteria: [{ label: 'Skimming', band: 7.5 }, { label: 'TFNG Traps', band: 7.0 }, { label: 'Gap-Fill', band: 7.5 }] },
-    { id: 3, skill: 'listening', book_number: 7, test_number: 1, title: 'Cambridge 7 — Test 1', band: 6.5, score: 28, is_general: false, date: 'Oct 3, 2026', timeSpent: 32, criteria: [{ label: 'Detail Recognition', band: 7.0 }, { label: 'Map Labelling', band: 6.0 }, { label: 'Number Capture', band: 6.5 }] },
-    { id: 4, skill: 'listening', book_number: 18, test_number: 1, title: 'Cambridge 18 — Test 1', band: 7.5, score: 34, is_general: true, date: 'Oct 2, 2026', timeSpent: 30, criteria: [{ label: 'Detail Recognition', band: 8.0 }, { label: 'Map Labelling', band: 7.0 }, { label: 'Number Capture', band: 7.5 }] },
-    { id: 5, skill: 'writing', book_number: 7, test_number: 1, title: 'Cambridge 7 — Test 1', taskType: 'task2', band: 6.5, is_general: false, date: 'Oct 1, 2026', timeSpent: 40, criteria: [{ label: 'Task Response', band: 6.5 }, { label: 'Coherence', band: 6.5 }, { label: 'Lexical Range', band: 6.0 }, { label: 'Grammar', band: 7.0 }] },
-    { id: 6, skill: 'reading', book_number: 7, test_number: 2, title: 'Cambridge 7 — Test 2', band: 6.5, score: 27, is_general: false, date: 'Aug 28, 2026', timeSpent: 38, criteria: [{ label: 'Skimming', band: 7.0 }, { label: 'TFNG Traps', band: 5.5 }, { label: 'Gap-Fill', band: 6.5 }] },
-    { id: 7, skill: 'writing', title: 'Task 2 - Education Policy', taskType: 'task2', band: 6.5, is_general: false, date: 'Aug 20, 2026', timeSpent: 44, criteria: [{ label: 'Task Response', band: 6.5 }, { label: 'Coherence', band: 6.5 }, { label: 'Lexical Range', band: 6.0 }, { label: 'Grammar', band: 7.0 }] },
-    { id: 8, skill: 'writing', title: 'Task 1 - General Letter', taskType: 'task1', band: 7.0, is_general: true, date: 'Aug 21, 2026', timeSpent: 20, criteria: [{ label: 'Task Achievement', band: 7.0 }, { label: 'Coherence', band: 7.0 }, { label: 'Lexical Range', band: 7.0 }, { label: 'Grammar', band: 7.0 }] },
-    { id: 9, skill: 'speaking', title: 'Part 2 - Describe a Memorable Journey', band: 7.0, is_general: false, date: 'Aug 18, 2026', timeSpent: 12, criteria: [{ label: 'Fluency', band: 7.0 }, { label: 'Lexical Resource', band: 7.0 }, { label: 'Pronunciation', band: 7.5 }, { label: 'Grammar', band: 6.5 }] },
-    { id: 10, skill: 'speaking', title: 'Part 3 - Environmental Conservation', band: 5.5, is_general: false, date: 'Aug 21, 2026', timeSpent: 15, criteria: [{ label: 'Fluency', band: 5.5 }, { label: 'Lexical Resource', band: 5.5 }, { label: 'Pronunciation', band: 6.0 }, { label: 'Grammar', band: 5.5 }] },
-    { id: 11, skill: 'listening', book_number: 18, test_number: 2, title: 'Cambridge 18 — Test 2', band: 7.0, score: 31, is_general: true, date: 'Aug 19, 2026', timeSpent: 30, criteria: [{ label: 'Detail Recognition', band: 8.0 }, { label: 'Map Labelling', band: 7.0 }, { label: 'Number Capture', band: 7.5 }] },
-    { id: 12, skill: 'listening', title: 'Section 4 Lecture Notes', band: 7.0, score: 31, is_general: false, date: 'Aug 22, 2026', timeSpent: 28, criteria: [{ label: 'Detail Recognition', band: 7.0 }, { label: 'Map Labelling', band: 7.0 }, { label: 'Number Capture', band: 7.0 }] },
-    { id: 13, skill: 'reading', title: 'The Physics of Traffic Behavior', band: 7.0, score: 30, is_general: false, date: 'Aug 20, 2026', timeSpent: 36, criteria: [{ label: 'Skimming', band: 7.5 }, { label: 'TFNG Traps', band: 6.5 }, { label: 'Gap-Fill', band: 7.0 }] },
-    { id: 14, skill: 'reading', title: 'Plain English Movement', band: 5.5, score: 22, is_general: false, date: 'Aug 22, 2026', timeSpent: 34, criteria: [{ label: 'Skimming', band: 6.0 }, { label: 'TFNG Traps', band: 5.0 }, { label: 'Gap-Fill', band: 5.5 }] },
-];
+export const SEED_ATTEMPTS: IeltsAttempt[] = [];
 
 export interface DiagnosticSubSkill {
     skill: IeltsSkill;

@@ -882,10 +882,10 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
 
     // Recordings & Drawer
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+    const userId = session?.user?.id;
     const [recordings, setRecordings] = useState<SpeakingPartnerSessionRecord[]>(() => {
-        if (typeof window === 'undefined') return MOCK_RECORDINGS;
-        const saved = getSavedSpeakingSessions();
-        return saved.length > 0 ? saved : MOCK_RECORDINGS;
+        if (typeof window === 'undefined') return [];
+        return getSavedSpeakingSessions(session?.user?.id);
     });
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [sessionPlayback, setSessionPlayback] = useState<SpeakingPartnerSessionRecord | null>(null);
@@ -893,14 +893,13 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
     // Cross-tab and event synchronization for saved sessions
     useEffect(() => {
         const syncSessions = () => {
-            const saved = getSavedSpeakingSessions();
-            if (saved.length > 0) {
-                setRecordings(saved);
-            }
+            const saved = getSavedSpeakingSessions(userId);
+            setRecordings(saved);
         };
+        syncSessions();
         window.addEventListener('speaking_partner_sessions_updated', syncSessions);
         return () => window.removeEventListener('speaking_partner_sessions_updated', syncSessions);
-    }, []);
+    }, [userId]);
 
     // Playback view
     const [playbackTab, setPlaybackTab] = useState<'transcript' | 'feedback' | 'scoring'>('scoring');
@@ -1578,7 +1577,7 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
                 audioUrl: null,
             };
             setActiveSessionId(newSessionId);
-            saveSpeakingSession(rec);
+            saveSpeakingSession(rec, userId);
             setRecordings(prev => [rec, ...prev.filter(r => r.id !== newSessionId)]);
 
             uploadSpeakingSession({
@@ -1646,7 +1645,7 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
                 evaluation: null,
                 audioUrl: null,
             };
-            saveSpeakingSession(rec);
+            saveSpeakingSession(rec, userId);
             setRecordings(prev => [rec, ...prev.filter(r => r.id !== newSessionId)]);
         }
 
@@ -1801,7 +1800,7 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
             // Persist evaluation back to LocalStorage and update in-memory recordings
             const targetSessionId = activeSessionId || sessionPlayback?.id;
             if (targetSessionId) {
-                updateSpeakingSessionEvaluation(targetSessionId, mapped);
+                updateSpeakingSessionEvaluation(targetSessionId, mapped, userId);
                 setRecordings(prev => prev.map(r => r.id === targetSessionId ? { ...r, evaluation: mapped } : r));
                 if (sessionPlayback && sessionPlayback.id === targetSessionId) {
                     setSessionPlayback(prev => prev ? { ...prev, evaluation: mapped } : null);
@@ -1843,7 +1842,7 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
             // Persist fallback evaluation back to LocalStorage and update in-memory recordings
             const targetSessionId = activeSessionId || sessionPlayback?.id;
             if (targetSessionId) {
-                updateSpeakingSessionEvaluation(targetSessionId, fallbackEval);
+                updateSpeakingSessionEvaluation(targetSessionId, fallbackEval, userId);
                 setRecordings(prev => prev.map(r => r.id === targetSessionId ? { ...r, evaluation: fallbackEval } : r));
                 if (sessionPlayback && sessionPlayback.id === targetSessionId) {
                     setSessionPlayback(prev => prev ? { ...prev, evaluation: fallbackEval } : null);
@@ -1946,7 +1945,7 @@ const AISpeakingPartnerView: React.FC<AISpeakingPartnerViewProps> = ({ userEmail
                 evaluation: null,
                 audioUrl: null,
             };
-            saveSpeakingSession(rec);
+            saveSpeakingSession(rec, userId);
             setRecordings(prev => [rec, ...prev.filter(r => r.id !== newSessionId)]);
         }
         // Freeze call — keep sessionActive true so Live Call view stays mounted

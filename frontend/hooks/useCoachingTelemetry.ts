@@ -160,9 +160,9 @@ const SEED_SPEAKING: CoachingSpeakingSession[] = [
 
 export function useCoachingTelemetry() {
   const [loading, setLoading] = useState(true);
-  const [examAttempts, setExamAttempts] = useState<CoachingAttempt[]>(SEED_ATTEMPTS);
-  const [handwrittenEssays, setHandwrittenEssays] = useState<CoachingHandwrittenSubmission[]>(SEED_ESSAYS);
-  const [speakingSessions, setSpeakingSessions] = useState<CoachingSpeakingSession[]>(SEED_SPEAKING);
+  const [examAttempts, setExamAttempts] = useState<CoachingAttempt[]>([]);
+  const [handwrittenEssays, setHandwrittenEssays] = useState<CoachingHandwrittenSubmission[]>([]);
+  const [speakingSessions, setSpeakingSessions] = useState<CoachingSpeakingSession[]>([]);
   const [studentDisputes, setStudentDisputes] = useState<any[]>([]);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date>(new Date());
 
@@ -175,7 +175,7 @@ export function useCoachingTelemetry() {
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (attemptsData && attemptsData.length > 0) {
+      if (attemptsData) {
         setExamAttempts(attemptsData);
       }
 
@@ -186,7 +186,7 @@ export function useCoachingTelemetry() {
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (essayData && essayData.length > 0) {
+      if (essayData) {
         setHandwrittenEssays(essayData);
       }
 

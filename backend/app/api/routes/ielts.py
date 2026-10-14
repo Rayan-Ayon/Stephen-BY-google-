@@ -570,29 +570,72 @@ def _parse_task_eval(data: dict | None, task_type: str = "task2"):
 @router.get("/user/diagnostic-summary")
 @router.get("/ielts/user/diagnostic-summary")
 async def get_user_diagnostic_summary(user: AuthUser = Depends(get_current_user)):
-    """Fetch aggregated performance statistics strictly for the authenticated user."""
+    """Fetch aggregated performance statistics strictly for the authenticated user across all 5 modules."""
     db = get_supabase()
+    uid = user.user_id
 
-    # 1. Fetch user's recent exam attempts
-    attempts = db.table("exam_attempts").select(
-        "id, module, band_score, correct_count, total_questions, time_spent_seconds, title, created_at"
-    ).eq("user_id", user.user_id).order("created_at", desc=True).limit(20).execute()
+    # 1. Full Mock Attempts (exam_attempts)
+    try:
+        mocks = db.table("exam_attempts") \
+            .select("id, module, band_score, correct_count, total_questions, time_spent_seconds, title, answers_payload, created_at") \
+            .eq("user_id", uid).order("created_at", desc=True).limit(10).execute()
+        mocks_data = mocks.data or []
+    except Exception as e:
+        logger.warning(f"[DIAGNOSTIC_SUMMARY] Failed to query exam_attempts: {e}")
+        mocks_data = []
 
-    # 2. Fetch user's recent writing submissions
-    writing = db.table("writing_submissions").select(
-        "id, overall_band, module_type, evaluation, created_at"
-    ).eq("user_id", user.user_id).order("created_at", desc=True).limit(5).execute()
+    # 2. Part Practice Attempts (part_practice_attempts)
+    try:
+        drills = db.table("part_practice_attempts") \
+            .select("id, module, part_number, scoped_target, exam_title, band_score, user_responses, detailed_results, created_at") \
+            .eq("user_id", uid).order("created_at", desc=True).limit(10).execute()
+        drills_data = drills.data or []
+    except Exception as e:
+        logger.warning(f"[DIAGNOSTIC_SUMMARY] Failed to query part_practice_attempts: {e}")
+        drills_data = []
 
-    # 3. Fetch user's recent speaking submissions
-    speaking = db.table("speaking_submissions").select(
-        "id, overall_band, fluency_score, lexical_score, grammar_score, pronunciation_score, raw_json_feedback, created_at"
-    ).eq("user_id", user.user_id).order("created_at", desc=True).limit(5).execute()
+    # 3. Writing Submissions (writing_submissions)
+    try:
+        writing = db.table("writing_submissions") \
+            .select("*") \
+            .eq("user_id", uid).order("created_at", desc=True).limit(5).execute()
+        writing_data = writing.data or []
+    except Exception as e:
+        logger.warning(f"[DIAGNOSTIC_SUMMARY] Failed to query writing_submissions: {e}")
+        writing_data = []
+
+    # 4. Speaking Submissions & Partner Transcripts (speaking_submissions)
+    try:
+        speaking = db.table("speaking_submissions") \
+            .select("id, overall_band, fluency_score, lexical_score, grammar_score, pronunciation_score, transcript, raw_json_feedback, created_at") \
+            .eq("user_id", uid).order("created_at", desc=True).limit(5).execute()
+        speaking_data = speaking.data or []
+    except Exception as e:
+        logger.warning(f"[DIAGNOSTIC_SUMMARY] Failed to query speaking_submissions: {e}")
+        speaking_data = []
+
+    # 5. AI Rewriter History (rewriter_history)
+    try:
+        rewrites = db.table("rewriter_history") \
+            .select("id, task_type, target_band, original_text, rewritten_text, criteria_scores, created_at") \
+            .eq("user_id", uid).order("created_at", desc=True).limit(5).execute()
+        rewrites_data = rewrites.data or []
+    except Exception as e:
+        logger.warning(f"[DIAGNOSTIC_SUMMARY] Failed to query rewriter_history: {e}")
+        rewrites_data = []
 
     return {
-        "user_id": user.user_id,
+        "user_id": uid,
         "email": user.email,
-        "recent_attempts": attempts.data or [],
-        "recent_writing": writing.data or [],
-        "recent_speaking": speaking.data or [],
+        "mock_tests": mocks_data,
+        "part_practice": drills_data,
+        "writing_submissions": writing_data,
+        "speaking_submissions": speaking_data,
+        "rewriter_history": rewrites_data,
+        # Backward compatibility
+        "recent_attempts": mocks_data,
+        "recent_writing": writing_data,
+        "recent_speaking": speaking_data,
     }
+
 
