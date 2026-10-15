@@ -7,10 +7,14 @@ openai
 pydantic
 python-dotenv
 google-genai
-sqlalchemy
+google-generativeai
+sqlalchemy[asyncio]
 greenlet>=3.0.0
 aiosqlite
 httpx
 chromadb
-pyjwt
+pyjwt[crypto]
+supabase>=2.0.0
 asyncpg
+python-jose[cryptography]
+passlib[bcrypt]
