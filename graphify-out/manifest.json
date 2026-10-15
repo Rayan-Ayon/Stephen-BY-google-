@@ -45,8 +45,8 @@
     "semantic_hash": ""
   },
   "backend/app/core/config.py": {
-    "mtime": 1792009981.001776,
-    "ast_hash": "6deec5cf1174b7825427f159cc605366",
+    "mtime": 1792087449.907159,
+    "ast_hash": "8af138576172dab3581f17a021d3481f",
     "semantic_hash": ""
   },
   "backend/app/core/security.py": {
@@ -65,13 +65,13 @@
     "semantic_hash": ""
   },
   "backend/app/db/session.py": {
-    "mtime": 1781907725.5543191,
-    "ast_hash": "dfa7fb586c83dadb8b6ec31b86cf0ca4",
+    "mtime": 1792087458.8575313,
+    "ast_hash": "6b3700fe7d54f75363775a6f25ff2dc0",
     "semantic_hash": ""
   },
   "backend/app/main.py": {
-    "mtime": 1792009981.003779,
-    "ast_hash": "3534f8b66ff91febe4722efd12a276ec",
+    "mtime": 1792089487.5972164,
+    "ast_hash": "1de4756a4ecab7969ec22afdb040c38c",
     "semantic_hash": ""
   },
   "backend/app/prompts/ai_prompts.py": {
@@ -2975,8 +2975,8 @@
     "semantic_hash": ""
   },
   "frontend/components/AIRewriterView.tsx": {
-    "mtime": 1792009981.087067,
-    "ast_hash": "90bf1e9216b1c3ff30010e4230884c73",
+    "mtime": 1792089431.0965395,
+    "ast_hash": "ec812650c91d6c754143d78d88cfae7e",
     "semantic_hash": ""
   },
   "frontend/components/AIIELTSChatbotView.tsx": {
@@ -2990,8 +2990,8 @@
     "semantic_hash": ""
   },
   "frontend/components/StudyPlanView.tsx": {
-    "mtime": 1792009981.1472774,
-    "ast_hash": "45aef85baccea94c4a2fc6a7d464d263",
+    "mtime": 1792089248.5388575,
+    "ast_hash": "4b179cc1c0a643b1bca443f3961b3427",
     "semantic_hash": ""
   },
   "frontend/components/ReadingHubView.tsx": {
@@ -3230,8 +3230,8 @@
     "semantic_hash": ""
   },
   "frontend/services/chatbotService.ts": {
-    "mtime": 1790036737.5011773,
-    "ast_hash": "0cf53127352dfc886925719572e48dbe",
+    "mtime": 1792089285.1429029,
+    "ast_hash": "6ec418d04086cb2d0ac225b3d77d3142",
     "semantic_hash": ""
   },
   "frontend/src/components/ai-speaking-partner/AISpeakingPartnerView.tsx": {
@@ -3265,8 +3265,8 @@
     "semantic_hash": ""
   },
   "frontend/vercel.json": {
-    "mtime": 1790254670.9503548,
-    "ast_hash": "6411d2fbb5f0e00aaff0ca0ded84e0b6",
+    "mtime": 1792089181.1112094,
+    "ast_hash": "6e3a23ae978138fddcee78555d7ebc09",
     "semantic_hash": ""
   },
   "frontend/src/components/mock-tests/speaking/MaraAvatar.tsx": {
@@ -3540,8 +3540,8 @@
     "semantic_hash": ""
   },
   "frontend/components/Overview.tsx": {
-    "mtime": 1792009981.1402745,
-    "ast_hash": "b076177be482360008c8fa0e25195775",
+    "mtime": 1792089311.4153638,
+    "ast_hash": "12467b0f56cc72e0e086e1d0f60c5075",
     "semantic_hash": ""
   },
   "frontend/components/ContentLibrary.tsx": {
@@ -4015,13 +4015,13 @@
     "semantic_hash": ""
   },
   "frontend/components/enterprise/writing/AIRewriterHistoryModal.tsx": {
-    "mtime": 1792009981.3832717,
-    "ast_hash": "fe2b53893d96d9783277ea6cc6956b7c",
+    "mtime": 1792089475.087401,
+    "ast_hash": "bae4747677a2078c979d40f69425349f",
     "semantic_hash": ""
   },
   "frontend/context/RayanChatContext.tsx": {
-    "mtime": 1792009981.4344382,
-    "ast_hash": "123e02bb8fcf328fc981634c6ac01b61",
+    "mtime": 1792089294.8051865,
+    "ast_hash": "fe8a85ac1a2c0ccf40d797d5cc626ba0",
     "semantic_hash": ""
   },
   "supabase/migrations/20261015_rewriter_history.sql": {
@@ -4035,8 +4035,8 @@
     "semantic_hash": ""
   },
   "frontend/components/study-plan/StudyPlanOnboardingWizard.tsx": {
-    "mtime": 1792009981.4201496,
-    "ast_hash": "9de299d0cdd6077a819892b5ec09c788",
+    "mtime": 1792089215.3517778,
+    "ast_hash": "1d1477bb8264a5d09ca7dc7ae10caea0",
     "semantic_hash": ""
   },
   "supabase/migrations/20261015_study_plans.sql": {
@@ -4047,6 +4047,11 @@
   "backend/app/api/routes/overview.py": {
     "mtime": 1792009980.9910755,
     "ast_hash": "f9865d76d46c1aac8ec1f3a3c3bfb163",
+    "semantic_hash": ""
+  },
+  "vercel.json": {
+    "mtime": 1792089189.799537,
+    "ast_hash": "6e3a23ae978138fddcee78555d7ebc09",
     "semantic_hash": ""
   }
 }

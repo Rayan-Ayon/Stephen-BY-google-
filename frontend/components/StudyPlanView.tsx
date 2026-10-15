@@ -163,7 +163,8 @@ export default function StudyPlanView({ userEmail, onNavigate }: StudyPlanViewPr
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch('/api/study-plan/active', {
+      const API_BASE = (import.meta as any).env?.VITE_API_URL || '';
+      const res = await fetch(`${API_BASE}/api/study-plan/active`, {
         headers: {
           Authorization: `Bearer ${session?.access_token || ''}`,
         },
@@ -317,7 +318,8 @@ export default function StudyPlanView({ userEmail, onNavigate }: StudyPlanViewPr
     setIsToggling(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(`/api/study-plan/tasks/${taskId}/toggle`, {
+      const API_BASE = (import.meta as any).env?.VITE_API_URL || '';
+      const res = await fetch(`${API_BASE}/api/study-plan/tasks/${taskId}/toggle`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

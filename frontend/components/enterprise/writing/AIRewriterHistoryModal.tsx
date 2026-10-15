@@ -50,7 +50,8 @@ export const AIRewriterHistoryModal: React.FC<AIRewriterHistoryModalProps> = ({
             try {
                 const { data: { session } } = await supabase.auth.getSession();
                 const token = session?.access_token;
-                const res = await fetch('/api/ielts/writing/history', {
+                const API_BASE = (import.meta as any).env?.VITE_API_URL || '';
+                const res = await fetch(`${API_BASE}/api/ielts/writing/history`, {
                     headers: {
                         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
                     },

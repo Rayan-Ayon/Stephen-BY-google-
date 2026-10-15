@@ -258,7 +258,8 @@ export const AIRewriterView: React.FC<AIRewriterViewProps> = ({ userEmail, onNav
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
-            const res = await fetch("/api/ielts/writing/diagnostic", {
+            const API_BASE = (import.meta as any).env?.VITE_API_URL || '';
+            const res = await fetch(`${API_BASE}/api/ielts/writing/diagnostic`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -357,7 +358,8 @@ export const AIRewriterView: React.FC<AIRewriterViewProps> = ({ userEmail, onNav
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
-            const res = await fetch("/api/ielts/writing/generate-model", {
+            const API_BASE = (import.meta as any).env?.VITE_API_URL || '';
+            const res = await fetch(`${API_BASE}/api/ielts/writing/generate-model`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -498,7 +500,8 @@ export const AIRewriterView: React.FC<AIRewriterViewProps> = ({ userEmail, onNav
             try {
                 const { data: { session } } = await supabase.auth.getSession();
                 const token = session?.access_token;
-                const res = await fetch("/api/ielts/writing/ocr-transcribe", {
+                const API_BASE = (import.meta as any).env?.VITE_API_URL || '';
+                const res = await fetch(`${API_BASE}/api/ielts/writing/ocr-transcribe`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

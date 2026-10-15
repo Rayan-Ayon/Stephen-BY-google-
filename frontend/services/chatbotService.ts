@@ -30,7 +30,7 @@ export interface ConversationDetail {
     updated_at: string;
 }
 
-const API_BASE = '/api/chatbot';
+const API_BASE = `${(import.meta as any).env?.VITE_API_URL || ''}/api/chatbot`;
 
 export async function sendChatMessage(
     message: string,

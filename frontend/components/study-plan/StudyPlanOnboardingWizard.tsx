@@ -47,7 +47,8 @@ export const StudyPlanOnboardingWizard: React.FC<WizardProps> = ({
         data: { session },
       } = await supabase.auth.getSession();
 
-      const res = await fetch('/api/study-plan/generate', {
+      const API_BASE = (import.meta as any).env?.VITE_API_URL || '';
+      const res = await fetch(`${API_BASE}/api/study-plan/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

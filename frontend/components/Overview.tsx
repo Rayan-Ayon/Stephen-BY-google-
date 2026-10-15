@@ -76,7 +76,8 @@ export const Overview: React.FC<OverviewProps> = ({ userEmail, onNavigate }) => 
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
 
-            const res = await fetch('/api/overview/metrics', {
+            const API_BASE = (import.meta as any).env?.VITE_API_URL || '';
+            const res = await fetch(`${API_BASE}/api/overview/metrics`, {
                 headers: token ? { 'Authorization': `Bearer ${token}` } : {}
             });
 

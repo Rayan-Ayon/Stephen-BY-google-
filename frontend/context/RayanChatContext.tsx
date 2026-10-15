@@ -212,7 +212,8 @@ export const RayanChatProvider: React.FC<{ children: React.ReactNode; initialEma
 
       // Attempt secondary generic `/api/chat/message` fallback if available
       try {
-        const response = await fetch('/api/chat/message', {
+        const API_BASE = (import.meta as any).env?.VITE_API_URL || '';
+        const response = await fetch(`${API_BASE}/api/chat/message`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
