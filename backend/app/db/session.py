@@ -1,11 +1,26 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.pool import NullPool
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import text
 from app.core.config import DATABASE_URL
 
 Base = declarative_base()
 
-engine = create_async_engine(DATABASE_URL, echo=False)
+connect_args = {}
+if "sqlite" in DATABASE_URL:
+    connect_args = {"check_same_thread": False}
+else:
+    connect_args = {
+        "statement_cache_size": 0,
+        "prepared_statement_cache_size": 0,
+    }
+
+engine = create_async_engine(
+    DATABASE_URL,
+    connect_args=connect_args,
+    poolclass=NullPool,
+    echo=False,
+)
 async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
